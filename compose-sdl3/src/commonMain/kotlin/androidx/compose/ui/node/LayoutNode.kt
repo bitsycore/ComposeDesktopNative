@@ -1,6 +1,8 @@
 package androidx.compose.ui.node
 
 import androidx.compose.ui.*
+import androidx.compose.ui.HoverableModifier
+import androidx.compose.ui.PressableModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
@@ -136,6 +138,52 @@ class LayoutNode {
         }
         if (handler != null) return handler
         return parent?.findClickHandler()
+    }
+
+    /* Walks self → root and collects nodes that carry a HoverableModifier.
+       The matching modifier is returned alongside the node so the dispatcher
+       can compute the enter/exit diff and fire callbacks. */
+    fun collectHoverableChain(): List<Pair<LayoutNode, HoverableModifier>> {
+        val acc = mutableListOf<Pair<LayoutNode, HoverableModifier>>()
+        var n: LayoutNode? = this
+        while (n != null) {
+            val current = n
+            current.modifier.foldIn(Unit) { _, e ->
+                if (e is HoverableModifier) acc.add(current to e)
+            }
+            n = current.parent
+        }
+        return acc
+    }
+
+    /* First PressableModifier on the self → root walk. */
+    fun findPressable(): Pair<LayoutNode, PressableModifier>? {
+        var n: LayoutNode? = this
+        while (n != null) {
+            var hit: PressableModifier? = null
+            val current = n
+            current.modifier.foldIn(Unit) { _, e ->
+                if (e is PressableModifier && hit == null) hit = e
+            }
+            val found = hit
+            if (found != null) return current to found
+            n = current.parent
+        }
+        return null
+    }
+
+    /* First clickable node on the self → root walk — used by ComposeWindow to
+       verify that release lands inside the same clickable that received the
+       press (Compose's drag-off-cancels-click semantics). */
+    fun findClickableNode(): LayoutNode? {
+        var n: LayoutNode? = this
+        while (n != null) {
+            var has = false
+            n.modifier.foldIn(Unit) { _, e -> if (e is ClickableModifier) has = true }
+            if (has) return n
+            n = n.parent
+        }
+        return null
     }
 }
 

@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.CircleShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import sdl3backend.composeWindow
 
@@ -52,20 +54,35 @@ fun App() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = { counter-- }) {
-                    Text(text = "  -  ", color = MaterialTheme.colors.onPrimary)
+                Button(onClick = { counter-- }, shape = CircleShape) {
+                    Text(text = "-", color = MaterialTheme.colors.onPrimary, fontSize = 20)
                 }
 
-                Button(onClick = { counter = 0 }) {
-                    Text(text = " Reset ", color = MaterialTheme.colors.onPrimary)
+                OutlinedButton(onClick = { counter = 0 }) {
+                    Text(text = "Reset", color = MaterialTheme.colors.primary)
                 }
 
-                Button(onClick = { counter++ }) {
-                    Text(text = "  +  ", color = MaterialTheme.colors.onPrimary)
+                Button(onClick = { counter++ }, shape = CircleShape) {
+                    Text(text = "+", color = MaterialTheme.colors.onPrimary, fontSize = 20)
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { counter += 10 },
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(text = "+10 (rounded 12dp)", color = MaterialTheme.colors.onPrimary)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(onClick = { counter -= 10 }) {
+                Text(text = "-10 (text button)", color = MaterialTheme.colors.primary)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Click the buttons above!",

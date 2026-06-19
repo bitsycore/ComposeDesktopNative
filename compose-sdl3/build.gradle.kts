@@ -13,7 +13,9 @@ repositories {
 }
 
 kotlin {
-    mingwX64()
+    // mingwX64() disabled while Skia is the renderer — Skiko ships no
+    // mingwX64 klib (their Windows native uses MSVC). Re-add when we have
+    // a custom Skia binding for MinGW or a non-Skia fallback wired up.
     linuxArm64()
     linuxX64()
     macosArm64()
@@ -24,10 +26,7 @@ kotlin {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3.def"))
                 packageName("sdl3")
             }
-            val sdl3_ttf by creating {
-                defFile(project.file("src/nativeInterop/cinterop/sdl3_ttf.def"))
-                packageName("sdl3.ttf")
-            }
+            // sdl3_ttf cinterop removed — text now rendered by Skia.
         }
     }
 
@@ -35,6 +34,11 @@ kotlin {
         commonMain.dependencies {
             api(compose.runtime)
             implementation(libs.kotlinx.coroutines.core)
+        }
+        nativeMain.dependencies {
+            // Skiko ships native klibs for macosArm64/x64 + linuxX64/arm64 + ios* + android.
+            // No mingwX64 variant — Windows would have to fall back to SDL3 software.
+            implementation(libs.skiko)
         }
     }
 

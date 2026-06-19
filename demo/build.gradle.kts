@@ -13,7 +13,7 @@ repositories {
 }
 
 kotlin {
-    mingwX64()
+    // mingwX64() disabled — see compose-sdl3/build.gradle.kts.
     linuxArm64()
     linuxX64()
     macosArm64()

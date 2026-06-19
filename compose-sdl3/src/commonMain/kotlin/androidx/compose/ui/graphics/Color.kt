@@ -38,3 +38,36 @@ data class Color(val red: Float, val green: Float, val blue: Float, val alpha: F
         val Unspecified = Color(0f, 0f, 0f, 0f)
     }
 }
+
+// ==================
+// MARK: Color helpers
+// ==================
+
+/* Linear blend toward white. amount=0 returns this; amount=1 returns white. */
+fun Color.lighten(amount: Float): Color {
+    val a = amount.coerceIn(0f, 1f)
+    return Color(
+        red + (1f - red) * a,
+        green + (1f - green) * a,
+        blue + (1f - blue) * a,
+        alpha
+    )
+}
+
+/* Linear blend toward black. */
+fun Color.darken(amount: Float): Color {
+    val a = amount.coerceIn(0f, 1f)
+    return Color(red * (1f - a), green * (1f - a), blue * (1f - a), alpha)
+}
+
+/* Linear blend toward an arbitrary color. amount=0 returns this; amount=1
+   returns the other color. Used for Material state-layer overlays. */
+fun Color.blend(other: Color, amount: Float): Color {
+    val a = amount.coerceIn(0f, 1f)
+    return Color(
+        red + (other.red - red) * a,
+        green + (other.green - green) * a,
+        blue + (other.blue - blue) * a,
+        alpha + (other.alpha - alpha) * a
+    )
+}

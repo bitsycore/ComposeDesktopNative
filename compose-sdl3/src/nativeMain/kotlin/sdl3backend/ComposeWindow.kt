@@ -2,6 +2,8 @@ package sdl3backend
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.ui.HoverableModifier
+import androidx.compose.ui.PressableModifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.node.LayoutNode
 import androidx.compose.ui.node.NodeApplier
@@ -43,16 +45,19 @@ fun composeWindow(
         return
     }
 
-    val renderer = SDL3Renderer(backend)
-    if (!renderer.init()) {
-        println("Failed to init SDL3 text renderer")
+    val skiaBridge = SkiaSurfaceBridge(backend)
+    if (!skiaBridge.ensureSize(backend.windowWidth, backend.windowHeight)) {
+        println("Failed to init Skia surface bridge")
         backend.destroy()
         return
     }
 
-    // Hook the real TTF metrics into the common layout pass so Text bounds match
-    // what's actually rendered (fixes off-center text inside Buttons / Boxes).
-    currentTextMeasurer = renderer.textMeasurer
+    val textRenderer = SkiaTextRenderer()
+    val renderer = SkiaRenderer(textRenderer)
+
+    // Hook Skia font metrics into the common layout pass so Text bounds match
+    // what's actually drawn (fixes off-centre text in Buttons / Boxes).
+    currentTextMeasurer = textRenderer.textMeasurer
 
     val rootNode = LayoutNode()
     val frameClock = SDL3FrameClock()
@@ -75,6 +80,40 @@ fun composeWindow(
         //  Main loop
         var running = true
 
+        // ============
+        //  Interaction state (hover / press / click target) — keyed by
+        //  LayoutNode so it survives recomposition (modifier identity does
+        //  not).
+        val activeHoverNodes = mutableMapOf<LayoutNode, (Boolean) -> Unit>()
+        var activePressNode: LayoutNode? = null
+        var activePressCallback: ((Boolean) -> Unit)? = null
+        var armedClickNode: LayoutNode? = null
+
+        fun dispatchHover(inX: Int, inY: Int) {
+            val vHit = rootNode.hitTest(inX, inY)
+            val vNewChain = vHit?.collectHoverableChain() ?: emptyList()
+            val vNewMap = vNewChain.associate { it.first to it.second.onChange }
+            // Exit nodes no longer under the cursor
+            for ((vNode, vCb) in activeHoverNodes) {
+                if (vNode !in vNewMap) vCb(false)
+            }
+            // Enter nodes newly under the cursor
+            for ((vNode, vCb) in vNewMap) {
+                if (vNode !in activeHoverNodes) vCb(true)
+            }
+            activeHoverNodes.clear()
+            activeHoverNodes.putAll(vNewMap)
+        }
+
+        fun cancelPress() {
+            activePressCallback?.invoke(false)
+            activePressNode = null
+            activePressCallback = null
+        }
+
+        fun cursorInsideNode(inHit: LayoutNode?, inNode: LayoutNode): Boolean =
+            generateSequence(inHit) { it.parent }.any { it === inNode }
+
         while (running) {
             // ============
             //  Drain any pending snapshot writes from the previous frame's handlers
@@ -92,9 +131,40 @@ fun composeWindow(
                     }
 
                     is AppEvent.Pointer -> {
-                        if (event.event.type == PointerEventType.Release) {
-                            val hit = rootNode.hitTest(event.event.x, event.event.y)
-                            hit?.findClickHandler()?.invoke()
+                        val vPx = event.event.x
+                        val vPy = event.event.y
+                        when (event.event.type) {
+                            PointerEventType.Move -> {
+                                dispatchHover(vPx, vPy)
+                                val vHit = rootNode.hitTest(vPx, vPy)
+                                // Drag off the pressed node cancels press + click.
+                                activePressNode?.let { vN ->
+                                    if (!cursorInsideNode(vHit, vN)) cancelPress()
+                                }
+                                armedClickNode?.let { vN ->
+                                    if (!cursorInsideNode(vHit, vN)) armedClickNode = null
+                                }
+                            }
+                            PointerEventType.Press -> {
+                                val vHit = rootNode.hitTest(vPx, vPy)
+                                cancelPress()
+                                val vPressable = vHit?.findPressable()
+                                if (vPressable != null) {
+                                    activePressNode = vPressable.first
+                                    activePressCallback = vPressable.second.onChange
+                                    vPressable.second.onChange(true)
+                                }
+                                armedClickNode = vHit?.findClickableNode()
+                            }
+                            PointerEventType.Release -> {
+                                cancelPress()
+                                val vHit = rootNode.hitTest(vPx, vPy)
+                                val vArmed = armedClickNode
+                                armedClickNode = null
+                                if (vArmed != null && cursorInsideNode(vHit, vArmed)) {
+                                    vArmed.findClickHandler()?.invoke()
+                                }
+                            }
                         }
                     }
 
@@ -109,17 +179,17 @@ fun composeWindow(
             yield()
 
             // ============
-            //  Layout
+            //  Layout — also resize the Skia surface if the window changed.
             backend.updateWindowSize()
+            skiaBridge.ensureSize(backend.windowWidth, backend.windowHeight)
             val constraints = Constraints.fixed(backend.windowWidth, backend.windowHeight)
             rootNode.measure(constraints)
             rootNode.place(0, 0)
 
             // ============
-            //  Draw
-            backend.beginFrame()
-            renderer.draw(rootNode)
-            backend.endFrame()
+            //  Draw via Skia, then push the pixel buffer to the SDL window.
+            renderer.draw(rootNode, skiaBridge.canvas)
+            skiaBridge.present()
 
             SDL_Delay(16u)
         }
@@ -130,6 +200,7 @@ fun composeWindow(
         recomposeJob.cancelAndJoin()
     }
 
-    renderer.destroy()
+    textRenderer.destroy()
+    skiaBridge.destroy()
     backend.destroy()
 }

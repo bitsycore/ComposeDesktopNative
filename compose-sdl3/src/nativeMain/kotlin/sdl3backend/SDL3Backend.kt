@@ -35,6 +35,10 @@ class SDL3Backend(
             return false
         }
 
+        // Alpha-blend by default so transparent text linegap and translucent
+        // state-layer overlays (Material hover / press) composite correctly.
+        SDL_SetRenderDrawBlendMode(renderer?.reinterpret(), SDL_BLENDMODE_BLEND)
+
         return true
     }
 
@@ -44,20 +48,6 @@ class SDL3Backend(
         SDL_Quit()
         renderer = null
         window = null
-    }
-
-    // ============
-    //  Frame helpers
-
-    fun beginFrame() {
-        val r = renderer ?: return
-        SDL_SetRenderDrawColor(r.reinterpret(), 0u, 0u, 0u, 255u)
-        SDL_RenderClear(r.reinterpret())
-    }
-
-    fun endFrame() {
-        val r = renderer ?: return
-        SDL_RenderPresent(r.reinterpret())
     }
 
     fun updateWindowSize() {

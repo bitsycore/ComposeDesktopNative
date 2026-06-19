@@ -1,6 +1,8 @@
 package androidx.compose.ui
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 
 // ==================
 // MARK: Modifier
@@ -51,8 +53,8 @@ data class PaddingModifier(
     val bottom: Int = 0
 ) : Modifier.Element
 
-data class BackgroundModifier(val color: Color) : Modifier.Element
-data class BorderModifier(val width: Int, val color: Color) : Modifier.Element
+data class BackgroundModifier(val color: Color, val shape: Shape = RectangleShape) : Modifier.Element
+data class BorderModifier(val width: Int, val color: Color, val shape: Shape = RectangleShape) : Modifier.Element
 
 data class SizeModifier(
     val width: Int = -1,
@@ -66,3 +68,14 @@ data class SizeModifier(
 ) : Modifier.Element
 
 data class ClickableModifier(val onClick: () -> Unit) : Modifier.Element
+
+/* Identity is by callback reference — not great across recomposition. The
+   dispatch code in ComposeWindow keys hover/press state by LayoutNode
+   identity (which is stable) rather than by the modifier itself. */
+class HoverableModifier(val onChange: (Boolean) -> Unit) : Modifier.Element
+class PressableModifier(val onChange: (Boolean) -> Unit) : Modifier.Element
+
+/* Clips this node's children to the given shape. The node's own bg/border
+   drawing is not clipped (they already follow the shape via their own
+   shape parameter). Children drawn inside are restricted to the shape. */
+data class ClipModifier(val shape: Shape) : Modifier.Element
