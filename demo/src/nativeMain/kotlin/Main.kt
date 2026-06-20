@@ -1,6 +1,8 @@
 import androidx.compose.runtime.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,6 +117,28 @@ fun App() {
                 color = Color.Gray,
                 fontSize = 14.sp
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ============
+            //  TextField MVP — Phase 1 of PLAN.md
+            var name by remember { mutableStateOf("") }
+            BasicTextField(
+                value = name,
+                onValueChange = { name = it },
+                color = MaterialTheme.colors.onBackground,
+                cursorColor = MaterialTheme.colors.primary,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .width(280.dp)
+                    .background(Color(0xFF1F1F1FL))
+                    .border(1.dp, Color.Gray)
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = "Typed: \"$name\"", color = Color.Gray, fontSize = 12.sp)
         }
     }
 }
