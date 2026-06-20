@@ -236,10 +236,18 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // glyphs inside the box.
         val vPenY = inY + (inBoxHeight - vLogH) / 2f
 
+        // Snap the blit origin to the physical pixel grid. The glyph texture is
+        // rasterised once at physical size, so drawing it at a fractional
+        // physical position resamples (softens) it. Vertically-centred labels
+        // — e.g. the sidebar items in a 40dp box — land on a half-pixel when
+        // (boxHeight - textHeight) is odd, which is the main source of blur.
+        // round(v * dpr) / dpr keeps the blit 1:1, matching Skia's crispness.
+        fun snap(inV: Float): Float = kotlin.math.round(inV * fDpr) / fDpr
+
         memScoped {
             val vDst = alloc<SDL_FRect>()
-            vDst.x = vPenX
-            vDst.y = vPenY
+            vDst.x = snap(vPenX)
+            vDst.y = snap(vPenY)
             vDst.w = vLogW
             vDst.h = vLogH
             SDL_RenderTexture(vRenderer.reinterpret(), vCached.tex.reinterpret(), null, vDst.ptr)
