@@ -8,11 +8,15 @@ import androidx.compose.ui.text.WrappedText
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import kotlinx.cinterop.*
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import sdl3.SDL_ConvertSurface
 import sdl3.SDL_CreateTextureFromSurface
 import sdl3.SDL_DestroyTexture
 import sdl3.SDL_FRect
 import sdl3.SDL_GetError
 import sdl3.SDL_GetTextureSize
+import sdl3.SDL_PIXELFORMAT_ARGB8888
 import sdl3.SDL_RenderTexture
 import sdl3.SDL_DestroySurface
 import sdl3_ttf.SDL_Color
@@ -254,6 +258,33 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         }
     }
 
+    // Coverage gamma: alpha' = 255*(alpha/255)^kTextGamma. kTextGamma < 1
+    // boosts partial coverage so antialiased stems read heavier and smoother
+    // for light text on a dark background — closer to Skia's gamma-corrected
+    // glyphs. Tune toward 1.0 to lighten, toward 0.6 to thicken further.
+    private val kTextGamma = 0.72f
+    private val fGammaLut = UByteArray(256) { i ->
+        (255f * (i / 255f).pow(kTextGamma)).roundToInt().coerceIn(0, 255).toUByte()
+    }
+
+    /* Gamma-boosts the alpha (coverage) channel of an ARGB8888 glyph surface
+       in place. Runs once per cached string. */
+    private fun applyCoverageGamma(inSurface: CPointer<sdl3.SDL_Surface>) {
+        val vS = inSurface.pointed
+        val vPixels = vS.pixels?.reinterpret<UByteVar>() ?: return
+        val vW = vS.w
+        val vH = vS.h
+        val vPitch = vS.pitch
+        // ARGB8888 is 0xAARRGGBB; little-endian → alpha is byte 3 of each pixel.
+        for (y in 0 until vH) {
+            val vRow = y * vPitch
+            for (x in 0 until vW) {
+                val vAi = vRow + x * 4 + 3
+                vPixels[vAi] = fGammaLut[vPixels[vAi].toInt()]
+            }
+        }
+    }
+
     private fun getOrCreateTexture(
         inText: String,
         inFontSize: Int,
@@ -279,10 +310,15 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             ) ?: return@memScoped null
             // sdl3 and sdl3_ttf cinterops both declare SDL_Surface — they
             // refer to the same C struct but Kotlin sees them as distinct
-            // types. Reinterpret to bridge.
-            val vSdlSurface = vSurface.reinterpret<sdl3.SDL_Surface>()
-            val vTexture = SDL_CreateTextureFromSurface(vRenderer.reinterpret(), vSdlSurface)
-            SDL_DestroySurface(vSdlSurface)
+            // types. Reinterpret to bridge, then convert to a known ARGB
+            // layout so we can gamma-boost the coverage before uploading.
+            val vBlended = vSurface.reinterpret<sdl3.SDL_Surface>()
+            val vArgb = SDL_ConvertSurface(vBlended, SDL_PIXELFORMAT_ARGB8888)
+            SDL_DestroySurface(vBlended)
+            if (vArgb == null) return@memScoped null
+            applyCoverageGamma(vArgb)
+            val vTexture = SDL_CreateTextureFromSurface(vRenderer.reinterpret(), vArgb)
+            SDL_DestroySurface(vArgb)
             vTexture
         } ?: return null
 
