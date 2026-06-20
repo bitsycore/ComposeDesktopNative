@@ -199,34 +199,19 @@ class SkiaTextRenderer {
         }
     }
 
+    /* Pulls the real Skia-measured advance width via Font.measureTextWidth.
+       Cached per (text, fontSize) since the wrap algorithm queries the
+       same prefixes many times. If the underlying Skia call ever aborts
+       again (the SkTypeface_Mac::onCharsToGlyphs path on older Skiko
+       builds), we'd die — there's no try-catch for abort(). Bundled
+       Roboto + Skiko 0.148.2 has been stable in testing. */
     private fun estimateTextWidth(inText: String, inFontSize: Int): Int {
+        if (inText.isEmpty()) return 0
         fWidthCache[inText to inFontSize]?.let { return it }
-        var vTotal = 0f
-        for (c in inText) vTotal += charAdvance(c, inFontSize)
-        val vResult = vTotal.toInt().coerceAtLeast(0)
-        fWidthCache[inText to inFontSize] = vResult
-        return vResult
-    }
-
-    /* Per-character advance estimate in pixels, ratios tuned against
-       Roboto-Regular's actual UPM advances (units-per-em = 2048). Not
-       perfect, but stable across frames and crash-free. */
-    private fun charAdvance(inC: Char, inFontSize: Int): Float {
-        val vBase = inFontSize.toFloat()
-        val vRatio = when {
-            inC == ' '              -> 0.27f
-            inC == '-'              -> 0.29f
-            inC == '+' || inC == '=' -> 0.58f
-            inC == '(' || inC == ')' || inC == '[' || inC == ']' -> 0.30f
-            inC == '.' || inC == ',' || inC == ':' || inC == ';' || inC == '\'' || inC == '!' -> 0.24f
-            inC == 'i' || inC == 'l' || inC == 'I' || inC == '|' || inC == 'j' || inC == 't' -> 0.28f
-            inC == 'm' || inC == 'M' || inC == 'W' || inC == 'w' -> 0.82f
-            inC.isDigit()           -> 0.55f
-            inC.isUpperCase()       -> 0.62f
-            inC.isLowerCase()       -> 0.51f
-            else                    -> 0.55f
-        }
-        return vBase * vRatio
+        val vFont = getFont(inFontSize)
+        val vWidth = vFont.measureTextWidth(inText).toInt().coerceAtLeast(0)
+        fWidthCache[inText to inFontSize] = vWidth
+        return vWidth
     }
 
     fun destroy() {
