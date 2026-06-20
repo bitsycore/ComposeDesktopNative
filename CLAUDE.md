@@ -47,18 +47,27 @@ included as srcDirs conditionally by `build.gradle.kts`.
 
 ### Key files (start here)
 
-- `compose-sdl3/src/nativeMain/kotlin/sdl3backend/ComposeWindow.kt` —
+Backend code lives under the **`com.compose.desktop.native`** package; the two
+renderers are isolated in **`…renderer.skia`** / **`…renderer.sdl`** subpackages.
+The `makeRenderBackend` / `preferredGpuMode` / `makeMetalBridge` **actuals stay
+in the core package** (next to their `expect`s — `expect`/`actual` must share a
+package and a module), and they construct the renderer classes that live in the
+subpackages. The re-implemented Compose APIs keep their upstream
+`androidx.compose.*` names on purpose.
+
+- `compose-sdl3/src/nativeMain/kotlin/com/compose/desktop/native/ComposeWindow.kt` —
   main loop, recomposer lifecycle, event dispatch, hooks up the
   `RenderBackend` and the `ComposeNativeWindow` handle.
-- `compose-sdl3/src/nativeMain/kotlin/sdl3backend/ComposeNativeWindow.kt`
+- `.../com/compose/desktop/native/ComposeNativeWindow.kt`
   — the per-window handle (title / size / minimize / fullscreen /
   rendererName / close), CompositionLocal + receiver scope.
-- `compose-sdl3/src/nativeMain/kotlin/sdl3backend/RenderBackend.kt` —
-  interface, `expect fun makeRenderBackend(...)`.
-- `compose-sdl3/src/nativeMain/kotlin/sdl3backend/GpuMode.kt` —
+- `.../com/compose/desktop/native/RenderBackend.kt` —
+  interface + `expect fun makeRenderBackend(...)`; the actuals are in
+  `RenderBackendFactory.{sdl,skia}.kt` in the same core package.
+- `.../com/compose/desktop/native/GpuMode.kt` —
   the sealed-hierarchy renderer/driver picker.
-- `compose-sdl3/src/skiaMain/.../SkiaRenderBackend.kt` — Skia actual.
-- `compose-sdl3/src/sdl3RendererMain/.../Sdl3RenderBackend.kt` — SDL3 actual.
+- `.../com/compose/desktop/native/renderer/skia/SkiaRenderBackend.kt` — Skia renderer.
+- `.../com/compose/desktop/native/renderer/sdl/Sdl3RenderBackend.kt` — SDL3 renderer.
 - `compose-sdl3/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNode.kt`
   — layout tree, hit testing.
 - `compose-sdl3/src/commonMain/kotlin/androidx/compose/ui/Modifier.kt`

@@ -54,7 +54,7 @@ The demo CLI accepts:
 
 ```kotlin
 import androidx.compose.material.Text
-import sdl3backend.composeWindow
+import com.compose.desktop.native.composeWindow
 
 fun main() = composeWindow(title = "Hello") {
     Text("Hello from ComposeNativeSDL3")

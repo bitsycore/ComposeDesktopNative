@@ -30,9 +30,9 @@ import kotlinx.cinterop.refTo
 import platform.posix.fclose
 import platform.posix.fopen
 import platform.posix.fwrite
-import sdl3backend.GpuMode
-import sdl3backend.LocalComposeNativeWindow
-import sdl3backend.composeWindow
+import com.compose.desktop.native.GpuMode
+import com.compose.desktop.native.LocalComposeNativeWindow
+import com.compose.desktop.native.composeWindow
 import composeresources.generated.compose_logo
 import composeresources.generated.heart
 import composeresources.generated.notice
