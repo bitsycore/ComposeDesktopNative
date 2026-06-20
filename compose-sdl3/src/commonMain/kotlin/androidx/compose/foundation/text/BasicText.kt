@@ -23,7 +23,8 @@ fun BasicText(
     modifier: Modifier = Modifier,
     color: Color = Color.White,
     fontSize: Sp = 16.sp,
-    textAlign: TextAlign = TextAlign.Start
+    textAlign: TextAlign = TextAlign.Start,
+    softWrap: Boolean = true,
 ) {
     ComposeNode<LayoutNode, NodeApplier>(
         factory = { LayoutNode() },
@@ -32,6 +33,7 @@ fun BasicText(
             set(color) { this.textColor = it }
             set(fontSize) { this.fontSize = it.value.toInt() }
             set(textAlign) { this.textAlign = it }
+            set(softWrap) { this.softWrap = it }
             set(modifier) { this.modifier = it }
             set(Unit) {
                 this.measurePolicy = TextMeasurePolicy
@@ -40,12 +42,15 @@ fun BasicText(
     )
 }
 
-/* Defers to whatever TextMeasurer is currently installed (TTF-backed on the
-   SDL3 backend, char-width estimate otherwise) so the laid-out bounds match
-   the glyphs the renderer will draw. */
+/* Defers to whatever TextMeasurer is currently installed so the laid-out
+   bounds match the glyphs the renderer will draw. When softWrap is true,
+   the measurer wraps lines to constraints.maxWidth; when false the text
+   reports its natural width (potentially overflowing its container). */
 internal val TextMeasurePolicy = MeasurePolicy { node, constraints ->
     val t = node.text ?: ""
-    val measured = currentTextMeasurer.measure(t, node.fontSize)
+    val wrapWidth = if (node.softWrap && constraints.maxWidth != androidx.compose.ui.unit.Constraints.Infinity)
+        constraints.maxWidth else Int.MAX_VALUE
+    val measured = currentTextMeasurer.measure(t, node.fontSize, wrapWidth)
 
     val w = measured.width.coerceIn(constraints.minWidth, constraints.maxWidth)
     val h = measured.height.coerceIn(constraints.minHeight, constraints.maxHeight)

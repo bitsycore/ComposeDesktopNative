@@ -46,17 +46,19 @@ class SkiaTextRenderer {
        the file data in a CoreText-backed SkTypeface_Mac. Until Skiko is fixed
        (or we get a FreeType-backed FontMgr) we estimate widths from the char
        class. font.metrics is safe to read — it doesn't trigger glyph lookup. */
-    val textMeasurer: TextMeasurer = TextMeasurer { inText, inFontSize ->
-        val vFont = getFont(inFontSize)
-        val vMetrics = vFont.metrics
-        val vLineHeight = (vMetrics.descent - vMetrics.ascent).toInt().coerceAtLeast(1)
-        if ('\n' !in inText) {
-            IntSize(estimateTextWidth(inText, inFontSize), vLineHeight)
-        } else {
-            val vLines = inText.split('\n')
-            val vWidth = vLines.maxOf { estimateTextWidth(it, inFontSize) }
-            IntSize(vWidth, vLineHeight * vLines.size)
+    val textMeasurer: TextMeasurer = object : TextMeasurer {
+        override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int): IntSize {
+            val vFont = getFont(inFontSize)
+            val vMetrics = vFont.metrics
+            val vLineHeight = (vMetrics.descent - vMetrics.ascent).toInt().coerceAtLeast(1)
+            val vLines = wrap(inText, inFontSize, inMaxWidth)
+            val vWidth = if (vLines.isEmpty()) 0
+                         else vLines.maxOf { estimateTextWidth(it, inFontSize) }
+            return IntSize(vWidth, vLineHeight * vLines.size.coerceAtLeast(1))
         }
+
+        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): List<String> =
+            wrapText(inText, inFontSize, inMaxWidth)
     }
 
     fun drawText(
@@ -90,15 +92,15 @@ class SkiaTextRenderer {
             }
         }
 
-        if ('\n' !in inText) {
-            // Single line: cap-centred over the full box (button text in a
-            // taller container lands at button centre).
+        // Use the same wrap algorithm as measureText so layout and rendering
+        // produce identical line breakdowns.
+        val vLines = wrapText(inText, inFontSize, inBoxWidth)
+        if (vLines.size == 1 && '\n' !in inText) {
+            // Single line, no wrap, no explicit newlines: cap-centre across
+            // the full box (button text in a taller container).
             val vBaseline = inY + (inBoxHeight + vCapHeight) / 2f
-            inCanvas.drawString(inText, penXFor(inText), vBaseline, vFont, vPaint)
+            inCanvas.drawString(vLines[0], penXFor(vLines[0]), vBaseline, vFont, vPaint)
         } else {
-            // Multi-line: stack each line in its own lineHeight slot, cap-
-            // centred within that slot.
-            val vLines = inText.split('\n')
             for ((vIdx, vLine) in vLines.withIndex()) {
                 val vSlotTop = inY + vIdx * vLineHeight
                 val vBaseline = vSlotTop + (vLineHeight + vCapHeight) / 2f
@@ -107,6 +109,66 @@ class SkiaTextRenderer {
         }
 
         vPaint.close()
+    }
+
+    /* Greedy soft-wrap: explicit newlines split first; long lines split at
+       whitespace; impossibly-long words split mid-word. maxWidth >= half
+       Int.MAX_VALUE is treated as unbounded (no wrap). */
+    private fun wrapText(inText: String, inFontSize: Int, inMaxWidth: Int): List<String> {
+        if (inText.isEmpty()) return listOf("")
+        val vHardLines = inText.split('\n')
+        if (inMaxWidth >= Int.MAX_VALUE / 2) return vHardLines
+        val vOut = mutableListOf<String>()
+        for (vHard in vHardLines) {
+            if (vHard.isEmpty() || estimateTextWidth(vHard, inFontSize) <= inMaxWidth) {
+                vOut.add(vHard)
+                continue
+            }
+            wrapSingleLine(vHard, inFontSize, inMaxWidth, vOut)
+        }
+        return vOut
+    }
+
+    private fun wrapSingleLine(
+        inLine: String,
+        inFontSize: Int,
+        inMaxWidth: Int,
+        outLines: MutableList<String>,
+    ) {
+        var vCurrent = StringBuilder()
+        var i = 0
+        while (i < inLine.length) {
+            // Pull one "word" (whitespace included so trailing spaces don't
+            // hide) by accumulating non-space then a single space-run.
+            val vWordStart = i
+            while (i < inLine.length && !inLine[i].isWhitespace()) i++
+            while (i < inLine.length && inLine[i].isWhitespace()) i++
+            val vWord = inLine.substring(vWordStart, i)
+            val vCandidate = vCurrent.toString() + vWord
+            if (estimateTextWidth(vCandidate, inFontSize) <= inMaxWidth) {
+                vCurrent.append(vWord)
+            } else {
+                if (vCurrent.isNotEmpty()) {
+                    outLines.add(vCurrent.toString())
+                    vCurrent = StringBuilder()
+                }
+                if (estimateTextWidth(vWord, inFontSize) > inMaxWidth) {
+                    // Word itself is too long — split mid-word, char by char.
+                    val vSub = StringBuilder()
+                    for (ch in vWord) {
+                        if (estimateTextWidth(vSub.toString() + ch, inFontSize) > inMaxWidth) {
+                            if (vSub.isNotEmpty()) outLines.add(vSub.toString())
+                            vSub.clear()
+                        }
+                        vSub.append(ch)
+                    }
+                    vCurrent = vSub
+                } else {
+                    vCurrent.append(vWord)
+                }
+            }
+        }
+        if (vCurrent.isNotEmpty()) outLines.add(vCurrent.toString())
     }
 
     private fun estimateTextWidth(inText: String, inFontSize: Int): Int {

@@ -18,13 +18,15 @@ fun Text(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colors.onBackground,
     fontSize: Sp = 16.sp,
-    textAlign: TextAlign = TextAlign.Start
+    textAlign: TextAlign = TextAlign.Start,
+    softWrap: Boolean = true,
 ) {
     BasicText(
         text = text,
         modifier = modifier,
         color = color,
         fontSize = fontSize,
-        textAlign = textAlign
+        textAlign = textAlign,
+        softWrap = softWrap,
     )
 }

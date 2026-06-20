@@ -43,6 +43,9 @@ class LayoutNode {
        integer pixel count before storing here so the renderer never sees Sp. */
     var fontSize: Int = 16
     var textAlign: TextAlign = TextAlign.Start
+    /* Whether text auto-wraps at constraints.maxWidth. BasicTextField sets
+       this false on its inner BasicText to keep cursor mapping deterministic. */
+    var softWrap: Boolean = true
 
     // ============
     //  Computed absolute position (incl. visual offset modifiers + parent scroll)

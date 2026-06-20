@@ -287,6 +287,28 @@ private fun TextScreen() {
                     color = MaterialTheme.colors.onBackground)
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("Soft-wrap inside a 280.dp Box (long text auto-wraps at word boundaries):", color = Color.Gray, fontSize = 12.sp)
+        Box(modifier = Modifier.width(280.dp).background(Color(0xFF222222L)).padding(8.dp)) {
+            Text(
+                text = "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!",
+                color = MaterialTheme.colors.onBackground,
+                fontSize = 14.sp,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text("softWrap = false (overflows horizontally — but clipped by parent Box):", color = Color.Gray, fontSize = 12.sp)
+        Box(modifier = Modifier.width(280.dp).background(Color(0xFF222222L)).clip(RoundedCornerShape(4.dp)).padding(8.dp)) {
+            Text(
+                text = "This long sentence does not wrap and will get clipped.",
+                color = MaterialTheme.colors.onBackground,
+                fontSize = 14.sp,
+                softWrap = false,
+            )
+        }
     }
 }
 

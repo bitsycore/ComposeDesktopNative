@@ -243,7 +243,10 @@ fun BasicTextField(
             }
         }
 
-        BasicText(text = value.text, color = color, fontSize = fontSize)
+        // softWrap=false: keep one-char-per-original-index mapping intact so
+        // cursor / selection math stays accurate. Soft-wrap inside TextField
+        // is a Phase 6 follow-up and needs its own wrapped-line index table.
+        BasicText(text = value.text, color = color, fontSize = fontSize, softWrap = false)
 
         if (isFocused && cursorBlinkVisible) {
             Box(
