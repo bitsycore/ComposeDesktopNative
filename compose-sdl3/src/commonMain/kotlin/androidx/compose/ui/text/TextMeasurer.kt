@@ -6,18 +6,23 @@ import androidx.compose.ui.unit.IntSize
 // MARK: TextMeasurer
 // ==================
 
-/* Shared abstraction so that the commonMain layout pass (TextMeasurePolicy) can
-   get the same width/height that the native renderer will actually draw. The
-   native backend installs a Skia-backed implementation at startup. */
+/* Wrapped layout result. `lines[i]` is the visible text of wrapped line i;
+   `lineStarts[i]` is the offset into the original text where that line
+   begins. lineStarts[i] + lines[i].length may be less than lineStarts[i+1]
+   when the gap contains explicit '\n' characters (which are consumed
+   between lines and don't appear in any line's text). */
+class WrappedText(val lines: List<String>, val lineStarts: IntArray)
+
+/* Shared abstraction so that the commonMain layout pass (TextMeasurePolicy)
+   can get the same width / height that the native renderer will actually
+   draw. The native backend installs a Skia-backed implementation at startup. */
 interface TextMeasurer {
 	/* Measure the text's laid-out size. If inMaxWidth is bounded, lines wrap
 	   at word boundaries (or mid-word if a single word exceeds the limit). */
 	fun measure(inText: String, inFontSize: Int, inMaxWidth: Int = Int.MAX_VALUE): IntSize
 
-	/* Wrapped lines for the same parameters. Same algorithm as measure;
-	   exposed so callers (BasicTextField, renderer) can iterate the same
-	   line breakdown without re-measuring. */
-	fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int = Int.MAX_VALUE): List<String>
+	/* Wrapped lines + the original-text offset where each begins. */
+	fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int = Int.MAX_VALUE): WrappedText
 }
 
 // ==================
@@ -29,8 +34,16 @@ private val kFallbackTextMeasurer = object : TextMeasurer {
 		val vCharW = (inFontSize * 0.6f).toInt().coerceAtLeast(1)
 		return IntSize(vCharW * inText.length, (inFontSize * 1.3f).toInt())
 	}
-	override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): List<String> =
-		inText.split('\n')
+	override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): WrappedText {
+		val vLines = if (inText.isEmpty()) listOf("") else inText.split('\n')
+		val vStarts = IntArray(vLines.size)
+		var vAcc = 0
+		for (i in vLines.indices) {
+			vStarts[i] = vAcc
+			vAcc += vLines[i].length + 1 // +1 for the consumed '\n' between hard lines
+		}
+		return WrappedText(vLines, vStarts)
+	}
 }
 
 var currentTextMeasurer: TextMeasurer = kFallbackTextMeasurer

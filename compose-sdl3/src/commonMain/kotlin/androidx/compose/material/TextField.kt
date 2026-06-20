@@ -110,6 +110,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     label: String? = null,
     placeholder: String? = null,
     supportingText: String? = null,
@@ -129,7 +130,7 @@ fun TextField(
             if (it.text != value) onValueChange(it.text)
         },
         modifier = modifier,
-        enabled = enabled, readOnly = readOnly,
+        enabled = enabled, readOnly = readOnly, singleLine = singleLine,
         label = label, placeholder = placeholder, supportingText = supportingText,
         isError = isError, fontSize = fontSize, shape = shape, colors = colors,
     )
@@ -142,6 +143,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     label: String? = null,
     placeholder: String? = null,
     supportingText: String? = null,
@@ -153,7 +155,7 @@ fun TextField(
     TextFieldImpl(
         value = value, onValueChange = onValueChange,
         outerModifier = modifier,
-        enabled = enabled, readOnly = readOnly,
+        enabled = enabled, readOnly = readOnly, singleLine = singleLine,
         label = label, placeholder = placeholder, supportingText = supportingText,
         isError = isError, fontSize = fontSize, shape = shape, colors = colors,
         outlined = false,
@@ -171,6 +173,7 @@ fun OutlinedTextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     label: String? = null,
     placeholder: String? = null,
     supportingText: String? = null,
@@ -190,7 +193,7 @@ fun OutlinedTextField(
             if (it.text != value) onValueChange(it.text)
         },
         modifier = modifier,
-        enabled = enabled, readOnly = readOnly,
+        enabled = enabled, readOnly = readOnly, singleLine = singleLine,
         label = label, placeholder = placeholder, supportingText = supportingText,
         isError = isError, fontSize = fontSize, shape = shape, colors = colors,
     )
@@ -203,6 +206,7 @@ fun OutlinedTextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     label: String? = null,
     placeholder: String? = null,
     supportingText: String? = null,
@@ -214,7 +218,7 @@ fun OutlinedTextField(
     TextFieldImpl(
         value = value, onValueChange = onValueChange,
         outerModifier = modifier,
-        enabled = enabled, readOnly = readOnly,
+        enabled = enabled, readOnly = readOnly, singleLine = singleLine,
         label = label, placeholder = placeholder, supportingText = supportingText,
         isError = isError, fontSize = fontSize, shape = shape, colors = colors,
         outlined = true,
@@ -232,6 +236,7 @@ private fun TextFieldImpl(
     outerModifier: Modifier,
     enabled: Boolean,
     readOnly: Boolean,
+    singleLine: Boolean,
     label: String?,
     placeholder: String?,
     supportingText: String?,
@@ -315,6 +320,7 @@ private fun TextFieldImpl(
                         fontSize = fontSize,
                         enabled = enabled,
                         readOnly = readOnly,
+                        singleLine = singleLine,
                         onFocusChanged = { isFocused = it },
                     )
                 }

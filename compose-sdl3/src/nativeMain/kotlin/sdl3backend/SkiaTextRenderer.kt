@@ -2,6 +2,7 @@ package sdl3backend
 
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.WrappedText
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import kotlinx.cinterop.toKString
@@ -51,14 +52,14 @@ class SkiaTextRenderer {
             val vFont = getFont(inFontSize)
             val vMetrics = vFont.metrics
             val vLineHeight = (vMetrics.descent - vMetrics.ascent).toInt().coerceAtLeast(1)
-            val vLines = wrap(inText, inFontSize, inMaxWidth)
-            val vWidth = if (vLines.isEmpty()) 0
-                         else vLines.maxOf { estimateTextWidth(it, inFontSize) }
-            return IntSize(vWidth, vLineHeight * vLines.size.coerceAtLeast(1))
+            val vWrap = wrap(inText, inFontSize, inMaxWidth)
+            val vWidth = if (vWrap.lines.isEmpty()) 0
+                         else vWrap.lines.maxOf { estimateTextWidth(it, inFontSize) }
+            return IntSize(vWidth, vLineHeight * vWrap.lines.size.coerceAtLeast(1))
         }
 
-        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): List<String> =
-            wrapText(inText, inFontSize, inMaxWidth)
+        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): WrappedText =
+            wrapTextWithStarts(inText, inFontSize, inMaxWidth)
     }
 
     fun drawText(
@@ -94,7 +95,7 @@ class SkiaTextRenderer {
 
         // Use the same wrap algorithm as measureText so layout and rendering
         // produce identical line breakdowns.
-        val vLines = wrapText(inText, inFontSize, inBoxWidth)
+        val vLines = wrapTextWithStarts(inText, inFontSize, inBoxWidth).lines
         if (vLines.size == 1 && '\n' !in inText) {
             // Single line, no wrap, no explicit newlines: cap-centre across
             // the full box (button text in a taller container).
@@ -111,35 +112,49 @@ class SkiaTextRenderer {
         vPaint.close()
     }
 
-    /* Greedy soft-wrap: explicit newlines split first; long lines split at
-       whitespace; impossibly-long words split mid-word. maxWidth >= half
-       Int.MAX_VALUE is treated as unbounded (no wrap). */
-    private fun wrapText(inText: String, inFontSize: Int, inMaxWidth: Int): List<String> {
-        if (inText.isEmpty()) return listOf("")
-        val vHardLines = inText.split('\n')
-        if (inMaxWidth >= Int.MAX_VALUE / 2) return vHardLines
-        val vOut = mutableListOf<String>()
-        for (vHard in vHardLines) {
-            if (vHard.isEmpty() || estimateTextWidth(vHard, inFontSize) <= inMaxWidth) {
-                vOut.add(vHard)
-                continue
+    /* Greedy soft-wrap that also tracks each line's start index in the
+       ORIGINAL text. Hard lines (split on '\n') always start a new line,
+       and the '\n' is consumed between them. Long hard lines are split at
+       whitespace (the trailing whitespace stays attached to the preceding
+       word so original-text length is preserved per hard line). Impossibly
+       long words split mid-word. maxWidth >= half Int.MAX_VALUE = no wrap. */
+    private fun wrapTextWithStarts(inText: String, inFontSize: Int, inMaxWidth: Int): WrappedText {
+        if (inText.isEmpty()) return WrappedText(listOf(""), intArrayOf(0))
+        val vLines = mutableListOf<String>()
+        val vStarts = mutableListOf<Int>()
+        val vUnbounded = inMaxWidth >= Int.MAX_VALUE / 2
+
+        var vHardStart = 0
+        while (vHardStart <= inText.length) {
+            val vNl = inText.indexOf('\n', vHardStart)
+            val vHardEnd = if (vNl < 0) inText.length else vNl
+            val vHard = inText.substring(vHardStart, vHardEnd)
+
+            if (vUnbounded || vHard.isEmpty() || estimateTextWidth(vHard, inFontSize) <= inMaxWidth) {
+                vLines.add(vHard)
+                vStarts.add(vHardStart)
+            } else {
+                wrapHardLine(vHard, inFontSize, inMaxWidth, vHardStart, vLines, vStarts)
             }
-            wrapSingleLine(vHard, inFontSize, inMaxWidth, vOut)
+
+            if (vNl < 0) break
+            vHardStart = vNl + 1 // skip the consumed '\n'
         }
-        return vOut
+        return WrappedText(vLines, vStarts.toIntArray())
     }
 
-    private fun wrapSingleLine(
+    private fun wrapHardLine(
         inLine: String,
         inFontSize: Int,
         inMaxWidth: Int,
+        inBaseOffset: Int,
         outLines: MutableList<String>,
+        outStarts: MutableList<Int>,
     ) {
         var vCurrent = StringBuilder()
+        var vLineStartInHard = 0 // start of the current sub-line within inLine
         var i = 0
         while (i < inLine.length) {
-            // Pull one "word" (whitespace included so trailing spaces don't
-            // hide) by accumulating non-space then a single space-run.
             val vWordStart = i
             while (i < inLine.length && !inLine[i].isWhitespace()) i++
             while (i < inLine.length && inLine[i].isWhitespace()) i++
@@ -150,25 +165,33 @@ class SkiaTextRenderer {
             } else {
                 if (vCurrent.isNotEmpty()) {
                     outLines.add(vCurrent.toString())
+                    outStarts.add(inBaseOffset + vLineStartInHard)
+                    vLineStartInHard += vCurrent.length
                     vCurrent = StringBuilder()
                 }
                 if (estimateTextWidth(vWord, inFontSize) > inMaxWidth) {
-                    // Word itself is too long — split mid-word, char by char.
                     val vSub = StringBuilder()
                     for (ch in vWord) {
                         if (estimateTextWidth(vSub.toString() + ch, inFontSize) > inMaxWidth) {
-                            if (vSub.isNotEmpty()) outLines.add(vSub.toString())
-                            vSub.clear()
+                            if (vSub.isNotEmpty()) {
+                                outLines.add(vSub.toString())
+                                outStarts.add(inBaseOffset + vLineStartInHard)
+                                vLineStartInHard += vSub.length
+                                vSub.clear()
+                            }
                         }
                         vSub.append(ch)
                     }
-                    vCurrent = vSub
+                    vCurrent.append(vSub)
                 } else {
                     vCurrent.append(vWord)
                 }
             }
         }
-        if (vCurrent.isNotEmpty()) outLines.add(vCurrent.toString())
+        if (vCurrent.isNotEmpty()) {
+            outLines.add(vCurrent.toString())
+            outStarts.add(inBaseOffset + vLineStartInHard)
+        }
     }
 
     private fun estimateTextWidth(inText: String, inFontSize: Int): Int {

@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onDrag
 import androidx.compose.foundation.onKeyEvent
+import androidx.compose.foundation.onSizeChanged
 import androidx.compose.foundation.onTextInput
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +24,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.platform.currentClipboard
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.WrappedText
 import androidx.compose.ui.text.currentTextMeasurer
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Sp
@@ -50,6 +53,7 @@ fun BasicTextField(
     fontSize: Sp = 16.sp,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
@@ -69,6 +73,7 @@ fun BasicTextField(
         fontSize = fontSize,
         enabled = enabled,
         readOnly = readOnly,
+        singleLine = singleLine,
         onFocusChanged = onFocusChanged,
     )
 }
@@ -84,17 +89,19 @@ fun BasicTextField(
     fontSize: Sp = 16.sp,
     enabled: Boolean = true,
     readOnly: Boolean = false,
+    singleLine: Boolean = false,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     var isFocused by remember { mutableStateOf(false) }
     var cursorBlinkVisible by remember { mutableStateOf(true) }
     var dragAnchor by remember { mutableStateOf(-1) }
-    // Double-click detection: timestamp + char index of the previous press
     var lastPressMs by remember { mutableStateOf(0L) }
     var lastPressIndex by remember { mutableStateOf(-1) }
-    // Preferred column for Up/Down navigation. Set on Up/Down's first use,
-    // reset on any horizontal move.
     var preferredCol by remember { mutableStateOf(-1) }
+    // Measured width of the field used for soft-wrap. Updated by onSizeChanged
+    // after every measure pass; stays Int.MAX_VALUE until the first measure
+    // so initial composition gets the no-wrap path.
+    var fieldWidthPx by remember { mutableStateOf(Int.MAX_VALUE) }
     // Undo / redo stacks of TextFieldValue snapshots. Most-recent at top.
     // We push a snapshot before each "edit run" (a sequence of typings is
     // grouped, but any non-typing edit closes the run).
@@ -118,10 +125,17 @@ fun BasicTextField(
 
     val vFontSize = fontSize.value.toInt()
     val vLineHeight = (fontSize.value * 1.2f)
-    // Cursor position in (lineIndex, columnInLine) and pixel (x, y).
+
+    // Compute the wrapped layout once per composition. Single-line forces
+    // unbounded wrap so explicit \n becomes one logical line per segment
+    // (and there shouldn't be any since Return is suppressed below).
+    val vWrapWidth = if (singleLine) Int.MAX_VALUE else fieldWidthPx
+    val vWrap: WrappedText = currentTextMeasurer.wrap(value.text, vFontSize, vWrapWidth)
+
+    // Cursor position in wrapped coordinates + pixel position.
     val vCursorIdx = value.selection.end.coerceIn(0, value.text.length)
-    val (vCursorLine, vCursorCol) = lineColumnAt(value.text, vCursorIdx)
-    val vCursorLineText = lineText(value.text, vCursorLine)
+    val (vCursorLine, vCursorCol) = wrappedPosOf(vWrap, vCursorIdx)
+    val vCursorLineText = vWrap.lines.getOrElse(vCursorLine) { "" }
     val vCursorOffsetPx = prefixWidth(vCursorLineText, vCursorCol, vFontSize)
     val vCursorYPx = (vCursorLine * vLineHeight)
 
@@ -168,6 +182,7 @@ fun BasicTextField(
     Box(
         modifier = modifier
             .defaultMinSize(minWidth = 120.dp, minHeight = (fontSize.value * 1.4f).dp)
+            .onSizeChanged { fieldWidthPx = it.width }
             .focusable {
                 isFocused = it
                 onFocusChanged(it)
@@ -175,7 +190,7 @@ fun BasicTextField(
             .onDrag(
                 onStart = { relX, relY ->
                     if (!enabled) return@onDrag
-                    val vIndex = charIndexAtPoint(value.text, vFontSize, relX, relY, vLineHeight)
+                    val vIndex = charIndexAtWrappedPoint(vWrap, vFontSize, relX, relY, vLineHeight)
                     val vNow = nowMillis()
                     val vIsDoubleClick = vIndex == lastPressIndex && (vNow - lastPressMs) < 350
                     lastPressMs = vNow
@@ -193,7 +208,7 @@ fun BasicTextField(
                 },
                 onDrag = { relX, relY ->
                     if (!enabled || dragAnchor < 0) return@onDrag
-                    val vIndex = charIndexAtPoint(value.text, vFontSize, relX, relY, vLineHeight)
+                    val vIndex = charIndexAtWrappedPoint(vWrap, vFontSize, relX, relY, vLineHeight)
                     cursorOnlyEdit(value.copy(selection = TextRange(dragAnchor, vIndex)))
                 },
                 onEnd = {
@@ -206,8 +221,10 @@ fun BasicTextField(
                 handleKey(
                     inKey = ev.key,
                     inValue = value,
+                    inWrap = vWrap,
                     inFontSize = vFontSize,
                     inReadOnly = readOnly,
+                    inSingleLine = singleLine,
                     inGetPrefColX = { preferredCol },
                     inSetPrefColX = { preferredCol = it },
                     inStructuralEdit = structuralEdit,
@@ -219,16 +236,19 @@ fun BasicTextField(
             }
             .onTextInput { input ->
                 if (!enabled || readOnly) return@onTextInput
-                typingEdit(insertAtCursor(value, input))
+                // Strip newlines from IME-committed text when single-line.
+                val vSafe = if (singleLine) input.replace("\n", "").replace("\r", "") else input
+                if (vSafe.isEmpty()) return@onTextInput
+                typingEdit(insertAtCursor(value, vSafe))
             }
     ) {
         // Selection rect(s) drawn FIRST so they sit behind glyphs. Multi-line
-        // selections emit one rect per spanned line.
+        // selections emit one rect per spanned line — wrap-aware.
         if (!value.selection.collapsed) {
-            val (vMinLine, vMinCol) = lineColumnAt(value.text, value.selection.min)
-            val (vMaxLine, vMaxCol) = lineColumnAt(value.text, value.selection.max)
+            val (vMinLine, vMinCol) = wrappedPosOf(vWrap, value.selection.min)
+            val (vMaxLine, vMaxCol) = wrappedPosOf(vWrap, value.selection.max)
             for (vLine in vMinLine..vMaxLine) {
-                val vLineStr = lineText(value.text, vLine)
+                val vLineStr = vWrap.lines.getOrElse(vLine) { "" }
                 val vStartCol = if (vLine == vMinLine) vMinCol else 0
                 val vEndCol = if (vLine == vMaxLine) vMaxCol else vLineStr.length
                 val vSx = prefixWidth(vLineStr, vStartCol, vFontSize)
@@ -243,10 +263,16 @@ fun BasicTextField(
             }
         }
 
-        // softWrap=false: keep one-char-per-original-index mapping intact so
-        // cursor / selection math stays accurate. Soft-wrap inside TextField
-        // is a Phase 6 follow-up and needs its own wrapped-line index table.
-        BasicText(text = value.text, color = color, fontSize = fontSize, softWrap = false)
+        // Inner BasicText: wraps when !singleLine so visible text matches the
+        // wrap our cursor / selection math used. fillMaxWidth so it gets the
+        // same width constraint our onSizeChanged saw.
+        BasicText(
+            text = value.text,
+            color = color,
+            fontSize = fontSize,
+            softWrap = !singleLine,
+            modifier = if (singleLine) Modifier else Modifier.fillMaxWidth(),
+        )
 
         if (isFocused && cursorBlinkVisible) {
             Box(
@@ -309,6 +335,44 @@ private fun charIndexAtPoint(
     val vLineStr = lineText(inText, vLine)
     val vCol = charIndexAtX(vLineStr, inFontSize, inX)
     return lineStart(inText, vLine) + vCol
+}
+
+// ==================
+// MARK: Wrap-aware mapping
+// ==================
+
+/* Convert a cursor index into the original text into (wrappedLine, column).
+   The cursor may sit at the boundary of a hard '\n' — we keep it at the END
+   of the preceding line in that case, not the start of the next one. */
+private fun wrappedPosOf(inWrap: WrappedText, inCursor: Int): Pair<Int, Int> {
+    if (inWrap.lines.isEmpty()) return 0 to 0
+    val vClamped = inCursor.coerceAtLeast(0)
+    // Find the last line whose start is <= cursor.
+    var lo = 0; var hi = inWrap.lines.size - 1
+    while (lo < hi) {
+        val mid = (lo + hi + 1) / 2
+        if (inWrap.lineStarts[mid] <= vClamped) lo = mid else hi = mid - 1
+    }
+    val vLine = lo
+    val vCol = (vClamped - inWrap.lineStarts[vLine])
+        .coerceIn(0, inWrap.lines[vLine].length)
+    return vLine to vCol
+}
+
+/* Click position → cursor index, wrap-aware. relY picks the wrapped line
+   (clamped to the last), relX picks the column within it. */
+private fun charIndexAtWrappedPoint(
+    inWrap: WrappedText,
+    inFontSize: Int,
+    inX: Int,
+    inY: Int,
+    inLineHeight: Float,
+): Int {
+    if (inWrap.lines.isEmpty()) return 0
+    val vLine = (inY / inLineHeight).toInt().coerceIn(0, inWrap.lines.size - 1)
+    val vLineStr = inWrap.lines[vLine]
+    val vCol = charIndexAtX(vLineStr, inFontSize, inX)
+    return inWrap.lineStarts[vLine] + vCol
 }
 
 // ==================
@@ -412,8 +476,10 @@ private fun moveCursor(
 private fun handleKey(
     inKey: KeyEvent,
     inValue: TextFieldValue,
+    inWrap: WrappedText,
     inFontSize: Int,
     inReadOnly: Boolean,
+    inSingleLine: Boolean,
     inGetPrefColX: () -> Int,
     inSetPrefColX: (Int) -> Unit,
     inStructuralEdit: (TextFieldValue) -> Unit,
@@ -424,19 +490,23 @@ private fun handleKey(
 ): Boolean {
     val vMods = inKey.modifiers
     val vShift = vMods.shift
-    val vMeta = vMods.meta   // Cmd on macOS
-    val vAlt = vMods.alt     // Option on macOS, Alt elsewhere
+    val vMeta = vMods.meta
+    val vAlt = vMods.alt
 
-    // Reset preferred-column on any non-vertical motion. Up/Down handlers
-    // below set it before consuming so they retain across consecutive presses.
     fun resetPrefX() { inSetPrefColX(-1) }
+    fun lineStartAt(inLine: Int): Int =
+        inWrap.lineStarts.getOrElse(inLine) { inValue.text.length }
+    fun lineEndAt(inLine: Int): Int =
+        lineStartAt(inLine) + inWrap.lines.getOrElse(inLine) { "" }.length
+    fun lineStrAt(inLine: Int): String =
+        inWrap.lines.getOrElse(inLine) { "" }
 
     when (inKey.keyCode) {
         SCANCODE_LEFT -> {
             resetPrefX()
             val vCurrent = inValue.selection.end
             val vNewHead = when {
-                vMeta -> lineStart(inValue.text, lineColumnAt(inValue.text, vCurrent).first)
+                vMeta -> lineStartAt(wrappedPosOf(inWrap, vCurrent).first)
                 vAlt  -> wordBoundaryLeft(inValue.text, vCurrent)
                 !vShift && !inValue.selection.collapsed -> inValue.selection.min
                 else  -> vCurrent - 1
@@ -448,10 +518,7 @@ private fun handleKey(
             resetPrefX()
             val vCurrent = inValue.selection.end
             val vNewHead = when {
-                vMeta -> {
-                    val vLine = lineColumnAt(inValue.text, vCurrent).first
-                    lineStart(inValue.text, vLine) + lineText(inValue.text, vLine).length
-                }
+                vMeta -> lineEndAt(wrappedPosOf(inWrap, vCurrent).first)
                 vAlt  -> wordBoundaryRight(inValue.text, vCurrent)
                 !vShift && !inValue.selection.collapsed -> inValue.selection.max
                 else  -> vCurrent + 1
@@ -461,53 +528,47 @@ private fun handleKey(
         }
         SCANCODE_UP -> {
             val vCurrent = inValue.selection.end
-            val (vLine, vCol) = lineColumnAt(inValue.text, vCurrent)
+            val (vLine, vCol) = wrappedPosOf(inWrap, vCurrent)
             if (vLine == 0) {
                 inCursorOnlyEdit(moveCursor(inValue, 0, vShift))
                 return true
             }
             val vCurX = if (inGetPrefColX() >= 0) inGetPrefColX()
-                        else prefixWidth(lineText(inValue.text, vLine), vCol, inFontSize)
+                        else prefixWidth(lineStrAt(vLine), vCol, inFontSize)
             inSetPrefColX(vCurX)
             val vTargetLine = vLine - 1
-            val vTargetLineStr = lineText(inValue.text, vTargetLine)
-            val vTargetCol = charIndexAtX(vTargetLineStr, inFontSize, vCurX)
-            val vNewHead = lineStart(inValue.text, vTargetLine) + vTargetCol
-            inCursorOnlyEdit(moveCursor(inValue, vNewHead, vShift))
+            val vTargetCol = charIndexAtX(lineStrAt(vTargetLine), inFontSize, vCurX)
+            inCursorOnlyEdit(moveCursor(inValue, lineStartAt(vTargetLine) + vTargetCol, vShift))
             return true
         }
         SCANCODE_DOWN -> {
             val vCurrent = inValue.selection.end
-            val (vLine, vCol) = lineColumnAt(inValue.text, vCurrent)
-            val vTotalLines = lineCount(inValue.text)
-            if (vLine >= vTotalLines - 1) {
+            val (vLine, vCol) = wrappedPosOf(inWrap, vCurrent)
+            if (vLine >= inWrap.lines.size - 1) {
                 inCursorOnlyEdit(moveCursor(inValue, inValue.text.length, vShift))
                 return true
             }
             val vCurX = if (inGetPrefColX() >= 0) inGetPrefColX()
-                        else prefixWidth(lineText(inValue.text, vLine), vCol, inFontSize)
+                        else prefixWidth(lineStrAt(vLine), vCol, inFontSize)
             inSetPrefColX(vCurX)
             val vTargetLine = vLine + 1
-            val vTargetLineStr = lineText(inValue.text, vTargetLine)
-            val vTargetCol = charIndexAtX(vTargetLineStr, inFontSize, vCurX)
-            val vNewHead = lineStart(inValue.text, vTargetLine) + vTargetCol
-            inCursorOnlyEdit(moveCursor(inValue, vNewHead, vShift))
+            val vTargetCol = charIndexAtX(lineStrAt(vTargetLine), inFontSize, vCurX)
+            inCursorOnlyEdit(moveCursor(inValue, lineStartAt(vTargetLine) + vTargetCol, vShift))
             return true
         }
         SCANCODE_HOME -> {
             resetPrefX()
-            val vLine = lineColumnAt(inValue.text, inValue.selection.end).first
-            inCursorOnlyEdit(moveCursor(inValue, lineStart(inValue.text, vLine), vShift))
+            val vLine = wrappedPosOf(inWrap, inValue.selection.end).first
+            inCursorOnlyEdit(moveCursor(inValue, lineStartAt(vLine), vShift))
             return true
         }
         SCANCODE_END -> {
             resetPrefX()
-            val vLine = lineColumnAt(inValue.text, inValue.selection.end).first
-            val vEnd = lineStart(inValue.text, vLine) + lineText(inValue.text, vLine).length
-            inCursorOnlyEdit(moveCursor(inValue, vEnd, vShift))
+            val vLine = wrappedPosOf(inWrap, inValue.selection.end).first
+            inCursorOnlyEdit(moveCursor(inValue, lineEndAt(vLine), vShift))
             return true
         }
-        SCANCODE_RETURN -> if (!inReadOnly) {
+        SCANCODE_RETURN -> if (!inReadOnly && !inSingleLine) {
             inTypingEdit(insertAtCursor(inValue, "\n"))
             return true
         }

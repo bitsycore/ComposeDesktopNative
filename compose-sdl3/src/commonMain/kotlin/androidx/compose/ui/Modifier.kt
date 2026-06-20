@@ -117,6 +117,12 @@ class OnDragModifier(
     val onEnd: () -> Unit,
 ) : Modifier.Element
 
+/* Fires after the node's measured size changes. Used by TextField to react
+   to its own measured width for soft-wrap. The callback runs during layout
+   right after measurement — writes to mutableStateOf inside it will trigger
+   the standard recompose-on-next-frame path. */
+class OnSizeChangedModifier(val onChange: (androidx.compose.ui.unit.IntSize) -> Unit) : Modifier.Element
+
 // ==================
 // MARK: Scroll
 // ==================

@@ -6,7 +6,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.OnDragModifier
 import androidx.compose.ui.OnKeyEventModifier
 import androidx.compose.ui.OnPressedModifier
+import androidx.compose.ui.OnSizeChangedModifier
 import androidx.compose.ui.OnTextInputModifier
+import androidx.compose.ui.unit.IntSize
 
 // ==================
 // MARK: Focus + keyboard modifiers
@@ -46,3 +48,8 @@ fun Modifier.onDrag(
     onDrag: (relX: Int, relY: Int) -> Unit = { _, _ -> },
     onEnd: () -> Unit = {},
 ) = then(OnDragModifier(onStart, onDrag, onEnd))
+
+/* Fires whenever the modified node's measured size changes. State writes
+   in the callback schedule a recomposition next frame. */
+fun Modifier.onSizeChanged(onChange: (IntSize) -> Unit) =
+    then(OnSizeChangedModifier(onChange))

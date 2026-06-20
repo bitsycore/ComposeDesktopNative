@@ -293,6 +293,32 @@ private fun TextFieldScreen() {
             )
         }
 
+        var soft by remember { mutableStateOf(
+            "This text auto-wraps at the field width. Resize the field by changing its " +
+            "Modifier.width and the wrap recalculates. Click anywhere to position the " +
+            "cursor; Up / Down move between wrapped lines while preserving the preferred " +
+            "x-column. Selection rectangles span all wrapped rows."
+        ) }
+        Section("Soft-wrap", "Long text wraps at word boundaries inside the field's width") {
+            OutlinedTextField(
+                value = soft,
+                onValueChange = { soft = it },
+                label = "Long form",
+                modifier = Modifier.width(320.dp).height(180.dp),
+            )
+        }
+
+        var oneLine by remember { mutableStateOf("singleLine = true; Return does nothing, no wrap") }
+        Section("singleLine = true", "Return is suppressed; wrap is disabled — text overflows past the field width") {
+            TextField(
+                value = oneLine,
+                onValueChange = { oneLine = it },
+                label = "Title",
+                singleLine = true,
+                modifier = Modifier.width(280.dp),
+            )
+        }
+
         Section("Raw BasicTextField", "No chrome — bare cursor + text") {
             Surface(
                 shape = RoundedCornerShape(6.dp),

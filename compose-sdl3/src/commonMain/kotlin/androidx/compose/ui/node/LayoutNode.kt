@@ -7,6 +7,7 @@ import androidx.compose.ui.HoverableModifier
 import androidx.compose.ui.KeyEventDispatch
 import androidx.compose.ui.OnDragModifier
 import androidx.compose.ui.OnKeyEventModifier
+import androidx.compose.ui.OnSizeChangedModifier
 import androidx.compose.ui.OnTextInputModifier
 import androidx.compose.ui.PressableModifier
 import androidx.compose.ui.VerticalScrollModifier
@@ -34,6 +35,9 @@ class LayoutNode {
     var y = 0; private set
     var width = 0; private set
     var height = 0; private set
+    /* Previous (w, h) snapshot for change detection; -1 forces fire on first measure. */
+    private var lastWidth = -1
+    private var lastHeight = -1
 
     // ============
     //  Content for leaf nodes
@@ -128,6 +132,19 @@ class LayoutNode {
 
         width = vCapWidth
         height = vCapHeight
+
+        // Fire OnSizeChangedModifier listeners when size actually changes.
+        // State writes inside the callback land in the global snapshot and
+        // recompose on the next frame, so this is safe to call from measure.
+        if (width != lastWidth || height != lastHeight) {
+            lastWidth = width
+            lastHeight = height
+            val vSize = IntSize(width, height)
+            modifier.foldIn(Unit) { _, e ->
+                if (e is OnSizeChangedModifier) e.onChange(vSize)
+            }
+        }
+
         return IntSize(width, height)
     }
 
