@@ -199,17 +199,23 @@ class SkiaTextRenderer {
         }
     }
 
-    /* Pulls the real Skia-measured advance width via Font.measureTextWidth.
-       Cached per (text, fontSize) since the wrap algorithm queries the
-       same prefixes many times. If the underlying Skia call ever aborts
-       again (the SkTypeface_Mac::onCharsToGlyphs path on older Skiko
-       builds), we'd die — there's no try-catch for abort(). Bundled
-       Roboto + Skiko 0.148.2 has been stable in testing. */
+    /* Width = sum of per-glyph advances. We don't use Font.measureTextWidth
+       because in Skiko 0.148.2 it returns roughly half the real advance
+       (measureText also undermeasures: rect.width ≈ 30 vs sum=62 for
+       "Disabled" at 16px Roboto). getStringGlyphs + getWidths bypasses
+       that path and matches what drawString actually paints, so the
+       resulting layout no longer clips text inside Button / centered
+       containers. Cached per (text, fontSize) since the wrap algorithm
+       queries the same prefixes many times. */
     private fun estimateTextWidth(inText: String, inFontSize: Int): Int {
         if (inText.isEmpty()) return 0
         fWidthCache[inText to inFontSize]?.let { return it }
         val vFont = getFont(inFontSize)
-        val vWidth = vFont.measureTextWidth(inText).toInt().coerceAtLeast(0)
+        val vGlyphs = vFont.getStringGlyphs(inText)
+        val vAdvances = vFont.getWidths(vGlyphs)
+        // Round up so the layout box never falls short of the drawn glyphs;
+        // a 0.5px undershoot still clips antialiased pixels on the right edge.
+        val vWidth = kotlin.math.ceil(vAdvances.sum()).toInt().coerceAtLeast(0)
         fWidthCache[inText to inFontSize] = vWidth
         return vWidth
     }
