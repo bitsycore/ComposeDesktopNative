@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-// compose-core — the renderer-agnostic base: the androidx.compose.* re-impl,
+// compose-desktop-native-core — the renderer-agnostic base: the androidx.compose.* re-impl,
 // RenderBackend interface, GpuMode, SDL3Backend + window/event/clipboard/IO,
 // and the default bundled font. Owns the `sdl3` cinterop. Renderer modules and
 // compose-desktop-native depend on this. No renderer code lives here.

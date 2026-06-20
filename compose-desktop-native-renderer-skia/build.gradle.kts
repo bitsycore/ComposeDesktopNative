@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-// compose-renderer-skia — Skia (Skiko) renderer: CPU raster / OpenGL / Metal
+// compose-desktop-native-renderer-skia — Skia (Skiko) renderer: CPU raster / OpenGL / Metal
 // bridges on top of SDL3's window. Exposes createRenderBackend /
 // rendererPreferredGpuMode in com.compose.desktop.native. No mingwX64 target —
 // Skiko publishes no Windows/native artifact.
@@ -33,7 +33,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":compose-core"))
+            implementation(project(":compose-desktop-native-core"))
             implementation(libs.skiko)
         }
     }

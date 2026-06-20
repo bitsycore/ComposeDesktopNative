@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-// compose-renderer-sdl3 — pure-SDL3 renderer (SDL3 primitives + SDL3_ttf text
+// compose-desktop-native-renderer-sdl3 — pure-SDL3 renderer (SDL3 primitives + SDL3_ttf text
 // + SDL3_image decode). Exposes createRenderBackend / rendererPreferredGpuMode
 // in the com.compose.desktop.native package. Builds for every native target.
 
@@ -41,7 +41,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":compose-core"))
+            implementation(project(":compose-desktop-native-core"))
         }
     }
 

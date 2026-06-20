@@ -157,7 +157,7 @@ tasks.matching { it.name.startsWith("compileKotlin") }.configureEach {
 
 val composeResourcesDir = layout.projectDirectory.dir("src/nativeMain/composeResources")
 val libComposeResourcesDir = rootProject.layout.projectDirectory.dir(
-    "compose-core/src/nativeMain/composeResources"
+    "compose-desktop-native-core/src/nativeMain/composeResources"
 )
 val bundleDefaultFont = (findProperty("bundleDefaultFont") as? String)?.toBoolean() ?: true
 

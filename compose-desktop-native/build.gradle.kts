@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 // compose-desktop-native — the module apps depend on. Owns composeWindow() and
 // selects the renderer per target by depending on exactly one renderer module:
-//   mingwX64        → compose-renderer-sdl3 (always; Skiko has no Windows build)
-//   macOS / Linux   → compose-renderer-skia, or compose-renderer-sdl3 under -Prenderer=sdl3
+//   mingwX64        → compose-desktop-native-renderer-sdl3 (always; Skiko has no Windows build)
+//   macOS / Linux   → compose-desktop-native-renderer-skia, or compose-desktop-native-renderer-sdl3 under -Prenderer=sdl3
 // composeWindow's makeRenderBackend/preferredGpuMode expects forward to that
 // module's createRenderBackend / rendererPreferredGpuMode.
 
@@ -21,7 +21,7 @@ repositories {
 
 // -Prenderer=sdl3 swaps macOS/Linux onto the SDL3 renderer (Skiko-free build).
 val useSdl3Everywhere = (findProperty("renderer") as? String) == "sdl3"
-val desktopRendererProject = if (useSdl3Everywhere) ":compose-renderer-sdl3" else ":compose-renderer-skia"
+val desktopRendererProject = if (useSdl3Everywhere) ":compose-desktop-native-renderer-sdl3" else ":compose-desktop-native-renderer-skia"
 
 kotlin {
     linuxArm64()
@@ -43,13 +43,13 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // api so apps depending on compose-desktop-native also get the
-            // compose re-impl, Res/resources, GpuMode, etc. from compose-core.
-            api(project(":compose-core"))
+            // compose re-impl, Res/resources, GpuMode, etc. from compose-desktop-native-core.
+            api(project(":compose-desktop-native-core"))
             implementation(libs.kotlinx.coroutines.core)
         }
         // Per-target renderer selection (the "include exactly one" mechanism).
         val mingwMain by getting {
-            dependencies { implementation(project(":compose-renderer-sdl3")) }
+            dependencies { implementation(project(":compose-desktop-native-renderer-sdl3")) }
         }
         val macosMain by getting {
             dependencies { implementation(project(desktopRendererProject)) }

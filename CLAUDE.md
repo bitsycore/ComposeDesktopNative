@@ -21,20 +21,20 @@ SDL3 input events into the tree, and render them. Rendering is pluggable:
 
 Four library modules + the demo (all share the `com.compose.desktop.native`
 package; the re-implemented Compose APIs keep their upstream `androidx.compose.*`
-names, in compose-core/commonMain):
+names, in compose-desktop-native-core/commonMain):
 
-- `compose-core/` — renderer-agnostic base: the `androidx.compose.*` re-impl,
+- `compose-desktop-native-core/` — renderer-agnostic base: the `androidx.compose.*` re-impl,
   `RenderBackend` interface, `GpuMode`, `SDL3Backend`, window / clipboard /
   event / resource IO, and the bundled default font. Owns the `sdl3` cinterop.
-- `compose-renderer-sdl3/` — pure-SDL3 renderer (+ `sdl3_ttf`, `sdl3_image`
+- `compose-desktop-native-renderer-sdl3/` — pure-SDL3 renderer (+ `sdl3_ttf`, `sdl3_image`
   cinterops). Exposes `createRenderBackend(...)` / `rendererPreferredGpuMode()`.
   All four native targets.
-- `compose-renderer-skia/` — Skia/Skiko renderer (Metal / OpenGL / CPU bridges).
+- `compose-desktop-native-renderer-skia/` — Skia/Skiko renderer (Metal / OpenGL / CPU bridges).
   Same two functions. **macOS + Linux only** — Skiko publishes no mingwX64 artifact.
 - `compose-desktop-native/` — what apps depend on. Owns `composeWindow()` and
   selects a renderer per target by depending on exactly one renderer module:
   mingwX64 → sdl3 (always); macOS/Linux → skia, or sdl3 under `-Prenderer=sdl3`.
-  Re-exports compose-core via `api`.
+  Re-exports compose-desktop-native-core via `api`.
 - `demo/` — example app (`Main.kt` → `composeWindow { App() }`), sidebar showcase.
 
 ### How renderer selection works
@@ -55,14 +55,14 @@ cinterop export needed.
 
 - `compose-desktop-native/src/nativeMain/.../ComposeWindow.kt` — main loop,
   recomposer lifecycle, event dispatch; calls the per-target makeRenderBackend.
-- `compose-core/src/nativeMain/.../ComposeNativeWindow.kt` — per-window handle
+- `compose-desktop-native-core/src/nativeMain/.../ComposeNativeWindow.kt` — per-window handle
   (title / size / fullscreen / rendererName / close), CompositionLocal + scope.
-- `compose-core/src/nativeMain/.../RenderBackend.kt` — the interface.
-- `compose-core/src/nativeMain/.../GpuMode.kt` — the sealed renderer/driver picker.
-- `compose-renderer-skia/.../renderer/skia/SkiaRenderBackend.kt` (+ `RenderBackendFactory.skia.kt`).
-- `compose-renderer-sdl3/.../renderer/sdl/Sdl3RenderBackend.kt` (+ `RenderBackendFactory.sdl.kt`).
-- `compose-core/src/commonMain/.../ui/node/LayoutNode.kt` — layout tree, hit testing.
-- `compose-core/src/commonMain/.../ui/Modifier.kt` — modifier elements the renderer reads.
+- `compose-desktop-native-core/src/nativeMain/.../RenderBackend.kt` — the interface.
+- `compose-desktop-native-core/src/nativeMain/.../GpuMode.kt` — the sealed renderer/driver picker.
+- `compose-desktop-native-renderer-skia/.../renderer/skia/SkiaRenderBackend.kt` (+ `RenderBackendFactory.skia.kt`).
+- `compose-desktop-native-renderer-sdl3/.../renderer/sdl/Sdl3RenderBackend.kt` (+ `RenderBackendFactory.sdl.kt`).
+- `compose-desktop-native-core/src/commonMain/.../ui/node/LayoutNode.kt` — layout tree, hit testing.
+- `compose-desktop-native-core/src/commonMain/.../ui/Modifier.kt` — modifier elements the renderer reads.
 - `demo/src/nativeMain/kotlin/Main.kt` — sidebar demo with --gpu / --screen / --screenshot CLI.
 
 ## Build / Run
@@ -124,9 +124,9 @@ Inside each release zip the right directory is `x86_64-w64-mingw32/`
 that subtree directly to `C:\SDL3` (so the `include/` and `lib/` dirs
 land at `C:\SDL3\include` etc.), or adjust the include / linker paths in the
 cinterop `.def` files. `sdl3.def` is duplicated in every module that touches
-SDL — `compose-core`, `compose-renderer-sdl3`, `compose-renderer-skia`,
+SDL — `compose-desktop-native-core`, `compose-desktop-native-renderer-sdl3`, `compose-desktop-native-renderer-skia`,
 `compose-desktop-native` (each `src/nativeInterop/cinterop/`) — so edit all
-copies; `sdl3_ttf.def` + `sdl3_image.def` live only in `compose-renderer-sdl3`.
+copies; `sdl3_ttf.def` + `sdl3_image.def` live only in `compose-desktop-native-renderer-sdl3`.
 Note the two *extension* `.def` files each list **two** include dirs — their
 own plus SDL3's (`-IC:/SDL3_image/include -IC:/SDL3/include`) — because their
 headers `#include <SDL3/SDL.h>`; `depends = sdl3` wires the Kotlin klib but
@@ -167,8 +167,8 @@ Drop assets under `demo/src/nativeMain/composeResources/` — `drawable/` for
 images (png / jpg / svg / android `<vector>` xml), `files/` for raw bytes.
 The `generateComposeResAccessors` Gradle task scans that tree and emits typed
 `Res.drawable.<name>` (→ `Painter`) and `Res.files.<name>` (→ path string for
-`Res.readBytes`). compose-core keeps its default font under
-`compose-core/src/nativeMain/composeResources/font/`; both roots merge into
+`Res.readBytes`). compose-desktop-native-core keeps its default font under
+`compose-desktop-native-core/src/nativeMain/composeResources/font/`; both roots merge into
 `<exe>/composeResources/` at build time (see `-PbundleDefaultFont`). The official Compose resources runtime can't be used here —
 its generated code needs real Compose UI (`Painter` / `ImageBitmap` /
 `ImageVector`), which this repo re-implements — so this is a self-contained
@@ -342,9 +342,9 @@ Follow `~/.claude/CLAUDE.md`:
   inter-child gaps to its reported width; if you change it, make sure
   centering in a parent still works.
 - **`-Prenderer=sdl3` mode** — flips `compose-desktop-native`'s macOS/Linux
-  dependency from `compose-renderer-skia` to `compose-renderer-sdl3`; the Skia
+  dependency from `compose-desktop-native-renderer-skia` to `compose-desktop-native-renderer-sdl3`; the Skia
   module just isn't on the dependency graph (not compiled, Skiko not pulled).
-  Don't add a hard dependency on `compose-renderer-skia` from a shared source
+  Don't add a hard dependency on `compose-desktop-native-renderer-skia` from a shared source
   set, or mingwX64 (which has no Skia module) won't link.
 - **mingwX64 cross-compile from macOS / Linux fails** at the cinterop
   step — it can't find `C:\SDL3\include\SDL3\SDL.h`. That's expected;
