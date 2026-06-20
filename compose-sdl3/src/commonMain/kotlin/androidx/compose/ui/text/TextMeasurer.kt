@@ -23,6 +23,11 @@ interface TextMeasurer {
 
 	/* Wrapped lines + the original-text offset where each begins. */
 	fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int = Int.MAX_VALUE): WrappedText
+
+	/* Exact line height the renderer uses for this fontSize, as a Float so
+	   callers (TextField cursor / click math) line up with rendered glyph
+	   slots even when the per-line drift is sub-pixel. */
+	fun lineHeight(inFontSize: Int): Float
 }
 
 // ==================
@@ -44,6 +49,7 @@ private val kFallbackTextMeasurer = object : TextMeasurer {
 		}
 		return WrappedText(vLines, vStarts)
 	}
+	override fun lineHeight(inFontSize: Int): Float = inFontSize * 1.3f
 }
 
 var currentTextMeasurer: TextMeasurer = kFallbackTextMeasurer

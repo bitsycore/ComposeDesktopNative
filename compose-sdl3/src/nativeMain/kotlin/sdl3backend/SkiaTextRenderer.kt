@@ -60,6 +60,11 @@ class SkiaTextRenderer {
 
         override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int): WrappedText =
             wrapTextWithStarts(inText, inFontSize, inMaxWidth)
+
+        override fun lineHeight(inFontSize: Int): Float {
+            val vMetrics = getFont(inFontSize).metrics
+            return (vMetrics.descent - vMetrics.ascent).coerceAtLeast(1f)
+        }
     }
 
     fun drawText(

@@ -124,7 +124,9 @@ fun BasicTextField(
     }
 
     val vFontSize = fontSize.value.toInt()
-    val vLineHeight = (fontSize.value * 1.2f)
+    // Pull the renderer's exact line height — sub-pixel-accurate so multi-
+    // line click / cursor positions line up with what's actually drawn.
+    val vLineHeight = currentTextMeasurer.lineHeight(vFontSize)
 
     // Compute the wrapped layout once per composition. Single-line forces
     // unbounded wrap so explicit \n becomes one logical line per segment
