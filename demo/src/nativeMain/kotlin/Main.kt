@@ -58,7 +58,12 @@ fun App() {
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(onClick = { counter-- }, shape = CircleShape) {
+                Button(
+                    onClick = { counter-- },
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp)
+                ) {
                     Text(
                         text = "-",
                         color = MaterialTheme.colors.onPrimary,
@@ -72,7 +77,12 @@ fun App() {
                     Text(text = "Reset", color = MaterialTheme.colors.primary)
                 }
 
-                Button(onClick = { counter++ }, shape = CircleShape) {
+                Button(
+                    onClick = { counter++ },
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp)
+                ) {
                     Text(
                         text = "+",
                         color = MaterialTheme.colors.onPrimary,
