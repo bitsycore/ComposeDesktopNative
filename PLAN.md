@@ -175,7 +175,7 @@ Material widgets (`androidx.compose.material.*`) currently live in
   `focusProperties { next = ..., previous = ... }`, `onFocusChanged` /
   `onFocusEvent` standalone modifiers.
 
-- [ ] **Step 9 — `LazyRow` + `LazyVerticalGrid`.** Extends the lazy
+- [x] **Step 9 — `LazyRow` + `LazyVerticalGrid`.** Extends the lazy
   story. `LazyRow` reuses LazyListState; `LazyVerticalGrid` adds
   `GridCells.Fixed(count)` and `GridCells.Adaptive(minSize)`.
   `stickyHeader` inside `LazyListScope` as a follow-up.
