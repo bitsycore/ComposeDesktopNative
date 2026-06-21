@@ -71,6 +71,13 @@ class LayoutNode {
     var imageAlpha: Float = 1f
 
     // ============
+    //  Content for Canvas{} leaf nodes. The renderer invokes the lambda with
+    //  a backend-specific DrawScope as the node's paint operation. Modifier
+    //  .drawBehind {} uses a separate path — see DrawBehindModifier — which
+    //  paints BEFORE children but AFTER background / border on the same node.
+    var drawer: (androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit)? = null
+
+    // ============
     //  Computed absolute position (incl. visual offset modifiers + parent scroll)
     val offsetX: Int get() = modifier.foldIn(0) { acc, e ->
         if (e is OffsetModifier) acc + e.x else acc

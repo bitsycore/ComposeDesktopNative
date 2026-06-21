@@ -81,6 +81,15 @@ class GloballyPositionedModifier(
     val onChange: (androidx.compose.ui.unit.IntOffset) -> Unit,
 ) : Modifier.Element
 
+/* Paints user-supplied content under the node's children via a DrawScope
+   lambda. The renderer invokes onDraw after background / border and before
+   painting children, with the DrawScope sized to the node's bounds.
+   Multiple drawBehinds on the same node compose in modifier order — the
+   later one paints on top. */
+class DrawBehindModifier(
+    val onDraw: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit,
+) : Modifier.Element
+
 /* Identity is by callback reference — not great across recomposition. The
    dispatch code in ComposeWindow keys hover/press state by LayoutNode
    identity (which is stable) rather than by the modifier itself. */

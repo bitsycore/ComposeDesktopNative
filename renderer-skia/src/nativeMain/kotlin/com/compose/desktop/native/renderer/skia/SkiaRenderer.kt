@@ -3,8 +3,10 @@ package com.compose.desktop.native.renderer.skia
 import androidx.compose.ui.BackgroundModifier
 import androidx.compose.ui.BorderModifier
 import androidx.compose.ui.ClipModifier
+import androidx.compose.ui.DrawBehindModifier
 import androidx.compose.ui.HorizontalScrollModifier
 import androidx.compose.ui.VerticalScrollModifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -90,6 +92,36 @@ class SkiaRenderer internal constructor(
                 )
                 vPaint.close()
             }
+        }
+
+        // ============
+        //  drawBehind modifier(s) — invoke each in modifier order. Runs
+        //  after background / border so it sits on top of the chrome but
+        //  under the node's text / image / children.
+        inNode.modifier.foldIn(Unit) { _, element ->
+            if (element is DrawBehindModifier) {
+                val vScope = SkiaDrawScope(
+                    fCanvas = inCanvas,
+                    fOriginX = vAx,
+                    fOriginY = vAy,
+                    size = Size(vW, vH),
+                )
+                element.onDraw(vScope)
+            }
+        }
+
+        // ============
+        //  Canvas {} leaf — drawer set by the Canvas composable. Invoked
+        //  with the node's bounds as size.
+        val vDrawer = inNode.drawer
+        if (vDrawer != null) {
+            val vScope = SkiaDrawScope(
+                fCanvas = inCanvas,
+                fOriginX = vAx,
+                fOriginY = vAy,
+                size = Size(vW, vH),
+            )
+            vDrawer(vScope)
         }
 
         // ============

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.desktop.native.nativeComposeWindow
 import screens.ButtonsScreen
+import screens.CanvasScreen
 import screens.DesktopWidgetsScreen
 import screens.DialogsScreen
 import screens.DispatchersScreen
@@ -126,6 +127,7 @@ private val Screens: List<Screen> = listOf(
     Screen("Dialogs")        { DialogsScreen() },
     Screen("Icons")          { IconsScreen() },
     Screen("Dispatchers")    { DispatchersScreen() },
+    Screen("Canvas")         { CanvasScreen() },
 )
 
 // ==================

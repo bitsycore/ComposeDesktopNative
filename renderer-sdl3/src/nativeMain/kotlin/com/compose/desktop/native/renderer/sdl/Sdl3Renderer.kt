@@ -151,6 +151,35 @@ internal class Sdl3Renderer(
         }
 
         // ============
+        //  drawBehind modifier(s) — invoke each in modifier order, after
+        //  background / border so they sit on top of the chrome but under
+        //  text / image / children.
+        inNode.modifier.foldIn(Unit) { _, element ->
+            if (element is androidx.compose.ui.DrawBehindModifier) {
+                val vScope = Sdl3DrawScope(
+                    fRenderer = vRenderer,
+                    fOriginX = vAx,
+                    fOriginY = vAy,
+                    size = androidx.compose.ui.geometry.Size(vW, vH),
+                )
+                element.onDraw(vScope)
+            }
+        }
+
+        // ============
+        //  Canvas{} leaf — drawer set by the Canvas composable.
+        val vDrawer = inNode.drawer
+        if (vDrawer != null) {
+            val vScope = Sdl3DrawScope(
+                fRenderer = vRenderer,
+                fOriginX = vAx,
+                fOriginY = vAy,
+                size = androidx.compose.ui.geometry.Size(vW, vH),
+            )
+            vDrawer(vScope)
+        }
+
+        // ============
         //  Text leaf
         val vText = inNode.text
         if (!vText.isNullOrEmpty()) {
