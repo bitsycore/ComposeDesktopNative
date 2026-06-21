@@ -1,7 +1,5 @@
 package screens
 
-import ScreenTitle
-import Section
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

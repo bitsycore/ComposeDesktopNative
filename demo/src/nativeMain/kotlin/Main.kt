@@ -29,6 +29,9 @@ import screens.StateScreen
 import screens.TextFieldScreen
 import screens.TextScreen
 import screens.WindowScreen
+import utils.encodeBmpBgra32
+import utils.parseArgs
+import utils.writeFile
 
 // ==================
 // MARK: Entry point

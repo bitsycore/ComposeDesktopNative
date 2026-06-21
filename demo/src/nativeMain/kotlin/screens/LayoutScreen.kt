@@ -1,8 +1,5 @@
 package screens
 
-import ScreenTitle
-import Section
-import Swatch
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*

@@ -1,3 +1,5 @@
+package utils
+
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.refTo
 import platform.posix.fclose
