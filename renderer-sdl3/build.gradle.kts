@@ -16,6 +16,24 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
+// See core/build.gradle.kts for the rationale; cross-target cinterop
+// indexing needs an -I that exists on this host, which clang silently
+// ignores for paths that don't exist (so per-.def per-target opts can
+// remain unchanged).
+val vHostOs = System.getProperty("os.name")
+val vHostSdlInclude: String? = when {
+    vHostOs.startsWith("Mac")     -> "/opt/homebrew/include"
+    vHostOs == "Linux"            -> "/usr/include"
+    vHostOs.startsWith("Windows") -> "C:/Dev/Libs/SDL3/include"
+    else                          -> null
+}
+val vHostFtInclude: String? = when {
+    vHostOs.startsWith("Mac")     -> "/opt/homebrew/include/freetype2"
+    vHostOs == "Linux"            -> "/usr/include/freetype2"
+    vHostOs.startsWith("Windows") -> "C:/Dev/Libs/FreeType/include/freetype2"
+    else                          -> null
+}
+
 kotlin {
     linuxArm64()
     linuxX64()
@@ -29,14 +47,17 @@ kotlin {
             val sdl3 by creating {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3.def"))
                 packageName("sdl3")
+                if (vHostSdlInclude != null) extraOpts("-compilerOpts", "-I$vHostSdlInclude")
             }
             val sdl3_ttf by creating {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3_ttf.def"))
                 packageName("sdl3_ttf")
+                if (vHostSdlInclude != null) extraOpts("-compilerOpts", "-I$vHostSdlInclude")
             }
             val sdl3_image by creating {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3_image.def"))
                 packageName("sdl3_image")
+                if (vHostSdlInclude != null) extraOpts("-compilerOpts", "-I$vHostSdlInclude")
             }
             // FreeType powers variable-font axis rendering (FILL / wght / GRAD /
             // opsz) on Material Symbols icons — SDL3_ttf 3.2 has no axis-set
@@ -46,6 +67,7 @@ kotlin {
             val freetype by creating {
                 defFile(project.file("src/nativeInterop/cinterop/freetype.def"))
                 packageName("freetype")
+                if (vHostFtInclude != null) extraOpts("-compilerOpts", "-I$vHostFtInclude")
             }
         }
     }

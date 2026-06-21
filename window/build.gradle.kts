@@ -24,6 +24,15 @@ repositories {
 val useSdl3Everywhere = (findProperty("renderer") as? String) == "sdl3"
 val desktopRendererProject = if (useSdl3Everywhere) ":renderer-sdl3" else ":renderer-skia"
 
+// See core/build.gradle.kts for the rationale on the host-side -I.
+val vHostOs = System.getProperty("os.name")
+val vHostSdlInclude: String? = when {
+    vHostOs.startsWith("Mac")     -> "/opt/homebrew/include"
+    vHostOs == "Linux"            -> "/usr/include"
+    vHostOs.startsWith("Windows") -> "C:/Dev/Libs/SDL3/include"
+    else                          -> null
+}
+
 kotlin {
     linuxArm64()
     linuxX64()
@@ -37,6 +46,7 @@ kotlin {
             val sdl3 by creating {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3.def"))
                 packageName("sdl3")
+                if (vHostSdlInclude != null) extraOpts("-compilerOpts", "-I$vHostSdlInclude")
             }
         }
     }
