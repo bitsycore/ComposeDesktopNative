@@ -16,7 +16,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.FontStyle
 import androidx.compose.ui.text.FontWeight
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -26,101 +25,156 @@ import androidx.compose.ui.unit.sp
 // MARK: AnnotatedStringScreen
 // ==================
 
-/* Exercises the AnnotatedString / SpanStyle / TextStyle / FontWeight /
-   FontStyle / TextDecoration / TextOverflow type surface. The current
-   text renderer only honours a SINGLE style (the default) per Text
-   composable — multi-span styling is a follow-up that touches the
-   Skia and SDL3 text paths. This screen mostly shows the API
-   compiles and the builder constructs the right objects; the runtime
-   text below each label is the plain backing string. */
+/* Exercises Text(AnnotatedString): each contiguous-style run is rendered
+   as its own BasicText in a Row. Per-run color / font size / font
+   weight (via FontVariation.Weight) apply directly; backgrounds tint
+   via Modifier.background; underline / line-through paint via
+   drawBehind beneath each run. */
 @Composable
 internal fun AnnotatedStringScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
 	val vOnSurface = MaterialTheme.colors.onSurface
-
-	val vAnnotated = remember {
-		buildAnnotatedString {
-			append("This sentence has ")
-			pushStyle(SpanStyle(color = Color(0xFF6200EE), fontWeight = FontWeight.Bold))
-			append("bold purple")
-			pop()
-			append(" and ")
-			pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
-			append("italic")
-			pop()
-			append(" and ")
-			pushStyle(SpanStyle(textDecoration = TextDecoration.Underline))
-			append("underlined")
-			pop()
-			append(" runs.")
+	val vCardBg = MaterialTheme.colors.surface
+	val vCard: @Composable (@Composable () -> Unit) -> Unit = { vContent ->
+		Box(modifier = Modifier.background(vCardBg, RoundedCornerShape(6.dp))) {
+			Box(modifier = Modifier.padding(12.dp)) { vContent() }
 		}
-	}
-
-	val vHeading = remember {
-		TextStyle(
-			color = Color(0xFF03DAC6),
-			fontSize = 22.sp,
-			fontWeight = FontWeight.SemiBold,
-		)
 	}
 
 	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 		ScreenTitle(
-			"AnnotatedString + TextStyle",
-			"AnnotatedString + SpanStyle / ParagraphStyle, buildAnnotatedString { } DSL, " +
-				"TextStyle aggregate, FontWeight / FontStyle / FontFamily / TextDecoration / " +
-				"TextOverflow. Text(AnnotatedString) renders each contiguous-style run as a " +
-				"separate BasicText in a horizontal Row (single-line, no soft-wrap across runs).",
+			"AnnotatedString + Text(AnnotatedString)",
+			"Each contiguous-style segment renders as a separate BasicText in a horizontal Row. " +
+				"Single-line — no soft-wrap across runs. Per-glyph multi-line layout would need a " +
+				"custom Layout that walks the runs and breaks them by width.",
 		)
 
-		Section(
-			"Text(AnnotatedString) — styled runs",
-			"Each contiguous-style segment renders as its own BasicText laid out in a Row. " +
-				"Color and font weight apply per run; underline is painted via Modifier.drawBehind.",
-		) {
-			Box(modifier = Modifier
-				.background(MaterialTheme.colors.surface, RoundedCornerShape(6.dp))
-			) {
-				Box(modifier = Modifier.padding(12.dp)) {
-					Text(vAnnotated, color = vOnSurface, fontSize = 16.sp)
+		// ============
+		//  Mixed colour + weight + decoration
+		val vMix = remember {
+			buildAnnotatedString {
+				append("This sentence has ")
+				pushStyle(SpanStyle(color = Color(0xFF6200EE), fontWeight = FontWeight.Bold))
+				append("bold purple")
+				pop()
+				append(" and ")
+				pushStyle(SpanStyle(fontStyle = FontStyle.Italic))
+				append("italic")
+				pop()
+				append(" and ")
+				pushStyle(SpanStyle(textDecoration = TextDecoration.Underline))
+				append("underlined")
+				pop()
+				append(" runs.")
+			}
+		}
+		Section("Mixed color + weight + underline", "Three SpanStyles applied to disjoint runs.") {
+			vCard { Text(vMix, color = vOnSurface, fontSize = 16.sp) }
+		}
+
+		// ============
+		//  Font weight sweep
+		val vWeights = remember {
+			buildAnnotatedString {
+				val vWeights = listOf(
+					"Thin" to FontWeight.Thin,
+					"Light" to FontWeight.Light,
+					"Normal" to FontWeight.Normal,
+					"Medium" to FontWeight.Medium,
+					"SemiBold" to FontWeight.SemiBold,
+					"Bold" to FontWeight.Bold,
+					"Black" to FontWeight.Black,
+				)
+				for ((vI, vW) in vWeights.withIndex()) {
+					pushStyle(SpanStyle(fontWeight = vW.second))
+					append(vW.first)
+					pop()
+					if (vI < vWeights.size - 1) append("  ")
 				}
 			}
 		}
-
-		Section("Plain backing string", "Same AnnotatedString.text, no styling applied — for comparison.") {
-			Box(modifier = Modifier
-				.background(MaterialTheme.colors.surface, RoundedCornerShape(6.dp))
-			) {
-				Box(modifier = Modifier.padding(12.dp)) {
-					Text(vAnnotated.text, color = vOnSurface, fontSize = 14.sp)
-				}
-			}
+		Section("FontWeight sweep", "Thin / Light / Normal / Medium / SemiBold / Bold / Black — uses the wght FontVariation under the hood.") {
+			vCard { Text(vWeights, color = vOnSurface, fontSize = 18.sp) }
 		}
 
-		Section(
-			"Recorded span styles (${vAnnotated.spanStyles.size})",
-			"Each entry is a Range<SpanStyle> the renderer will eventually consult.",
-		) {
-			Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-				for (vR in vAnnotated.spanStyles) {
-					val vText = vAnnotated.text.substring(vR.start, vR.end)
-					Text("[${vR.start}..${vR.end}) \"$vText\" → ${vR.item}",
-						color = vOnSurface, fontSize = 12.sp)
-				}
+		// ============
+		//  Font size sweep
+		val vSizes = remember {
+			buildAnnotatedString {
+				pushStyle(SpanStyle(fontSize = 12.sp))
+				append("small")
+				pop()
+				append(" ")
+				pushStyle(SpanStyle(fontSize = 18.sp))
+				append("medium")
+				pop()
+				append(" ")
+				pushStyle(SpanStyle(fontSize = 28.sp))
+				append("LARGE")
+				pop()
 			}
 		}
+		Section("Per-run fontSize", "SpanStyle.fontSize overrides the default size for each run.") {
+			vCard { Text(vSizes, color = vOnSurface, fontSize = 16.sp) }
+		}
 
-		Section(
-			"TextStyle constants",
-			"FontWeight.Bold = ${FontWeight.Bold.weight}, .Medium = ${FontWeight.Medium.weight}. " +
-				"vHeading = $vHeading.",
-		) {
-			Text(
-				"Default TextStyle: ${TextStyle.Default}",
-				color = vOnSurface,
-				fontSize = 12.sp,
-			)
+		// ============
+		//  Background tint
+		val vCodeLike = remember {
+			buildAnnotatedString {
+				append("Call ")
+				pushStyle(SpanStyle(
+					background = Color(0xFF2A2A2A),
+					color = Color(0xFF03DAC6),
+				))
+				append(" rememberMutableInteractionSource() ")
+				pop()
+				append(" to bind state.")
+			}
+		}
+		Section("Background tint", "SpanStyle.background paints a coloured rectangle under the run.") {
+			vCard { Text(vCodeLike, color = vOnSurface, fontSize = 14.sp) }
+		}
+
+		// ============
+		//  Hyperlink-style
+		val vLink = remember {
+			buildAnnotatedString {
+				append("Read the docs at ")
+				pushStyle(SpanStyle(
+					color = Color(0xFF03DAC6),
+					textDecoration = TextDecoration.Underline,
+				))
+				append("compose.dev/docs")
+				pop()
+				append(" for more.")
+			}
+		}
+		Section("Hyperlink-style run", "Colour + underline combined.") {
+			vCard { Text(vLink, color = vOnSurface, fontSize = 16.sp) }
+		}
+
+		// ============
+		//  Line-through
+		val vStrike = remember {
+			buildAnnotatedString {
+				append("Old price ")
+				pushStyle(SpanStyle(
+					textDecoration = TextDecoration.LineThrough,
+					color = Color(0xFFAAAAAA),
+				))
+				append("\$19.99")
+				pop()
+				append(" → ")
+				pushStyle(SpanStyle(
+					color = Color(0xFF6200EE),
+					fontWeight = FontWeight.Bold,
+				))
+				append("\$9.99")
+				pop()
+			}
+		}
+		Section("Line-through + bold accent", "TextDecoration.LineThrough on the old price, bold accent on the new.") {
+			vCard { Text(vStrike, color = vOnSurface, fontSize = 16.sp) }
 		}
 	}
 }
