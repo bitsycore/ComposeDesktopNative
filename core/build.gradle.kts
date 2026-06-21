@@ -18,11 +18,19 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
+// Only declare the native target(s) the current host can actually build.
+// Cross-compile across host OSes never worked (the .def files reference
+// platform-specific SDL3 paths), so removing the unbuildable targets here
+// lets cinterop commonization succeed on each host.
+val vHostOs = System.getProperty("os.name")
+val vIsMacHost = vHostOs.startsWith("Mac")
+val vIsLinuxHost = vHostOs == "Linux"
+val vIsWindowsHost = vHostOs.startsWith("Windows")
+
 kotlin {
-    linuxArm64()
-    linuxX64()
-    macosArm64()
-    mingwX64()
+    if (vIsLinuxHost) { linuxArm64(); linuxX64() }
+    if (vIsMacHost) macosArm64()
+    if (vIsWindowsHost) mingwX64()
 
     applyDefaultHierarchyTemplate()
 

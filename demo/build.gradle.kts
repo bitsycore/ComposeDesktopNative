@@ -17,11 +17,15 @@ repositories {
 // sources and produced by the generateComposeResAccessors task below.
 val composeResGenDir = layout.buildDirectory.dir("generated/composeRes")
 
+val vHostOs = System.getProperty("os.name")
+val vIsMacHost = vHostOs.startsWith("Mac")
+val vIsLinuxHost = vHostOs == "Linux"
+val vIsWindowsHost = vHostOs.startsWith("Windows")
+
 kotlin {
-    linuxArm64()
-    linuxX64()
-    macosArm64()
-    mingwX64()
+    if (vIsLinuxHost) { linuxArm64(); linuxX64() }
+    if (vIsMacHost) macosArm64()
+    if (vIsWindowsHost) mingwX64()
 
     targets.withType<KotlinNativeTarget>().all {
         binaries.executable {
