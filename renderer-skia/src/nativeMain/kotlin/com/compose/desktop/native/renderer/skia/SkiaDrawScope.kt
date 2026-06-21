@@ -16,10 +16,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.StrokeCap as ComposeStrokeCap
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Color
+import org.jetbrains.skia.Color4f
+import org.jetbrains.skia.FilterTileMode
+import org.jetbrains.skia.Gradient
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.PaintMode
 import org.jetbrains.skia.PaintStrokeCap
+import org.jetbrains.skia.Point
 import org.jetbrains.skia.Rect
+import org.jetbrains.skia.Shader
 
 // ==================
 // MARK: SkiaDrawScope
@@ -139,23 +144,70 @@ internal class SkiaDrawScope(
 		when (inBrush) {
 			is SolidColor -> vPaint.color = inBrush.color.withAlphaScaled(inAlpha).toSkiaColor()
 			is LinearGradient -> {
-				// TODO: wire to Skia's Gradient/Shader API for 0.150. For now
-				// degrade to the gradient's first colour so widgets that
-				// request a gradient still draw something sensible.
-				vPaint.color = (inBrush.colors.firstOrNull() ?: ComposeColor.Transparent)
-					.withAlphaScaled(inAlpha).toSkiaColor()
+				vPaint.color = Color.makeARGB(((inAlpha) * 255).toInt().coerceIn(0, 255), 255, 255, 255)
+				vPaint.shader = makeLinearShader(inBrush, inShapeSize)
 			}
 			is RadialGradient -> {
-				vPaint.color = (inBrush.colors.firstOrNull() ?: ComposeColor.Transparent)
-					.withAlphaScaled(inAlpha).toSkiaColor()
+				vPaint.color = Color.makeARGB(((inAlpha) * 255).toInt().coerceIn(0, 255), 255, 255, 255)
+				vPaint.shader = makeRadialShader(inBrush, inShapeSize)
 			}
 			is SweepGradient -> {
-				vPaint.color = (inBrush.colors.firstOrNull() ?: ComposeColor.Transparent)
-					.withAlphaScaled(inAlpha).toSkiaColor()
+				vPaint.color = Color.makeARGB(((inAlpha) * 255).toInt().coerceIn(0, 255), 255, 255, 255)
+				vPaint.shader = makeSweepShader(inBrush, inShapeSize)
 			}
 		}
 		return vPaint
 	}
+
+	// ============
+	//  Gradient → Skia Shader. Gradient.Colors wraps the Array<Color4f> +
+	//  positions + tile mode + colour space. Float.POSITIVE_INFINITY in
+	//  the caller's anchor coordinates means "extend to the shape's bounds".
+
+	private fun makeLinearShader(inB: LinearGradient, inSize: Size): Shader {
+		val vStartX = fOriginX + resolveX(inB.start.x, inSize.width)
+		val vStartY = fOriginY + resolveY(inB.start.y, inSize.height)
+		val vEndX = fOriginX + resolveX(inB.end.x, inSize.width)
+		val vEndY = fOriginY + resolveY(inB.end.y, inSize.height)
+		return Shader.makeLinearGradient(
+			p0 = Point(vStartX, vStartY),
+			p1 = Point(vEndX, vEndY),
+			gradient = Gradient(skiaColorsFor(inB.colors, inB.stops, inB.tileMode.toSkia())),
+		)
+	}
+
+	private fun makeRadialShader(inB: RadialGradient, inSize: Size): Shader {
+		val vCx = fOriginX + resolveX(inB.center.x, inSize.width)
+		val vCy = fOriginY + resolveY(inB.center.y, inSize.height)
+		val vR = if (inB.radius.isFinite()) inB.radius else (inSize.minDimension / 2f)
+		return Shader.makeRadialGradient(
+			center = Point(vCx, vCy),
+			radius = vR,
+			gradient = Gradient(skiaColorsFor(inB.colors, inB.stops, inB.tileMode.toSkia())),
+		)
+	}
+
+	private fun makeSweepShader(inB: SweepGradient, inSize: Size): Shader {
+		val vCx = fOriginX + resolveX(inB.center.x, inSize.width)
+		val vCy = fOriginY + resolveY(inB.center.y, inSize.height)
+		return Shader.makeSweepGradient(
+			center = Point(vCx, vCy),
+			gradient = Gradient(skiaColorsFor(inB.colors, inB.stops, FilterTileMode.CLAMP)),
+		)
+	}
+
+	private fun skiaColorsFor(
+		inColors: List<ComposeColor>,
+		inStops: List<Float>?,
+		inTile: FilterTileMode,
+	): Gradient.Colors = Gradient.Colors(
+		colors = Array(inColors.size) { inColors[it].toColor4f() },
+		positions = inStops?.toFloatArray(),
+		tileMode = inTile,
+	)
+
+	private fun resolveX(inV: Float, inW: Float): Float = if (inV.isFinite()) inV else inW
+	private fun resolveY(inV: Float, inH: Float): Float = if (inV.isFinite()) inV else inH
 }
 
 // ==================
@@ -165,5 +217,15 @@ internal class SkiaDrawScope(
 private fun ComposeColor.toSkiaColor(): Int =
 	Color.makeARGB(a8, r8, g8, b8)
 
+private fun ComposeColor.toColor4f(): Color4f =
+	Color4f(r = r8 / 255f, g = g8 / 255f, b = b8 / 255f, a = a8 / 255f)
+
 private fun ComposeColor.withAlphaScaled(inAlpha: Float): ComposeColor =
 	if (inAlpha >= 1f) this else copy(alpha = alpha * inAlpha)
+
+private fun ComposeTileMode.toSkia(): FilterTileMode = when (this) {
+	ComposeTileMode.Clamp    -> FilterTileMode.CLAMP
+	ComposeTileMode.Repeated -> FilterTileMode.REPEAT
+	ComposeTileMode.Mirror   -> FilterTileMode.MIRROR
+	ComposeTileMode.Decal    -> FilterTileMode.DECAL
+}

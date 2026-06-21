@@ -39,8 +39,8 @@ internal fun CanvasScreen() {
             "Canvas + DrawScope",
             "Custom-drawn shapes via Canvas {} and Modifier.drawBehind {} on a shared DrawScope. " +
                 "Skia draws natively (Canvas.drawArc etc.); SDL3 tessellates each primitive into triangles " +
-                "for SDL_RenderGeometry. Gradient brushes currently degrade to their first colour on both " +
-                "backends — proper gradient sampling is on the follow-up list.",
+                "for SDL_RenderGeometry. Gradient brushes work on both — Skia via Shader/Gradient, SDL3 via " +
+                "per-vertex colour interpolation on the tessellated geometry.",
         )
 
         Section(
@@ -128,10 +128,7 @@ internal fun CanvasScreen() {
 
         Section(
             "Brush gradients",
-            "Linear / radial / sweep brushes flow through any draw* method that accepts a Brush. " +
-                "Both backends currently render the gradient's first colour — full gradient sampling is " +
-                "still TODO (Skia: wire up Shader.makeLinearGradient with the new Gradient API; SDL3: " +
-                "per-vertex colour interpolation).",
+            "Linear / radial / sweep brushes flow through any draw* method that accepts a Brush.",
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Canvas(modifier = Modifier.size(80.dp)) {

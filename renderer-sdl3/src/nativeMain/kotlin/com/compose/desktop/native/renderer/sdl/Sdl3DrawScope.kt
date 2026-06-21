@@ -56,8 +56,18 @@ internal class Sdl3DrawScope(
 	override val size: Size,
 ) : DrawScope {
 
+	// Exposed for the sampler extension functions below — they need to map
+	// gradient anchor points (in node-local coords) into the SDL renderer's
+	// absolute pixel space.
+	internal val originX: Float get() = fOriginX
+	internal val originY: Float get() = fOriginY
+
 	// ============
-	//  Public primitives
+	//  Public primitives. Each one resolves the Brush into a "sampler" —
+	//  a function (x, y) → ComposeColor in this scope's pixel space — and
+	//  hands that sampler to the triangle emitters so per-vertex colour
+	//  interpolation handles gradients on the GPU. SolidColor's sampler
+	//  is constant, so flat-coloured calls cost no per-vertex work.
 
 	override fun drawRect(
 		brush: Brush,
@@ -66,25 +76,23 @@ internal class Sdl3DrawScope(
 		alpha: Float,
 		style: DrawStyle,
 	) {
-		val vColor = brush.dominantColor().withAlphaScaled(alpha)
+		val vSampler = samplerFor(brush, size, alpha)
 		val vL = fOriginX + topLeft.x
 		val vT = fOriginY + topLeft.y
 		val vR = vL + size.width
 		val vB = vT + size.height
 		when (style) {
-			Fill -> emitFilledQuad(vL, vT, vR, vT, vR, vB, vL, vB, vColor)
+			Fill -> emitQuad(vL, vT, vR, vT, vR, vB, vL, vB, vSampler)
 			is Stroke -> {
 				val vW = style.width
-				// Outer = bounds; inner is shrunk by width on each side.
 				val vIL = vL + vW; val vIT = vT + vW; val vIR = vR - vW; val vIB = vB - vW
 				if (vIR <= vIL || vIB <= vIT) {
-					emitFilledQuad(vL, vT, vR, vT, vR, vB, vL, vB, vColor)
+					emitQuad(vL, vT, vR, vT, vR, vB, vL, vB, vSampler)
 				} else {
-					// 4 sides as quads.
-					emitFilledQuad(vL, vT, vR, vT, vIR, vIT, vIL, vIT, vColor) // top
-					emitFilledQuad(vIR, vIT, vR, vT, vR, vB, vIR, vIB, vColor) // right
-					emitFilledQuad(vIL, vIB, vIR, vIB, vR, vB, vL, vB, vColor) // bottom
-					emitFilledQuad(vL, vT, vIL, vIT, vIL, vIB, vL, vB, vColor) // left
+					emitQuad(vL, vT, vR, vT, vIR, vIT, vIL, vIT, vSampler) // top
+					emitQuad(vIR, vIT, vR, vT, vR, vB, vIR, vIB, vSampler) // right
+					emitQuad(vIL, vIB, vIR, vIB, vR, vB, vL, vB, vSampler) // bottom
+					emitQuad(vL, vT, vIL, vIT, vIL, vIB, vL, vB, vSampler) // left
 				}
 			}
 		}
@@ -119,7 +127,7 @@ internal class Sdl3DrawScope(
 		alpha: Float,
 		style: DrawStyle,
 	) {
-		val vColor = brush.dominantColor().withAlphaScaled(alpha)
+		val vSampler = samplerFor(brush, size, alpha)
 		val vCx = fOriginX + topLeft.x + size.width / 2f
 		val vCy = fOriginY + topLeft.y + size.height / 2f
 		val vRx = size.width / 2f
@@ -127,15 +135,15 @@ internal class Sdl3DrawScope(
 		val vSeg = arcSegments(sweepAngle)
 
 		when (style) {
-			Fill -> emitFilledArc(vCx, vCy, vRx, vRy, startAngle, sweepAngle, useCenter, vSeg, vColor)
+			Fill -> emitFilledArc(vCx, vCy, vRx, vRy, startAngle, sweepAngle, useCenter, vSeg, vSampler)
 			is Stroke -> {
-				val vR = (vRx + vRy) / 2f // assume ~circle for stroked arcs
+				val vR = (vRx + vRy) / 2f
 				val vOuter = vR + style.width / 2f
 				val vInner = (vR - style.width / 2f).coerceAtLeast(0f)
-				emitStrokedArc(vCx, vCy, vInner, vOuter, startAngle, sweepAngle, vSeg, vColor)
+				emitStrokedArc(vCx, vCy, vInner, vOuter, startAngle, sweepAngle, vSeg, vSampler)
 				if (style.cap == StrokeCap.Round && sweepAngle < 360f) {
-					emitRoundCap(vCx, vCy, vR, style.width / 2f, startAngle, vColor)
-					emitRoundCap(vCx, vCy, vR, style.width / 2f, startAngle + sweepAngle, vColor)
+					emitRoundCap(vCx, vCy, vR, style.width / 2f, startAngle, vSampler)
+					emitRoundCap(vCx, vCy, vR, style.width / 2f, startAngle + sweepAngle, vSampler)
 				}
 			}
 		}
@@ -149,7 +157,7 @@ internal class Sdl3DrawScope(
 		cap: StrokeCap,
 		alpha: Float,
 	) {
-		val vColor = brush.dominantColor().withAlphaScaled(alpha)
+		val vSampler = samplerFor(brush, size, alpha)
 		val vX1 = fOriginX + start.x
 		val vY1 = fOriginY + start.y
 		val vX2 = fOriginX + end.x
@@ -160,16 +168,16 @@ internal class Sdl3DrawScope(
 		if (vLen < 1e-4f) return
 		val vNx = -vDy / vLen * strokeWidth / 2f
 		val vNy = vDx / vLen * strokeWidth / 2f
-		emitFilledQuad(
+		emitQuad(
 			vX1 + vNx, vY1 + vNy,
 			vX2 + vNx, vY2 + vNy,
 			vX2 - vNx, vY2 - vNy,
 			vX1 - vNx, vY1 - vNy,
-			vColor,
+			vSampler,
 		)
 		if (cap == StrokeCap.Round) {
-			emitFilledArc(vX1, vY1, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 12, vColor)
-			emitFilledArc(vX2, vY2, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 12, vColor)
+			emitFilledArc(vX1, vY1, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 12, vSampler)
+			emitFilledArc(vX2, vY2, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 12, vSampler)
 		}
 	}
 
@@ -187,13 +195,8 @@ internal class Sdl3DrawScope(
 	private fun emitFilledArc(
 		inCx: Float, inCy: Float, inRx: Float, inRy: Float,
 		inStartDeg: Float, inSweepDeg: Float, inUseCenter: Boolean,
-		inSegments: Int, inColor: ComposeColor,
+		inSegments: Int, inSampler: Sampler,
 	) {
-		// Triangle fan from the centre. Each output triangle shares the
-		// centre with two adjacent perimeter points. useCenter=false on an
-		// arc would normally chord-close it; for simplicity we still fan
-		// from the centre (the visual difference is minimal at typical
-		// arc lengths used by widgets).
 		val vStartRad = inStartDeg * (PI / 180.0).toFloat()
 		val vSweepRad = inSweepDeg * (PI / 180.0).toFloat()
 		val vStep = vSweepRad / inSegments
@@ -204,18 +207,14 @@ internal class Sdl3DrawScope(
 			val vAy = inCy + inRy * sin(vA)
 			val vBx = inCx + inRx * cos(vB)
 			val vBy = inCy + inRy * sin(vB)
-			if (inUseCenter || inSweepDeg >= 360f) {
-				emitFilledTri(inCx, inCy, vAx, vAy, vBx, vBy, inColor)
-			} else {
-				emitFilledTri(inCx, inCy, vAx, vAy, vBx, vBy, inColor)
-			}
+			emitTri(inCx, inCy, vAx, vAy, vBx, vBy, inSampler)
 		}
 	}
 
 	private fun emitStrokedArc(
 		inCx: Float, inCy: Float, inInnerR: Float, inOuterR: Float,
 		inStartDeg: Float, inSweepDeg: Float, inSegments: Int,
-		inColor: ComposeColor,
+		inSampler: Sampler,
 	) {
 		val vStartRad = inStartDeg * (PI / 180.0).toFloat()
 		val vSweepRad = inSweepDeg * (PI / 180.0).toFloat()
@@ -229,43 +228,38 @@ internal class Sdl3DrawScope(
 			val vOBX = inCx + inOuterR * vCosB; val vOBY = inCy + inOuterR * vSinB
 			val vIAX = inCx + inInnerR * vCosA; val vIAY = inCy + inInnerR * vSinA
 			val vIBX = inCx + inInnerR * vCosB; val vIBY = inCy + inInnerR * vSinB
-			emitFilledQuad(vOAX, vOAY, vOBX, vOBY, vIBX, vIBY, vIAX, vIAY, inColor)
+			emitQuad(vOAX, vOAY, vOBX, vOBY, vIBX, vIBY, vIAX, vIAY, inSampler)
 		}
 	}
 
 	private fun emitRoundCap(
 		inCx: Float, inCy: Float, inR: Float, inCapRadius: Float,
-		inAtAngleDeg: Float, inColor: ComposeColor,
+		inAtAngleDeg: Float, inSampler: Sampler,
 	) {
-		// Semicircle cap centred on the arc's centreline at the given angle.
 		val vRad = inAtAngleDeg * (PI / 180.0).toFloat()
 		val vPx = inCx + inR * cos(vRad)
 		val vPy = inCy + inR * sin(vRad)
-		// Cap orientation: the diameter aligned with the radial direction;
-		// the semicircle extends along the tangent. Fan as a full circle for
-		// simplicity (overshoots into the stroke body, which is invisible
-		// because the body is opaque too).
-		emitFilledArc(vPx, vPy, inCapRadius, inCapRadius, 0f, 360f, true, 12, inColor)
+		emitFilledArc(vPx, vPy, inCapRadius, inCapRadius, 0f, 360f, true, 12, inSampler)
 	}
 
-	private fun emitFilledQuad(
+	private fun emitQuad(
 		ax: Float, ay: Float, bx: Float, by: Float,
 		cx: Float, cy: Float, dx: Float, dy: Float,
-		inColor: ComposeColor,
+		inSampler: Sampler,
 	) {
-		emitFilledTri(ax, ay, bx, by, cx, cy, inColor)
-		emitFilledTri(ax, ay, cx, cy, dx, dy, inColor)
+		emitTri(ax, ay, bx, by, cx, cy, inSampler)
+		emitTri(ax, ay, cx, cy, dx, dy, inSampler)
 	}
 
-	private fun emitFilledTri(
+	private fun emitTri(
 		ax: Float, ay: Float, bx: Float, by: Float, cx: Float, cy: Float,
-		inColor: ComposeColor,
+		inSampler: Sampler,
 	) {
 		memScoped {
 			val vVerts = allocArray<SDL_Vertex>(3)
-			writeVertex(vVerts[0], ax, ay, inColor)
-			writeVertex(vVerts[1], bx, by, inColor)
-			writeVertex(vVerts[2], cx, cy, inColor)
+			writeVertex(vVerts[0], ax, ay, inSampler(ax, ay))
+			writeVertex(vVerts[1], bx, by, inSampler(bx, by))
+			writeVertex(vVerts[2], cx, cy, inSampler(cx, cy))
 			SDL_RenderGeometry(
 				fRenderer.reinterpret(),
 				null,
@@ -290,19 +284,114 @@ internal class Sdl3DrawScope(
 }
 
 // ==================
-// MARK: Brush → flat colour reducer
+// MARK: Brush → per-vertex colour sampler
 // ==================
 
-/* Reduces a Brush to a single ComposeColor. SolidColor passes through; the
-   three gradient flavours collapse to their first colour (visible) so
-   widgets still render — gradient rendering proper needs per-vertex colour
-   sampling which is out of scope for this turn. */
-private fun Brush.dominantColor(): ComposeColor = when (this) {
-	is SolidColor -> color
-	is LinearGradient -> colors.firstOrNull() ?: ComposeColor.Transparent
-	is RadialGradient -> colors.firstOrNull() ?: ComposeColor.Transparent
-	is SweepGradient -> colors.firstOrNull() ?: ComposeColor.Transparent
+/* A Sampler is a (x, y) → ComposeColor function in this scope's pixel
+   coordinate space. The triangle emitters call it once per vertex; the GPU
+   linearly interpolates between vertex colours across each triangle, which
+   approximates the gradient shading you'd get from a real shader. The
+   approximation is good when the tessellation is fine enough — circles use
+   64 segments by default, so the inter-vertex gap is < 6° which keeps the
+   linear-interp colour close to the analytic gradient value. */
+private typealias Sampler = (x: Float, y: Float) -> ComposeColor
+
+@OptIn(ExperimentalForeignApi::class)
+private fun Sdl3DrawScope.samplerFor(
+	inBrush: Brush,
+	inShapeSize: Size,
+	inAlpha: Float,
+): Sampler = when (inBrush) {
+	is SolidColor -> {
+		val vC = inBrush.color.withAlphaScaled(inAlpha)
+		val vS: Sampler = { _, _ -> vC }
+		vS
+	}
+	is LinearGradient -> linearSampler(inBrush, inShapeSize, inAlpha)
+	is RadialGradient -> radialSampler(inBrush, inShapeSize, inAlpha)
+	is SweepGradient -> sweepSampler(inBrush, inShapeSize, inAlpha)
 }
+
+@OptIn(ExperimentalForeignApi::class)
+private fun Sdl3DrawScope.linearSampler(inB: LinearGradient, inSize: Size, inAlpha: Float): Sampler {
+	val vSx = originX + resolveX(inB.start.x, inSize.width)
+	val vSy = originY + resolveY(inB.start.y, inSize.height)
+	val vEx = originX + resolveX(inB.end.x, inSize.width)
+	val vEy = originY + resolveY(inB.end.y, inSize.height)
+	val vDx = vEx - vSx
+	val vDy = vEy - vSy
+	val vLen2 = vDx * vDx + vDy * vDy
+	val vColors = inB.colors
+	val vStops = inB.stops
+	return { x, y ->
+		val vT = if (vLen2 < 1e-6f) 0f
+		         else (((x - vSx) * vDx + (y - vSy) * vDy) / vLen2).coerceIn(0f, 1f)
+		sampleColors(vColors, vStops, vT).withAlphaScaled(inAlpha)
+	}
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun Sdl3DrawScope.radialSampler(inB: RadialGradient, inSize: Size, inAlpha: Float): Sampler {
+	val vCx = originX + resolveX(inB.center.x, inSize.width)
+	val vCy = originY + resolveY(inB.center.y, inSize.height)
+	val vR = if (inB.radius.isFinite()) inB.radius else (inSize.minDimension / 2f)
+	val vColors = inB.colors
+	val vStops = inB.stops
+	return { x, y ->
+		val vDx = x - vCx; val vDy = y - vCy
+		val vT = if (vR < 1e-6f) 0f
+		         else (sqrt(vDx * vDx + vDy * vDy) / vR).coerceIn(0f, 1f)
+		sampleColors(vColors, vStops, vT).withAlphaScaled(inAlpha)
+	}
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun Sdl3DrawScope.sweepSampler(inB: SweepGradient, inSize: Size, inAlpha: Float): Sampler {
+	val vCx = originX + resolveX(inB.center.x, inSize.width)
+	val vCy = originY + resolveY(inB.center.y, inSize.height)
+	val vColors = inB.colors
+	val vStops = inB.stops
+	return { x, y ->
+		// atan2 returns radians in [-π, π]. Map to [0, 1] going clockwise from
+		// 3 o'clock to match Skia's sweep gradient convention.
+		val vAng = kotlin.math.atan2(y - vCy, x - vCx)
+		val vT = ((vAng / (2.0 * PI) + 1.0) % 1.0).toFloat()
+		sampleColors(vColors, vStops, vT).withAlphaScaled(inAlpha)
+	}
+}
+
+/* Sample the colour at position [0..1] along the gradient. Uses uniform
+   distribution when stops is null, otherwise the user-supplied stops. */
+private fun sampleColors(
+	inColors: List<ComposeColor>,
+	inStops: List<Float>?,
+	inT: Float,
+): ComposeColor {
+	if (inColors.isEmpty()) return ComposeColor.Transparent
+	if (inColors.size == 1) return inColors[0]
+	val vStops = inStops ?: (0 until inColors.size).map { it / (inColors.size - 1f) }
+	// Walk to the bracketing stop pair.
+	if (inT <= vStops.first()) return inColors.first()
+	if (inT >= vStops.last()) return inColors.last()
+	var vIdx = 0
+	while (vIdx < vStops.size - 1 && vStops[vIdx + 1] < inT) vIdx++
+	val vS1 = vStops[vIdx]
+	val vS2 = vStops[vIdx + 1]
+	val vSpan = (vS2 - vS1).coerceAtLeast(1e-6f)
+	val vLocal = ((inT - vS1) / vSpan).coerceIn(0f, 1f)
+	return lerpColor(inColors[vIdx], inColors[vIdx + 1], vLocal)
+}
+
+private fun lerpColor(inA: ComposeColor, inB: ComposeColor, inT: Float): ComposeColor =
+	ComposeColor(
+		red   = inA.red   + (inB.red   - inA.red)   * inT,
+		green = inA.green + (inB.green - inA.green) * inT,
+		blue  = inA.blue  + (inB.blue  - inA.blue)  * inT,
+		alpha = inA.alpha + (inB.alpha - inA.alpha) * inT,
+	)
 
 private fun ComposeColor.withAlphaScaled(inAlpha: Float): ComposeColor =
 	if (inAlpha >= 1f) this else copy(alpha = alpha * inAlpha)
+
+private fun resolveX(inV: Float, inW: Float): Float = if (inV.isFinite()) inV else inW
+private fun resolveY(inV: Float, inH: Float): Float = if (inV.isFinite()) inV else inH
