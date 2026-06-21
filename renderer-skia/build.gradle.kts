@@ -16,15 +16,10 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
-// Skia/Skiko has no mingwX64 build; the parent :window switches to the
-// SDL3 renderer on Windows so this module isn't pulled in there.
-val vHostOs = System.getProperty("os.name")
-val vIsMacHost = vHostOs.startsWith("Mac")
-val vIsLinuxHost = vHostOs == "Linux"
-
 kotlin {
-    if (vIsLinuxHost) { linuxArm64(); linuxX64() }
-    if (vIsMacHost) macosArm64()
+    linuxArm64()
+    linuxX64()
+    macosArm64()
 
     applyDefaultHierarchyTemplate()
 

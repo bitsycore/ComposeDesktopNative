@@ -31,15 +31,11 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
-val vHostOs = System.getProperty("os.name")
-val vIsMacHost = vHostOs.startsWith("Mac")
-val vIsLinuxHost = vHostOs == "Linux"
-val vIsWindowsHost = vHostOs.startsWith("Windows")
-
 kotlin {
-    if (vIsLinuxHost) { linuxArm64(); linuxX64() }
-    if (vIsMacHost) macosArm64()
-    if (vIsWindowsHost) mingwX64()
+    linuxArm64()
+    linuxX64()
+    macosArm64()
+    mingwX64()
 
     applyDefaultHierarchyTemplate()
 

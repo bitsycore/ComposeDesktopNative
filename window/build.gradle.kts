@@ -24,15 +24,11 @@ repositories {
 val useSdl3Everywhere = (findProperty("renderer") as? String) == "sdl3"
 val desktopRendererProject = if (useSdl3Everywhere) ":renderer-sdl3" else ":renderer-skia"
 
-val vHostOs = System.getProperty("os.name")
-val vIsMacHost = vHostOs.startsWith("Mac")
-val vIsLinuxHost = vHostOs == "Linux"
-val vIsWindowsHost = vHostOs.startsWith("Windows")
-
 kotlin {
-    if (vIsLinuxHost) { linuxArm64(); linuxX64() }
-    if (vIsMacHost) macosArm64()
-    if (vIsWindowsHost) mingwX64()
+    linuxArm64()
+    linuxX64()
+    macosArm64()
+    mingwX64()
 
     applyDefaultHierarchyTemplate()
 
@@ -59,21 +55,14 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         // Per-target renderer selection (the "include exactly one" mechanism).
-        // Each source-set block only runs when its target was declared above.
-        if (vIsWindowsHost) {
-            val mingwMain by getting {
-                dependencies { implementation(project(":renderer-sdl3")) }
-            }
+        val mingwMain by getting {
+            dependencies { implementation(project(":renderer-sdl3")) }
         }
-        if (vIsMacHost) {
-            val macosMain by getting {
-                dependencies { implementation(project(desktopRendererProject)) }
-            }
+        val macosMain by getting {
+            dependencies { implementation(project(desktopRendererProject)) }
         }
-        if (vIsLinuxHost) {
-            val linuxMain by getting {
-                dependencies { implementation(project(desktopRendererProject)) }
-            }
+        val linuxMain by getting {
+            dependencies { implementation(project(desktopRendererProject)) }
         }
     }
 
