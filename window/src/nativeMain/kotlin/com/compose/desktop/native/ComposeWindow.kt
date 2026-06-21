@@ -119,10 +119,17 @@ fun nativeComposeWindow(
         }
 
         val popupHost = createPopupHostState()
+        // Lazy FocusManager — body filled in once setFocus is in scope below.
+        var focusManagerImpl: androidx.compose.ui.focus.FocusManager? = null
+        val focusManagerProxy = object : androidx.compose.ui.focus.FocusManager {
+            override fun focusOnNode(inNode: LayoutNode) { focusManagerImpl?.focusOnNode(inNode) }
+            override fun clearFocus() { focusManagerImpl?.clearFocus() }
+        }
         composition.setContent {
             CompositionLocalProvider(
                 LocalComposeNativeWindow provides composeWindow,
                 LocalPopupHost provides popupHost,
+                androidx.compose.ui.focus.LocalFocusManager provides focusManagerProxy,
             ) {
                 // Root Box: main content + overlay layer as sibling. The
                 // overlay is the *last* child so popups draw above and the
@@ -167,6 +174,38 @@ fun nativeComposeWindow(
             focusedNode = inNode
             focusedCallback = inCallback
             inCallback?.invoke(true)
+        }
+
+        /* Concrete FocusManager wired into setFocus. Walks the node's
+           modifier chain to find its FocusableModifier so the focus
+           callback fires; falls back to focusing-without-callback if
+           the node has no focusable. */
+        focusManagerImpl = object : androidx.compose.ui.focus.FocusManager {
+            override fun focusOnNode(inNode: LayoutNode) {
+                var vCallback: ((Boolean) -> Unit)? = null
+                inNode.modifier.foldIn(Unit) { _, vEl ->
+                    if (vEl is androidx.compose.ui.FocusableModifier) vCallback = vEl.onFocusChanged
+                }
+                setFocus(inNode, vCallback)
+            }
+            override fun clearFocus() = setFocus(null, null)
+        }
+
+        /* Walk the tree and pop each FocusRequester onto its hosting
+           node so requestFocus() can resolve the node back. Fast and
+           good enough for a tree of a few hundred nodes; we could keep
+           a registry instead if it ever shows up on a profile. */
+        fun bindFocusRequesters(inRoot: LayoutNode) {
+            fun walk(inN: LayoutNode) {
+                inN.modifier.foldIn(Unit) { _, vEl ->
+                    if (vEl is androidx.compose.ui.focus.FocusRequesterModifier) {
+                        vEl.focusRequester.attachedNode = inN
+                        vEl.focusRequester.focusManager = focusManagerImpl
+                    }
+                }
+                for (vC in inN.children) walk(vC)
+            }
+            walk(inRoot)
         }
 
         fun dispatchHover(inX: Int, inY: Int) {
@@ -361,6 +400,11 @@ fun nativeComposeWindow(
             val constraints = Constraints.fixed(backend.windowWidth, backend.windowHeight)
             rootNode.measure(constraints)
             rootNode.place(0, 0)
+            // Rebind FocusRequesters every frame so a state-driven
+            // recomposition that swaps which node carries the modifier
+            // picks up the new binding by the time the next requestFocus
+            // call lands.
+            bindFocusRequesters(rootNode)
             // Fire onGloballyPositioned callbacks now that absolute coords
             // are valid. Popups (DropdownMenu/Tooltip) read these to anchor
             // to their target's current window-coordinate position.

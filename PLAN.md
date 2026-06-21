@@ -180,7 +180,7 @@ Material widgets (`androidx.compose.material.*`) currently live in
   `GridCells.Fixed(count)` and `GridCells.Adaptive(minSize)`.
   `stickyHeader` inside `LazyListScope` as a follow-up.
 
-- [ ] **Step 10 — `InteractionSource` + `Indication`.**
+- [x] **Step 10 — `InteractionSource` + `Indication`.**
   `MutableInteractionSource` (Press / Hover / Focus emissions),
   `Indication` interface, default ripple indication, default
   focus-ring indication. Wire into `clickable` / `focusable` /

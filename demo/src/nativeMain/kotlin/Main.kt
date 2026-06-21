@@ -18,6 +18,7 @@ import screens.ButtonsScreen
 import screens.AnimationScreen
 import screens.CanvasScreen
 import screens.CustomLayoutScreen
+import screens.FocusRequesterScreen
 import screens.GestureScreen
 import screens.GraphicsLayerScreen
 import screens.InteractionSourceScreen
@@ -144,6 +145,7 @@ private val Screens: List<Screen> = listOf(
     Screen("ModShortcuts")   { ModifierShortcutsScreen() },
     Screen("LazyExtra")      { LazyExtraScreen() },
     Screen("InteractionSource") { InteractionSourceScreen() },
+    Screen("FocusRequester") { FocusRequesterScreen() },
 )
 
 // ==================
