@@ -22,7 +22,7 @@ import org.jetbrains.skia.Rect
 // MARK: SkiaRenderer — draws the LayoutNode tree onto a Skia Canvas.
 // ==================
 
-class SkiaRenderer(
+class SkiaRenderer internal constructor(
     private val textRenderer: SkiaTextRenderer,
     private val imageCache: SkiaImageCache,
 ) {
