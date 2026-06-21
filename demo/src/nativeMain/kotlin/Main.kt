@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.desktop.native.nativeComposeWindow
 import screens.ButtonsScreen
+import screens.AnimationScreen
 import screens.CanvasScreen
 import screens.CustomLayoutScreen
 import screens.GraphicsLayerScreen
@@ -132,6 +133,7 @@ private val Screens: List<Screen> = listOf(
     Screen("Canvas")         { CanvasScreen() },
     Screen("GraphicsLayer")  { GraphicsLayerScreen() },
     Screen("CustomLayout")   { CustomLayoutScreen() },
+    Screen("Animation")      { AnimationScreen() },
 )
 
 // ==================

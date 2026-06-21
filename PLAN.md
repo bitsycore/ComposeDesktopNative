@@ -115,7 +115,7 @@ Material widgets (`androidx.compose.material.*`) currently live in
   `fill = false` lets them stay at their min content size while still
   claiming weight share.
 
-- [ ] **Step 2 — Public `Layout` composable + `MeasurePolicy` API +
+- [x] **Step 2 — Public `Layout` composable + `MeasurePolicy` API +
   `Modifier.layout { ... }`.** Opens the door to user-written custom
   layouts without forking `:core`. LayoutNode already does measure /
   place; this step is mostly exposing the right interfaces
