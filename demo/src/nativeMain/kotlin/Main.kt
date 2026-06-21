@@ -1,11 +1,9 @@
-import androidx.compose.runtime.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.darkColors
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,37 +12,7 @@ import androidx.compose.ui.graphics.blend
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.desktop.native.nativeComposeWindow
-import screens.ButtonsScreen
-import screens.AnimationScreen
-import screens.AnnotatedStringScreen
-import screens.CanvasScreen
-import screens.CustomLayoutScreen
-import screens.FocusRequesterScreen
-import screens.GestureScreen
-import screens.GraphicsLayerScreen
-import screens.InteractionSourceScreen
-import screens.LazyExtraScreen
-import screens.ModifierShortcutsScreen
-import screens.PathScreen
-import screens.DesktopWidgetsScreen
-import screens.DialogsScreen
-import screens.DispatchersScreen
-import screens.IconsScreen
-import screens.WidgetsScreen
-import screens.ColorsScreen
-import screens.CounterScreen
-import screens.ImagesScreen
-import screens.InteractionScreen
-import screens.LayoutScreen
-import screens.LazyColumnScreen
-import screens.ModifiersScreen
-import screens.RecompositionScreen
-import screens.ScrollScreen
-import screens.ShapesScreen
-import screens.StateScreen
-import screens.TextFieldScreen
-import screens.TextScreen
-import screens.WindowScreen
+import screens.*
 import utils.encodeBmpBgra32
 import utils.parseArgs
 import utils.writeFile
@@ -132,6 +100,7 @@ private val Screens: List<Screen> = listOf(
     Screen("Scroll")         { ScrollScreen() },
     Screen("LazyColumn")     { LazyColumnScreen() },
     Screen("Counter")        { CounterScreen() },
+    Screen("Clipboard")      { ClipboardScreen() },
     Screen("Widgets")        { WidgetsScreen() },
     Screen("Desktop")        { DesktopWidgetsScreen() },
     Screen("Dialogs")        { DialogsScreen() },
