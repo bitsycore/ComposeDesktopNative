@@ -13,10 +13,11 @@ import androidx.compose.ui.graphics.RoundedCornerShape
 import androidx.compose.ui.graphics.blend
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.composeWindow
+import com.compose.desktop.native.nativeComposeWindow
 import screens.ButtonsScreen
 import screens.DesktopWidgetsScreen
 import screens.DialogsScreen
+import screens.DispatchersScreen
 import screens.IconsScreen
 import screens.WidgetsScreen
 import screens.ColorsScreen
@@ -49,7 +50,7 @@ fun main(args: Array<String>) {
         append(" [").append(vCli.gpu).append("]")
     }
 
-    composeWindow(
+    nativeComposeWindow(
         title = vTitle,
         width = vCli.width,
         height = vCli.height,
@@ -124,6 +125,7 @@ private val Screens: List<Screen> = listOf(
     Screen("Desktop")        { DesktopWidgetsScreen() },
     Screen("Dialogs")        { DialogsScreen() },
     Screen("Icons")          { IconsScreen() },
+    Screen("Dispatchers")    { DispatchersScreen() },
 )
 
 // ==================

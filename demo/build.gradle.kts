@@ -32,10 +32,10 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":compose-desktop-native"))
-                implementation(project(":compose-desktop-material-symbols:outlined"))
-                implementation(project(":compose-desktop-material-symbols:rounded"))
-                implementation(project(":compose-desktop-material-symbols:sharp"))
+                implementation(project(":window"))
+                implementation(project(":material-symbols:outlined"))
+                implementation(project(":material-symbols:rounded"))
+                implementation(project(":material-symbols:sharp"))
             }
             // Generated typed Res.* accessors (produced by generateComposeResAccessors).
             kotlin.srcDir(composeResGenDir)
@@ -164,17 +164,17 @@ tasks.matching { it.name.startsWith("compileKotlin") }.configureEach {
 
 val composeResourcesDir = layout.projectDirectory.dir("src/nativeMain/composeResources")
 val libComposeResourcesDir = rootProject.layout.projectDirectory.dir(
-    "compose-desktop-native-core/src/nativeMain/composeResources"
+    "core/src/nativeMain/composeResources"
 )
 val bundleDefaultFont = (findProperty("bundleDefaultFont") as? String)?.toBoolean() ?: true
 
-// Walk the demo's declared dependencies and pick out every
-// :compose-desktop-material-symbols:* project this module actually pulls in.
-// Each such module exposes extra["iconFontFile"] (Provider<RegularFile> for
-// the downloaded .ttf) and extra["iconFontDownloadTask"] (TaskProvider). The
-// Zip task pulls the file into data.kres under font/ and depends on the
-// download task — apps just declare the dependency on the style(s) they want,
-// the bundling is automatic and only ships what's depended on.
+// Walk the demo's declared dependencies and pick out every :material-symbols:*
+// project this module actually pulls in. Each such module exposes
+// extra["iconFontFile"] (Provider<RegularFile> for the downloaded .ttf) and
+// extra["iconFontDownloadTask"] (TaskProvider). The Zip task pulls the file
+// into data.kres under font/ and depends on the download task — apps just
+// declare the dependency on the style(s) they want, the bundling is
+// automatic and only ships what's depended on.
 fun collectIconFontModules(): List<Project> {
     val vConfigs = listOf(
         "commonMainImplementation", "commonMainApi",
@@ -186,7 +186,7 @@ fun collectIconFontModules(): List<Project> {
         for (vDep in vCfg.dependencies) {
             if (vDep is org.gradle.api.artifacts.ProjectDependency) {
                 val vPath = vDep.path
-                if (vPath.startsWith(":compose-desktop-material-symbols:")) {
+                if (vPath.startsWith(":material-symbols:")) {
                     rootProject.findProject(vPath)?.let { vSet.add(it) }
                 }
             }

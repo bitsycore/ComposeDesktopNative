@@ -19,29 +19,40 @@ SDL3 input events into the tree, and render them. Rendering is pluggable:
 
 ## Module Layout
 
-Four library modules + the demo (all share the `com.compose.desktop.native`
-package; the re-implemented Compose APIs keep their upstream `androidx.compose.*`
-names, in compose-desktop-native-core/commonMain):
+Local module names drop the `compose-desktop-native-` / `compose-desktop-`
+prefix for terseness; publication artifact IDs add it back (so consumers see
+`compose-desktop-native-core` etc. on the dependency line). All modules share
+the `com.compose.desktop.native` Kotlin package; the re-implemented Compose
+APIs keep their upstream `androidx.compose.*` names, in `core/commonMain`.
 
-- `compose-desktop-native-core/` — renderer-agnostic base: the `androidx.compose.*` re-impl,
-  `RenderBackend` interface, `GpuMode`, `SDL3Backend`, window / clipboard /
-  event / resource IO, and the bundled default font. Owns the `sdl3` cinterop.
-- `compose-desktop-native-renderer-sdl3/` — pure-SDL3 renderer (+ `sdl3_ttf`, `sdl3_image`
-  cinterops). Exposes `createRenderBackend(...)` / `rendererPreferredGpuMode()`.
-  All four native targets.
-- `compose-desktop-native-renderer-skia/` — Skia/Skiko renderer (Metal / OpenGL / CPU bridges).
-  Same two functions. **macOS + Linux only** — Skiko publishes no mingwX64 artifact.
-- `compose-desktop-native/` — what apps depend on. Owns `composeWindow()` and
-  selects a renderer per target by depending on exactly one renderer module:
-  mingwX64 → sdl3 (always); macOS/Linux → skia, or sdl3 under `-Prenderer=sdl3`.
-  Re-exports compose-desktop-native-core via `api`.
+- `core/` (publishes as `compose-desktop-native-core`) — renderer-agnostic
+  base: the `androidx.compose.*` re-impl, `RenderBackend` interface,
+  `GpuMode`, `SDL3Backend`, window / clipboard / event / resource IO, and
+  the bundled default font. Owns the `sdl3` cinterop.
+- `renderer-sdl3/` (publishes as `compose-desktop-native-renderer-sdl3`) —
+  pure-SDL3 renderer (+ `sdl3_ttf`, `sdl3_image`, `freetype` cinterops).
+  Exposes `createRenderBackend(...)` / `rendererPreferredGpuMode()`. All
+  four native targets.
+- `renderer-skia/` (publishes as `compose-desktop-native-renderer-skia`) —
+  Skia/Skiko renderer (Metal / OpenGL / CPU bridges). Same two functions.
+  **macOS + Linux only** — Skiko publishes no mingwX64 artifact.
+- `window/` (publishes as `compose-desktop-native`) — what apps depend on.
+  Owns `composeWindow()` and selects a renderer per target by depending on
+  exactly one renderer module: mingwX64 → sdl3 (always); macOS/Linux →
+  skia, or sdl3 under `-Prenderer=sdl3`. Re-exports `:core` via `api`.
+- `material-symbols/{outlined,rounded,sharp}/` (publishes as
+  `compose-desktop-material-symbols-{outlined,rounded,sharp}`) — Material
+  Symbols icon-font modules. Each ships its variable font (downloaded at
+  build time from Google) and a single `MaterialSymbols{Style}` object
+  with a `@Composable operator fun invoke(...)` that auto-installs the
+  font on first call.
 - `demo/` — example app (`Main.kt` → `composeWindow { App() }`), sidebar showcase.
 
 ### How renderer selection works
 
 Both renderer modules expose identically-signed `createRenderBackend` /
-`rendererPreferredGpuMode` in the same package. `compose-desktop-native` has a
-thin per-target `expect`/`actual` (`makeRenderBackend` / `preferredGpuMode`,
+`rendererPreferredGpuMode` in the same package. `:window` has a thin
+per-target `expect`/`actual` (`makeRenderBackend` / `preferredGpuMode`,
 in `RenderBackendFactory.{kt,mingw.kt,macos.kt,linux.kt}`) whose actuals just
 forward to those functions — and since the build links **exactly one** renderer
 module per target, the call resolves unambiguously ("include one" selection).
@@ -53,16 +64,19 @@ cinterop export needed.
 
 ### Key files (start here)
 
-- `compose-desktop-native/src/nativeMain/.../ComposeWindow.kt` — main loop,
-  recomposer lifecycle, event dispatch; calls the per-target makeRenderBackend.
-- `compose-desktop-native-core/src/nativeMain/.../ComposeNativeWindow.kt` — per-window handle
+- `window/src/nativeMain/.../ComposeWindow.kt` — main loop, recomposer
+  lifecycle, event dispatch; calls the per-target makeRenderBackend.
+- `core/src/nativeMain/.../ComposeNativeWindow.kt` — per-window handle
   (title / size / fullscreen / rendererName / close), CompositionLocal + scope.
-- `compose-desktop-native-core/src/nativeMain/.../RenderBackend.kt` — the interface.
-- `compose-desktop-native-core/src/nativeMain/.../GpuMode.kt` — the sealed renderer/driver picker.
-- `compose-desktop-native-renderer-skia/.../renderer/skia/SkiaRenderBackend.kt` (+ `RenderBackendFactory.skia.kt`).
-- `compose-desktop-native-renderer-sdl3/.../renderer/sdl/Sdl3RenderBackend.kt` (+ `RenderBackendFactory.sdl.kt`).
-- `compose-desktop-native-core/src/commonMain/.../ui/node/LayoutNode.kt` — layout tree, hit testing.
-- `compose-desktop-native-core/src/commonMain/.../ui/Modifier.kt` — modifier elements the renderer reads.
+- `core/src/nativeMain/.../RenderBackend.kt` — the interface.
+- `core/src/nativeMain/.../GpuMode.kt` — the sealed renderer/driver picker.
+- `renderer-skia/.../renderer/skia/SkiaRenderBackend.kt` (+ `RenderBackendFactory.skia.kt`).
+- `renderer-sdl3/.../renderer/sdl/Sdl3RenderBackend.kt` (+ `RenderBackendFactory.sdl.kt`).
+- `renderer-sdl3/.../renderer/sdl/FreeTypeIcons.kt` — variable-font axis
+  rasterisation for the SDL3 path (SDL3_ttf has no axis API; we go to
+  FreeType directly for icon families).
+- `core/src/commonMain/.../ui/node/LayoutNode.kt` — layout tree, hit testing.
+- `core/src/commonMain/.../ui/Modifier.kt` — modifier elements the renderer reads.
 - `demo/src/nativeMain/kotlin/Main.kt` — sidebar demo with --gpu / --screen / --screenshot CLI.
 
 ## Build / Run
@@ -138,9 +152,9 @@ Inside each release zip the right directory is `x86_64-w64-mingw32/`
 that subtree directly to `C:\SDL3` (so the `include/` and `lib/` dirs
 land at `C:\SDL3\include` etc.), or adjust the include / linker paths in the
 cinterop `.def` files. `sdl3.def` is duplicated in every module that touches
-SDL — `compose-desktop-native-core`, `compose-desktop-native-renderer-sdl3`, `compose-desktop-native-renderer-skia`,
-`compose-desktop-native` (each `src/nativeInterop/cinterop/`) — so edit all
-copies; `sdl3_ttf.def` + `sdl3_image.def` live only in `compose-desktop-native-renderer-sdl3`.
+SDL — `core`, `renderer-sdl3`, `renderer-skia`, `window` (each
+`src/nativeInterop/cinterop/`) — so edit all copies; `sdl3_ttf.def` +
+`sdl3_image.def` + `freetype.def` live only in `renderer-sdl3`.
 Note the two *extension* `.def` files each list **two** include dirs — their
 own plus SDL3's (`-IC:/SDL3_image/include -IC:/SDL3/include`) — because their
 headers `#include <SDL3/SDL.h>`; `depends = sdl3` wires the Kotlin klib but
@@ -181,8 +195,8 @@ Drop assets under `demo/src/nativeMain/composeResources/` — `drawable/` for
 images (png / jpg / svg / android `<vector>` xml), `files/` for raw bytes.
 The `generateComposeResAccessors` Gradle task scans that tree and emits typed
 `Res.drawable.<name>` (→ `Painter`) and `Res.files.<name>` (→ path string for
-`Res.readBytes`). compose-desktop-native-core keeps its default font under
-`compose-desktop-native-core/src/nativeMain/composeResources/font/`; both roots merge into
+`Res.readBytes`). `:core` keeps its default font under
+`core/src/nativeMain/composeResources/font/`; both roots merge into
 a single `<exe>/data.kres` at build time (STORED, no compression —
 see `-PbundleDefaultFont`). At runtime `ResourceIO.kt` opens that archive
 once via `SDL_GetBasePath()`, parses its central directory, and serves each
@@ -364,14 +378,14 @@ Follow `~/.claude/CLAUDE.md`:
 - **Row with `Arrangement.spacedBy(...)`** — `RowMeasurePolicy` adds
   inter-child gaps to its reported width; if you change it, make sure
   centering in a parent still works.
-- **`-Prenderer=sdl3` mode** — flips `compose-desktop-native`'s macOS/Linux
-  dependency from `compose-desktop-native-renderer-skia` to `compose-desktop-native-renderer-sdl3`; the Skia
+- **`-Prenderer=sdl3` mode** — flips `:window`'s macOS/Linux
+  dependency from `:renderer-skia` to `:renderer-sdl3`; the Skia
   module just isn't on the dependency graph (not compiled, Skiko not pulled).
-  Don't add a hard dependency on `compose-desktop-native-renderer-skia` from a shared source
-  set, or mingwX64 (which has no Skia module) won't link.
+  Don't add a hard dependency on `:renderer-skia` from a shared source set,
+  or mingwX64 (which has no Skia module) won't link.
 - **mingwX64 cross-compile from macOS / Linux fails** at the cinterop
-  step — it can't find `C:\SDL3\include\SDL3\SDL.h`. That's expected;
-  build the Windows target on Windows.
+  step — it can't find `C:/Dev/Libs/SDL3/include/SDL3/SDL.h`. That's
+  expected; build the Windows target on Windows.
 - **Configuration cache and `-Prenderer=`** — Gradle caches the
   configuration; toggling the renderer property may not invalidate the
   cache. Delete `.gradle/configuration-cache/` between switches if you

@@ -8,11 +8,11 @@ pluginManagement {
 }
 
 rootProject.name = "ComposeNativeSDL3"
-include(":compose-desktop-native-core")
-include(":compose-desktop-native-renderer-sdl3")
-include(":compose-desktop-native-renderer-skia")
-include(":compose-desktop-native")
-include(":compose-desktop-material-symbols:outlined")
-include(":compose-desktop-material-symbols:rounded")
-include(":compose-desktop-material-symbols:sharp")
+include(":core")
+include(":renderer-sdl3")
+include(":renderer-skia")
+include(":window")
+include(":material-symbols:outlined")
+include(":material-symbols:rounded")
+include(":material-symbols:sharp")
 include(":demo")
