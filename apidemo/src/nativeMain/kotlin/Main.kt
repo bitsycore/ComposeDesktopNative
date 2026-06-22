@@ -992,11 +992,11 @@ private fun BodyContent(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) 
     val c = LocalAppColors.current
     when (inReq.bodyType) {
         BodyType.NONE -> ViewerEmpty(MaterialSymbols.Block, "No Body", Modifier.fillMaxWidth().height(240.dp))
-        BodyType.JSON, BodyType.TEXT -> ThinField(
-            inReq.body, { v -> inEdit { it.copy(body = v) } },
-            inModifier = Modifier.fillMaxWidth().height(240.dp),
+        BodyType.JSON, BodyType.TEXT -> BodyView(
+            inText = inReq.body,
+            modifier = Modifier.fillMaxWidth().height(240.dp),
+            inOnChange = { v -> inEdit { it.copy(body = v) } },
             inPlaceholder = if (inReq.bodyType == BodyType.JSON) "{ }" else "text body",
-            inSingleLine = false,
         )
         BodyType.FORM -> KeyValEditor(inReq.form) { v -> inEdit { it.copy(form = v) } }
         BodyType.FILE -> FileBody(inReq) { v -> inEdit(v) }
@@ -1236,7 +1236,7 @@ private fun HttpFlowView(
                     Image(painter = inImagePainter, contentDescription = "Response image", contentScale = ContentScale.Fit)
                 }
             } else if (inBody != null) {
-                BodyView(inBody, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp))
+                BodyView(inBody, modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp))
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -1272,32 +1272,47 @@ private fun HeaderTable(inHeaders: List<Pair<String, String>>, modifier: Modifie
 /* Body view with line numbers in the gutter — mimics the code panel
    in httpie. Numbers are dim; body text uses the regular colour. */
 @Composable
-private fun BodyView(inText: String, modifier: Modifier = Modifier) {
+private fun BodyView(
+    inText: String,
+    modifier: Modifier = Modifier,
+    inOnChange: ((String) -> Unit)? = null,
+    inPlaceholder: String = "",
+) {
     val c = LocalAppColors.current
     val vLines = if (inText.isEmpty()) listOf("") else inText.split('\n')
-    val vGutterWidth = ((vLines.size).toString().length * 9 + 12).dp
+    // Tight gutter: width = digits in the max line number × glyph width at
+    // 12sp (~7dp/digit for monospace digits). One char of padding either
+    // side keeps the numbers from kissing the body text or the panel edge.
+    val vDigits = vLines.size.toString().length
+    val vGutterWidth = (vDigits * 7 + 4).dp
     Row(modifier = modifier) {
-        // Gutter: line numbers right-aligned.
-        Column(horizontalAlignment = Alignment.End, modifier = Modifier.width(vGutterWidth)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(vGutterWidth),
+        ) {
             for (vI in vLines.indices) {
-                Text(
-                    "${vI + 1}",
-                    color = c.dim,
-                    fontSize = 12.sp,
-                )
+                Text("${vI + 1}", color = c.dim, fontSize = 12.sp)
             }
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(6.dp))
         // Body: a single BasicTextField so selection / copy works; the
         // gutter alignment relies on the matching line-height, which the
-        // default font metric gives us at 12.sp.
-        BasicTextField(
-            value = inText,
-            onValueChange = {}, readOnly = true,
-            color = c.text, cursorColor = c.accent, selectionColor = c.accent.copy(alpha = 0.35f),
-            fontSize = 12.sp,
-            modifier = Modifier.weight(1f),
-        )
+        // default font metric gives us at 12.sp. Read-only when no
+        // onChange is supplied (response viewer); editable in the
+        // request builder.
+        Box(modifier = Modifier.weight(1f)) {
+            if (inText.isEmpty() && inPlaceholder.isNotEmpty()) {
+                Text(inPlaceholder, color = c.dim, fontSize = 12.sp)
+            }
+            BasicTextField(
+                value = inText,
+                onValueChange = inOnChange ?: {},
+                readOnly = inOnChange == null,
+                color = c.text, cursorColor = c.accent, selectionColor = c.accent.copy(alpha = 0.35f),
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
