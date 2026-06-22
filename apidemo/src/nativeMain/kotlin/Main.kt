@@ -487,7 +487,6 @@ private fun App() {
                                         ViewerPanel(
                                             inRs = vAct,
                                             inResolved = resolveVars(vReq, effective(vP)),
-                                            inOnCancel = { cancel(vAct) },
                                         )
                                     },
                                 )
@@ -1026,7 +1025,7 @@ private fun FileBody(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> 
    Preview); "Response" shows the result (image-aware). A copy / save toolbar
    acts on whichever view is showing. */
 @Composable
-private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -> Unit) {
+private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
     val c = LocalAppColors.current
     var vMsg by remember { mutableStateOf<String?>(null) }
     var vHeadersCollapsed by remember { mutableStateOf(false) }
@@ -1083,10 +1082,10 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                     inOnClick = { inRs.viewTab = 1 },
                 )
                 Spacer(Modifier.weight(1f))
+                // Spinner only — the Cancel control already lives next to
+                // Send in the URL bar; no need for a duplicate here.
                 if (inRs.viewTab == 1 && vLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(14.dp), color = c.accent, strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
-                    IconLabelChip(MaterialSymbols.Stop, "Cancel") { inOnCancel() }
                 }
             }
         }
