@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -96,18 +98,26 @@ fun Popup(
 ) {
 	val vHost = LocalPopupHost.current
 	val vId = remember { Any() }
+	// Snapshot the CompositionLocals in scope at the call site. PopupLayer renders
+	// the hosted content at the composition root, so without re-providing these it
+	// would only see the root defaults — MaterialTheme and app-level locals (e.g. a
+	// light/dark palette) set further down the tree would never reach the popup,
+	// leaving dialogs and menus stuck on the default theme.
+	val vLocals = currentCompositionLocalContext
 	SideEffect {
 		vHost.upsert(vId) {
-			if (modal) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.background(scrimColor)
-						.clickable { onDismissRequest() },
-					contentAlignment = Alignment.Center,
-				) { content() }
-			} else {
-				content()
+			CompositionLocalProvider(vLocals) {
+				if (modal) {
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(scrimColor)
+							.clickable { onDismissRequest() },
+						contentAlignment = Alignment.Center,
+					) { content() }
+				} else {
+					content()
+				}
 			}
 		}
 	}
