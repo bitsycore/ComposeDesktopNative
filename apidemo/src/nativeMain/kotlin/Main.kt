@@ -276,93 +276,102 @@ private fun App() {
                 first = {
                     // ============
                     //  Sidebar (Pack panel)
-                    Column(
-                        modifier = Modifier.fillMaxSize().background(c.panel)
-                            .verticalScroll(rememberScrollState()).padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            PackSwitcher(
-                                inPacks = vPacks,
-                                inActive = vActivePack,
-                                inOnSelect = { vActivePack = it; vReqMsg = null },
-                                inOnClose = { closePack(it) },
-                                inOnNew = { newPack() },
-                                inOnOpen = { openPackFile() },
-                                inModifier = Modifier.weight(1f),
-                            )
-                            IconBtn(MaterialSymbols.Save, "Save pack", inSize = 18.dp) { savePack() }
-                            OptionsMenu(
-                                inDark = vDark,
-                                inOnToggleTheme = { vDark = !vDark; persist() },
-                                inOnSaveAs = { saveAsPack() },
-                                inOnClosePack = { closePack(vActivePack) },
-                                inOnLoadDefault = { loadDefaultPack() },
-                            )
+                    Column(modifier = Modifier.fillMaxSize().background(c.panel)) {
+                        // Sticky header — pack switcher + section tabs stay pinned while the list scrolls.
+                        Column(
+                            modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                PackSwitcher(
+                                    inPacks = vPacks,
+                                    inActive = vActivePack,
+                                    inOnSelect = { vActivePack = it; vReqMsg = null },
+                                    inOnClose = { closePack(it) },
+                                    inOnNew = { newPack() },
+                                    inOnOpen = { openPackFile() },
+                                    inModifier = Modifier.weight(1f),
+                                )
+                                IconBtn(MaterialSymbols.Save, "Save pack", inSize = 18.dp) { savePack() }
+                                OptionsMenu(
+                                    inDark = vDark,
+                                    inOnToggleTheme = { vDark = !vDark; persist() },
+                                    inOnSaveAs = { saveAsPack() },
+                                    inOnClosePack = { closePack(vActivePack) },
+                                    inOnLoadDefault = { loadDefaultPack() },
+                                )
+                            }
+                            TabBar(listOf("Requests", "History", "Env (${vP?.variables?.size ?: 0})"), vSideTab) { vSideTab = it }
                         }
-                        TabBar(listOf("Requests", "History", "Env (${vP?.variables?.size ?: 0})"), vSideTab) { vSideTab = it }
                         Divider(color = c.border)
 
-                        when (vSideTab) {
-                            0 -> {
-                                if (vP == null) {
-                                    Text("No pack open — use the pack menu to open or create one.", color = c.dim, fontSize = 12.sp)
-                                } else {
-                                    vP.requests.forEach { vRs ->
-                                        key(vRs) {
-                                            RequestRow(
-                                                inRs = vRs,
-                                                inSelected = vRs === vP.active,
-                                                inOnOpen = { open(vRs) },
-                                                inOnRename = { vRenameTarget = vRs; vRenameText = vRs.req.name },
-                                                inOnDuplicate = { duplicate(vRs) },
-                                                inOnDelete = { vDeleteTarget = vRs },
-                                            )
-                                        }
-                                    }
-                                    OutlinedAction(MaterialSymbols.Add, "New request") { newRequest() }
-                                }
-                            }
-                            1 -> {
-                                if (vHistory.isEmpty()) Text("No requests sent yet.", color = c.dim, fontSize = 12.sp)
-                                vHistory.forEachIndexed { vI, vH ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
-                                            .clickable {
-                                                val vTarget = activePack() ?: return@clickable
-                                                val vRs = ReqState(vH.request.copy())
-                                                vTarget.requests.add(vRs); vTarget.openTabs.add(vRs); vTarget.active = vRs
-                                                vTarget.dirty = true; vSideTab = 0; vReqMsg = null
+                        // Scrollable list area below the pinned header.
+                        Column(
+                            modifier = Modifier.fillMaxWidth().weight(1f)
+                                .verticalScroll(rememberScrollState()).padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            when (vSideTab) {
+                                0 -> {
+                                    if (vP == null) {
+                                        Text("No pack open — use the pack menu to open or create one.", color = c.dim, fontSize = 12.sp)
+                                    } else {
+                                        vP.requests.forEach { vRs ->
+                                            key(vRs) {
+                                                RequestRow(
+                                                    inRs = vRs,
+                                                    inSelected = vRs === vP.active,
+                                                    inOnOpen = { open(vRs) },
+                                                    inOnRename = { vRenameTarget = vRs; vRenameText = vRs.req.name },
+                                                    inOnDuplicate = { duplicate(vRs) },
+                                                    inOnDelete = { vDeleteTarget = vRs },
+                                                )
                                             }
-                                            .padding(horizontal = 8.dp, vertical = 5.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        MethodTag(vH.method)
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(vH.url, color = c.text, fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
-                                            Text("#${vHistory.size - vI} · ${vH.timeMs} ms", color = c.dim, fontSize = 10.sp)
                                         }
-                                        Text(if (vH.status > 0) "${vH.status}" else "ERR", color = statusColor(vH.status), fontSize = 12.sp)
+                                        OutlinedAction(MaterialSymbols.Add, "New request") { newRequest() }
                                     }
                                 }
-                            }
-                            else -> {
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 16.dp)
-                                    Text("Variables", color = c.text, fontSize = 13.sp)
+                                1 -> {
+                                    if (vHistory.isEmpty()) Text("No requests sent yet.", color = c.dim, fontSize = 12.sp)
+                                    vHistory.forEachIndexed { vI, vH ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
+                                                .clickable {
+                                                    val vTarget = activePack() ?: return@clickable
+                                                    val vRs = ReqState(vH.request.copy())
+                                                    vTarget.requests.add(vRs); vTarget.openTabs.add(vRs); vTarget.active = vRs
+                                                    vTarget.dirty = true; vSideTab = 0; vReqMsg = null
+                                                }
+                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            MethodTag(vH.method)
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(vH.url, color = c.text, fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
+                                                Text("#${vHistory.size - vI} · ${vH.timeMs} ms", color = c.dim, fontSize = 10.sp)
+                                            }
+                                            Text(if (vH.status > 0) "${vH.status}" else "ERR", color = statusColor(vH.status), fontSize = 12.sp)
+                                        }
+                                    }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    TogglePill("Pack", vEnvScope == 0) { vEnvScope = 0 }
-                                    TogglePill("Global", vEnvScope == 1) { vEnvScope = 1 }
-                                }
-                                if (vEnvScope == 0) {
-                                    Text("Pack variables — {{name}} in this pack.", color = c.dim, fontSize = 11.sp)
-                                    if (vP == null) Text("No pack open.", color = c.dim, fontSize = 12.sp)
-                                    else KeyValEditor(vP.variables) { vNew -> vP.variables.clear(); vP.variables.addAll(vNew); vP.dirty = true }
-                                } else {
-                                    Text("Global variables override pack variables in every pack.", color = c.dim, fontSize = 11.sp)
-                                    KeyValEditor(vGlobalEnv) { vNew -> vGlobalEnv.clear(); vGlobalEnv.addAll(vNew); persist() }
+                                else -> {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 16.dp)
+                                        Text("Variables", color = c.text, fontSize = 13.sp)
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        TogglePill("Pack", vEnvScope == 0) { vEnvScope = 0 }
+                                        TogglePill("Global", vEnvScope == 1) { vEnvScope = 1 }
+                                    }
+                                    if (vEnvScope == 0) {
+                                        Text("Pack variables — {{name}} in this pack.", color = c.dim, fontSize = 11.sp)
+                                        if (vP == null) Text("No pack open.", color = c.dim, fontSize = 12.sp)
+                                        else KeyValEditor(vP.variables) { vNew -> vP.variables.clear(); vP.variables.addAll(vNew); vP.dirty = true }
+                                    } else {
+                                        Text("Global variables override pack variables in every pack.", color = c.dim, fontSize = 11.sp)
+                                        KeyValEditor(vGlobalEnv) { vNew -> vGlobalEnv.clear(); vGlobalEnv.addAll(vNew); persist() }
+                                    }
                                 }
                             }
                         }
