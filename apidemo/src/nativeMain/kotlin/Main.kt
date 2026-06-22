@@ -1105,7 +1105,10 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                 vShowRequest -> {
                     val vR = vReqShown!!
                     val vSentHeaders = if (!vPreview) inRs.response?.requestHeaders?.takeIf { it.isNotEmpty() } else null
-                    val vHeaders = if (vSentHeaders != null) vSentHeaders else parseHeaderLines(requestHeadersText(vR))
+                    // Synthesize wire-level headers (Host, Content-Length, User-Agent)
+                    // the engine adds without telling Ktor — same set httpie shows.
+                    val vRawHeaders = if (vSentHeaders != null) vSentHeaders else parseHeaderLines(requestHeadersText(vR))
+                    val vHeaders = synthesizeRequestHeaders(vR, vRawHeaders)
                     val vBody = if (!vR.method.allowsBody || vR.bodyType == BodyType.NONE) null else requestBodyText(vR)
                     HttpFlowView(
                         inStatusLine = formatRequestLine(vR, inRs.response?.httpVersion ?: "HTTP/1.1", c),
@@ -1149,7 +1152,7 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
         if (vReqHasContent || vRespHasContent) {
             Divider(color = c.border)
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -1173,7 +1176,6 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                         inRs.response = null
                         inRs.sentReq = null
                         inRs.preview = false
-                        vMsg = "Cleared."
                     },
                 )
             }
@@ -1389,12 +1391,72 @@ private fun formatRequestLine(inReq: ApiRequest, inHttpVersion: String, inColors
     pop()
     append("   ")
     pushStyle(SpanStyle(color = inColors.text))
-    append(inReq.url.ifEmpty { "/" })
+    append(urlPathOnly(inReq.url).ifEmpty { "/" })
     pop()
     append("   ")
     pushStyle(SpanStyle(color = inColors.dim))
     append(inHttpVersion)
     pop()
+}
+
+/* Pull the path (+ query) out of a URL, dropping scheme + host. The
+   request line in HTTP is "METHOD path HTTP/x.y" — the host lives on a
+   separate Host: header line, not in the path. Falls back to the input
+   string when no "://" is present (relative URL). */
+private fun urlPathOnly(inUrl: String): String {
+    val vIdx = inUrl.indexOf("://")
+    if (vIdx < 0) return inUrl
+    val vAfterScheme = inUrl.substring(vIdx + 3)
+    val vSlash = vAfterScheme.indexOf('/')
+    return if (vSlash < 0) "/" else vAfterScheme.substring(vSlash)
+}
+
+/* Extract the host (+ port) from a URL — used to synthesize a Host
+   header for display when the engine didn't surface one. */
+private fun urlHost(inUrl: String): String? {
+    val vIdx = inUrl.indexOf("://")
+    if (vIdx < 0) return null
+    val vAfterScheme = inUrl.substring(vIdx + 3)
+    val vSlash = vAfterScheme.indexOf('/')
+    val vAuthority = if (vSlash < 0) vAfterScheme else vAfterScheme.substring(0, vSlash)
+    return vAuthority.ifEmpty { null }
+}
+
+/* The user-agent string our Darwin engine sends is opaque to Ktor —
+   NSURLSession picks the default. Match what httpie does: identify
+   ourselves so the wire log isn't missing the field entirely. */
+private const val kUserAgent: String = "compose-apidemo/1.0"
+
+/* Combine Ktor's reported request headers with the ones the engine
+   adds at the wire level (Host, Content-Length, User-Agent) so the
+   Request tab shows the actual on-the-wire header set rather than
+   just the subset Ktor sees. Sorted alphabetically. */
+private fun synthesizeRequestHeaders(
+    inReq: ApiRequest,
+    inReported: List<Pair<String, String>>,
+): List<Pair<String, String>> {
+    val vByKey = inReported.associate { it.first.lowercase() to it }.toMutableMap()
+    urlHost(inReq.url)?.let { vHost ->
+        vByKey.getOrPut("host") { "Host" to vHost }
+    }
+    if (!vByKey.containsKey("user-agent")) {
+        vByKey["user-agent"] = "User-Agent" to kUserAgent
+    }
+    if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE && !vByKey.containsKey("content-length")) {
+        val vLen = computedBodyLength(inReq)
+        if (vLen != null) vByKey["content-length"] = "Content-Length" to vLen.toString()
+    }
+    return vByKey.values.sortedBy { it.first.lowercase() }
+}
+
+/* Body length in bytes for the headers synthesis. JSON / TEXT use the
+   raw UTF-8 byte count; FORM serialises and counts; FILE skips
+   (loading the file just for the count would be wasteful — the engine
+   sets the field anyway). */
+private fun computedBodyLength(inReq: ApiRequest): Int? = when (inReq.bodyType) {
+    BodyType.JSON, BodyType.TEXT -> inReq.body.encodeToByteArray().size
+    BodyType.FORM -> formEncode(inReq.form).encodeToByteArray().size
+    BodyType.FILE, BodyType.NONE -> null
 }
 
 /* Format the timing / size footer text shown bottom-right. */
@@ -1430,9 +1492,11 @@ private fun ViewerOverflowMenu(
     var vOpen by remember { mutableStateOf(false) }
     val vAnchor = rememberMenuAnchor()
 
-    val vHeadersText = if (inIsRequestTab) {
-        if (inSentRequestHeaders != null) headersText(inSentRequestHeaders)
-        else inRequest?.let { requestHeadersText(it) } ?: ""
+    val vHeadersText = if (inIsRequestTab && inRequest != null) {
+        val vRaw = inSentRequestHeaders ?: parseHeaderLines(requestHeadersText(inRequest))
+        headersText(synthesizeRequestHeaders(inRequest, vRaw))
+    } else if (inIsRequestTab) {
+        ""
     } else {
         inResponse?.headers?.let { headersText(it) } ?: ""
     }
@@ -1440,7 +1504,7 @@ private fun ViewerOverflowMenu(
     val vCanCopyBody = !(inIsImage && !inIsRequestTab)
 
     fun statusLineText(): String = if (inIsRequestTab && inRequest != null) {
-        "${inRequest.method.name} ${inRequest.url.ifEmpty { "/" }} ${inResponse?.httpVersion ?: "HTTP/1.1"}"
+        "${inRequest.method.name} ${urlPathOnly(inRequest.url).ifEmpty { "/" }} ${inResponse?.httpVersion ?: "HTTP/1.1"}"
     } else if (!inIsRequestTab && inResponse != null) {
         val vVer = inResponse.httpVersion
         if (inResponse.error != null) "$vVer FAILED"
@@ -1460,12 +1524,12 @@ private fun ViewerOverflowMenu(
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(4.dp))
             .clickable { vOpen = true }
             .menuAnchor(vAnchor)
-            .padding(6.dp),
+            .padding(horizontal = 6.dp, vertical = 2.dp),
     ) {
-        MaterialSymbolsOutlined(icon = MaterialSymbols.MoreHoriz, tint = c.dim, size = 18.dp)
+        MaterialSymbolsOutlined(icon = MaterialSymbols.MoreHoriz, tint = c.dim, size = 16.dp)
     }
     DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
         DropdownMenuItem(onClick = {
