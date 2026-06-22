@@ -224,7 +224,12 @@ private fun App(inDark: Boolean, inOnToggleTheme: () -> Unit) {
                     }
                 }
 
-                TabBar(listOf("Query (${vReq.params.size})", "Headers (${vReq.headers.size})", "Body"), vReqTab) { vReqTab = it }
+                val vHasBody = vReq.method.allowsBody && vReq.bodyType != BodyType.NONE && vReq.body.isNotBlank()
+                TabBar(
+                    listOf("Query (${vReq.params.size})", "Headers (${vReq.headers.size})", "Body"),
+                    vReqTab,
+                    inDots = if (vHasBody) setOf(2) else emptySet(),
+                ) { vReqTab = it }
                 when (vReqTab) {
                     0 -> KeyValEditor(vReq.params) { v -> edit { it.copy(params = v) } }
                     1 -> KeyValEditor(vReq.headers) { v -> edit { it.copy(headers = v) } }
@@ -481,7 +486,7 @@ private fun ResponseView(inLoading: Boolean, inResp: ApiResponse?, inTab: Int, i
 
         // Tabs.
         Box(modifier = Modifier.padding(horizontal = 6.dp)) {
-            TabBar(listOf("Body", "Headers" + (inResp?.let { " (${it.headers.size})" } ?: "")), inTab, inSelectTab)
+            TabBar(listOf("Body", "Headers" + (inResp?.let { " (${it.headers.size})" } ?: "")), inTab, inOnSelect = inSelectTab)
         }
         Divider(color = c.border)
 
@@ -578,15 +583,24 @@ private fun MethodTag(inMethod: ReqMethod) {
     Text(inMethod.name, color = methodColor(inMethod), fontSize = 10.sp, modifier = Modifier.width(40.dp))
 }
 
+/* Tab indices listed in inDots get a small accent dot after their label — used
+   to flag a tab that holds content (e.g. a non-empty request body). */
 @Composable
-private fun TabBar(inTabs: List<String>, inSelected: Int, inOnSelect: (Int) -> Unit) {
+private fun TabBar(inTabs: List<String>, inSelected: Int, inDots: Set<Int> = emptySet(), inOnSelect: (Int) -> Unit) {
     val c = LocalAppColors.current
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         inTabs.forEachIndexed { vI, vT ->
             val vSel = vI == inSelected
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(modifier = Modifier.clickable { inOnSelect(vI) }.padding(horizontal = 10.dp, vertical = 7.dp)) {
+                Row(
+                    modifier = Modifier.clickable { inOnSelect(vI) }.padding(horizontal = 10.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
                     Text(vT, color = if (vSel) c.accent else c.dim, fontSize = 13.sp)
+                    if (vI in inDots) {
+                        Box(modifier = Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
+                    }
                 }
                 Box(modifier = Modifier.height(2.dp).width(if (vSel) 24.dp else 0.dp).background(c.accent))
             }
