@@ -342,7 +342,8 @@ fun nativeComposeWindow(
                     }
 
                     is AppEvent.Key -> {
-                        focusedNode?.dispatchKeyEvent(KeyEventDispatch(event.event))
+                        val vConsumed = focusedNode?.dispatchKeyEvent(KeyEventDispatch(event.event)) ?: false
+                        if (!vConsumed) composeWindow.dispatchKeyShortcut(event.event)
                     }
 
                     is AppEvent.TextInput -> {

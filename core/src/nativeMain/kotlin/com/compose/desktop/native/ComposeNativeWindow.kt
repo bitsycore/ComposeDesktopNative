@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.input.key.KeyEvent
 import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.toKString
 import sdl3.SDL_GetRendererName
@@ -137,6 +138,16 @@ class ComposeNativeWindow constructor(
     fun setOnCloseRequest(inHandler: (() -> Boolean)?) { fOnCloseRequest = inHandler }
 
     // ============
+    //  Global key shortcuts
+
+    private var fOnKeyShortcut: ((KeyEvent) -> Boolean)? = null
+
+    /* Register a handler for key events the focused node didn't consume — for
+       app-wide shortcuts (Ctrl+S, etc.). Receives every unconsumed key (and all
+       keys when nothing is focused). Return true if handled. Pass null to clear. */
+    fun setOnKeyShortcut(inHandler: ((KeyEvent) -> Boolean)?) { fOnKeyShortcut = inHandler }
+
+    // ============
     //  Framework hooks — driven by composeWindow's main loop (which lives in
     //  the :window module, so these are public rather than internal). Not
     //  intended for app code.
@@ -153,6 +164,10 @@ class ComposeNativeWindow constructor(
     /* Driven by composeWindow's main loop on an OS close / Quit event. Returns
        true if the close should proceed (no handler, or the handler allowed it). */
     fun requestCloseFromUser(): Boolean = fOnCloseRequest?.invoke() ?: true
+
+    /* Driven by composeWindow's main loop for keys the focused node didn't
+       consume. Returns true if the shortcut handler handled it. */
+    fun dispatchKeyShortcut(inEvent: KeyEvent): Boolean = fOnKeyShortcut?.invoke(inEvent) ?: false
 }
 
 // ==================
