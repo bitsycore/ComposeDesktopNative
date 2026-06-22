@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
 import kotlin.time.TimeSource
 
 // ==================
@@ -50,6 +51,10 @@ class HttpRunner {
                     .sortedBy { it.first.lowercase() },
                 body = vBody,
             )
+        } catch (e: CancellationException) {
+            // The caller cancelled (Cancel button) — let it propagate so the
+            // request is dropped rather than reported as a failed response.
+            throw e
         } catch (e: Throwable) {
             ApiResponse(
                 ok = false,
