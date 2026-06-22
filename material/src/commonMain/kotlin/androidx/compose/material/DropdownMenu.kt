@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onGloballyPositioned
@@ -26,7 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PositionedPopup
+import androidx.compose.ui.window.Popup
 
 // ==================
 // MARK: DropdownMenu
@@ -66,20 +68,40 @@ fun DropdownMenu(
     content: @Composable () -> Unit,
 ) {
     if (!expanded) return
-    val vX: Dp = if (anchor != null) (anchor.position.x + offsetX.value.toInt()).dp else offsetX
-    val vY: Dp = if (anchor != null) (anchor.position.y + anchor.size.height + offsetY.value.toInt()).dp else offsetY
-    PositionedPopup(x = vX, y = vY, onDismissRequest = onDismissRequest) {
+    // Anchor edges (window coords, logical points). Without an anchor, offsetX/Y
+    // is the absolute open point.
+    val vAnchorTop = (anchor?.position?.y ?: 0) + offsetY.value.toInt()
+    val vAnchorBottom = vAnchorTop + (anchor?.size?.height ?: 0)
+    val vBaseX = (anchor?.position?.x ?: 0) + offsetX.value.toInt()
+
+    Popup(onDismissRequest = onDismissRequest, modal = false) {
+        // The fullscreen scrim measures the window; the menu measures itself. With
+        // both known we flip the menu above the anchor when it would overflow the
+        // bottom, and clamp X into the window — this renderer has no position
+        // provider that does it automatically like real Compose.
+        var vWin by remember { mutableStateOf(IntSize.Zero) }
+        var vMenu by remember { mutableStateOf(IntSize.Zero) }
         Box(
-            modifier = Modifier
-                .width(minWidth)
-                .background(MaterialTheme.colors.surface, DropdownMenuDefaults.Shape)
-                // No elevation/shadow in this renderer, so a hairline outline keeps
-                // the menu legible against similar-coloured content behind it.
-                .border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f), DropdownMenuDefaults.Shape)
-                .padding(vertical = 4.dp)
-                .clickable { /* swallow clicks landed inside the menu */ }
+            modifier = Modifier.fillMaxSize().onSizeChanged { vWin = it }.clickable { onDismissRequest() },
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) { content() }
+            val vBelowY = vAnchorBottom
+            val vAboveY = vAnchorTop - vMenu.height
+            val vY = if (vMenu.height > 0 && vWin.height > 0 && vBelowY + vMenu.height > vWin.height && vAboveY >= 0) vAboveY else vBelowY
+            val vX = if (vMenu.width > 0 && vWin.width > 0) vBaseX.coerceIn(0, (vWin.width - vMenu.width).coerceAtLeast(0)) else vBaseX
+            Box(
+                modifier = Modifier
+                    .offset(vX.dp, vY.dp)
+                    .onSizeChanged { vMenu = it }
+                    .width(minWidth)
+                    .background(MaterialTheme.colors.surface, DropdownMenuDefaults.Shape)
+                    // No elevation/shadow in this renderer, so a hairline outline keeps
+                    // the menu legible against similar-coloured content behind it.
+                    .border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f), DropdownMenuDefaults.Shape)
+                    .padding(vertical = 4.dp)
+                    .clickable { /* swallow clicks landed inside the menu */ }
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) { content() }
+            }
         }
     }
 }
