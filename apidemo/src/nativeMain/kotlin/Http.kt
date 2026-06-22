@@ -6,7 +6,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import okio.Buffer
+import okio.FileSystem
 import okio.GzipSource
+import okio.Path.Companion.toPath
 import okio.buffer
 import kotlin.time.TimeSource
 
@@ -32,14 +34,17 @@ class HttpRunner {
                 inReq.headers
                     .filter { it.enabled && it.key.isNotBlank() }
                     .forEach { header(it.key, it.value) }
-                if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE && inReq.body.isNotEmpty()) {
+                if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
                     when (inReq.bodyType) {
-                        BodyType.JSON -> contentType(ContentType.Application.Json)
-                        BodyType.TEXT -> contentType(ContentType.Text.Plain)
-                        BodyType.FORM -> contentType(ContentType.Application.FormUrlEncoded)
+                        BodyType.JSON -> { contentType(ContentType.Application.Json); if (inReq.body.isNotEmpty()) setBody(inReq.body) }
+                        BodyType.TEXT -> { contentType(ContentType.Text.Plain); if (inReq.body.isNotEmpty()) setBody(inReq.body) }
+                        BodyType.FORM -> { contentType(ContentType.Application.FormUrlEncoded); setBody(formEncode(inReq.form)) }
+                        BodyType.FILE -> if (inReq.body.isNotBlank()) {
+                            contentType(ContentType.Application.OctetStream)
+                            setBody(readFileBytes(inReq.body))
+                        }
                         BodyType.NONE -> {}
                     }
-                    setBody(inReq.body)
                 }
             }
             // Read the raw payload, then gunzip ourselves if needed. Ktor's
@@ -91,6 +96,10 @@ class HttpRunner {
 private fun isGzip(inEncoding: String?, inBytes: ByteArray): Boolean =
     inEncoding?.contains("gzip", ignoreCase = true) == true ||
         (inBytes.size >= 2 && inBytes[0] == 0x1f.toByte() && inBytes[1] == 0x8b.toByte())
+
+/* Read a file's raw bytes (used for a FILE request body). */
+private fun readFileBytes(inPath: String): ByteArray =
+    FileSystem.SYSTEM.read(inPath.trim().toPath()) { readByteArray() }
 
 /* Inflate a gzip stream to its original bytes via okio's GzipSource. */
 private fun gunzip(inBytes: ByteArray): ByteArray {

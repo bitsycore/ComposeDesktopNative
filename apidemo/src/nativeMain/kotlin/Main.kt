@@ -73,9 +73,10 @@ private class ReqState(inInitial: ApiRequest) {
     var response by mutableStateOf<ApiResponse?>(null)
     var loading by mutableStateOf(false)
     var job: Job? = null
-    var reqTab by mutableStateOf(0)
-    var respTab by mutableStateOf(0)
-    var imageKey: String? = null   // memory-resource key when the response is an image
+    var reqTab by mutableStateOf(0)       // panel 3 (build): 0 Query, 1 Headers, 2 Body
+    var viewTab by mutableStateOf(1)      // panel 4 (view): 0 Request, 1 Response
+    var preview by mutableStateOf(false)  // panel 4 showing the resolved, not-yet-sent request
+    var imageKey: String? = null          // memory-resource key when the response is an image
 }
 
 /* One open pack: its file path (null = never saved), a dirty flag (edits since
@@ -196,6 +197,7 @@ private fun App() {
         val vOriginal = inRs.req
         val vSend = resolveVars(vOriginal, effective(vP))
         inRs.loading = true; inRs.response = null; vReqMsg = null
+        inRs.preview = false; inRs.viewTab = 1   // sending → show the Response tab
         inRs.job = vScope.launch(Dispatchers.Main) {
             try {
                 val vR = withContext(Dispatchers.Default) { vRunner.run(vSend) }
@@ -355,6 +357,10 @@ private fun App() {
                                                         inOnOpen = { open(vRs) },
                                                         inOnRename = { vRenameTarget = vRs; vRenameText = vRs.req.name },
                                                         inOnDuplicate = { duplicate(vRs) },
+                                                        inOnCopyCurl = {
+                                                            currentClipboard.setText(toCurl(resolveVars(vRs.req, effective(vP))))
+                                                            vReqMsg = "Copied cURL."
+                                                        },
                                                         inOnDelete = { vDeleteTarget = vRs },
                                                     )
                                                 }
@@ -429,7 +435,9 @@ private fun App() {
                             Text("No request open — pick one from the sidebar.", color = c.dim)
                         }
                     } else {
+                        val vReq = vAct.req
                         Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+                            // Panel 1 — open-request tabs.
                             RequestTabStrip(
                                 inTabs = vP.openTabs,
                                 inActive = vAct,
@@ -438,63 +446,42 @@ private fun App() {
                                 inOnReorder = { vFrom, vTo -> reorderTabs(vFrom, vTo) },
                             )
                             Divider(color = c.border)
+
+                            // Panel 2 — unified method · url · send.
+                            UrlBar(
+                                inReq = vReq,
+                                inLoading = vAct.loading,
+                                inOnMethod = { m -> edit { it.copy(method = m) } },
+                                inOnUrl = { v -> edit { it.copy(url = v) } },
+                                inOnSend = { send(vAct) },
+                                inOnCancel = { cancel(vAct) },
+                            )
+                            Divider(color = c.border)
+
                             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                                 HorizontalSplitPane(
-                                    initialFirstSize = 540.dp,
-                                    minFirstSize = 360.dp,
+                                    initialFirstSize = 460.dp,
+                                    minFirstSize = 320.dp,
                                     minSecondSize = 320.dp,
                                     dividerColor = c.border,
                                     dividerHoverColor = c.accent,
                                     first = {
-                                        // Request editor (Request panel)
-                                        val vReq = vAct.req
-                                        Column(
-                                            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                                            verticalArrangement = Arrangement.spacedBy(14.dp),
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                Text(vReq.name, color = c.text, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                                                vReqMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
-                                                IconLabelChip(MaterialSymbols.FileCopy, "Duplicate") { duplicate(vAct) }
-                                                IconLabelChip(MaterialSymbols.Terminal, "Copy as cURL") {
-                                                    currentClipboard.setText(toCurl(resolveVars(vAct.req, effective(vP))))
-                                                    vReqMsg = "Copied cURL."
-                                                }
-                                            }
-
-                                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                MethodPicker(vReq.method) { m -> edit { it.copy(method = m) } }
-                                                ThinField(vReq.url, { v -> edit { it.copy(url = v) } }, inModifier = Modifier.weight(1f), inPlaceholder = "https://example.com/path", inOnEnter = { send(vAct) })
-                                                if (vAct.loading) {
-                                                    DangerButton("Cancel", MaterialSymbols.Stop) { cancel(vAct) }
-                                                } else {
-                                                    Button(onClick = { send(vAct) }) { BtnContent(MaterialSymbols.Send, "Send", c.onAccent) }
-                                                }
-                                            }
-
-                                            val vMissing = unresolvedVars(vReq, effective(vP))
-                                            if (vMissing.isNotEmpty()) {
-                                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                    MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 15.dp)
-                                                    Text("Undefined: ${vMissing.joinToString(", ") { "{{$it}}" }}", color = kWarnColor, fontSize = 11.sp)
-                                                }
-                                            }
-
-                                            val vHasBody = vReq.method.allowsBody && vReq.bodyType != BodyType.NONE && vReq.body.isNotBlank()
-                                            TabBar(
-                                                listOf("Query (${vReq.params.size})", "Headers (${vReq.headers.size})", "Body"),
-                                                vAct.reqTab,
-                                                inDots = if (vHasBody) setOf(2) else emptySet(),
-                                            ) { vAct.reqTab = it }
-                                            when (vAct.reqTab) {
-                                                0 -> KeyValEditor(vReq.params) { v -> edit { it.copy(params = v) } }
-                                                1 -> KeyValEditor(vReq.headers) { v -> edit { it.copy(headers = v) } }
-                                                else -> BodyEditor(vReq) { v -> edit(v) }
-                                            }
-                                        }
+                                        // Panel 3 — request building.
+                                        RequestBuilder(
+                                            inReq = vReq,
+                                            inRs = vAct,
+                                            inUnresolved = unresolvedVars(vReq, effective(vP)),
+                                            inMsg = vReqMsg,
+                                            inEdit = { t -> edit(t) },
+                                        )
                                     },
                                     second = {
-                                        ResponseView(vAct) { cancel(vAct) }
+                                        // Panel 4 — Request / Response viewer.
+                                        ViewerPanel(
+                                            inRs = vAct,
+                                            inResolved = resolveVars(vReq, effective(vP)),
+                                            inOnCancel = { cancel(vAct) },
+                                        )
                                     },
                                 )
                             }
@@ -630,6 +617,7 @@ private fun RequestRow(
     inOnOpen: () -> Unit,
     inOnRename: () -> Unit,
     inOnDuplicate: () -> Unit,
+    inOnCopyCurl: () -> Unit,
     inOnDelete: () -> Unit,
 ) {
     val c = LocalAppColors.current
@@ -651,6 +639,7 @@ private fun RequestRow(
             DropdownMenu(expanded = vMenu, onDismissRequest = { vMenu = false }, anchor = vAnchor, minWidth = 168.dp) {
                 DropdownMenuItem(onClick = { vMenu = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename") }
                 DropdownMenuItem(onClick = { vMenu = false; inOnDuplicate() }) { MenuRow(MaterialSymbols.FileCopy, "Duplicate") }
+                DropdownMenuItem(onClick = { vMenu = false; inOnCopyCurl() }) { MenuRow(MaterialSymbols.Terminal, "Copy as cURL") }
                 DropdownMenuItem(onClick = { vMenu = false; inOnDelete() }) { MenuRow(MaterialSymbols.Delete, "Delete", methodColor(ReqMethod.DELETE)) }
             }
         }
@@ -814,23 +803,90 @@ private fun OptionsMenu(
 // MARK: Method picker (dropdown)
 // ==================
 
+/* Panel 2 — one unified bar: a method dropdown (coloured label + unfold arrows),
+   a borderless URL field that melts into the bar, and Send (or Cancel). */
 @Composable
-private fun MethodPicker(inMethod: ReqMethod, inOnPick: (ReqMethod) -> Unit) {
+private fun UrlBar(
+    inReq: ApiRequest,
+    inLoading: Boolean,
+    inOnMethod: (ReqMethod) -> Unit,
+    inOnUrl: (String) -> Unit,
+    inOnSend: () -> Unit,
+    inOnCancel: () -> Unit,
+) {
+    val c = LocalAppColors.current
+    val vAnchor = rememberMenuAnchor()
+    var vOpen by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth().background(c.panel).padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box {
+            Row(
+                modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+                    .clickable { vOpen = true }.padding(horizontal = 6.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(inReq.method.name, color = methodColor(inReq.method), fontSize = 14.sp)
+                MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = methodColor(inReq.method), size = 16.dp)
+            }
+            DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
+                ReqMethod.entries.forEach { vM ->
+                    DropdownMenuItem(onClick = { inOnMethod(vM); vOpen = false }) {
+                        Text(vM.name, color = methodColor(vM), fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+
+        // Borderless URL field — no box, so it reads as part of the bar.
+        Box(
+            modifier = Modifier.weight(1f).onKeyEvent { ev ->
+                if (ev.key.type == KeyEventType.Down && (ev.key.keyCode == kScEnter || ev.key.keyCode == kScKpEnter)) { inOnSend(); true } else false
+            },
+        ) {
+            if (inReq.url.isEmpty()) Text("https://example.com/path", color = c.dim, fontSize = 14.sp)
+            BasicTextField(
+                value = inReq.url,
+                onValueChange = inOnUrl,
+                color = c.text,
+                cursorColor = c.accent,
+                selectionColor = c.accent.copy(alpha = 0.35f),
+                fontSize = 14.sp,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        if (inLoading) DangerButton("Cancel", MaterialSymbols.Stop) { inOnCancel() }
+        else Button(onClick = inOnSend) { BtnContent(MaterialSymbols.Send, "Send", c.onAccent) }
+    }
+}
+
+/* Bottom-of-panel-3 dropdown choosing the body type (None/Json/Text/Form/File). */
+@Composable
+private fun BodyTypeMenu(inType: BodyType, inEnabled: Boolean, inOnPick: (BodyType) -> Unit) {
+    val c = LocalAppColors.current
     val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Box {
-        Box(
-            modifier = Modifier.menuAnchor(vAnchor)
-                .clip(RoundedCornerShape(6.dp))
-                .background(methodColor(inMethod), RoundedCornerShape(6.dp))
-                .clickable { vOpen = true }
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) { Text(inMethod.name, color = Color.White, fontSize = 13.sp) }
+        Row(
+            modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+                .border(1.dp, c.border, RoundedCornerShape(6.dp))
+                .clickable { if (inEnabled) vOpen = true }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(inType.name, color = if (inEnabled) c.text else c.dim, fontSize = 13.sp)
+            MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = c.dim, size = 15.dp)
+        }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
-            ReqMethod.entries.forEach { vM ->
-                DropdownMenuItem(onClick = { inOnPick(vM); vOpen = false }) {
-                    Text(vM.name, color = methodColor(vM), fontSize = 13.sp)
+            BodyType.entries.forEach { vT ->
+                DropdownMenuItem(onClick = { inOnPick(vT); vOpen = false }) {
+                    Text(vT.name, color = if (vT == inType) c.accent else c.text, fontSize = 13.sp)
                 }
             }
         }
@@ -838,30 +894,124 @@ private fun MethodPicker(inMethod: ReqMethod, inOnPick: (ReqMethod) -> Unit) {
 }
 
 // ==================
-// MARK: Body editor
+// MARK: Panel 3 — request builder (Query / Headers / Body)
 // ==================
 
+/* Tabs to edit query params, headers and the body, a Preview toggle top-right,
+   and a body-type dropdown pinned at the bottom. */
 @Composable
-private fun BodyEditor(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
+private fun RequestBuilder(
+    inReq: ApiRequest,
+    inRs: ReqState,
+    inUnresolved: List<String>,
+    inMsg: String?,
+    inEdit: ((ApiRequest) -> ApiRequest) -> Unit,
+) {
     val c = LocalAppColors.current
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (!inReq.method.allowsBody) {
-            Text("${inReq.method.name} requests don't send a body.", color = c.dim, fontSize = 13.sp)
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BodyType.entries.forEach { vT ->
-                    TogglePill(vT.name, vT == inReq.bodyType) { inEdit { it.copy(bodyType = vT) } }
-                }
-            }
-            if (inReq.bodyType != BodyType.NONE) {
-                ThinField(
-                    inReq.body, { v -> inEdit { it.copy(body = v) } },
-                    inModifier = Modifier.fillMaxWidth().height(190.dp),
-                    inPlaceholder = if (inReq.bodyType == BodyType.JSON) "{ }" else "body",
-                    inSingleLine = false,
-                )
+    val vBodySet = inReq.method.allowsBody && when (inReq.bodyType) {
+        BodyType.NONE -> false
+        BodyType.FORM -> inReq.form.any { it.enabled && it.key.isNotBlank() }
+        else -> inReq.body.isNotBlank()
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header — request name + Preview toggle.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 10.dp, top = 12.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(inReq.name, color = c.text, fontSize = 17.sp, modifier = Modifier.weight(1f))
+            inMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
+            val vPreviewOn = inRs.preview
+            Box(
+                modifier = Modifier.clip(RoundedCornerShape(6.dp))
+                    .background(if (vPreviewOn) c.accent.copy(alpha = 0.20f) else Color.Transparent, RoundedCornerShape(6.dp))
+                    .border(1.dp, if (vPreviewOn) c.accent else c.border, RoundedCornerShape(6.dp))
+                    .clickable { inRs.preview = !inRs.preview; if (inRs.preview) inRs.viewTab = 0 }
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            ) {
+                BtnContent(MaterialSymbols.Visibility, "Preview", if (vPreviewOn) c.accent else c.dim, 14.dp)
             }
         }
+
+        if (inUnresolved.isNotEmpty()) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 15.dp)
+                Text("Undefined: ${inUnresolved.joinToString(", ") { "{{$it}}" }}", color = kWarnColor, fontSize = 11.sp)
+            }
+        }
+
+        Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+            TabBar(
+                listOf("Query (${inReq.params.size})", "Headers (${inReq.headers.size})", "Body"),
+                inRs.reqTab,
+                inDots = if (vBodySet) setOf(2) else emptySet(),
+            ) { inRs.reqTab = it }
+        }
+        Divider(color = c.border)
+
+        // Tab content — scrolls.
+        Box(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp)) {
+            when (inRs.reqTab) {
+                0 -> KeyValEditor(inReq.params) { v -> inEdit { it.copy(params = v) } }
+                1 -> KeyValEditor(inReq.headers) { v -> inEdit { it.copy(headers = v) } }
+                else -> BodyContent(inReq) { v -> inEdit(v) }
+            }
+        }
+
+        // Body-type selector pinned at the bottom.
+        Divider(color = c.border)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Body", color = c.dim, fontSize = 12.sp)
+            BodyTypeMenu(inReq.bodyType, inReq.method.allowsBody) { vT ->
+                inEdit { it.copy(bodyType = vT) }
+                inRs.reqTab = 2
+            }
+            if (!inReq.method.allowsBody) Text("${inReq.method.name} sends no body", color = c.dim, fontSize = 11.sp)
+        }
+    }
+}
+
+/* The body editing area for the current body type (driven by the bottom menu). */
+@Composable
+private fun BodyContent(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
+    val c = LocalAppColors.current
+    if (!inReq.method.allowsBody) {
+        Text("${inReq.method.name} requests don't send a body.", color = c.dim, fontSize = 13.sp)
+        return
+    }
+    when (inReq.bodyType) {
+        BodyType.NONE -> Text("No body — pick a type from the selector below.", color = c.dim, fontSize = 13.sp)
+        BodyType.JSON, BodyType.TEXT -> ThinField(
+            inReq.body, { v -> inEdit { it.copy(body = v) } },
+            inModifier = Modifier.fillMaxWidth().height(240.dp),
+            inPlaceholder = if (inReq.bodyType == BodyType.JSON) "{ }" else "text body",
+            inSingleLine = false,
+        )
+        BodyType.FORM -> KeyValEditor(inReq.form) { v -> inEdit { it.copy(form = v) } }
+        BodyType.FILE -> FileBody(inReq) { v -> inEdit(v) }
+    }
+}
+
+/* FILE body — pick a file; its path is stored in body and sent as raw bytes. */
+@Composable
+private fun FileBody(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
+    val c = LocalAppColors.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedAction(MaterialSymbols.InsertDriveFile, "Choose file…") {
+            showOpenFileDialog { vPath -> if (vPath != null) inEdit { it.copy(body = vPath) } }
+        }
+        if (inReq.body.isNotBlank()) Text(inReq.body, color = c.text, fontSize = 12.sp)
+        else Text("No file selected.", color = c.dim, fontSize = 12.sp)
     }
 }
 
@@ -869,115 +1019,154 @@ private fun BodyEditor(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -
 // MARK: Response
 // ==================
 
-/* Response result as a bordered panel: status header (with a Cancel chip while
-   in-flight), Body/Headers tabs, a scrollable (selectable) content area, and a
-   Copy / Save-as toolbar pinned to the bottom. Reads its live state from the
-   active ReqState so each open tab shows its own response. */
+/* Panel 4 — Request / Response viewer. Each tab stacks a HEADERS section over a
+   BODY section. "Request" shows the resolved request that would be sent (the
+   Preview); "Response" shows the result (image-aware). A copy / save toolbar
+   acts on whichever view is showing. */
 @Composable
-private fun ResponseView(inRs: ReqState, inOnCancel: () -> Unit) {
+private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -> Unit) {
     val c = LocalAppColors.current
     var vMsg by remember { mutableStateOf<String?>(null) }
-
-    val vLoading = inRs.loading
     val vResp = inRs.response
-    val vTab = inRs.respTab
+    val vLoading = inRs.loading
+    val vReqTab = inRs.viewTab == 0
 
-    val vBody = if (vResp != null) prettyJsonOrRaw(vResp.body).take(20000) else ""
-    val vHeaders = if (vResp != null) vResp.headers.joinToString("\n") { (vK, vV) -> "$vK: $vV" }.ifEmpty { "(no headers)" } else ""
-    val vShown = when {
-        vResp == null -> ""
-        vResp.error != null -> vResp.error
-        vTab == 0 -> vBody
-        else -> vHeaders
-    }
-    // Body tab + image content → render the picture instead of decoded text.
-    val vImageBody = vTab == 0 && vResp?.isImage == true && vResp.error == null && inRs.imageKey != null
+    val vRespBody = if (vResp != null) (vResp.error ?: prettyJsonOrRaw(vResp.body).take(20000)) else ""
+    val vRespHeaders = if (vResp != null) vResp.headers.joinToString("\n") { (vK, vV) -> "$vK: $vV" }.ifEmpty { "(no headers)" } else ""
+    val vRespImage = vResp?.isImage == true && vResp.error == null && inRs.imageKey != null
 
     Column(modifier = Modifier.fillMaxSize().background(c.panel)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 6.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("RESPONSE", color = c.dim, fontSize = 11.sp)
+            TabBar(listOf("Request", "Response"), inRs.viewTab) { inRs.viewTab = it; inRs.preview = false }
             Spacer(Modifier.weight(1f))
             when {
-                vLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = c.accent, strokeWidth = 2.dp)
-                    Text("Sending…", color = c.dim, fontSize = 13.sp)
+                vReqTab && inRs.preview -> Text("PREVIEW · not sent", color = kWarnColor, fontSize = 11.sp)
+                !vReqTab && vLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.size(14.dp), color = c.accent, strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
                     IconLabelChip(MaterialSymbols.Stop, "Cancel") { inOnCancel() }
                 }
-                vResp?.error != null -> StatusPill(0, "FAILED")
-                vResp != null -> {
+                !vReqTab && vResp?.error != null -> StatusPill(0, "FAILED")
+                !vReqTab && vResp != null -> {
                     StatusPill(vResp.status, "${vResp.status} ${vResp.statusText}")
-                    Text("${vResp.timeMs} ms", color = c.dim, fontSize = 12.sp)
-                    Text("${vResp.sizeBytes} B", color = c.dim, fontSize = 12.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text("${vResp.timeMs} ms · ${vResp.sizeBytes} B", color = c.dim, fontSize = 12.sp)
                 }
             }
         }
         Divider(color = c.border)
 
-        Box(modifier = Modifier.padding(horizontal = 6.dp)) {
-            TabBar(listOf("Body", "Headers" + (vResp?.let { " (${it.headers.size})" } ?: "")), vTab, inOnSelect = { inRs.respTab = it })
-        }
-        Divider(color = c.border)
-
-        Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 8.dp)) {
-            Box(
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
-                    .background(c.bg, RoundedCornerShape(8.dp))
-                    .border(1.dp, c.border, RoundedCornerShape(8.dp))
-                    .verticalScroll(rememberScrollState()).padding(12.dp),
-            ) {
-                when {
-                    vResp == null && !vLoading -> Text("Send a request to see the response.", color = c.dim, fontSize = 13.sp)
-                    vImageBody && !vLoading -> {
-                        val vKind = if (vResp?.contentType?.contains("svg", ignoreCase = true) == true) ResourceKind.Svg else ResourceKind.Raster
-                        Image(
-                            painter = painterResource(inRs.imageKey!!, vKind),
-                            contentDescription = "Response image",
-                            contentScale = ContentScale.Fit,
-                        )
+        Column(
+            modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (vReqTab) {
+                CodeSection("HEADERS", requestHeadersText(inResolved))
+                CodeSection("BODY", requestBodyText(inResolved))
+            } else if (vResp == null && !vLoading) {
+                Text("Send a request to see the response.", color = c.dim, fontSize = 13.sp)
+            } else {
+                CodeSection("HEADERS" + (vResp?.let { " (${it.headers.size})" } ?: ""), if (vLoading) "…" else vRespHeaders)
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("BODY", color = c.dim, fontSize = 11.sp)
+                    Box(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                            .background(c.bg, RoundedCornerShape(8.dp)).border(1.dp, c.border, RoundedCornerShape(8.dp)).padding(12.dp),
+                    ) {
+                        if (vRespImage && !vLoading) {
+                            val vKind = if (vResp?.contentType?.contains("svg", ignoreCase = true) == true) ResourceKind.Svg else ResourceKind.Raster
+                            Image(painter = painterResource(inRs.imageKey!!, vKind), contentDescription = "Response image", contentScale = ContentScale.Fit)
+                        } else {
+                            BasicTextField(
+                                value = if (vLoading) "…" else vRespBody.ifEmpty { "(empty)" },
+                                onValueChange = {}, readOnly = true,
+                                color = c.text, cursorColor = c.accent, selectionColor = c.accent.copy(alpha = 0.35f),
+                                fontSize = 12.sp, modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
-                    else -> BasicTextField(
-                        value = if (vLoading) "…" else vShown.ifEmpty { "(empty)" },
-                        onValueChange = {},
-                        readOnly = true,
-                        color = c.text,
-                        cursorColor = c.accent,
-                        selectionColor = c.accent.copy(alpha = 0.35f),
-                        fontSize = 12.sp,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                 }
             }
         }
 
+        // Toolbar — copy / save the current view's body.
+        Divider(color = c.border)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (!vImageBody) {
-                IconLabelChip(MaterialSymbols.ContentCopy, "Copy") {
-                    currentClipboard.setText(vShown); vMsg = "Copied."
-                }
+            val vImg = !vReqTab && vRespImage
+            val vText = if (vReqTab) requestBodyText(inResolved) else vRespBody
+            if (!vImg) {
+                IconLabelChip(MaterialSymbols.ContentCopy, "Copy") { currentClipboard.setText(vText); vMsg = "Copied." }
             }
             IconLabelChip(MaterialSymbols.Save, "Save as…") {
-                if (vImageBody) {
-                    val vImgBytes = vResp?.bytes ?: ByteArray(0)
+                if (vImg) {
+                    val vBytes = vResp?.bytes ?: ByteArray(0)
                     showSaveFileDialog(imageFileName(vResp?.contentType)) { vPath ->
-                        if (vPath != null) vMsg = writeBytesFile(vPath, vImgBytes)?.let { "Save failed: $it" } ?: "Saved."
+                        if (vPath != null) vMsg = writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" } ?: "Saved."
                     }
                 } else {
-                    showSaveFileDialog(if (vTab == 0) "response.json" else "headers.txt") { vPath ->
-                        if (vPath != null) vMsg = writeTextFile(vPath, vShown)?.let { "Save failed: $it" } ?: "Saved."
+                    showSaveFileDialog(if (vReqTab) "request.txt" else "response.json") { vPath ->
+                        if (vPath != null) vMsg = writeTextFile(vPath, vText)?.let { "Save failed: $it" } ?: "Saved."
                     }
                 }
             }
             Spacer(Modifier.weight(1f))
             vMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
         }
+    }
+}
+
+/* A labelled, read-only (selectable) code block used by the viewer sections. */
+@Composable
+private fun CodeSection(inLabel: String, inText: String) {
+    val c = LocalAppColors.current
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(inLabel, color = c.dim, fontSize = 11.sp)
+        Box(
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                .background(c.bg, RoundedCornerShape(8.dp)).border(1.dp, c.border, RoundedCornerShape(8.dp)).padding(12.dp),
+        ) {
+            BasicTextField(
+                value = inText.ifEmpty { "(empty)" }, onValueChange = {}, readOnly = true,
+                color = c.text, cursorColor = c.accent, selectionColor = c.accent.copy(alpha = 0.35f),
+                fontSize = 12.sp, modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/* The headers that would be sent — explicit enabled headers plus the inferred
+   Content-Type for the body type (unless one is already set). */
+private fun requestHeadersText(inReq: ApiRequest): String {
+    val vLines = mutableListOf<String>()
+    inReq.headers.filter { it.enabled && it.key.isNotBlank() }.forEach { vLines.add("${it.key}: ${it.value}") }
+    val vCt = when (inReq.bodyType) {
+        BodyType.JSON -> "application/json"
+        BodyType.TEXT -> "text/plain"
+        BodyType.FORM -> "application/x-www-form-urlencoded"
+        BodyType.FILE -> "application/octet-stream"
+        BodyType.NONE -> null
+    }
+    if (inReq.method.allowsBody && vCt != null && inReq.headers.none { it.enabled && it.key.equals("content-type", ignoreCase = true) }) {
+        vLines.add("Content-Type: $vCt")
+    }
+    return vLines.joinToString("\n").ifEmpty { "(no headers)" }
+}
+
+/* The body that would be sent, rendered as text for the preview. */
+private fun requestBodyText(inReq: ApiRequest): String {
+    if (!inReq.method.allowsBody) return "(no body)"
+    return when (inReq.bodyType) {
+        BodyType.NONE -> "(no body)"
+        BodyType.JSON, BodyType.TEXT -> inReq.body.ifEmpty { "(empty)" }
+        BodyType.FORM -> formEncode(inReq.form).ifEmpty { "(empty form)" }
+        BodyType.FILE -> if (inReq.body.isBlank()) "(no file)" else "(file) ${inReq.body}"
     }
 }
 

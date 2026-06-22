@@ -31,6 +31,7 @@ fun resolveVars(inReq: ApiRequest, inVars: List<KeyVal>): ApiRequest {
         params = inReq.params.map { it.copy(key = substituteVars(it.key, inVars), value = substituteVars(it.value, inVars)) },
         headers = inReq.headers.map { it.copy(key = substituteVars(it.key, inVars), value = substituteVars(it.value, inVars)) },
         body = substituteVars(inReq.body, inVars),
+        form = inReq.form.map { it.copy(key = substituteVars(it.key, inVars), value = substituteVars(it.value, inVars)) },
     )
 }
 
@@ -45,7 +46,12 @@ fun unresolvedVars(inReq: ApiRequest, inVars: List<KeyVal>): List<String> {
         append(inReq.url).append('\n')
         inReq.params.forEach { append(it.key).append('\n').append(it.value).append('\n') }
         inReq.headers.forEach { append(it.key).append('\n').append(it.value).append('\n') }
-        if (inReq.method.allowsBody) append(inReq.body)
+        if (inReq.method.allowsBody) {
+            when (inReq.bodyType) {
+                BodyType.FORM -> inReq.form.forEach { append(it.key).append('\n').append(it.value).append('\n') }
+                else -> append(inReq.body)
+            }
+        }
     }
     return kVarRegex.findAll(vText)
         .map { it.groupValues[1] }
@@ -71,21 +77,31 @@ fun toCurl(inReq: ApiRequest): String {
         .filter { it.enabled && it.key.isNotBlank() }
         .forEach { vSb.append(" \\\n  -H ").append(shellQuote("${it.key}: ${it.value}")) }
 
-    if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE && inReq.body.isNotEmpty()) {
+    if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
         val vContentType = when (inReq.bodyType) {
             BodyType.JSON -> "application/json"
             BodyType.TEXT -> "text/plain"
             BodyType.FORM -> "application/x-www-form-urlencoded"
+            BodyType.FILE -> "application/octet-stream"
             BodyType.NONE -> null
         }
         val vHasCt = inReq.headers.any { it.enabled && it.key.equals("content-type", ignoreCase = true) }
         if (vContentType != null && !vHasCt) {
             vSb.append(" \\\n  -H ").append(shellQuote("Content-Type: $vContentType"))
         }
-        vSb.append(" \\\n  --data ").append(shellQuote(inReq.body))
+        when (inReq.bodyType) {
+            BodyType.FORM -> if (inReq.form.any { it.enabled && it.key.isNotBlank() }) vSb.append(" \\\n  --data ").append(shellQuote(formEncode(inReq.form)))
+            BodyType.FILE -> if (inReq.body.isNotBlank()) vSb.append(" \\\n  --data-binary ").append(shellQuote("@${inReq.body}"))
+            else -> if (inReq.body.isNotEmpty()) vSb.append(" \\\n  --data ").append(shellQuote(inReq.body))
+        }
     }
     return vSb.toString()
 }
+
+/* URL-encode enabled form fields into an application/x-www-form-urlencoded body. */
+fun formEncode(inForm: List<KeyVal>): String =
+    inForm.filter { it.enabled && it.key.isNotBlank() }
+        .joinToString("&") { "${urlEncode(it.key)}=${urlEncode(it.value)}" }
 
 /* The request URL with its enabled query params appended (percent-encoded). */
 private fun urlWithParams(inReq: ApiRequest): String {

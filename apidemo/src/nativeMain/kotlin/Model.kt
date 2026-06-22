@@ -68,7 +68,8 @@ data class ApiRequest(
     val params: List<KeyVal> = emptyList(),
     val headers: List<KeyVal> = emptyList(),
     val bodyType: BodyType = BodyType.NONE,
-    val body: String = "",
+    val body: String = "",                       // JSON / TEXT content, or the file path when bodyType == FILE
+    val form: List<KeyVal> = emptyList(),        // key/value fields when bodyType == FORM
 )
 
 /* A toggleable key/value row, used for both query params and headers. */
@@ -84,7 +85,7 @@ val ReqMethod.allowsBody: Boolean
         this == ReqMethod.PATCH || this == ReqMethod.DELETE
 
 @Serializable
-enum class BodyType { NONE, JSON, TEXT, FORM }
+enum class BodyType { NONE, JSON, TEXT, FORM, FILE }
 
 // ==================
 // MARK: Response (runtime only — not part of a pack)
