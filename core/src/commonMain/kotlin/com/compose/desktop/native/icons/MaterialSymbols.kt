@@ -84,6 +84,7 @@ object MaterialSymbols {
 	const val CheckCircle     = 0xe86c
 	const val Cancel          = 0xe5c9
 	const val Done            = 0xe876
+	const val Lock            = 0xe897
 
 	// ============
 	//  Toggleables

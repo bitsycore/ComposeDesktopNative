@@ -1116,6 +1116,7 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                         inImagePainter = null,
                         inHeadersCollapsed = vHeadersCollapsed,
                         inOnToggleCollapse = { vHeadersCollapsed = !vHeadersCollapsed },
+                        inShowSecureLock = isTlsValidated(vR.url, inRs.response),
                     )
                 }
                 vResp == null && !vLoading -> ViewerEmpty(MaterialSymbols.Download, "Not received")
@@ -1134,6 +1135,7 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                         } else null,
                         inHeadersCollapsed = vHeadersCollapsed,
                         inOnToggleCollapse = { vHeadersCollapsed = !vHeadersCollapsed },
+                        inShowSecureLock = isTlsValidated(inRs.sentReq?.url ?: inResolved.url, vResp),
                     )
                 }
             }
@@ -1199,12 +1201,13 @@ private fun HttpFlowView(
     inImagePainter: Painter?,
     inHeadersCollapsed: Boolean,
     inOnToggleCollapse: () -> Unit,
+    inShowSecureLock: Boolean = false,
 ) {
     val c = LocalAppColors.current
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
-        // Status line with collapse arrow on the left.
+        // Status line: collapse arrow + optional lock + status text.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1218,6 +1221,14 @@ private fun HttpFlowView(
                 size = 16.dp,
             )
             Spacer(Modifier.width(6.dp))
+            if (inShowSecureLock) {
+                MaterialSymbolsOutlined(
+                    icon = MaterialSymbols.Lock,
+                    tint = Color(0xFF36B37E),  // green — TLS verified by OS
+                    size = 14.dp,
+                )
+                Spacer(Modifier.width(6.dp))
+            }
             Text(inStatusLine, color = c.text, fontSize = 13.sp)
         }
         // Headers as a key/value table — only when not collapsed.
@@ -1396,6 +1407,19 @@ private fun formatTimingSize(inResp: ApiResponse): String {
         else -> "${(inResp.sizeBytes + 512 * 1024) / (1024 * 1024)} MB"
     }
     return "$vSize, ${inResp.timeMs} ms"
+}
+
+/* TLS validation indicator: only true when the URL is https AND we got
+   a real response back (i.e. the OS engine completed the TLS handshake
+   without an error). The engines we ship — NSURLSession on macOS,
+   WinHttp on Windows, libcurl on Linux — all reject an untrusted
+   certificate by default, so a non-error response is implicit proof
+   that the OS validated the chain. */
+private fun isTlsValidated(inUrl: String, inResp: ApiResponse?): Boolean {
+    if (!inUrl.startsWith("https://", ignoreCase = true)) return false
+    if (inResp == null) return false
+    if (inResp.error != null) return false
+    return inResp.status > 0
 }
 
 /* Parse "Key: value\nKey2: value2" into a list of pairs so the headers
