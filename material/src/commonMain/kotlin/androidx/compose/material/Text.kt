@@ -3,6 +3,8 @@ package androidx.compose.material
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.selection.LocalInSelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -31,16 +33,30 @@ fun Text(
     fontFamily: String? = null,
     fontVariationSettings: List<FontVariation>? = null,
 ) {
-    BasicText(
-        text = text,
-        modifier = modifier,
-        color = color,
-        fontSize = fontSize,
-        textAlign = textAlign,
-        softWrap = softWrap,
-        fontFamily = fontFamily,
-        fontVariationSettings = fontVariationSettings,
-    )
+    // Inside a SelectionContainer, render as a read-only BasicTextField
+    // so the existing drag-select + Cmd/Ctrl+C copy path takes over.
+    // Outside, stick with the cheaper non-selectable BasicText.
+    // Caveat: BasicTextField doesn't yet honour textAlign / softWrap /
+    // fontFamily / fontVariationSettings — selection trades a bit of
+    // styling for the copy gesture.
+    if (LocalInSelectionContainer.current) {
+        BasicTextField(
+            value = text, onValueChange = {}, readOnly = true,
+            color = color, fontSize = fontSize,
+            modifier = modifier,
+        )
+    } else {
+        BasicText(
+            text = text,
+            modifier = modifier,
+            color = color,
+            fontSize = fontSize,
+            textAlign = textAlign,
+            softWrap = softWrap,
+            fontFamily = fontFamily,
+            fontVariationSettings = fontVariationSettings,
+        )
+    }
 }
 
 // ==================
@@ -71,6 +87,20 @@ fun Text(
     fontFamily: String? = null,
     fontVariationSettings: List<FontVariation>? = null,
 ) {
+    // Inside a SelectionContainer the span colours are dropped — fall
+    // back to a plain selectable BasicTextField on the AnnotatedString's
+    // backing text. Trading colour for selection here matches what
+    // every other text-rendering surface in this re-impl does today;
+    // upgrading would require BasicTextField to carry per-char colour
+    // spans, which the Skia / SDL3 text path doesn't.
+    if (LocalInSelectionContainer.current) {
+        BasicTextField(
+            value = text.text, onValueChange = {}, readOnly = true,
+            color = color, fontSize = fontSize,
+            modifier = modifier,
+        )
+        return
+    }
     val vLines = splitIntoRunLines(text)
     androidx.compose.foundation.layout.Column(modifier = modifier) {
         for (vLine in vLines) {
