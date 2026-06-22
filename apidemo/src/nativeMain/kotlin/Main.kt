@@ -1142,7 +1142,8 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
         }
 
         // ============
-        //  Bottom bar: copy / save on the left, timing+size on the right.
+        //  Bottom bar: status message on the left, timing/size + 3-dot
+        //  overflow menu on the right.
         val vReqHasContent = vShowRequest && vReqShown != null
         val vRespHasContent = !vShowRequest && vResp != null
         if (vReqHasContent || vRespHasContent) {
@@ -1152,32 +1153,29 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val vImg = vRespHasContent && vRespImage
-                val vText = if (vReqHasContent) requestBodyText(vReqShown!!) else vRespBody
-                if (!vImg) {
-                    IconLabelChip(MaterialSymbols.ContentCopy, "Copy") { currentClipboard.setText(vText); vMsg = "Copied." }
-                }
-                IconLabelChip(MaterialSymbols.Save, "Save as…") {
-                    if (vImg) {
-                        val vBytes = vResp?.bytes ?: ByteArray(0)
-                        showSaveFileDialog(imageFileName(vResp?.contentType)) { vPath ->
-                            if (vPath != null) vMsg = writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" } ?: "Saved."
-                        }
-                    } else {
-                        showSaveFileDialog(if (vReqHasContent) "request.txt" else "response.json") { vPath ->
-                            if (vPath != null) vMsg = writeTextFile(vPath, vText)?.let { "Save failed: $it" } ?: "Saved."
-                        }
-                    }
-                }
-                vMsg?.let {
-                    Spacer(Modifier.width(8.dp))
-                    Text(it, color = c.dim, fontSize = 11.sp)
-                }
+                vMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
                 Spacer(Modifier.weight(1f))
-                // Timing / size: bottom-right footer, only on response with data.
                 if (vRespHasContent && vResp != null && vResp.error == null) {
                     Text(formatTimingSize(vResp), color = c.dim, fontSize = 11.sp)
+                    Spacer(Modifier.width(8.dp))
                 }
+                ViewerOverflowMenu(
+                    inIsRequestTab = vShowRequest,
+                    inRequest = if (vReqHasContent) vReqShown else null,
+                    inSentRequestHeaders = inRs.response?.requestHeaders?.takeIf { it.isNotEmpty() },
+                    inResponse = if (vRespHasContent) vResp else null,
+                    inIsImage = vRespHasContent && vRespImage,
+                    inResponseBody = vRespBody,
+                    inOnMessage = { vMsg = it },
+                    inOnClear = {
+                        inRs.imageKey?.let { removeMemoryResource(it) }
+                        inRs.imageKey = null
+                        inRs.response = null
+                        inRs.sentReq = null
+                        inRs.preview = false
+                        vMsg = "Cleared."
+                    },
+                )
             }
         }
     }
@@ -1407,6 +1405,104 @@ private fun formatTimingSize(inResp: ApiResponse): String {
         else -> "${(inResp.sizeBytes + 512 * 1024) / (1024 * 1024)} MB"
     }
     return "$vSize, ${inResp.timeMs} ms"
+}
+
+// ==================
+// MARK: ViewerOverflowMenu — 3-dot menu in the bottom-right of the viewer
+// ==================
+
+/* Replaces the inline Copy / Save chips with a single MoreHoriz menu.
+   Copy actions target whichever tab is showing (request or response);
+   Clear is global — wipes the response, sentReq, preview state, and any
+   memory-backed image resource for the current request. */
+@Composable
+private fun ViewerOverflowMenu(
+    inIsRequestTab: Boolean,
+    inRequest: ApiRequest?,
+    inSentRequestHeaders: List<Pair<String, String>>?,
+    inResponse: ApiResponse?,
+    inIsImage: Boolean,
+    inResponseBody: String,
+    inOnMessage: (String) -> Unit,
+    inOnClear: () -> Unit,
+) {
+    val c = LocalAppColors.current
+    var vOpen by remember { mutableStateOf(false) }
+    val vAnchor = rememberMenuAnchor()
+
+    val vHeadersText = if (inIsRequestTab) {
+        if (inSentRequestHeaders != null) headersText(inSentRequestHeaders)
+        else inRequest?.let { requestHeadersText(it) } ?: ""
+    } else {
+        inResponse?.headers?.let { headersText(it) } ?: ""
+    }
+    val vBodyText = if (inIsRequestTab) inRequest?.let { requestBodyText(it) } ?: "" else inResponseBody
+    val vCanCopyBody = !(inIsImage && !inIsRequestTab)
+
+    fun statusLineText(): String = if (inIsRequestTab && inRequest != null) {
+        "${inRequest.method.name} ${inRequest.url.ifEmpty { "/" }} ${inResponse?.httpVersion ?: "HTTP/1.1"}"
+    } else if (!inIsRequestTab && inResponse != null) {
+        val vVer = inResponse.httpVersion
+        if (inResponse.error != null) "$vVer FAILED"
+        else "$vVer ${inResponse.status} ${inResponse.statusText.uppercase()}"
+    } else ""
+
+    fun copyAll(): String = buildString {
+        appendLine(statusLineText())
+        if (vHeadersText.isNotBlank() && vHeadersText != "(no headers)") {
+            appendLine(vHeadersText)
+        }
+        if (vBodyText.isNotBlank() && vBodyText != "(no body)") {
+            appendLine()
+            append(vBodyText)
+        }
+    }.trimEnd()
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .clickable { vOpen = true }
+            .menuAnchor(vAnchor)
+            .padding(6.dp),
+    ) {
+        MaterialSymbolsOutlined(icon = MaterialSymbols.MoreHoriz, tint = c.dim, size = 18.dp)
+    }
+    DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
+        DropdownMenuItem(onClick = {
+            currentClipboard.setText(copyAll())
+            inOnMessage("Copied all.")
+            vOpen = false
+        }) { Text("Copy all") }
+        DropdownMenuItem(onClick = {
+            currentClipboard.setText(vHeadersText)
+            inOnMessage("Copied headers.")
+            vOpen = false
+        }) { Text("Copy headers") }
+        if (vCanCopyBody) {
+            DropdownMenuItem(onClick = {
+                currentClipboard.setText(vBodyText)
+                inOnMessage("Copied body.")
+                vOpen = false
+            }) { Text("Copy body") }
+        }
+        DropdownMenuItem(onClick = {
+            if (inIsImage && !inIsRequestTab) {
+                val vBytes = inResponse?.bytes ?: ByteArray(0)
+                showSaveFileDialog(imageFileName(inResponse?.contentType)) { vPath ->
+                    if (vPath != null) inOnMessage(writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" } ?: "Saved.")
+                }
+            } else {
+                showSaveFileDialog(if (inIsRequestTab) "request.txt" else "response.json") { vPath ->
+                    if (vPath != null) inOnMessage(writeTextFile(vPath, vBodyText)?.let { "Save failed: $it" } ?: "Saved.")
+                }
+            }
+            vOpen = false
+        }) { Text("Save body") }
+        Divider(color = c.border, modifier = Modifier.padding(vertical = 4.dp))
+        DropdownMenuItem(onClick = { inOnClear(); vOpen = false }) {
+            Text("Clear", color = Color(0xFFFF5630))
+        }
+    }
 }
 
 /* TLS validation indicator: only true when the URL is https AND we got
