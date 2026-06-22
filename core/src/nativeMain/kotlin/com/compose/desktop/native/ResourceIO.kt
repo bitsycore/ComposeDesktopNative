@@ -165,14 +165,24 @@ private val kArchive: ComposeResourceArchive? by lazy {
 // MARK: Public API
 // ==================
 
-/* Reads a bundled resource's raw bytes by its path inside data.kres
-   (e.g. "drawable/logo.png"). Returns null when the archive is missing or the
-   entry isn't found. */
+/* Lets an app feed the image pipeline bytes it produced at runtime (e.g. a
+   downloaded PNG) under a synthetic path, so painterResource(key) / Image(...)
+   render it through the same decode + cache path as bundled drawables. Use a
+   unique key per distinct content — renderers cache decoded textures by path,
+   so reusing a key keeps showing the first bytes. */
+private val kMemoryResources = mutableMapOf<String, ByteArray>()
+
+fun registerMemoryResource(inKey: String, inBytes: ByteArray) { kMemoryResources[inKey] = inBytes }
+
+fun removeMemoryResource(inKey: String) { kMemoryResources.remove(inKey) }
+
+/* Reads a resource's raw bytes — an in-memory resource if registered under the
+   path, otherwise the bundled entry inside data.kres. Null when neither exists. */
 @OptIn(ExperimentalForeignApi::class)
 fun loadComposeResourceBytes(inRelativePath: String): ByteArray? =
-	kArchive?.readBytes(inRelativePath)
+	kMemoryResources[inRelativePath] ?: kArchive?.readBytes(inRelativePath)
 
-/* True when an entry exists in the bundled archive. Cheap (map lookup). */
+/* True when an entry exists in memory or the bundled archive. Cheap. */
 @OptIn(ExperimentalForeignApi::class)
 fun hasComposeResource(inRelativePath: String): Boolean =
-	kArchive?.has(inRelativePath) == true
+	kMemoryResources.containsKey(inRelativePath) || kArchive?.has(inRelativePath) == true
