@@ -1247,7 +1247,7 @@ private fun KeyValEditor(inRows: List<KeyVal>, inOnChange: (List<KeyVal>) -> Uni
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (inRows.isNotEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Spacer(Modifier.width(20.dp))
+                Spacer(Modifier.width(28.dp))
                 Text("KEY", color = c.dim, fontSize = 11.sp, modifier = Modifier.weight(1f))
                 Text("VALUE", color = c.dim, fontSize = 11.sp, modifier = Modifier.weight(1.4f))
                 Spacer(Modifier.width(30.dp))
@@ -1255,10 +1255,19 @@ private fun KeyValEditor(inRows: List<KeyVal>, inOnChange: (List<KeyVal>) -> Uni
         }
         inRows.forEachIndexed { vI, vKv ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = vKv.enabled,
-                    onCheckedChange = { vOn -> inOnChange(inRows.mapIndexed { vJ, vR -> if (vJ == vI) vR.copy(enabled = vOn) else vR }) },
-                )
+                // Whole cell toggles (a bare 20dp checkbox is a fiddly target in a
+                // taller row); the inner Checkbox is just the visual.
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(6.dp))
+                        .clickable { inOnChange(inRows.mapIndexed { vJ, vR -> if (vJ == vI) vR.copy(enabled = !vR.enabled) else vR }) }
+                        .padding(4.dp),
+                ) {
+                    Checkbox(
+                        checked = vKv.enabled,
+                        onCheckedChange = null,
+                        colors = CheckboxDefaults.colors(checkedColor = c.accent, uncheckedColor = c.dim, checkmarkColor = c.onAccent),
+                    )
+                }
                 ThinField(vKv.key, { v -> inOnChange(inRows.mapIndexed { vJ, vR -> if (vJ == vI) vR.copy(key = v) else vR }) }, inModifier = Modifier.weight(1f), inPlaceholder = "key")
                 ThinField(vKv.value, { v -> inOnChange(inRows.mapIndexed { vJ, vR -> if (vJ == vI) vR.copy(value = v) else vR }) }, inModifier = Modifier.weight(1.4f), inPlaceholder = "value")
                 IconBtn(MaterialSymbols.Close, "Remove", inSize = 16.dp) { inOnChange(inRows.filterIndexed { vJ, _ -> vJ != vI }) }
