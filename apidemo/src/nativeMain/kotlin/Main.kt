@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.translate
 import androidx.compose.ui.draw.zIndex
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.graphics.RoundedCornerShape
 import androidx.compose.ui.platform.currentClipboard
 import androidx.compose.ui.unit.Dp
@@ -246,12 +247,26 @@ private fun App() {
 
     // ============
     //  Warn-on-quit: persist always; veto if anything is unsaved-to-file.
+    //  Plus app-wide keyboard shortcuts (work even with nothing focused).
     DisposableEffect(Unit) {
         vWindow.setOnCloseRequest {
             persist()
             if (vPacks.any { it.dirty }) { vQuitDialog = true; false } else true
         }
-        onDispose { vWindow.setOnCloseRequest(null) }
+        vWindow.setOnKeyShortcut { vKey ->
+            if (vKey.type != KeyEventType.Down) return@setOnKeyShortcut false
+            val vPrimary = vKey.modifiers.ctrl || vKey.modifiers.meta
+            when {
+                vPrimary && vKey.keyCode == kScS -> { savePack(); true }
+                vPrimary && (vKey.keyCode == kScEnter || vKey.keyCode == kScKpEnter) -> {
+                    activePack()?.active?.let { send(it) }; true
+                }
+                vPrimary && vKey.keyCode == kScN -> { newRequest(); true }
+                vPrimary && vKey.keyCode == kScW -> { activePack()?.active?.let { closeTab(it) }; true }
+                else -> false
+            }
+        }
+        onDispose { vWindow.setOnCloseRequest(null); vWindow.setOnKeyShortcut(null) }
     }
 
     val vC = if (vDark) DarkColors else LightColors
@@ -316,16 +331,18 @@ private fun App() {
                                     if (vP == null) {
                                         Text("No pack open — use the pack menu to open or create one.", color = c.dim, fontSize = 12.sp)
                                     } else {
-                                        vP.requests.forEach { vRs ->
-                                            key(vRs) {
-                                                RequestRow(
-                                                    inRs = vRs,
-                                                    inSelected = vRs === vP.active,
-                                                    inOnOpen = { open(vRs) },
-                                                    inOnRename = { vRenameTarget = vRs; vRenameText = vRs.req.name },
-                                                    inOnDuplicate = { duplicate(vRs) },
-                                                    inOnDelete = { vDeleteTarget = vRs },
-                                                )
+                                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            vP.requests.forEach { vRs ->
+                                                key(vRs) {
+                                                    RequestRow(
+                                                        inRs = vRs,
+                                                        inSelected = vRs === vP.active,
+                                                        inOnOpen = { open(vRs) },
+                                                        inOnRename = { vRenameTarget = vRs; vRenameText = vRs.req.name },
+                                                        inOnDuplicate = { duplicate(vRs) },
+                                                        inOnDelete = { vDeleteTarget = vRs },
+                                                    )
+                                                }
                                             }
                                         }
                                         OutlinedAction(MaterialSymbols.Add, "New request") { newRequest() }
@@ -432,7 +449,7 @@ private fun App() {
 
                                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                                                 MethodPicker(vReq.method) { m -> edit { it.copy(method = m) } }
-                                                ThinField(vReq.url, { v -> edit { it.copy(url = v) } }, inModifier = Modifier.weight(1f), inPlaceholder = "https://example.com/path")
+                                                ThinField(vReq.url, { v -> edit { it.copy(url = v) } }, inModifier = Modifier.weight(1f), inPlaceholder = "https://example.com/path", inOnEnter = { send(vAct) })
                                                 if (vAct.loading) {
                                                     DangerButton("Cancel", MaterialSymbols.Stop) { cancel(vAct) }
                                                 } else {
@@ -728,7 +745,7 @@ private fun RequestTabStrip(
                 ) {
                     Box(modifier = Modifier.size(7.dp).background(methodColor(vReq.method), RoundedCornerShape(4.dp)))
                     Text(vReq.name, color = if (vSel) c.text else c.dim, fontSize = 13.sp)
-                    if (vRs.loading) Text("…", color = c.accent, fontSize = 13.sp)
+                    if (vRs.loading) CircularProgressIndicator(modifier = Modifier.size(12.dp), color = c.accent, strokeWidth = 1.5.dp)
                     IconBtn(MaterialSymbols.Close, "Close", inSize = 13.dp) { inOnClose(vRs) }
                 }
             }
@@ -869,6 +886,7 @@ private fun ResponseView(inRs: ReqState, inOnCancel: () -> Unit) {
             Spacer(Modifier.weight(1f))
             when {
                 vLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = c.accent, strokeWidth = 2.dp)
                     Text("Sending…", color = c.dim, fontSize = 13.sp)
                     IconLabelChip(MaterialSymbols.Stop, "Cancel") { inOnCancel() }
                 }
@@ -1027,13 +1045,19 @@ private fun TogglePill(inLabel: String, inSelected: Boolean, inOnClick: () -> Un
 /* Compact single-line (or fixed-height multi-line) input — a BasicTextField in
    a slim bordered box, much shorter than the 56 dp Material OutlinedTextField. */
 @Composable
-private fun ThinField(inValue: String, inOnChange: (String) -> Unit, inModifier: Modifier = Modifier, inPlaceholder: String = "", inSingleLine: Boolean = true) {
+private fun ThinField(inValue: String, inOnChange: (String) -> Unit, inModifier: Modifier = Modifier, inPlaceholder: String = "", inSingleLine: Boolean = true, inOnEnter: (() -> Unit)? = null) {
     val c = LocalAppColors.current
+    // Box is an ancestor of the field, so it sees Enter the single-line field
+    // leaves unconsumed (it propagates up the focus → root chain).
+    var vBoxMod = inModifier.clip(RoundedCornerShape(6.dp))
+        .background(c.field, RoundedCornerShape(6.dp))
+        .border(1.dp, c.border, RoundedCornerShape(6.dp))
+        .padding(horizontal = 10.dp, vertical = 9.dp)
+    if (inOnEnter != null) vBoxMod = vBoxMod.onKeyEvent { ev ->
+        if (ev.key.type == KeyEventType.Down && (ev.key.keyCode == kScEnter || ev.key.keyCode == kScKpEnter)) { inOnEnter(); true } else false
+    }
     Box(
-        modifier = inModifier.clip(RoundedCornerShape(6.dp))
-            .background(c.field, RoundedCornerShape(6.dp))
-            .border(1.dp, c.border, RoundedCornerShape(6.dp))
-            .padding(horizontal = 10.dp, vertical = 9.dp),
+        modifier = vBoxMod,
         contentAlignment = if (inSingleLine) Alignment.CenterStart else Alignment.TopStart,
     ) {
         if (inValue.isEmpty() && inPlaceholder.isNotEmpty()) Text(inPlaceholder, color = c.dim, fontSize = 13.sp)
@@ -1098,6 +1122,13 @@ private fun BtnContent(inIcon: Int, inLabel: String, inColor: Color, inSize: Dp 
 
 // Amber used to flag undefined {{variables}} and unsaved-changes warnings.
 private val kWarnColor = Color(0xFFFFAB00)
+
+// SDL scancodes used for app keyboard shortcuts.
+private const val kScS = 22
+private const val kScN = 17
+private const val kScW = 26
+private const val kScEnter = 40
+private const val kScKpEnter = 88
 
 private fun methodColor(inM: ReqMethod): Color = when (inM) {
     ReqMethod.GET -> Color(0xFF4C9AFF)
