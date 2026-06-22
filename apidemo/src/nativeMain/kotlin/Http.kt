@@ -69,6 +69,12 @@ class HttpRunner {
                 body = if (vIsImage) "" else vBody.decodeToString(),
                 bytes = vBody,
                 contentType = vContentType,
+                // The headers Ktor actually put on the wire (incl. its auto-added
+                // Accept / Accept-Encoding / User-Agent / Host), so the Request tab
+                // shows what was sent rather than a guess.
+                requestHeaders = vResp.call.request.headers.entries()
+                    .flatMap { e -> e.value.map { e.key to it } }
+                    .sortedBy { it.first.lowercase() },
             )
         } catch (e: CancellationException) {
             // The caller cancelled (Cancel button) — let it propagate so the

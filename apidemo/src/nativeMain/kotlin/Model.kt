@@ -101,6 +101,7 @@ class ApiResponse(
     val body: String,
     val bytes: ByteArray = ByteArray(0),
     val contentType: String? = null,
+    val requestHeaders: List<Pair<String, String>> = emptyList(),  // headers actually sent
     val error: String? = null,
 )
 

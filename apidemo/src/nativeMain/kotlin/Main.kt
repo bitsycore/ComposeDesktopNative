@@ -1080,18 +1080,24 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest, inOnCancel: () -
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             when {
                 vShowRequest && vReqShown == null -> ViewerEmpty(MaterialSymbols.Send, "Not sent")
-                vShowRequest -> Column(
-                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CodeSection("HEADERS", requestHeadersText(vReqShown!!))
-                    if (!vReqShown.method.allowsBody || vReqShown.bodyType == BodyType.NONE) {
-                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("BODY", color = c.dim, fontSize = 11.sp)
-                            ViewerEmpty(MaterialSymbols.Block, "No Body", Modifier.fillMaxWidth().height(140.dp))
+                vShowRequest -> {
+                    val vR = vReqShown!!
+                    Column(
+                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        // A sent request shows the headers Ktor actually put on the wire;
+                        // Preview (nothing sent yet) shows the inferred set.
+                        val vSentHeaders = if (!vPreview) inRs.response?.requestHeaders?.takeIf { it.isNotEmpty() } else null
+                        CodeSection("HEADERS", if (vSentHeaders != null) headersText(vSentHeaders) else requestHeadersText(vR))
+                        if (!vR.method.allowsBody || vR.bodyType == BodyType.NONE) {
+                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("BODY", color = c.dim, fontSize = 11.sp)
+                                ViewerEmpty(MaterialSymbols.Block, "No Body", Modifier.fillMaxWidth().height(140.dp))
+                            }
+                        } else {
+                            CodeSection("BODY", requestBodyText(vR))
                         }
-                    } else {
-                        CodeSection("BODY", requestBodyText(vReqShown))
                     }
                 }
                 vResp == null && !vLoading -> ViewerEmpty(MaterialSymbols.Download, "Not received")
@@ -1189,8 +1195,13 @@ private fun CodeSection(inLabel: String, inText: String) {
     }
 }
 
-/* The headers that would be sent — explicit enabled headers plus the inferred
-   Content-Type for the body type (unless one is already set). */
+/* Format an actual header list (key: value per line). */
+private fun headersText(inHeaders: List<Pair<String, String>>): String =
+    inHeaders.joinToString("\n") { (vK, vV) -> "$vK: $vV" }.ifEmpty { "(no headers)" }
+
+/* The headers that *would* be sent — explicit enabled headers plus the inferred
+   Content-Type for the body type (unless one is already set). Used for Preview;
+   a sent request shows the real headers via headersText(response.requestHeaders). */
 private fun requestHeadersText(inReq: ApiRequest): String {
     val vLines = mutableListOf<String>()
     inReq.headers.filter { it.enabled && it.key.isNotBlank() }.forEach { vLines.add("${it.key}: ${it.value}") }
