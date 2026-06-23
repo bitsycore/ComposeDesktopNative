@@ -122,18 +122,18 @@ private fun App() {
     val vScope = rememberCoroutineScope()
     val vWindow = LocalComposeNativeWindow.current
 
-    // First launch (or empty saved state) → load the httpbin starter pack once.
-    val vPacks = remember {
-        mutableStateListOf<PackState>().apply {
-            val vSaved = if (!vInitial.launched || vInitial.packs.isEmpty())
-                listOf(SavedPack(pack = defaultPack()))
-            else vInitial.packs
-            vSaved.forEach { add(PackState(it.pack, it.path, it.dirty)) }
-        }
+    // First launch (or empty saved state) → boot from the default session (an
+    // unsaved, multi-pack working set); otherwise restore the persisted session.
+    val vBoot = remember {
+        if (!vInitial.launched || vInitial.packs.isEmpty()) defaultSession()
+        else Session(vInitial.packs, vInitial.globalEnv, vInitial.activePack)
     }
-    val vGlobalEnv = remember { mutableStateListOf<KeyVal>().apply { addAll(vInitial.globalEnv) } }
+    val vPacks = remember {
+        mutableStateListOf<PackState>().apply { vBoot.packs.forEach { add(PackState(it.pack, it.path, it.dirty)) } }
+    }
+    val vGlobalEnv = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalEnv) } }
     val vHistory = remember { mutableStateListOf<HistoryEntry>() }
-    var vActivePack by remember { mutableStateOf(vInitial.activePack.coerceIn(0, (vPacks.size - 1).coerceAtLeast(0))) }
+    var vActivePack by remember { mutableStateOf(vBoot.activePack.coerceIn(0, (vPacks.size - 1).coerceAtLeast(0))) }
 
     // The single open session (self-contained working set) + recent session files.
     var vSessionPath by remember { mutableStateOf(vInitial.currentSession) }
@@ -149,6 +149,7 @@ private fun App() {
     var vRemovePackTarget by remember { mutableStateOf<PackState?>(null) }
     var vDeleteTarget by remember { mutableStateOf<ReqState?>(null) }
     var vImgSeq by remember { mutableStateOf(0) }   // unique-key counter for response images
+    var vSwitchAction by remember { mutableStateOf<(() -> Unit)?>(null) }  // pending session switch awaiting confirm
 
     fun activePack(): PackState? = vPacks.getOrNull(vActivePack)
     fun selectPack(inP: PackState) { vActivePack = vPacks.indexOf(inP).coerceAtLeast(0); vReqMsg = null }
@@ -316,8 +317,8 @@ private fun App() {
     fun saveSessionTo(inPath: String) {
         vSessionPath = inPath; rememberRecent(inPath); persist()   // persist() writes the file
     }
-    fun saveSessionAs() {
-        showSaveFileDialog("session.json") { vPath -> if (vPath != null) saveSessionTo(vPath) }
+    fun saveSessionAs(inThen: () -> Unit = {}) {
+        showSaveFileDialog("session.json") { vPath -> if (vPath != null) { saveSessionTo(vPath); inThen() } }
     }
     // First save (no file yet) prompts for a location; afterwards the session
     // auto-saves on every change, so Ctrl+S just flushes via persist().
@@ -346,6 +347,13 @@ private fun App() {
     fun newSession() {
         vPacks.clear(); vPacks.add(PackState(Pack(name = "My Pack"), null, false))
         vGlobalEnv.clear(); vActivePack = 0; vSessionPath = null; vReqMsg = null; persist()
+    }
+    fun loadDefaultSession() { loadSession(defaultSession(), null) }
+    // Switching to another session replaces the current working set. If the
+    // current session was never saved to a file, confirm first (and offer to
+    // save it); a file-backed session auto-saves, so just switch.
+    fun requestSwitch(inAction: () -> Unit) {
+        if (vSessionPath == null) vSwitchAction = inAction else inAction()
     }
     fun renameSession(inName: String) {
         val vOld = vSessionPath ?: return
@@ -433,9 +441,10 @@ private fun App() {
                                     inOnSaveAs = { saveSessionAs() },
                                     inOnRename = { vSessionPath?.let { vRenameSession = true; vRenameText = fileLeaf(it) } },
                                     inOnReveal = { vSessionPath?.let { revealInFileManager(it) } },
-                                    inOnOpen = { openSessionFile() },
-                                    inOnNew = { newSession() },
-                                    inOnOpenRecent = { openSession(it) },
+                                    inOnDefault = { requestSwitch { loadDefaultSession() } },
+                                    inOnOpen = { requestSwitch { openSessionFile() } },
+                                    inOnNew = { requestSwitch { newSession() } },
+                                    inOnOpenRecent = { vPath -> requestSwitch { openSession(vPath) } },
                                     inModifier = Modifier.weight(1f),
                                 )
                                 OptionsMenu(
@@ -549,7 +558,7 @@ private fun App() {
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 OutlinedAction(MaterialSymbols.Add, "New pack") { newPack() }
                                 OutlinedAction(MaterialSymbols.Folder, "Import pack…") { openPackFile() }
-                                OutlinedAction(MaterialSymbols.Refresh, "Load default") { loadDefaultPack() }
+                                OutlinedAction(MaterialSymbols.Refresh, "Load default session") { loadDefaultSession() }
                             }
                             Spacer(Modifier.weight(1f))
                         }
@@ -648,6 +657,29 @@ private fun App() {
                                     vRenamePackTarget = null
                                 }) { BtnContent(MaterialSymbols.Check, "Save", c.onAccent) }
                                 OutlinedButton(onClick = { vRenamePackTarget = null }) { Text("Cancel", color = c.text) }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Confirm replacing an unsaved session (Default / New / Open).
+            val vSwitch = vSwitchAction
+            if (vSwitch != null) {
+                Dialog(onDismissRequest = { vSwitchAction = null }) {
+                    Surface(color = c.panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.width(420.dp)) {
+                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 20.dp)
+                                Text("Replace current session?", color = c.text, fontSize = 16.sp)
+                            }
+                            Text("This session hasn't been saved to a file — continuing will discard it. Save it first if you want to keep it.", color = c.dim, fontSize = 13.sp)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    OutlinedButton(onClick = { vSwitchAction = null }) { Text("Cancel", color = c.text) }
+                                    Button(onClick = { vSwitchAction = null; saveSessionAs { vSwitch() } }) { BtnContent(MaterialSymbols.Save, "Save first…", c.onAccent) }
+                                    DangerButton("Discard", MaterialSymbols.Delete) { vSwitchAction = null; vSwitch() }
+                                }
                             }
                         }
                     }
@@ -809,6 +841,7 @@ private fun SessionMenu(
     inOnSaveAs: () -> Unit,
     inOnRename: () -> Unit,
     inOnReveal: () -> Unit,
+    inOnDefault: () -> Unit,
     inOnOpen: () -> Unit,
     inOnNew: () -> Unit,
     inOnOpenRecent: (String) -> Unit,
@@ -845,8 +878,9 @@ private fun SessionMenu(
             DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename session…", if (vSaved) c.text else vDisabled) }
             DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnReveal() }) { MenuRow(MaterialSymbols.Folder, "Reveal in ${fileManagerName()}", if (vSaved) c.text else vDisabled) }
             Divider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) { MenuRow(MaterialSymbols.Folder, "Open session…") }
+            DropdownMenuItem(onClick = { vOpen = false; inOnDefault() }) { MenuRow(MaterialSymbols.Refresh, "Default session") }
             DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New session") }
+            DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) { MenuRow(MaterialSymbols.Folder, "Open session…") }
             if (inRecent.isNotEmpty()) {
                 Divider(color = c.border)
                 Text("Recent", color = c.dim, fontSize = 11.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 2.dp))

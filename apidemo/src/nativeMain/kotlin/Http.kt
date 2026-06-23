@@ -57,6 +57,9 @@ class HttpRunner {
 
             val vContentType = vResp.contentType()?.toString()
             val vIsImage = vContentType?.startsWith("image/", ignoreCase = true) == true
+            // Non-image binary (PDF, octet-stream, audio…) would decode to garbage,
+            // so show a short note instead and let the user Save the raw bytes.
+            val vBinary = !vIsImage && isBinaryBody(vContentType, vBody)
             ApiResponse(
                 ok = true,
                 status = vResp.status.value,
@@ -66,7 +69,11 @@ class HttpRunner {
                 headers = vResp.headers.entries()
                     .flatMap { e -> e.value.map { e.key to it } }
                     .sortedBy { it.first.lowercase() },
-                body = if (vIsImage) "" else vBody.decodeToString(),
+                body = when {
+                    vIsImage -> ""
+                    vBinary -> "(${vContentType ?: "binary"} · ${vBody.size} bytes — not shown; use Save as…)"
+                    else -> vBody.decodeToString()
+                },
                 bytes = vBody,
                 contentType = vContentType,
                 // The headers Ktor actually put on the wire (incl. its auto-added
@@ -98,6 +105,19 @@ class HttpRunner {
     }
 
     fun close() = fClient.close()
+}
+
+/* Heuristic for a non-text body: textual content types (text, json, xml, html,
+   javascript, csv, form) are shown as text; everything else, or bytes with
+   embedded NULs, is treated as binary. */
+private fun isBinaryBody(inContentType: String?, inBytes: ByteArray): Boolean {
+    val vCt = inContentType?.lowercase() ?: ""
+    val vTextual = vCt.startsWith("text/") ||
+        vCt.contains("json") || vCt.contains("xml") || vCt.contains("html") ||
+        vCt.contains("javascript") || vCt.contains("csv") || vCt.contains("x-www-form-urlencoded")
+    if (vTextual) return false
+    if (vCt.isNotEmpty()) return true                       // a non-textual content type → binary
+    return inBytes.take(1024).any { it.toInt() == 0 }       // no type: sniff for NUL bytes
 }
 
 /* True when the bytes are gzip — either the response says so or they carry the

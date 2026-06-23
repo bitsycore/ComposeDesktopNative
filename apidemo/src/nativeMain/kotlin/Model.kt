@@ -61,6 +61,71 @@ fun defaultPack(): Pack = Pack(
     ),
 )
 
+/* The starter SESSION loaded on first launch (and on demand from the session
+   menu) — the httpbin tour split into themed packs, with the shared base URL /
+   creds in the session's global env. Loaded as an unsaved (untitled) session. */
+fun defaultSession(): Session = Session(
+    activePack = 0,
+    globalEnv = listOf(
+        KeyVal("baseUrl", "https://httpbin.org"),
+        KeyVal("token", "my-secret-token"),
+        KeyVal("user", "user"),
+        KeyVal("password", "passwd"),
+    ),
+    packs = listOf(
+        SavedPack(pack = Pack(name = "Methods", color = 1, requests = listOf(
+            ApiRequest(name = "GET — query params", method = ReqMethod.GET, url = "{{baseUrl}}/get",
+                params = listOf(KeyVal("q", "compose"), KeyVal("page", "1"))),
+            ApiRequest(name = "POST — JSON", method = ReqMethod.POST, url = "{{baseUrl}}/post",
+                bodyType = BodyType.JSON, body = "{\n  \"name\": \"{{user}}\",\n  \"active\": true\n}"),
+            ApiRequest(name = "POST — form", method = ReqMethod.POST, url = "{{baseUrl}}/post",
+                bodyType = BodyType.FORM, form = listOf(KeyVal("field1", "value1"), KeyVal("field2", "value2"))),
+            ApiRequest(name = "PUT — replace", method = ReqMethod.PUT, url = "{{baseUrl}}/put",
+                bodyType = BodyType.JSON, body = "{\n  \"id\": 1,\n  \"name\": \"updated\"\n}"),
+            ApiRequest(name = "PATCH — partial", method = ReqMethod.PATCH, url = "{{baseUrl}}/patch",
+                bodyType = BodyType.JSON, body = "{ \"name\": \"patched\" }"),
+            ApiRequest(name = "DELETE", method = ReqMethod.DELETE, url = "{{baseUrl}}/delete"),
+            ApiRequest(name = "HEAD", method = ReqMethod.HEAD, url = "{{baseUrl}}/get"),
+            ApiRequest(name = "OPTIONS", method = ReqMethod.OPTIONS, url = "{{baseUrl}}/anything"),
+            ApiRequest(name = "Anything echo", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
+                bodyType = BodyType.JSON, body = "{ \"hello\": \"world\" }"),
+        ))),
+        SavedPack(pack = Pack(name = "Auth & status", color = 2, requests = listOf(
+            ApiRequest(name = "Bearer auth", method = ReqMethod.GET, url = "{{baseUrl}}/bearer",
+                headers = listOf(KeyVal("Authorization", "Bearer {{token}}"))),
+            ApiRequest(name = "Basic auth", method = ReqMethod.GET, url = "{{baseUrl}}/basic-auth/{{user}}/{{password}}"),
+            ApiRequest(name = "Status 200", method = ReqMethod.GET, url = "{{baseUrl}}/status/200"),
+            ApiRequest(name = "Status 404", method = ReqMethod.GET, url = "{{baseUrl}}/status/404"),
+            ApiRequest(name = "Status 500", method = ReqMethod.GET, url = "{{baseUrl}}/status/500"),
+            ApiRequest(name = "Redirect x3", method = ReqMethod.GET, url = "{{baseUrl}}/redirect/3"),
+            ApiRequest(name = "Delay 3s (try Cancel)", method = ReqMethod.GET, url = "{{baseUrl}}/delay/3"),
+            ApiRequest(name = "Set cookies", method = ReqMethod.GET, url = "{{baseUrl}}/cookies/set",
+                params = listOf(KeyVal("name", "value"))),
+            ApiRequest(name = "Response headers", method = ReqMethod.GET, url = "{{baseUrl}}/response-headers",
+                params = listOf(KeyVal("X-Demo", "compose-native"))),
+        ))),
+        SavedPack(pack = Pack(name = "Formats", color = 3, requests = listOf(
+            ApiRequest(name = "JSON", method = ReqMethod.GET, url = "{{baseUrl}}/json"),
+            ApiRequest(name = "XML", method = ReqMethod.GET, url = "{{baseUrl}}/xml"),
+            ApiRequest(name = "HTML", method = ReqMethod.GET, url = "{{baseUrl}}/html"),
+            ApiRequest(name = "Gzip (decompressed)", method = ReqMethod.GET, url = "{{baseUrl}}/gzip"),
+            ApiRequest(name = "UTF-8 text", method = ReqMethod.GET, url = "{{baseUrl}}/encoding/utf8"),
+            ApiRequest(name = "Base64 decode", method = ReqMethod.GET, url = "{{baseUrl}}/base64/SFRUUEJJTiBpcyBhd2Vzb21l"),
+            ApiRequest(name = "robots.txt", method = ReqMethod.GET, url = "{{baseUrl}}/robots.txt"),
+            ApiRequest(name = "Deny", method = ReqMethod.GET, url = "{{baseUrl}}/deny"),
+            ApiRequest(name = "UUID", method = ReqMethod.GET, url = "{{baseUrl}}/uuid"),
+        ))),
+        SavedPack(pack = Pack(name = "Images & files", color = 4, requests = listOf(
+            ApiRequest(name = "PNG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/png"),
+            ApiRequest(name = "JPEG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/jpeg"),
+            ApiRequest(name = "SVG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/svg"),
+            ApiRequest(name = "WebP image", method = ReqMethod.GET, url = "{{baseUrl}}/image/webp"),
+            ApiRequest(name = "PDF document", method = ReqMethod.GET, url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"),
+            ApiRequest(name = "Random bytes (binary)", method = ReqMethod.GET, url = "{{baseUrl}}/bytes/64"),
+        ))),
+    ),
+)
+
 @Serializable
 data class ApiRequest(
     val name: String = "New request",
