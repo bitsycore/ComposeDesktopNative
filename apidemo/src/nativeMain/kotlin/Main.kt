@@ -1636,9 +1636,17 @@ private fun CertCard(inIndex: Int, inCert: ChainCert) {
             if (vPem != null) CopyButton(vPem)
         }
         vSubject?.let { CertLine("Subject", it) }
-        if (vSelfSigned) Text("Self-signed", color = kSelfSignedColor, fontSize = 12.sp)
+        if (vSelfSigned) CertLine("Issuer", "Self-signed", kSelfSignedColor)
         else vIssuer?.let { CertLine("Issuer", it) }
-        if (vFrom != null || vTo != null) CertLine("Valid", "${vFrom ?: "?"}  →  ${vTo ?: "?"}")
+        // Hosts this cert is valid for — the field that actually has to match the URL.
+        (certField(vFields, "X509v3 Subject Alternative Name") ?: certField(vFields, "Subject Alternative Name"))
+            ?.let { CertLine("SAN", it) }
+        vFrom?.let { CertLine("Issued", it) }
+        vTo?.let { CertLine("Expires", it) }
+        certField(vFields, "Serial Number")?.let { CertLine("Serial", it) }
+        certField(vFields, "Signature Algorithm")?.let { CertLine("Signature", it) }
+        certField(vFields, "Public Key Algorithm")?.let { CertLine("Key", it) }
+        certField(vFields, "Version")?.let { CertLine("Version", it) }
     }
 }
 
@@ -1690,11 +1698,11 @@ private fun CopyButton(inText: String, inLabel: String? = null) {
 }
 
 @Composable
-private fun CertLine(inLabel: String, inValue: String) {
+private fun CertLine(inLabel: String, inValue: String, inValueColor: Color? = null) {
     val c = LocalAppColors.current
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("$inLabel:", color = c.dim, fontSize = 12.sp)
-        Text(inValue, color = c.text, fontSize = 12.sp)
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(inLabel, color = c.dim, fontSize = 11.sp, modifier = Modifier.width(64.dp))
+        Text(inValue, color = inValueColor ?: c.text, fontSize = 12.sp, modifier = Modifier.weight(1f))
     }
 }
 
