@@ -1,7 +1,8 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 // :apidemo — a Postman-style REST API manager built on the compose-desktop-native
-// stack. Uses Ktor (WinHttp on Windows, Darwin on macOS, Curl on Linux),
+// stack. Uses Ktor with the Curl engine on every desktop target (bundled
+// libcurl: Schannel on Windows, OpenSSL on macOS/Linux),
 // kotlinx.serialization for the savable "packs", and okio for file I/O.
 
 plugins {
@@ -67,10 +68,15 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
             }
         }
-        // Per-target Ktor engine — WinHttp ships with Windows (no extra DLL),
-        // Darwin uses NSURLSession, Curl needs libcurl on the Linux host.
-        getByName("mingwX64Main").dependencies { implementation(libs.ktor.client.winhttp) }
-        getByName("macosArm64Main").dependencies { implementation(libs.ktor.client.darwin) }
+        // Single HTTP engine on every desktop target: Ktor's Curl engine. It
+        // bundles a static libcurl per target (Schannel on Windows, OpenSSL on
+        // macOS/Linux) embedded in its cinterop klib — no runtime DLL, one copy.
+        // We use Curl everywhere (not WinHttp/Darwin) so that an upcoming
+        // client-certificate (mTLS) path — which calls the same bundled libcurl
+        // directly, since Ktor's engines expose no client-cert API — shares the
+        // exact same TLS stack as ordinary requests.
+        getByName("mingwX64Main").dependencies { implementation(libs.ktor.client.curl) }
+        getByName("macosArm64Main").dependencies { implementation(libs.ktor.client.curl) }
         getByName("linuxX64Main").dependencies { implementation(libs.ktor.client.curl) }
         getByName("linuxArm64Main").dependencies { implementation(libs.ktor.client.curl) }
     }

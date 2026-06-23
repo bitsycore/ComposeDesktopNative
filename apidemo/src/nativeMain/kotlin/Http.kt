@@ -1,6 +1,7 @@
 package apidemo
 
 import io.ktor.client.*
+import io.ktor.client.engine.curl.Curl
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -16,12 +17,13 @@ import kotlin.time.TimeSource
 // MARK: HttpRunner — executes an ApiRequest through Ktor
 // ==================
 
-/* Holds one Ktor HttpClient for the app's lifetime. The engine is resolved per
-   target from the single engine artifact on the classpath (WinHttp / Darwin /
-   Curl). run() is a suspend fun — call it off the UI dispatcher. */
+/* Holds one Ktor HttpClient for the app's lifetime. One engine on every desktop
+   target: Ktor's Curl engine (bundled libcurl — Schannel on Windows, OpenSSL on
+   macOS/Linux). Same TLS stack as the client-cert path in CurlMtls.kt.
+   run() is a suspend fun — call it off the UI dispatcher. */
 class HttpRunner {
 
-    private val fClient = HttpClient()
+    private val fClient = HttpClient(Curl)
 
     suspend fun run(inReq: ApiRequest): ApiResponse {
         val vMark = TimeSource.Monotonic.markNow()
