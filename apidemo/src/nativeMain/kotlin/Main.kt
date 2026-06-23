@@ -643,12 +643,14 @@ private fun App() {
                                     inOnToggleTheme = { vDark = !vDark; persist() },
                                 )
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                AddPackMenu(
-                                    inOnNew = { newPack() },
-                                    inOnImport = { openPackFile() },
-                                )
+                            // Tabs centred via equal-weight side slots; the + sits in the
+                            // left slot so it doesn't shift the centring.
+                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                    AddPackMenu(inOnNew = { newPack() }, inOnImport = { openPackFile() })
+                                }
                                 TabBar(listOf("Packs", "History"), vSideTab) { vSideTab = it }
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                         Divider(color = c.border)
