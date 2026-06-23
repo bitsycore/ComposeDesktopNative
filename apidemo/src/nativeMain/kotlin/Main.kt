@@ -1619,9 +1619,12 @@ private fun CertCard(inIndex: Int, inCert: ChainCert) {
     val vSubject = certField(vFields, "Subject")
     val vIssuer = certField(vFields, "Issuer")
     val vSelfSigned = vIssuer != null && vIssuer == vSubject
-    val vFrom = certField(vFields, "Start date") ?: certField(vFields, "Start Date")
-    val vTo = certField(vFields, "Expire date") ?: certField(vFields, "Expire Date")
     val vPem = certField(vFields, "Cert")
+    // Backends like Schannel only expose Subject/Issuer/PEM via CURLINFO_CERTINFO,
+    // so parse the rest (dates, serial, SAN, algorithms) straight from the PEM.
+    val vParsed = remember(vPem) { vPem?.let { parseCertDetails(it) } }
+    val vFrom = certField(vFields, "Start date") ?: certField(vFields, "Start Date") ?: vParsed?.notBefore
+    val vTo = certField(vFields, "Expire date") ?: certField(vFields, "Expire Date") ?: vParsed?.notAfter
     Column(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
             .background(c.field.copy(alpha = if (inCert.fromServer) 1f else 0.4f), RoundedCornerShape(8.dp))
@@ -1639,14 +1642,16 @@ private fun CertCard(inIndex: Int, inCert: ChainCert) {
         if (vSelfSigned) CertLine("Issuer", "Self-signed", kSelfSignedColor)
         else vIssuer?.let { CertLine("Issuer", it) }
         // Hosts this cert is valid for — the field that actually has to match the URL.
-        (certField(vFields, "X509v3 Subject Alternative Name") ?: certField(vFields, "Subject Alternative Name"))
+        (certField(vFields, "X509v3 Subject Alternative Name")
+            ?: certField(vFields, "Subject Alternative Name")
+            ?: vParsed?.sans?.takeIf { it.isNotEmpty() }?.joinToString(", "))
             ?.let { CertLine("SAN", it) }
         vFrom?.let { CertLine("Issued", it) }
         vTo?.let { CertLine("Expires", it) }
-        certField(vFields, "Serial Number")?.let { CertLine("Serial", it) }
-        certField(vFields, "Signature Algorithm")?.let { CertLine("Signature", it) }
-        certField(vFields, "Public Key Algorithm")?.let { CertLine("Key", it) }
-        certField(vFields, "Version")?.let { CertLine("Version", it) }
+        (certField(vFields, "Serial Number") ?: vParsed?.serial)?.let { CertLine("Serial", it) }
+        (certField(vFields, "Signature Algorithm") ?: vParsed?.sigAlg)?.let { CertLine("Signature", it) }
+        (certField(vFields, "Public Key Algorithm") ?: vParsed?.keyAlg)?.let { CertLine("Key", it) }
+        (certField(vFields, "Version") ?: vParsed?.version?.let { "v$it" })?.let { CertLine("Version", it) }
     }
 }
 
