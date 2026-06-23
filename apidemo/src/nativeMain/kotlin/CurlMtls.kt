@@ -45,11 +45,42 @@ expect fun prepareClientCert(inReq: ApiRequest): PreparedCert
    at startup. */
 expect fun sweepTempClientCerts()
 
-/* The server's TLS certificate chain as reported by libcurl (CURLINFO_CERTINFO).
-   Each cert is a list of "name" → "content" fields (Subject / Issuer / the PEM
-   under "Cert" / dates …); fields vary by TLS backend. error is set instead when
-   the chain couldn't be fetched. */
-class TlsChain(val certs: List<List<Pair<String, String>>>, val error: String?)
+/* One certificate in the chain: its CURLINFO_CERTINFO-style fields (Subject /
+   Issuer / the PEM under "Cert" / dates …) and whether the server actually
+   presented it. Derived certs — an issuer resolved from the OS store, or a
+   name-only placeholder — have fromServer = false and are drawn dotted. */
+class ChainCert(val fields: List<Pair<String, String>>, val fromServer: Boolean)
+
+/* The server's TLS certificate chain. error is set instead when it couldn't be
+   fetched; fields vary by TLS backend. */
+class TlsChain(val certs: List<ChainCert>, val error: String?)
+
+/* Continue a server-presented chain with its issuer(s). Where possible the
+   issuer is resolved from the OS certificate store with full info; otherwise the
+   chain ends with a name-only placeholder. Every derived (non-server) cert is
+   flagged fromServer = false. Platform-specific (OS store on Windows). */
+expect fun extendChain(inServerCerts: List<List<Pair<String, String>>>): List<ChainCert>
+
+/* A CURLINFO_CERTINFO field by name (case-insensitive). */
+internal fun certFieldOf(inFields: List<Pair<String, String>>, inName: String): String? =
+	inFields.firstOrNull { it.first.equals(inName, ignoreCase = true) }?.second
+
+/* Server certs as ChainCerts; if the last one isn't self-signed, append a
+   dotted, name-only issuer so the chain visibly continues. The cross-platform
+   fallback when the OS store can't (or isn't able to) resolve the real issuer. */
+internal fun serverChainWithIssuerName(inServer: List<List<Pair<String, String>>>): List<ChainCert>
+	{
+	val vOut = inServer.map { ChainCert(it, true) }.toMutableList()
+	val vLast = inServer.lastOrNull()
+	if (vLast != null)
+		{
+		val vSubject = certFieldOf(vLast, "Subject")
+		val vIssuer = certFieldOf(vLast, "Issuer")
+		if (!vIssuer.isNullOrBlank() && vIssuer != vSubject)
+			vOut.add(ChainCert(listOf("Subject" to vIssuer), false))
+		}
+	return vOut
+	}
 
 /* Per-transfer accumulators handed to the C callbacks through a StableRef. */
 private class CurlSink
@@ -112,8 +143,9 @@ fun inspectTlsChain(inReq: ApiRequest): TlsChain
 		val vCode = curl_easy_perform(vCurl)
 		if (vCode != CURLE_OK)
 			return TlsChain(emptyList(), curl_easy_strerror(vCode)?.toKString() ?: "libcurl error $vCode")
-		val vCerts = readCertInfo(vCurl)
-		return TlsChain(vCerts, if (vCerts.isEmpty()) "No certificate chain reported (not an HTTPS URL, or the TLS backend didn't expose it)." else null)
+		val vRaw = readCertInfo(vCurl)
+		if (vRaw.isEmpty()) return TlsChain(emptyList(), "No certificate chain reported (not an HTTPS URL, or the TLS backend didn't expose it).")
+		return TlsChain(extendChain(vRaw), null)
 		}
 	finally
 		{

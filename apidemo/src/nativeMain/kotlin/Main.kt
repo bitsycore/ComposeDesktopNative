@@ -8,8 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.translate
 import androidx.compose.ui.draw.zIndex
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.StrokeCap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEventType
@@ -1568,8 +1572,9 @@ private fun TlsChainDialog(inChain: TlsChain?, inUrl: String, inOnDismiss: () ->
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (vCerts.isNotEmpty()) IconLabelChip(MaterialSymbols.ContentCopy, "Copy PEM") {
-                            currentClipboard.setText(vCerts.mapNotNull { certField(it, "Cert") }.joinToString("\n"))
+                        val vAnyPem = vCerts.any { certField(it.fields, "Cert") != null }
+                        if (vAnyPem) IconLabelChip(MaterialSymbols.ContentCopy, "Copy chain") {
+                            currentClipboard.setText(vCerts.mapNotNull { certField(it.fields, "Cert") }.joinToString("\n"))
                         }
                         OutlinedButton(onClick = inOnDismiss) { Text("Close", color = c.text) }
                     }
@@ -1579,21 +1584,49 @@ private fun TlsChainDialog(inChain: TlsChain?, inUrl: String, inOnDismiss: () ->
     }
 }
 
-/* One certificate's summary card (subject / issuer / validity). */
+/* One certificate's summary card (subject / issuer / validity). Server-presented
+   certs get a solid outline; derived ones (issuer pulled from the OS store, or a
+   name-only placeholder) get a dotted outline. A copy-PEM button shows when the
+   cert carries its PEM. */
 @Composable
-private fun CertCard(inIndex: Int, inFields: List<Pair<String, String>>) {
+private fun CertCard(inIndex: Int, inCert: ChainCert) {
     val c = LocalAppColors.current
-    val vFrom = certField(inFields, "Start date") ?: certField(inFields, "Start Date")
-    val vTo = certField(inFields, "Expire date") ?: certField(inFields, "Expire Date")
-    Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-            .background(c.field, RoundedCornerShape(8.dp)).border(1.dp, c.border, RoundedCornerShape(8.dp)).padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        Text(if (inIndex == 0) "Leaf certificate" else "Issuer #$inIndex", color = c.accent, fontSize = 12.sp)
-        certField(inFields, "Subject")?.let { CertLine("Subject", it) }
-        certField(inFields, "Issuer")?.let { CertLine("Issuer", it) }
+    val vFields = inCert.fields
+    val vFrom = certField(vFields, "Start date") ?: certField(vFields, "Start Date")
+    val vTo = certField(vFields, "Expire date") ?: certField(vFields, "Expire Date")
+    val vPem = certField(vFields, "Cert")
+    var vMod = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+        .background(c.field.copy(alpha = if (inCert.fromServer) 1f else 0.35f), RoundedCornerShape(8.dp))
+    vMod = if (inCert.fromServer) vMod.border(1.dp, c.border, RoundedCornerShape(8.dp)) else vMod.dottedBorder(c.dim)
+    Column(modifier = vMod.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(if (inIndex == 0) "Leaf certificate" else "Issuer #$inIndex", color = c.accent, fontSize = 12.sp, modifier = Modifier.weight(1f))
+            if (!inCert.fromServer) Text(if (vPem != null) "from OS store" else "not presented", color = c.dim, fontSize = 10.sp)
+            if (vPem != null) TooltipBox(text = "Copy PEM") {
+                IconBtn(MaterialSymbols.ContentCopy, "Copy PEM", inSize = 15.dp, inPadding = 3.dp) { currentClipboard.setText(vPem) }
+            }
+        }
+        certField(vFields, "Subject")?.let { CertLine("Subject", it) }
+        certField(vFields, "Issuer")?.let { CertLine("Issuer", it) }
         if (vFrom != null || vTo != null) CertLine("Valid", "${vFrom ?: "?"}  →  ${vTo ?: "?"}")
+    }
+}
+
+/* A hand-drawn dotted rectangular outline (no PathEffect in this renderer). */
+private fun Modifier.dottedBorder(inColor: Color): Modifier = this.drawBehind {
+    val vDash = 3f; val vStep = 7f; val vW = 1.5f
+    val vBrush = SolidColor(inColor)
+    var vX = 0f
+    while (vX < size.width) {
+        drawLine(vBrush, Offset(vX, 0f), Offset(minOf(vX + vDash, size.width), 0f), vW, StrokeCap.Round)
+        drawLine(vBrush, Offset(vX, size.height), Offset(minOf(vX + vDash, size.width), size.height), vW, StrokeCap.Round)
+        vX += vStep
+    }
+    var vY = 0f
+    while (vY < size.height) {
+        drawLine(vBrush, Offset(0f, vY), Offset(0f, minOf(vY + vDash, size.height)), vW, StrokeCap.Round)
+        drawLine(vBrush, Offset(size.width, vY), Offset(size.width, minOf(vY + vDash, size.height)), vW, StrokeCap.Round)
+        vY += vStep
     }
 }
 

@@ -16,3 +16,7 @@ actual fun prepareClientCert(inReq: ApiRequest): PreparedCert =
 
 /* No temporary certificate store off Windows. */
 actual fun sweepTempClientCerts() {}
+
+/* No OS-store issuer resolution here — just continue with the name-only issuer. */
+actual fun extendChain(inServerCerts: List<List<Pair<String, String>>>): List<ChainCert> =
+	serverChainWithIssuerName(inServerCerts)

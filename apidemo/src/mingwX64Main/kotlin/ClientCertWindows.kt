@@ -357,6 +357,95 @@ private fun friendlyNameOf(inCert: CPointer<CERT_CONTEXT>): String? = memScoped 
 }
 
 // ============
+//  Chain extension via the OS certificate store
+// ============
+
+/* Continue the server's chain by asking the OS to build it from the leaf — this
+   pulls intermediates/roots from the Windows store with full info. Falls back to
+   a name-only issuer if the OS can't (or the leaf can't be parsed). */
+@OptIn(ExperimentalForeignApi::class)
+actual fun extendChain(inServerCerts: List<List<Pair<String, String>>>): List<ChainCert>
+	{
+	val vLeafPem = inServerCerts.firstOrNull()?.let { certFieldOf(it, "Cert") }
+		?: return serverChainWithIssuerName(inServerCerts)
+	val vOs = runCatching { osChain(vLeafPem, inServerCerts.size) }.getOrNull()
+	return if (!vOs.isNullOrEmpty()) vOs else serverChainWithIssuerName(inServerCerts)
+	}
+
+/* Build the full chain from the leaf via CertGetCertificateChain (OS store). */
+@OptIn(ExperimentalForeignApi::class)
+private fun osChain(inLeafPem: String, inServerCount: Int): List<ChainCert> = memScoped {
+	val vDer = derFromMaybePem(inLeafPem.encodeToByteArray(), "CERTIFICATE")
+	val vLeaf = vDer.usePinned { CertCreateCertificateContext(kEncoding, it.addressOf(0).reinterpret(), vDer.size.convert()) }
+		?: return@memScoped emptyList()
+	try
+		{
+		val vPara = alloc<CERT_CHAIN_PARA>()
+		vPara.cbSize = sizeOf<CERT_CHAIN_PARA>().convert()
+		val vChainPtr = alloc<CPointerVar<CERT_CHAIN_CONTEXT>>()
+		if (CertGetCertificateChain(null, vLeaf, null, null, vPara.ptr, 0u, null, vChainPtr.ptr) == 0)
+			return@memScoped emptyList()
+		val vChain = vChainPtr.value ?: return@memScoped emptyList()
+		try
+			{
+			val vSimple = vChain.pointed.rgpChain?.get(0)?.pointed ?: return@memScoped emptyList()
+			val vElems = vSimple.rgpElement ?: return@memScoped emptyList()
+			val vResult = ArrayList<ChainCert>()
+			for (vI in 0 until vSimple.cElement.toInt())
+				{
+				val vCtx = vElems[vI]?.pointed?.pCertContext ?: continue
+				vResult.add(ChainCert(certFieldsFromContext(vCtx), vI < inServerCount))
+				}
+			// If the chain didn't reach a self-signed root, end with the name only.
+			val vLast = vResult.lastOrNull()
+			if (vLast != null)
+				{
+				val vSub = certFieldOf(vLast.fields, "Subject")
+				val vIss = certFieldOf(vLast.fields, "Issuer")
+				if (!vIss.isNullOrBlank() && vIss != vSub) vResult.add(ChainCert(listOf("Subject" to vIss), false))
+				}
+			vResult
+			}
+		finally { CertFreeCertificateChain(vChain) }
+		}
+	finally { CertFreeCertificateContext(vLeaf) }
+}
+
+/* Subject / Issuer (RDN strings) + the PEM, read from a cert context. */
+@OptIn(ExperimentalForeignApi::class)
+private fun certFieldsFromContext(inCtx: CPointer<CERT_CONTEXT>): List<Pair<String, String>>
+	{
+	val vFields = ArrayList<Pair<String, String>>()
+	certNameString(inCtx, 0u)?.let { vFields.add("Subject" to it) }
+	certNameString(inCtx, CERT_NAME_ISSUER_FLAG.toUInt())?.let { vFields.add("Issuer" to it) }
+	certPem(inCtx)?.let { vFields.add("Cert" to it) }
+	return vFields
+	}
+
+/* A cert's Subject (inFlags=0) or Issuer (CERT_NAME_ISSUER_FLAG) as an X.500 string. */
+@OptIn(ExperimentalForeignApi::class)
+private fun certNameString(inCtx: CPointer<CERT_CONTEXT>, inFlags: UInt): String? = memScoped {
+	val vType = alloc<UIntVar>().apply { value = CERT_X500_NAME_STR.toUInt() }
+	val vLen = CertGetNameStringA(inCtx, CERT_NAME_RDN_TYPE.toUInt(), inFlags, vType.ptr, null, 0u)
+	if (vLen <= 1u) return@memScoped null
+	val vBuf = allocArray<ByteVar>(vLen.toInt())
+	CertGetNameStringA(inCtx, CERT_NAME_RDN_TYPE.toUInt(), inFlags, vType.ptr, vBuf, vLen)
+	vBuf.toKString()
+}
+
+/* The PEM (base64-with-header) of a cert context. */
+@OptIn(ExperimentalForeignApi::class)
+private fun certPem(inCtx: CPointer<CERT_CONTEXT>): String? = memScoped {
+	val vData = inCtx.pointed.pbCertEncoded ?: return@memScoped null
+	val vSize = inCtx.pointed.cbCertEncoded
+	val vLen = alloc<UIntVar>()
+	if (CryptBinaryToStringA(vData, vSize, CRYPT_STRING_BASE64HEADER.toUInt(), null, vLen.ptr) == 0) return@memScoped null
+	val vBuf = allocArray<ByteVar>(vLen.value.toInt())
+	if (CryptBinaryToStringA(vData, vSize, CRYPT_STRING_BASE64HEADER.toUInt(), vBuf, vLen.ptr) == 0) return@memScoped null
+	vBuf.toKString()
+}
+
+// ============
 //  Small helpers
 // ============
 
