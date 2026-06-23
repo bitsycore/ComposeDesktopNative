@@ -567,7 +567,7 @@ private fun App() {
                                     inOnNew = { newPack() },
                                     inOnImport = { openPackFile() },
                                 )
-                                TabBar(listOf("Packs", "History", "Env (${vP?.variables?.size ?: 0})"), vSideTab) { vSideTab = it }
+                                TabBar(listOf("Packs", "History", "Var (${vGlobalEnv.size})"), vSideTab) { vSideTab = it }
                             }
                         }
                         Divider(color = c.border)
@@ -638,9 +638,9 @@ private fun App() {
                                 else -> {
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                                         MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 16.dp)
-                                        Text("Global variables", color = c.text, fontSize = 13.sp)
+                                        Text("Session Var", color = c.text, fontSize = 13.sp)
                                     }
-                                    Text("Shared across every pack, and override a pack's own variables. Edit a pack's variables from its tab (click the pack).", color = c.dim, fontSize = 11.sp)
+                                    Text("Shared across every pack; override a pack's own vars. Edit a pack's vars from its tab (click the pack).", color = c.dim, fontSize = 11.sp)
                                     KeyValEditor(vGlobalEnv) { vNew -> vGlobalEnv.clear(); vGlobalEnv.addAll(vNew); persist() }
                                 }
                             }
@@ -666,7 +666,7 @@ private fun App() {
                         }
                     } else if (vTabs.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize().background(c.bg), contentAlignment = Alignment.Center) {
-                            Text("Nothing open — click a request, or a pack to edit its variables.", color = c.dim)
+                            Text("Nothing open — click a request, or a pack to edit its Var.", color = c.dim)
                         }
                     } else {
                         Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
@@ -692,9 +692,9 @@ private fun App() {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                             ColorDot(vP.color)
                                             Text(vP.name, color = c.text, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                                            Text("pack variables", color = c.dim, fontSize = 12.sp)
+                                            Text("Pack Var", color = c.dim, fontSize = 12.sp)
                                         }
-                                        Text("Used by every request in this pack as {{name}}. The global env overrides these.", color = c.dim, fontSize = 12.sp)
+                                        Text("Used by every request in this pack as {{name}}. Session Var overrides these.", color = c.dim, fontSize = 12.sp)
                                         KeyValEditor(vP.variables) { vNew -> vP.variables.clear(); vP.variables.addAll(vNew); vP.dirty = true; persist() }
                                     }
                                 }
@@ -1427,7 +1427,7 @@ private fun RequestTabStrip(
                                     val vRs = vTab.req
                                     if (vRs == null) {
                                         MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = if (vSel) c.accent else c.dim, size = 13.dp)
-                                        Text("${vTab.pack.name} · env", color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                                        Text("${vTab.pack.name} · var", color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
                                     } else {
                                         Box(modifier = Modifier.size(7.dp).background(methodColor(vRs.req.method), RoundedCornerShape(4.dp)))
                                         Text(vRs.req.name, color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
