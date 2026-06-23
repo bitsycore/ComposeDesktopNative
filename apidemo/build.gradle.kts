@@ -207,7 +207,7 @@ for (variant in variants) {
         val copyTask = tasks.register<Zip>("copy${variantCap}ComposeResources${targetCap}") {
             archiveFileName.set("data.kres")
             destinationDirectory.set(outDir)
-            entryCompression = org.gradle.api.tasks.bundling.ZipEntryCompression.STORED
+            entryCompression = if ((findProperty("compressResources") as? String)?.toBoolean() == true) org.gradle.api.tasks.bundling.ZipEntryCompression.DEFLATED else org.gradle.api.tasks.bundling.ZipEntryCompression.STORED
             from(libComposeResourcesDir)
             iconFontModules.forEach { vP ->
                 @Suppress("UNCHECKED_CAST")
