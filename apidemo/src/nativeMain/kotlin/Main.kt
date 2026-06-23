@@ -138,10 +138,12 @@ private class PackState(inPack: Pack, inPath: String?, inDirty: Boolean, inOpenT
    across save / load). */
 private fun newPackId(): String = "pk-" + kotlin.random.Random.nextLong().toULong().toString(16)
 
-/* One entry in the unified tab strip: a request tab, or a pack's env tab when
-   req == null. The underlying ReqState / PackState is the stable identity. */
-private class StripTab(val pack: PackState, val req: ReqState?)
-private val StripTab.tabKey: Any get() = req ?: pack
+/* One entry in the unified tab strip: a request tab, a pack's settings tab when
+   req == null, or the session settings tab when isSession (pack == null). The
+   underlying ReqState / PackState (or the session key) is the stable identity. */
+private const val kSessionTabKey = "session-settings"
+private class StripTab(val pack: PackState?, val req: ReqState?, val isSession: Boolean = false)
+private val StripTab.tabKey: Any get() = req ?: pack ?: kSessionTabKey
 
 // ==================
 // MARK: App
@@ -210,6 +212,8 @@ private fun App() {
     var vImgSeq by remember { mutableStateOf(0) }   // unique-key counter for response images
     var vSwitchAction by remember { mutableStateOf<(() -> Unit)?>(null) }  // pending session switch awaiting confirm
     var vEnvActive by remember { mutableStateOf(false) }  // active tab is the active pack's env tab (vs a request)
+    var vSessionTabOpen by remember { mutableStateOf(false) }  // the session-settings tab is open in the strip
+    var vSessionActive by remember { mutableStateOf(false) }   // and it's the active main-panel tab
 
     fun activePack(): PackState? = vPacks.getOrNull(vActivePack)
     fun selectPack(inP: PackState) { vActivePack = vPacks.indexOf(inP).coerceAtLeast(0); vReqMsg = null }
@@ -276,19 +280,26 @@ private fun App() {
     }
     // The unified tab strip, flattened across packs: each pack contributes its
     // env tab (if open) followed by its request tabs.
-    fun stripTabs(): List<StripTab> = vPacks.flatMap { vQ ->
-        buildList { if (vQ.envOpen) add(StripTab(vQ, null)); vQ.openTabs.forEach { add(StripTab(vQ, it)) } }
+    fun stripTabs(): List<StripTab> = buildList {
+        if (vSessionTabOpen) add(StripTab(null, null, isSession = true))
+        vPacks.forEach { vQ ->
+            if (vQ.envOpen) add(StripTab(vQ, null))
+            vQ.openTabs.forEach { add(StripTab(vQ, it)) }
+        }
     }
+    fun openSessionTab() { vSessionTabOpen = true; vSessionActive = true; vEnvActive = false; vReqMsg = null }
+    fun closeSessionTab() { vSessionTabOpen = false; vSessionActive = false }
     // Open a request in a specific pack's context (a linked copy shares the
     // source's ReqState objects, so the pack must be passed — packOf would
     // resolve to the source, not the linked copy).
     fun open(inRs: ReqState, inPack: PackState) {
         if (inRs !in inPack.openTabs) inPack.openTabs.add(inRs)
-        vActivePack = vPacks.indexOf(inPack).coerceAtLeast(0); inPack.active = inRs; vEnvActive = false; vReqMsg = null
+        vActivePack = vPacks.indexOf(inPack).coerceAtLeast(0); inPack.active = inRs
+        vEnvActive = false; vSessionActive = false; vReqMsg = null
     }
     fun openEnv(inP: PackState) {
         vActivePack = vPacks.indexOf(inP).coerceAtLeast(0)
-        inP.envOpen = true; vEnvActive = true; vReqMsg = null
+        inP.envOpen = true; vEnvActive = true; vSessionActive = false; vReqMsg = null
     }
     fun closeTab(inRs: ReqState, inPack: PackState) {
         val vIdx = inPack.openTabs.indexOf(inRs)
@@ -300,20 +311,28 @@ private fun App() {
         inP.envOpen = false
         if (vEnvActive && activePack() === inP) vEnvActive = false   // fall back to the active request
     }
-    // Close every tab except inTab (a request or a pack-env tab).
+    // Close every tab except inTab (a request, a pack-env, or the session tab).
     fun closeOthers(inTab: StripTab) {
         vPacks.forEach { vQ ->
             vQ.openTabs.removeAll { it !== inTab.req }
             vQ.active = vQ.openTabs.firstOrNull()
             if (vQ !== inTab.pack || inTab.req != null) vQ.envOpen = false
         }
-        vActivePack = vPacks.indexOf(inTab.pack)
-        if (inTab.req != null) { inTab.pack.active = inTab.req; vEnvActive = false }
-        else { inTab.pack.envOpen = true; vEnvActive = true }
+        if (inTab.isSession) {
+            vSessionTabOpen = true; vSessionActive = true; vEnvActive = false
+        } else {
+            vSessionTabOpen = false; vSessionActive = false
+            val vKeep = inTab.pack
+            if (vKeep != null) {
+                vActivePack = vPacks.indexOf(vKeep)
+                if (inTab.req != null) { vKeep.active = inTab.req; vEnvActive = false }
+                else { vKeep.envOpen = true; vEnvActive = true }
+            }
+        }
     }
     fun closeAllTabs() {
         vPacks.forEach { it.openTabs.clear(); it.active = null; it.envOpen = false }
-        vEnvActive = false
+        vEnvActive = false; vSessionTabOpen = false; vSessionActive = false
     }
     // inFrom / inTo index into the unified strip; only request tabs reorder, and
     // the move is clamped to the dragged tab's own pack so it can't jump packs.
@@ -321,8 +340,8 @@ private fun App() {
         val vFlat = stripTabs()
         val vTab = vFlat.getOrNull(inFrom) ?: return
         val vRs = vTab.req ?: return
-        val vP = vTab.pack
-        var vStart = 0
+        val vP = vTab.pack ?: return
+        var vStart = if (vSessionTabOpen) 1 else 0   // session tab sits at flat index 0
         for (vQ in vPacks) { if (vQ === vP) break; vStart += (if (vQ.envOpen) 1 else 0) + vQ.openTabs.size }
         val vReqStart = vStart + (if (vP.envOpen) 1 else 0)
         val vLocalFrom = vP.openTabs.indexOf(vRs)
@@ -612,6 +631,7 @@ private fun App() {
                                     inOnSaveAs = { saveSessionAs() },
                                     inOnRename = { vSessionPath?.let { vRenameSession = true; vRenameText = fileLeaf(it) } },
                                     inOnReveal = { vSessionPath?.let { revealInFileManager(it) } },
+                                    inOnSettings = { openSessionTab() },
                                     inOnDefault = { requestSwitch { loadDefaultSession() } },
                                     inOnOpen = { requestSwitch { openSessionFile() } },
                                     inOnNew = { requestSwitch { newSession() } },
@@ -628,7 +648,7 @@ private fun App() {
                                     inOnNew = { newPack() },
                                     inOnImport = { openPackFile() },
                                 )
-                                TabBar(listOf("Packs", "History", "Var (${vGlobalEnv.size})"), vSideTab) { vSideTab = it }
+                                TabBar(listOf("Packs", "History"), vSideTab) { vSideTab = it }
                             }
                         }
                         Divider(color = c.border)
@@ -697,31 +717,7 @@ private fun App() {
                                         }
                                     }
                                 }
-                                else -> {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 16.dp)
-                                        Text(if (vSettingsTab == 0) "Session Var" else "Session Header", color = c.text, fontSize = 13.sp)
-                                    }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        TogglePill("Var", vSettingsTab == 0) { vSettingsTab = 0 }
-                                        TogglePill("Header", vSettingsTab == 1) { vSettingsTab = 1 }
-                                        TogglePill("Cert", vSettingsTab == 2) { vSettingsTab = 2 }
-                                    }
-                                    when (vSettingsTab) {
-                                        0 -> {
-                                            Text("Shared across every pack; override a pack's own vars. Used as {{name}}.", color = c.dim, fontSize = 11.sp)
-                                            KeyValEditor(vGlobalEnv) { vNew -> vGlobalEnv.clear(); vGlobalEnv.addAll(vNew); persist() }
-                                        }
-                                        1 -> {
-                                            Text("Sent with every request in the session. Packs and requests can override by key.", color = c.dim, fontSize = 11.sp)
-                                            KeyValEditor(vSessionHeaders) { vNew -> vSessionHeaders.clear(); vSessionHeaders.addAll(vNew); persist() }
-                                        }
-                                        else -> {
-                                            Text("Fallback client cert for every request in the session, unless a pack or request sets its own.", color = c.dim, fontSize = 11.sp)
-                                            CertConfigEditor(vSessionCert ?: CertConfig(), "Session client certificate") { vCc -> vSessionCert = vCc.takeIf { it.isSet }; persist() }
-                                        }
-                                    }
-                                }
+                                else -> {}
                             }
                         }
                     }
@@ -732,29 +728,27 @@ private fun App() {
                     val vTabs = stripTabs()
                     val vReqActive = vP?.active
                     val vEnvShown = vEnvActive && vP != null && vP.envOpen
-                    if (vP == null) {
+                    if (vTabs.isEmpty()) {
                         Column(modifier = Modifier.fillMaxSize().background(c.bg), verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Spacer(Modifier.weight(1f))
-                            Text("No pack open.", color = c.dim)
-                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                OutlinedAction(MaterialSymbols.Add, "New pack") { newPack() }
-                                OutlinedAction(MaterialSymbols.Folder, "Import pack…") { openPackFile() }
-                                OutlinedAction(MaterialSymbols.Refresh, "Load default session") { loadDefaultSession() }
-                            }
+                            if (vPacks.isEmpty()) {
+                                Text("No pack open.", color = c.dim)
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    OutlinedAction(MaterialSymbols.Add, "New pack") { newPack() }
+                                    OutlinedAction(MaterialSymbols.Folder, "Import pack…") { openPackFile() }
+                                    OutlinedAction(MaterialSymbols.Refresh, "Load default session") { loadDefaultSession() }
+                                }
+                            } else Text("Nothing open — click a request, a pack, or Session settings.", color = c.dim)
                             Spacer(Modifier.weight(1f))
-                        }
-                    } else if (vTabs.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize().background(c.bg), contentAlignment = Alignment.Center) {
-                            Text("Nothing open — click a request, or a pack to edit its Var.", color = c.dim)
                         }
                     } else {
                         Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
-                            // Panel 1 — unified tab strip (request + pack-env tabs).
+                            // Panel 1 — unified tab strip (session + pack-settings + request tabs).
                             RequestTabStrip(
                                 inTabs = vTabs,
-                                inActiveKey = if (vEnvShown) vP else vReqActive,
-                                inOnSelect = { vT -> if (vT.req != null) open(vT.req, vT.pack) else openEnv(vT.pack) },
-                                inOnClose = { vT -> if (vT.req != null) closeTab(vT.req, vT.pack) else closeEnv(vT.pack) },
+                                inActiveKey = when { vSessionActive -> kSessionTabKey; vEnvShown && vP != null -> vP; else -> vReqActive },
+                                inOnSelect = { vT -> when { vT.isSession -> openSessionTab(); vT.req != null && vT.pack != null -> open(vT.req, vT.pack); vT.pack != null -> openEnv(vT.pack); else -> {} } },
+                                inOnClose = { vT -> when { vT.isSession -> closeSessionTab(); vT.req != null && vT.pack != null -> closeTab(vT.req, vT.pack); vT.pack != null -> closeEnv(vT.pack); else -> {} } },
                                 inOnCloseOthers = { vT -> closeOthers(vT) },
                                 inOnCloseAll = { closeAllTabs() },
                                 inOnReorder = { vFrom, vTo -> reorderTabs(vFrom, vTo) },
@@ -762,36 +756,41 @@ private fun App() {
                             Divider(color = c.border)
 
                             when {
+                                vSessionActive -> {
+                                    ScopeSettings(
+                                        inTab = vSettingsTab, inOnTab = { vSettingsTab = it },
+                                        inHeader = {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 18.dp)
+                                                Text("Session", color = c.text, fontSize = 19.sp)
+                                            }
+                                        },
+                                        inVars = vGlobalEnv, inOnVars = { vGlobalEnv.clear(); vGlobalEnv.addAll(it); persist() },
+                                        inVarHelp = "Shared across every pack; override a pack's own vars. Used as {{name}}.",
+                                        inHeaders = vSessionHeaders, inOnHeaders = { vSessionHeaders.clear(); vSessionHeaders.addAll(it); persist() },
+                                        inHeaderHelp = "Sent with every request in the session. Packs and requests can override by key.",
+                                        inCert = vSessionCert, inOnCert = { vSessionCert = it; persist() },
+                                        inCertHelp = "Fallback client cert for every request, unless a pack or request sets its own.",
+                                        inCertHeading = "Session client certificate",
+                                    )
+                                }
                                 vEnvShown && vP != null -> {
-                                    // Pack settings — the pack's own variables / headers.
-                                    Column(
-                                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            ColorDot(vP.color)
-                                            Text(vP.name, color = c.text, fontSize = 19.sp, modifier = Modifier.weight(1f))
-                                        }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            TogglePill("Var", vSettingsTab == 0) { vSettingsTab = 0 }
-                                            TogglePill("Header", vSettingsTab == 1) { vSettingsTab = 1 }
-                                            TogglePill("Cert", vSettingsTab == 2) { vSettingsTab = 2 }
-                                        }
-                                        when (vSettingsTab) {
-                                            0 -> {
-                                                Text("Used by every request in this pack as {{name}}. Session Var overrides these.", color = c.dim, fontSize = 12.sp)
-                                                KeyValEditor(vP.variables) { vNew -> vP.variables.clear(); vP.variables.addAll(vNew); vP.dirty = true; persist() }
+                                    ScopeSettings(
+                                        inTab = vSettingsTab, inOnTab = { vSettingsTab = it },
+                                        inHeader = {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                ColorDot(vP.color)
+                                                Text(vP.name, color = c.text, fontSize = 19.sp)
                                             }
-                                            1 -> {
-                                                Text("Sent with every request in this pack. A request can override a header by the same key.", color = c.dim, fontSize = 12.sp)
-                                                KeyValEditor(vP.headers) { vNew -> vP.headers.clear(); vP.headers.addAll(vNew); vP.dirty = true; persist() }
-                                            }
-                                            else -> {
-                                                Text("Used by every request in this pack unless the request sets its own. Overrides the session cert.", color = c.dim, fontSize = 12.sp)
-                                                CertConfigEditor(vP.cert ?: CertConfig(), "Pack client certificate") { vCc -> vP.cert = vCc.takeIf { it.isSet }; vP.dirty = true; persist() }
-                                            }
-                                        }
-                                    }
+                                        },
+                                        inVars = vP.variables, inOnVars = { vP.variables.clear(); vP.variables.addAll(it); vP.dirty = true; persist() },
+                                        inVarHelp = "Used by every request in this pack as {{name}}. Session Var overrides these.",
+                                        inHeaders = vP.headers, inOnHeaders = { vP.headers.clear(); vP.headers.addAll(it); vP.dirty = true; persist() },
+                                        inHeaderHelp = "Sent with every request in this pack. A request can override a header by the same key.",
+                                        inCert = vP.cert, inOnCert = { vP.cert = it; vP.dirty = true; persist() },
+                                        inCertHelp = "Used by every request in this pack unless the request sets its own. Overrides the session cert.",
+                                        inCertHeading = "Pack client certificate",
+                                    )
                                 }
                                 vReqActive != null && vP != null -> {
                                     val vReq = vReqActive.req
@@ -1071,6 +1070,7 @@ private fun SessionMenu(
     inOnSaveAs: () -> Unit,
     inOnRename: () -> Unit,
     inOnReveal: () -> Unit,
+    inOnSettings: () -> Unit,
     inOnDefault: () -> Unit,
     inOnOpen: () -> Unit,
     inOnNew: () -> Unit,
@@ -1103,6 +1103,8 @@ private fun SessionMenu(
             if (!vSaved) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 248.dp) {
+            DropdownMenuItem(onClick = { vOpen = false; inOnSettings() }) { MenuRow(MaterialSymbols.Tune, "Session settings (Var / Header / Cert)") }
+            Divider(color = c.border)
             DropdownMenuItem(onClick = { vOpen = false; inOnSave() }) { MenuRow(MaterialSymbols.Save, "Save session") }
             DropdownMenuItem(onClick = { vOpen = false; inOnSaveAs() }) { MenuRow(MaterialSymbols.Download, "Save session as…") }
             DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename session…", if (vSaved) c.text else vDisabled) }
@@ -1496,9 +1498,9 @@ private fun RequestTabStrip(
                 ) {
                     val vRs = vTab.req
                     if (vRs == null) {
-                        // Pack env tab.
+                        // Session / pack settings tab.
                         MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = if (vSel) c.accent else c.dim, size = 13.dp)
-                        Text(vTab.pack.name, color = if (vSel) c.text else c.dim, fontSize = 13.sp)
+                        Text(if (vTab.isSession) "Session" else (vTab.pack?.name ?: ""), color = if (vSel) c.text else c.dim, fontSize = 13.sp)
                     } else {
                         Box(modifier = Modifier.size(7.dp).background(methodColor(vRs.req.method), RoundedCornerShape(4.dp)))
                         Text(vRs.req.name, color = if (vSel) c.text else c.dim, fontSize = 13.sp)
@@ -1541,7 +1543,7 @@ private fun RequestTabStrip(
                                     val vRs = vTab.req
                                     if (vRs == null) {
                                         MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = if (vSel) c.accent else c.dim, size = 13.dp)
-                                        Text("${vTab.pack.name} · var", color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                                        Text(if (vTab.isSession) "Session" else "${vTab.pack?.name} · var", color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
                                     } else {
                                         Box(modifier = Modifier.size(7.dp).background(methodColor(vRs.req.method), RoundedCornerShape(4.dp)))
                                         Text(vRs.req.name, color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
@@ -2090,6 +2092,36 @@ private fun RequestCertTab(inReq: ApiRequest, inInheritedCert: CertConfig?, inRe
             }
         }
         CertConfigEditor(inReq.certConfig()) { vCc -> inEdit { it.withCert(vCc) } }
+    }
+}
+
+/* Scope settings editor (Variables / Headers / Cert sub-tabs) — shared by the
+   session settings tab and each pack's settings tab. */
+@Composable
+private fun ScopeSettings(
+    inTab: Int,
+    inOnTab: (Int) -> Unit,
+    inHeader: @Composable () -> Unit,
+    inVars: List<KeyVal>, inOnVars: (List<KeyVal>) -> Unit, inVarHelp: String,
+    inHeaders: List<KeyVal>, inOnHeaders: (List<KeyVal>) -> Unit, inHeaderHelp: String,
+    inCert: CertConfig?, inOnCert: (CertConfig?) -> Unit, inCertHelp: String, inCertHeading: String,
+) {
+    val c = LocalAppColors.current
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        inHeader()
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            TogglePill("Var", inTab == 0) { inOnTab(0) }
+            TogglePill("Header", inTab == 1) { inOnTab(1) }
+            TogglePill("Cert", inTab == 2) { inOnTab(2) }
+        }
+        when (inTab) {
+            0 -> { Text(inVarHelp, color = c.dim, fontSize = 12.sp); KeyValEditor(inVars, inOnVars) }
+            1 -> { Text(inHeaderHelp, color = c.dim, fontSize = 12.sp); KeyValEditor(inHeaders, inOnHeaders) }
+            else -> { Text(inCertHelp, color = c.dim, fontSize = 12.sp); CertConfigEditor(inCert ?: CertConfig(), inCertHeading) { vCc -> inOnCert(vCc.takeIf { it.isSet }) } }
+        }
     }
 }
 
