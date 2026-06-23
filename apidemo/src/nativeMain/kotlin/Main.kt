@@ -438,17 +438,19 @@ private fun App() {
                                     inOnOpenRecent = { openSession(it) },
                                     inModifier = Modifier.weight(1f),
                                 )
-                                AddPackMenu(
-                                    inOnNew = { newPack() },
-                                    inOnImport = { openPackFile() },
-                                    inOnLoadDefault = { loadDefaultPack() },
-                                )
                                 OptionsMenu(
                                     inDark = vDark,
                                     inOnToggleTheme = { vDark = !vDark; persist() },
                                 )
                             }
-                            TabBar(listOf("Packs", "History", "Env (${vP?.variables?.size ?: 0})"), vSideTab) { vSideTab = it }
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                AddPackMenu(
+                                    inOnNew = { newPack() },
+                                    inOnImport = { openPackFile() },
+                                    inOnLoadDefault = { loadDefaultPack() },
+                                )
+                                TabBar(listOf("Packs", "History", "Env (${vP?.variables?.size ?: 0})"), vSideTab) { vSideTab = it }
+                            }
                         }
                         Divider(color = c.border)
 
@@ -823,7 +825,7 @@ private fun SessionMenu(
         // Highlight on hover and stay highlighted while the menu is open.
         Row(
             modifier = Modifier.fillMaxWidth().menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
-                .background(if (vHover || vOpen) c.field else Color.Transparent, RoundedCornerShape(6.dp))
+                .background(if (vHover || vOpen) c.accent.copy(alpha = 0.16f) else Color.Transparent, RoundedCornerShape(6.dp))
                 .hoverable { vHover = it }
                 .clickable { vOpen = true }.padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
