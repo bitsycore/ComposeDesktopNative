@@ -32,6 +32,9 @@ fun resolveVars(inReq: ApiRequest, inVars: List<KeyVal>): ApiRequest {
         headers = inReq.headers.map { it.copy(key = substituteVars(it.key, inVars), value = substituteVars(it.value, inVars)) },
         body = substituteVars(inReq.body, inVars),
         form = inReq.form.map { it.copy(key = substituteVars(it.key, inVars), value = substituteVars(it.value, inVars)) },
+        certPath = substituteVars(inReq.certPath, inVars),
+        keyPath = substituteVars(inReq.keyPath, inVars),
+        certPassword = substituteVars(inReq.certPassword, inVars),
     )
 }
 
@@ -76,6 +79,17 @@ fun toCurl(inReq: ApiRequest): String {
     inReq.headers
         .filter { it.enabled && it.key.isNotBlank() }
         .forEach { vSb.append(" \\\n  -H ").append(shellQuote("${it.key}: ${it.value}")) }
+
+    // Client certificate (mutual TLS).
+    if (inReq.certPath.isNotBlank()) {
+        vSb.append(" \\\n  --cert ").append(shellQuote(inReq.certPath))
+        vSb.append(" --cert-type ").append(inReq.certFormat.curlName)
+        if (inReq.keyPath.isNotBlank()) {
+            vSb.append(" \\\n  --key ").append(shellQuote(inReq.keyPath))
+            vSb.append(" --key-type ").append(inReq.keyFormat.curlName)
+        }
+        if (inReq.certPassword.isNotEmpty()) vSb.append(" \\\n  --pass ").append(shellQuote(inReq.certPassword))
+    }
 
     if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
         val vContentType = when (inReq.bodyType) {

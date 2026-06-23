@@ -1,0 +1,207 @@
+package apidemo
+
+import io.ktor.http.HttpStatusCode
+import kotlinx.cinterop.*
+import libcurl.*
+import okio.Buffer
+import platform.posix.size_t
+import kotlin.time.TimeSource
+
+// ==================
+// MARK: Client-certificate (mTLS) sending via libcurl
+// ==================
+// Ktor's native engines expose no client-certificate API, so a request that
+// carries a client certificate is sent here instead — straight through the
+// libcurl that ktor-client-curl already bundles (package `libcurl`, embedded
+// static archive; Schannel on Windows, OpenSSL on macOS/Linux). This is the
+// same TLS stack the default engine uses, so behaviour matches; we just get to
+// set CURLOPT_SSLCERT / SSLCERTTYPE / SSLKEY / SSLKEYTYPE / KEYPASSWD.
+//
+// The transfer is synchronous (curl_easy_perform) and runs on Dispatchers.Default
+// from HttpRunner.run(); cancellation is best-effort (an in-flight perform can't
+// be interrupted — the result is simply discarded if the caller cancelled).
+
+/* Per-transfer accumulators handed to the C callbacks through a StableRef. */
+private class CurlSink
+	{
+	val body = Buffer()                 // response body bytes (already decompressed by curl)
+	val headerRaw = StringBuilder()     // raw response header lines, all responses incl. redirects
+	}
+
+/* Body write callback — appends each chunk to the sink's buffer. */
+@OptIn(ExperimentalForeignApi::class)
+private fun onCurlBody(inBuffer: CPointer<ByteVar>, inSize: size_t, inCount: size_t, inUserdata: COpaquePointer): size_t
+	{
+	val vSink = inUserdata.asStableRef<CurlSink>().get()
+	val vLen = (inSize * inCount).toLong()
+	if (vLen > 0) vSink.body.write(inBuffer.readBytes(vLen.toInt()))
+	return vLen.convert()
+	}
+
+/* Header callback — one parsed header line per call; accumulated for parsing. */
+@OptIn(ExperimentalForeignApi::class)
+private fun onCurlHeader(inBuffer: CPointer<ByteVar>, inSize: size_t, inCount: size_t, inUserdata: COpaquePointer): size_t
+	{
+	val vSink = inUserdata.asStableRef<CurlSink>().get()
+	val vLen = (inSize * inCount).toLong()
+	if (vLen > 0) vSink.headerRaw.append(inBuffer.readBytes(vLen.toInt()).decodeToString())
+	return vLen.convert()
+	}
+
+/* Send a client-certificate request through libcurl and adapt the result into
+   the same ApiResponse the Ktor path produces. inReq is already var-resolved. */
+@OptIn(ExperimentalForeignApi::class)
+fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse
+	{
+	val vMark = TimeSource.Monotonic.markNow()
+	val vCurl = curl_easy_init()
+		?: return errorResponse("Could not initialize libcurl", vMark.elapsedNow().inWholeMilliseconds)
+
+	val vSink = CurlSink()
+	val vSinkRef = StableRef.create(vSink)
+	var vHeaders: CPointer<curl_slist>? = null
+
+	try
+		{
+		curl_easy_setopt(vCurl, CURLOPT_URL, urlWithParams(inReq))
+		curl_easy_setopt(vCurl, CURLOPT_FOLLOWLOCATION, 1L)
+		curl_easy_setopt(vCurl, CURLOPT_ACCEPT_ENCODING, "")   // advertise + auto-decompress
+
+		// ============
+		//  Method + body
+		val vBody = if (inReq.method == ReqMethod.HEAD) null else requestBodyBytes(inReq)
+		if (inReq.method == ReqMethod.HEAD)
+			curl_easy_setopt(vCurl, CURLOPT_NOBODY, 1L)
+		else
+			curl_easy_setopt(vCurl, CURLOPT_CUSTOMREQUEST, inReq.method.name)
+		if (vBody != null && vBody.bytes.isNotEmpty())
+			{
+			curl_easy_setopt(vCurl, CURLOPT_POSTFIELDSIZE_LARGE, vBody.bytes.size.toLong())
+			vBody.bytes.usePinned { curl_easy_setopt(vCurl, CURLOPT_COPYPOSTFIELDS, it.addressOf(0)) }
+			}
+
+		// ============
+		//  Headers (+ Content-Type for the body type if the user didn't set one)
+		inReq.headers
+			.filter { it.enabled && it.key.isNotBlank() }
+			.forEach { vHeaders = curl_slist_append(vHeaders, "${it.key}: ${it.value}") }
+		val vHasCt = inReq.headers.any { it.enabled && it.key.equals("content-type", ignoreCase = true) }
+		if (vBody?.contentType != null && !vHasCt)
+			vHeaders = curl_slist_append(vHeaders, "Content-Type: ${vBody.contentType}")
+		vHeaders = curl_slist_append(vHeaders, "Expect:")   // disable 100-continue, as Ktor's engine does
+		vHeaders?.let { curl_easy_setopt(vCurl, CURLOPT_HTTPHEADER, it) }
+
+		// ============
+		//  Response capture callbacks
+		curl_easy_setopt(vCurl, CURLOPT_WRITEFUNCTION, staticCFunction(::onCurlBody))
+		curl_easy_setopt(vCurl, CURLOPT_WRITEDATA, vSinkRef.asCPointer())
+		curl_easy_setopt(vCurl, CURLOPT_HEADERFUNCTION, staticCFunction(::onCurlHeader))
+		curl_easy_setopt(vCurl, CURLOPT_HEADERDATA, vSinkRef.asCPointer())
+
+		// ============
+		//  Client certificate
+		curl_easy_setopt(vCurl, CURLOPT_SSLCERT, inReq.certPath)
+		curl_easy_setopt(vCurl, CURLOPT_SSLCERTTYPE, inReq.certFormat.curlName)
+		if (inReq.keyPath.isNotBlank())
+			{
+			curl_easy_setopt(vCurl, CURLOPT_SSLKEY, inReq.keyPath)
+			curl_easy_setopt(vCurl, CURLOPT_SSLKEYTYPE, inReq.keyFormat.curlName)
+			}
+		if (inReq.certPassword.isNotEmpty()) curl_easy_setopt(vCurl, CURLOPT_KEYPASSWD, inReq.certPassword)
+
+		// ============
+		//  Perform
+		val vCode = curl_easy_perform(vCurl)
+		val vMs = vMark.elapsedNow().inWholeMilliseconds
+		if (vCode != CURLE_OK)
+			return errorResponse(curl_easy_strerror(vCode)?.toKString() ?: "libcurl error $vCode", vMs)
+
+		val vBytes = vSink.body.readByteArray()
+		val vStatus = memScoped { val p = alloc<LongVar>(); curl_easy_getinfo(vCurl, CURLINFO_RESPONSE_CODE, p.ptr); p.value.toInt() }
+		val vCt = memScoped { val p = alloc<CPointerVar<ByteVar>>(); curl_easy_getinfo(vCurl, CURLINFO_CONTENT_TYPE, p.ptr); p.value?.toKString() }
+		val vVer = memScoped { val p = alloc<LongVar>(); curl_easy_getinfo(vCurl, CURLINFO_HTTP_VERSION, p.ptr); httpVersionName(p.value) }
+		val vIsImage = vCt?.startsWith("image/", ignoreCase = true) == true
+		val vBinary = !vIsImage && isBinaryBody(vCt, vBytes)
+
+		// Headers we explicitly put on the wire (curl also adds Host / Accept /
+		// User-Agent / Content-Length, which it doesn't expose without a debug hook).
+		val vSent = buildList {
+			inReq.headers.filter { it.enabled && it.key.isNotBlank() }.forEach { add(it.key to it.value) }
+			if (vBody?.contentType != null && !vHasCt) add("Content-Type" to vBody.contentType)
+		}.sortedBy { it.first.lowercase() }
+
+		return ApiResponse(
+			ok = true,
+			status = vStatus,
+			statusText = runCatching { HttpStatusCode.fromValue(vStatus).description }.getOrDefault(""),
+			timeMs = vMs,
+			sizeBytes = vBytes.size.toLong(),
+			headers = parseRawHeaders(vSink.headerRaw.toString()),
+			body = when {
+				vIsImage -> ""
+				vBinary -> "(${vCt ?: "binary"} · ${vBytes.size} bytes — not shown; use Save as…)"
+				else -> vBytes.decodeToString()
+			},
+			bytes = vBytes,
+			contentType = vCt,
+			requestHeaders = vSent,
+			httpVersion = vVer,
+		)
+		}
+	finally
+		{
+		vHeaders?.let { curl_slist_free_all(it) }
+		curl_easy_cleanup(vCurl)
+		vSinkRef.dispose()
+		}
+	}
+
+/* A failed-request ApiResponse with a message (mirrors HttpRunner's catch). */
+private fun errorResponse(inMessage: String, inMs: Long): ApiResponse =
+	ApiResponse(ok = false, status = 0, statusText = "—", timeMs = inMs, sizeBytes = 0, headers = emptyList(), body = "", error = inMessage)
+
+/* The encoded body for the request's body type, with the Content-Type curl
+   should send (null when there's no body). Mirrors HttpRunner.run(). */
+private class CurlBody(val contentType: String?, val bytes: ByteArray)
+
+private fun requestBodyBytes(inReq: ApiRequest): CurlBody?
+	{
+	if (inReq.bodyType == BodyType.NONE) return null
+	return when (inReq.bodyType)
+		{
+		BodyType.JSON -> CurlBody("application/json", inReq.body.encodeToByteArray())
+		BodyType.TEXT -> CurlBody("text/plain", inReq.body.encodeToByteArray())
+		BodyType.FORM -> CurlBody("application/x-www-form-urlencoded", formEncode(inReq.form).encodeToByteArray())
+		BodyType.FILE -> if (inReq.body.isBlank()) null else CurlBody("application/octet-stream", readFileBytes(inReq.body))
+		BodyType.NONE -> null
+		}
+	}
+
+/* Parse libcurl's accumulated raw header text into ordered key/value pairs,
+   keeping only the final response's block (a new "HTTP/" status line — emitted
+   per redirect hop — resets what we've gathered). */
+private fun parseRawHeaders(inRaw: String): List<Pair<String, String>>
+	{
+	var vCurrent = mutableListOf<Pair<String, String>>()
+	for (vRawLine in inRaw.split("\r\n", "\n"))
+		{
+		val vLine = vRawLine.trimEnd()
+		if (vLine.isEmpty()) continue
+		if (vLine.startsWith("HTTP/", ignoreCase = true)) { vCurrent = mutableListOf(); continue }
+		val vColon = vLine.indexOf(':')
+		if (vColon <= 0) continue
+		vCurrent.add(vLine.substring(0, vColon).trim() to vLine.substring(vColon + 1).trim())
+		}
+	return vCurrent.sortedBy { it.first.lowercase() }
+	}
+
+/* libcurl's CURLINFO_HTTP_VERSION code → a human protocol string. */
+@OptIn(ExperimentalForeignApi::class)
+private fun httpVersionName(inCode: Long): String = when (inCode)
+	{
+	CURL_HTTP_VERSION_1_0.toLong() -> "HTTP/1.0"
+	CURL_HTTP_VERSION_1_1.toLong() -> "HTTP/1.1"
+	CURL_HTTP_VERSION_2_0.toLong() -> "HTTP/2"
+	CURL_HTTP_VERSION_3.toLong() -> "HTTP/3"
+	else -> "HTTP/1.1"
+	}

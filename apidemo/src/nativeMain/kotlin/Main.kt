@@ -1556,9 +1556,9 @@ private fun RequestBuilder(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TabBar(
-                listOf("Query (${inReq.params.size})", "Headers (${inReq.headers.size})", "Body"),
+                listOf("Query (${inReq.params.size})", "Headers (${inReq.headers.size})", "Body", "Cert"),
                 inRs.reqTab,
-                inDots = if (vBodySet) setOf(2) else emptySet(),
+                inDots = buildSet { if (vBodySet) add(2); if (inReq.hasClientCert) add(3) },
             ) { inRs.reqTab = it }
             Spacer(Modifier.weight(1f))
             inMsg?.let {
@@ -1586,7 +1586,8 @@ private fun RequestBuilder(
             when (inRs.reqTab) {
                 0 -> KeyValEditor(inReq.params) { v -> inEdit { it.copy(params = v) } }
                 1 -> KeyValEditor(inReq.headers) { v -> inEdit { it.copy(headers = v) } }
-                else -> BodyContent(inReq, inRs) { v -> inEdit(v) }
+                2 -> BodyContent(inReq, inRs) { v -> inEdit(v) }
+                else -> CertEditor(inReq) { v -> inEdit(v) }
             }
         }
 
@@ -1646,6 +1647,87 @@ private fun FileBody(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> 
         }
         if (inReq.body.isNotBlank()) Text(inReq.body, color = c.text, fontSize = 12.sp)
         else Text("No file selected.", color = c.dim, fontSize = 12.sp)
+    }
+}
+
+/* Client-certificate (mTLS) editor — certificate + optional separate key +
+   passphrase. PEM/DER are used directly by OpenSSL on macOS/Linux; on Windows
+   they're imported into the certificate store for the request then removed
+   (see CurlMtls). PKCS#12 bundles its own private key. */
+@Composable
+private fun CertEditor(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
+    val c = LocalAppColors.current
+    val vHasCert = inReq.certPath.isNotBlank()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Client certificate (mTLS)", color = c.text, fontSize = 14.sp)
+        Text(
+            "Presents your certificate to the server. PKCS#12 (.p12/.pfx) bundles its private key; PEM/DER take a separate key file unless the certificate file already contains it.",
+            color = c.dim, fontSize = 11.sp,
+        )
+
+        // ============
+        //  Certificate file + format
+        Text("Certificate", color = c.dim, fontSize = 12.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedAction(MaterialSymbols.InsertDriveFile, "Choose certificate…") {
+                showOpenFileDialog { vPath -> if (vPath != null) inEdit { it.copy(certPath = vPath) } }
+            }
+            CertFormatMenu(inReq.certFormat) { vF -> inEdit { it.copy(certFormat = vF) } }
+            if (vHasCert) IconBtn(MaterialSymbols.Close, "Clear certificate") {
+                inEdit { it.copy(certPath = "", keyPath = "", certPassword = "", certFormat = CertFormat.PEM, keyFormat = CertFormat.PEM) }
+            }
+        }
+        Text(if (vHasCert) inReq.certPath else "No certificate selected.", color = if (vHasCert) c.text else c.dim, fontSize = 12.sp)
+
+        // ============
+        //  Private key (PKCS#12 carries its own key)
+        if (inReq.certFormat != CertFormat.PKCS12) {
+            Text("Private key", color = c.dim, fontSize = 12.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedAction(MaterialSymbols.InsertDriveFile, "Choose key…") {
+                    showOpenFileDialog { vPath -> if (vPath != null) inEdit { it.copy(keyPath = vPath) } }
+                }
+                CertFormatMenu(inReq.keyFormat) { vF -> inEdit { it.copy(keyFormat = vF) } }
+                if (inReq.keyPath.isNotBlank()) IconBtn(MaterialSymbols.Close, "Clear key") { inEdit { it.copy(keyPath = "", keyFormat = CertFormat.PEM) } }
+            }
+            Text(
+                if (inReq.keyPath.isNotBlank()) inReq.keyPath else "Optional — only if the key is in a separate file.",
+                color = if (inReq.keyPath.isNotBlank()) c.text else c.dim, fontSize = 12.sp,
+            )
+        }
+
+        // ============
+        //  Passphrase
+        Text("Passphrase", color = c.dim, fontSize = 12.sp)
+        ThinField(inReq.certPassword, { v -> inEdit { it.copy(certPassword = v) } }, inPlaceholder = "Key / PKCS#12 password (optional)")
+    }
+}
+
+/* Certificate / key encoding dropdown (PEM / DER / PKCS#12). */
+@Composable
+private fun CertFormatMenu(inFormat: CertFormat, inOnPick: (CertFormat) -> Unit) {
+    val c = LocalAppColors.current
+    val vAnchor = rememberMenuAnchor()
+    var vOpen by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+                .border(1.dp, c.border, RoundedCornerShape(6.dp))
+                .clickable { vOpen = true }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(inFormat.label, color = c.text, fontSize = 13.sp)
+            MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = c.dim, size = 15.dp)
+        }
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
+            CertFormat.entries.forEach { vF ->
+                DropdownMenuItem(onClick = { inOnPick(vF); vOpen = false }) {
+                    Text(vF.label, color = if (vF == inFormat) c.accent else c.text, fontSize = 13.sp)
+                }
+            }
+        }
     }
 }
 

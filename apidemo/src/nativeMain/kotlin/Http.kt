@@ -26,6 +26,9 @@ class HttpRunner {
     private val fClient = HttpClient(Curl)
 
     suspend fun run(inReq: ApiRequest): ApiResponse {
+        // Client-certificate requests bypass Ktor (no engine exposes a cert API)
+        // and go straight through libcurl — same bundled TLS stack.
+        if (inReq.hasClientCert) return curlSendWithClientCert(inReq)
         val vMark = TimeSource.Monotonic.markNow()
         return try {
             val vResp: HttpResponse = fClient.request(inReq.url.trim()) {
@@ -112,7 +115,7 @@ class HttpRunner {
 /* Heuristic for a non-text body: textual content types (text, json, xml, html,
    javascript, csv, form) are shown as text; everything else, or bytes with
    embedded NULs, is treated as binary. */
-private fun isBinaryBody(inContentType: String?, inBytes: ByteArray): Boolean {
+internal fun isBinaryBody(inContentType: String?, inBytes: ByteArray): Boolean {
     val vCt = inContentType?.lowercase() ?: ""
     val vTextual = vCt.startsWith("text/") ||
         vCt.contains("json") || vCt.contains("xml") || vCt.contains("html") ||
@@ -129,7 +132,7 @@ private fun isGzip(inEncoding: String?, inBytes: ByteArray): Boolean =
         (inBytes.size >= 2 && inBytes[0] == 0x1f.toByte() && inBytes[1] == 0x8b.toByte())
 
 /* Read a file's raw bytes (used for a FILE request body). */
-private fun readFileBytes(inPath: String): ByteArray =
+internal fun readFileBytes(inPath: String): ByteArray =
     FileSystem.SYSTEM.read(inPath.trim().toPath()) { readByteArray() }
 
 /* Inflate a gzip stream to its original bytes via okio's GzipSource. */

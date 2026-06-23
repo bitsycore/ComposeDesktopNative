@@ -94,7 +94,32 @@ data class ApiRequest(
     val bodyType: BodyType = BodyType.NONE,
     val body: String = "",                       // JSON / TEXT content, or the file path when bodyType == FILE
     val form: List<KeyVal> = emptyList(),        // key/value fields when bodyType == FORM
+    // Client certificate (mutual TLS). When certPath is set, the request is sent
+    // through the libcurl path (CurlMtls.kt) with these mapped to CURLOPT_SSLCERT
+    // / SSLCERTTYPE / SSLKEY / SSLKEYTYPE / KEYPASSWD. A PKCS#12 file bundles its
+    // own key, so keyPath is left blank for it.
+    val certPath: String = "",
+    val certFormat: CertFormat = CertFormat.PEM,
+    val keyPath: String = "",
+    val keyFormat: CertFormat = CertFormat.PEM,
+    val certPassword: String = "",
 )
+
+/* Whether this request carries a client certificate (and so is sent via the
+   libcurl mTLS path rather than the default engine). */
+val ApiRequest.hasClientCert: Boolean
+    get() = certPath.isNotBlank()
+
+/* Certificate / private-key encodings, mapped to libcurl's CURLOPT_SSLCERTTYPE
+   / CURLOPT_SSLKEYTYPE string values and to `curl --cert-type` / `--key-type`.
+   Runtime support depends on the TLS backend: OpenSSL (macOS/Linux) handles all
+   three; Schannel (Windows) effectively supports P12. */
+@Serializable
+enum class CertFormat(val curlName: String, val label: String) {
+    PEM("PEM", "PEM"),
+    DER("DER", "DER"),
+    PKCS12("P12", "PKCS#12"),
+}
 
 /* A toggleable key/value row, used for both query params and headers. */
 @Serializable
