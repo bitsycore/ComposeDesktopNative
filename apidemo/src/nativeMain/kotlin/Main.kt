@@ -177,6 +177,15 @@ private fun App() {
         vP.openTabs.remove(inRs)
         if (vP.active === inRs) vP.active = vP.openTabs.getOrNull(vIdx) ?: vP.openTabs.lastOrNull()
     }
+    fun closeOtherTabs(inRs: ReqState) {
+        val vP = activePack() ?: return
+        vP.openTabs.removeAll { it !== inRs }
+        vP.active = vP.openTabs.firstOrNull()
+    }
+    fun closeAllTabs() {
+        val vP = activePack() ?: return
+        vP.openTabs.clear(); vP.active = null
+    }
     fun reorderTabs(inFrom: Int, inTo: Int) {
         val vP = activePack() ?: return
         if (inFrom == inTo || inFrom !in vP.openTabs.indices || inTo !in vP.openTabs.indices) return
@@ -547,6 +556,8 @@ private fun App() {
                                 inActive = vAct,
                                 inOnSelect = { open(it) },
                                 inOnClose = { closeTab(it) },
+                                inOnCloseOthers = { closeOtherTabs(it) },
+                                inOnCloseAll = { closeAllTabs() },
                                 inOnReorder = { vFrom, vTo -> reorderTabs(vFrom, vTo) },
                             )
                             Divider(color = c.border)
@@ -1068,6 +1079,8 @@ private fun RequestTabStrip(
     inActive: ReqState?,
     inOnSelect: (ReqState) -> Unit,
     inOnClose: (ReqState) -> Unit,
+    inOnCloseOthers: (ReqState) -> Unit,
+    inOnCloseAll: () -> Unit,
     inOnReorder: (Int, Int) -> Unit,
 ) {
     val c = LocalAppColors.current
@@ -1077,6 +1090,13 @@ private fun RequestTabStrip(
     var vPressRelX by remember { mutableStateOf(0) }              // press point inside the tab
     var vDragDx by remember { mutableStateOf(0f) }               // visual follow offset
     var vDragTarget by remember { mutableStateOf(-1) }           // slot to drop into
+
+    // One shared context menu for the strip, opened at the cursor over the
+    // right-clicked tab (kept out of the per-tab box so drag z-order is intact).
+    var vMenu by remember { mutableStateOf(false) }
+    var vMenuRs by remember { mutableStateOf<ReqState?>(null) }
+    var vMenuX by remember { mutableStateOf(0) }
+    var vMenuY by remember { mutableStateOf(0) }
 
     // Where the drop indicator goes: before the tab now sitting at the target
     // slot (among the non-dragged tabs), or at the very end.
@@ -1134,6 +1154,8 @@ private fun RequestTabStrip(
                             vDragging = null; vDragDx = 0f; vDragTarget = -1
                         },
                     )
+                    .onMiddleClick { inOnClose(vRs) }
+                    .onSecondaryClick { x, y -> vMenuRs = vRs; vMenuX = x; vMenuY = y; vMenu = true }
                     .clickable { inOnSelect(vRs) }
                     .padding(start = 9.dp, top = 6.dp, bottom = 6.dp, end = 3.dp)
 
@@ -1150,6 +1172,23 @@ private fun RequestTabStrip(
             }
         }
         if (vBarAtEnd) DropBar()
+
+        // Shared right-click menu, opened at the cursor over the clicked tab.
+        val vMRs = vMenuRs
+        if (vMenu && vMRs != null) {
+            DropdownMenu(
+                expanded = true,
+                onDismissRequest = { vMenu = false },
+                anchor = null,
+                offsetX = vMenuX.dp,
+                offsetY = vMenuY.dp,
+                minWidth = 188.dp,
+            ) {
+                DropdownMenuItem(onClick = { vMenu = false; inOnClose(vMRs) }) { MenuRow(MaterialSymbols.Close, "Close tab") }
+                DropdownMenuItem(onClick = { vMenu = false; inOnCloseOthers(vMRs) }) { MenuRow(MaterialSymbols.Clear, "Close other tabs") }
+                DropdownMenuItem(onClick = { vMenu = false; inOnCloseAll() }) { MenuRow(MaterialSymbols.Clear, "Close all tabs") }
+            }
+        }
     }
 }
 

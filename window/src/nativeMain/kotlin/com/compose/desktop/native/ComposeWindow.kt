@@ -297,6 +297,10 @@ fun nativeComposeWindow(
                                     // the window-coord click position); don't arm the
                                     // primary press / click / drag / focus.
                                     vHit?.findSecondaryClickHandler()?.invoke(vPx, vPy)
+                                } else if (event.event.button == PointerButton.Middle) {
+                                    // Middle-click: fire only the middle handler (e.g. close a
+                                    // tab); don't arm the primary press / click / drag / focus.
+                                    vHit?.findMiddleClickHandler()?.invoke()
                                 } else {
                                     cancelPress()
                                     val vPressable = vHit?.findPressable()

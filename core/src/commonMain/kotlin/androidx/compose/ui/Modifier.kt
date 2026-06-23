@@ -73,6 +73,7 @@ data class SizeModifier(
 
 data class ClickableModifier(val onClick: () -> Unit) : Modifier.Element
 data class SecondaryClickModifier(val onClick: (x: Int, y: Int) -> Unit) : Modifier.Element
+data class MiddleClickModifier(val onClick: () -> Unit) : Modifier.Element
 
 /* Fires after the place() pass with the node's absolute window-coordinate
    position. Different from OnSizeChangedModifier in that the callback runs

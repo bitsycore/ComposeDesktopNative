@@ -349,6 +349,15 @@ class LayoutNode {
         return parent?.findSecondaryClickHandler()
     }
 
+    fun findMiddleClickHandler(): (() -> Unit)? {
+        var handler: (() -> Unit)? = null
+        modifier.foldIn(Unit) { _, element ->
+            if (element is MiddleClickModifier) handler = element.onClick
+        }
+        if (handler != null) return handler
+        return parent?.findMiddleClickHandler()
+    }
+
     /* Walks self → root and collects nodes that carry a HoverableModifier.
        The matching modifier is returned alongside the node so the dispatcher
        can compute the enter/exit diff and fire callbacks. */

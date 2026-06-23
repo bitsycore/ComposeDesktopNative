@@ -2,6 +2,7 @@ package androidx.compose.foundation
 
 import androidx.compose.ui.ClickableModifier
 import androidx.compose.ui.HoverableModifier
+import androidx.compose.ui.MiddleClickModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.PressableModifier
 import androidx.compose.ui.SecondaryClickModifier
@@ -16,6 +17,11 @@ fun Modifier.clickable(onClick: () -> Unit) = then(ClickableModifier(onClick))
    click's absolute window coordinates (logical points) — handy for opening a
    context menu at the cursor. Does not arm the primary click. */
 fun Modifier.onSecondaryClick(onClick: (x: Int, y: Int) -> Unit) = then(SecondaryClickModifier(onClick))
+
+/* Fires on a middle (mouse-wheel button) click inside this node. Like the
+   secondary handler it doesn't arm the primary click — handy for close-on-
+   middle-click affordances (tabs). */
+fun Modifier.onMiddleClick(onClick: () -> Unit) = then(MiddleClickModifier(onClick))
 
 /* Fires (true) when the cursor enters this node, (false) when it leaves.
    Multiple hoverable ancestors of the cursor target all fire (true)
