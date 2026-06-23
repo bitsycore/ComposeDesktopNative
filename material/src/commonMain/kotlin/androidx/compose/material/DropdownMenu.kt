@@ -121,9 +121,11 @@ fun DropdownMenuItem(
     content: @Composable () -> Unit,
 ) {
     var vHover by remember { mutableStateOf(false) }
+    // Theme-aware hover overlay — a translucent white is invisible on a light
+    // surface, so tint toward the content colour (dark on light, light on dark).
     val vBg = when {
         !enabled -> Color.Transparent
-        vHover   -> Color(0x14FFFFFFL)
+        vHover   -> MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
         else     -> Color.Transparent
     }
     Box(
