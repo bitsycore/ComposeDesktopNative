@@ -108,6 +108,9 @@ private class PackState(inPack: Pack, inPath: String?, inDirty: Boolean, inOpenT
         inPack.requests.ifEmpty { listOf(ApiRequest()) }.forEach { add(ReqState(it)) }
     }
     val variables = mutableStateListOf<KeyVal>().apply { addAll(inPack.variables) }
+    val headers = mutableStateListOf<KeyVal>().apply { addAll(inPack.headers) }   // pack-level, inherited by requests
+    var cert by mutableStateOf(inPack.cert)                                        // pack-level client cert (inherited)
+    val id: String = inPack.id.ifBlank { newPackId() }                            // stable id (linked copies reference it)
     // No auto-open: tabs start empty and are restored from persisted state only.
     val openTabs = mutableStateListOf<ReqState>().apply {
         inOpenTabs.forEach { vIdx -> requests.getOrNull(vIdx)?.let { add(it) } }
@@ -116,8 +119,12 @@ private class PackState(inPack: Pack, inPath: String?, inDirty: Boolean, inOpenT
     var expanded by mutableStateOf(true)   // sidebar fold state (transient — not part of the pack file)
     var envOpen by mutableStateOf(false)   // whether this pack's env tab is open in the strip (transient)
 
-    fun toPack(): Pack = Pack(name, requests.map { it.req }, variables.toList(), color)
+    fun toPack(): Pack = Pack(name, requests.map { it.req }, variables.toList(), color, headers.toList(), cert, id)
 }
+
+/* A fresh random id for a pack (used to wire linked-copy packs to their source
+   across save / load). */
+private fun newPackId(): String = "pk-" + kotlin.random.Random.nextLong().toULong().toString(16)
 
 /* One entry in the unified tab strip: a request tab, or a pack's env tab when
    req == null. The underlying ReqState / PackState is the stable identity. */
@@ -142,7 +149,8 @@ private fun App() {
     val vFirst = !vInitial.launched || vInitial.packs.isEmpty()
     val vBoot = remember {
         if (vFirst) defaultSession()
-        else Session(vInitial.packs, vInitial.globalEnv, vInitial.activePack)
+        else Session(packs = vInitial.packs, globalEnv = vInitial.globalEnv,
+            globalHeaders = vInitial.globalHeaders, globalCert = vInitial.globalCert, activePack = vInitial.activePack)
     }
     val vPacks = remember {
         mutableStateListOf<PackState>().apply {
@@ -156,6 +164,8 @@ private fun App() {
         }
     }
     val vGlobalEnv = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalEnv) } }
+    val vSessionHeaders = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalHeaders) } }
+    var vSessionCert by remember { mutableStateOf(vBoot.globalCert) }
     val vHistory = remember { mutableStateListOf<HistoryEntry>() }
     // Focus the saved active pack, but fall back to one that actually has tabs so
     // the strip shows whenever any tab is open.
@@ -198,6 +208,8 @@ private fun App() {
             launched = true,
             dark = vDark,
             globalEnv = vGE,
+            globalHeaders = vSessionHeaders.toList(),
+            globalCert = vSessionCert,
             packs = vSaved,
             activePack = vActivePack,
             currentSession = vSessionPath,
@@ -208,7 +220,8 @@ private fun App() {
         // A session opened from / saved to a file auto-saves back to it on every
         // change — once it has a file, it's always in sync (best-effort). The
         // Session has no open-tab fields, so the file never carries them.
-        vSessionPath?.let { exportSession(Session(vSaved, vGE, vActivePack), it) }
+        vSessionPath?.let { exportSession(Session(packs = vSaved, globalEnv = vGE,
+            globalHeaders = vSessionHeaders.toList(), globalCert = vSessionCert, activePack = vActivePack), it) }
     }
 
     // ============
@@ -420,6 +433,8 @@ private fun App() {
         inSession.packs.forEach { vPacks.add(PackState(it.pack, it.path, it.dirty)) }
         if (vPacks.isEmpty()) vPacks.add(PackState(Pack(), null, false))
         vGlobalEnv.clear(); vGlobalEnv.addAll(inSession.globalEnv)
+        vSessionHeaders.clear(); vSessionHeaders.addAll(inSession.globalHeaders)
+        vSessionCert = inSession.globalCert
         vActivePack = inSession.activePack.coerceIn(0, vPacks.size - 1)
         vSessionPath = inPath
         if (inPath != null) rememberRecent(inPath)
@@ -436,7 +451,8 @@ private fun App() {
     }
     fun newSession() {
         vPacks.clear(); vPacks.add(PackState(Pack(name = "My Pack"), null, false))
-        vGlobalEnv.clear(); vActivePack = 0; vSessionPath = null; vReqMsg = null; persist()
+        vGlobalEnv.clear(); vSessionHeaders.clear(); vSessionCert = null
+        vActivePack = 0; vSessionPath = null; vReqMsg = null; persist()
     }
     fun loadDefaultSession() { loadSession(defaultSession(), null) }
     // Switching to another session replaces the current working set. If the

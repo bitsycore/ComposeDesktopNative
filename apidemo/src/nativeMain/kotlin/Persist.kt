@@ -19,7 +19,9 @@ import okio.Path.Companion.toPath
 data class AppState(
     val launched: Boolean = false,
     val dark: Boolean = true,
-    val globalEnv: List<KeyVal> = emptyList(),
+    val globalEnv: List<KeyVal> = emptyList(),        // session-level variables (base of the inheritance ladder)
+    val globalHeaders: List<KeyVal> = emptyList(),    // session-level headers (inherited by every request)
+    val globalCert: CertConfig? = null,               // session-level client cert (inherited)
     val packs: List<SavedPack> = emptyList(),
     val activePack: Int = 0,
     val currentSession: String? = null,        // path of the session file currently open (null = unsaved)
@@ -46,7 +48,9 @@ data class SavedPack(
 @Serializable
 data class Session(
     val packs: List<SavedPack> = emptyList(),
-    val globalEnv: List<KeyVal> = emptyList(),
+    val globalEnv: List<KeyVal> = emptyList(),        // session-level variables
+    val globalHeaders: List<KeyVal> = emptyList(),    // session-level headers (inherited)
+    val globalCert: CertConfig? = null,               // session-level client cert (inherited)
     val activePack: Int = 0,
 )
 

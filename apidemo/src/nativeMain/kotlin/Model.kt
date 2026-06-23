@@ -17,6 +17,21 @@ data class Pack(
     val requests: List<ApiRequest> = listOf(ApiRequest()),
     val variables: List<KeyVal> = emptyList(),
     val color: Int = 0,   // 1-based index into the pack-colour palette; 0 = none
+    val headers: List<KeyVal> = emptyList(),   // pack-level headers, inherited by requests
+    val cert: CertConfig? = null,              // pack-level client cert, inherited by requests
+    val id: String = "",                       // stable id (used by linked-copy packs)
+)
+
+/* A client-certificate (mutual TLS) configuration. Lives on a request today and
+   — with the pack tree — on the session / packs too (inherited downward). Maps
+   to libcurl's CURLOPT_SSLCERT / SSLCERTTYPE / SSLKEY / SSLKEYTYPE / KEYPASSWD. */
+@Serializable
+data class CertConfig(
+    val certPath: String = "",
+    val certFormat: CertFormat = CertFormat.PEM,
+    val keyPath: String = "",
+    val keyFormat: CertFormat = CertFormat.PEM,
+    val certPassword: String = "",
 )
 
 /* The starter SESSION loaded on first launch (and on demand from the session
