@@ -815,12 +815,16 @@ private fun SessionMenu(
     val c = LocalAppColors.current
     val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
+    var vHover by remember { mutableStateOf(false) }
     val vSaved = inPath != null
     val vName = inPath?.let { fileLeaf(it) } ?: "Untitled session"
     val vDisabled = c.dim.copy(alpha = 0.5f)
     Box(modifier = inModifier) {
+        // Highlight on hover and stay highlighted while the menu is open.
         Row(
             modifier = Modifier.fillMaxWidth().menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+                .background(if (vHover || vOpen) c.field else Color.Transparent, RoundedCornerShape(6.dp))
+                .hoverable { vHover = it }
                 .clickable { vOpen = true }.padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -832,7 +836,6 @@ private fun SessionMenu(
             }
             // No file yet → a dot; once it has a file it auto-saves, so no dot.
             if (!vSaved) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
-            MaterialSymbolsOutlined(MaterialSymbols.ExpandMore, tint = c.dim, size = 18.dp)
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 248.dp) {
             DropdownMenuItem(onClick = { vOpen = false; inOnSave() }) { MenuRow(MaterialSymbols.Save, "Save session") }
