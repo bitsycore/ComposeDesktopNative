@@ -382,7 +382,7 @@ private fun App() {
                         if (vRenameSession) renameSession(vRenameText)
                         vRemovePackTarget?.let { closePack(vPacks.indexOf(it)) }
                         vDeleteTarget?.let { deleteRequest(it) }
-                        if (vQuitDialog) savePack()
+                        if (vQuitDialog) saveSession()
                         vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null; vQuitDialog = false
                         return@setOnKeyShortcut true
                     }
@@ -390,7 +390,7 @@ private fun App() {
             }
             val vPrimary = vKey.modifiers.ctrl || vKey.modifiers.meta
             when {
-                vPrimary && vKey.keyCode == kScS -> { savePack(); true }
+                vPrimary && vKey.keyCode == kScS -> { saveSession(); true }
                 vPrimary && (vKey.keyCode == kScEnter || vKey.keyCode == kScKpEnter) -> {
                     activePack()?.active?.let { send(it) }; true
                 }
@@ -729,11 +729,11 @@ private fun App() {
                                 Text("Unsaved changes", color = c.text, fontSize = 18.sp)
                             }
                             Text("Unsaved edits in: $vDirty.", color = c.text, fontSize = 13.sp)
-                            Text("Your session is kept and restored next launch, but export a pack to a .json file to save it permanently.", color = c.dim, fontSize = 12.sp)
+                            Text("Your session is kept and restored next launch. Save the session to a .json file to keep it permanently.", color = c.dim, fontSize = 12.sp)
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     OutlinedButton(onClick = { vQuitDialog = false }) { Text("Keep editing", color = c.text) }
-                                    Button(onClick = { vQuitDialog = false; savePack() }) { BtnContent(MaterialSymbols.Save, "Export pack", c.onAccent) }
+                                    Button(onClick = { vQuitDialog = false; saveSession() }) { BtnContent(MaterialSymbols.Save, "Save session", c.onAccent) }
                                     DangerButton("Quit anyway", MaterialSymbols.Close) { persist(); vWindow.close() }
                                 }
                             }
