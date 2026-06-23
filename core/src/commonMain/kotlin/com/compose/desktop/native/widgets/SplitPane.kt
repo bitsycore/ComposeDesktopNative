@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -51,6 +50,7 @@ fun HorizontalSplitPane(
     var vTotalWidth by remember { mutableStateOf(0) }
     var vFirstWidth by remember { mutableStateOf(initialFirstSize.value.toInt()) }
     var vDividerHover by remember { mutableStateOf(false) }
+    var vDragging by remember { mutableStateOf(false) }
 
     val vDividerW = SplitPaneDefaults.DividerThickness.value.toInt()
     val vMinFirst = minFirstSize.value.toInt()
@@ -68,35 +68,31 @@ fun HorizontalSplitPane(
 
         Box(modifier = Modifier.width(vClampedFirst.dp).fillMaxHeight()) { first() }
 
-        // Fixed-width hit/drag slot; the visible line sits centred inside it and
-        // only thickens on hover, so the panes never shift.
+        // Solid divider that fills its own slot — what you see is exactly what
+        // you can grab. Hover or an in-progress drag just changes the colour (no
+        // size change → no layout shift, and no flicker when the pointer briefly
+        // leaves the slot mid-drag).
+        val vActive = vDividerHover || vDragging
         Box(
             modifier = Modifier
                 .width(SplitPaneDefaults.DividerThickness)
                 .fillMaxHeight()
+                .background(if (vActive) dividerHoverColor else dividerColor)
                 .hoverable { vDividerHover = it }
                 .onDrag(
+                    onStart = { _, _ -> vDragging = true },
+                    onEnd = { vDragging = false },
                     onDrag = { x, _ ->
                         // onDrag's x is relative to the divider's *current*
-                        // top-left (the dispatcher passes pointerX - node.absoluteX
-                        // each move). Add it to the divider's live offset read from
-                        // state — NOT the value captured when the press began, or
-                        // the reference and the delta disagree every frame and the
-                        // divider oscillates between the two.
+                        // top-left; add it to the divider's live offset read from
+                        // state — NOT the press-time capture, or the reference and
+                        // the delta disagree each frame and the divider oscillates.
                         val vMax = (vTotalWidth - vDividerW - vMinSecond).coerceAtLeast(vMinFirst)
                         val vLive = if (vTotalWidth > 0) vFirstWidth.coerceIn(vMinFirst, vMax) else vFirstWidth
                         vFirstWidth = (vLive + x).coerceIn(vMinFirst, vMax)
                     }
                 ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(if (vDividerHover) SplitPaneDefaults.DividerHoverThickness else SplitPaneDefaults.DividerLineThickness)
-                    .fillMaxHeight()
-                    .background(if (vDividerHover) dividerHoverColor else dividerColor),
-            )
-        }
+        )
 
         Box(modifier = Modifier.width(vSecondWidth.dp).fillMaxHeight()) { second() }
     }
@@ -116,6 +112,7 @@ fun VerticalSplitPane(
     var vTotalHeight by remember { mutableStateOf(0) }
     var vFirstHeight by remember { mutableStateOf(initialFirstSize.value.toInt()) }
     var vDividerHover by remember { mutableStateOf(false) }
+    var vDragging by remember { mutableStateOf(false) }
 
     val vDividerH = SplitPaneDefaults.DividerThickness.value.toInt()
     val vMinFirst = minFirstSize.value.toInt()
@@ -133,13 +130,18 @@ fun VerticalSplitPane(
 
         Box(modifier = Modifier.height(vClampedFirst.dp).fillMaxWidth()) { first() }
 
-        // Fixed-height hit/drag slot; centred line thickens on hover only.
+        // Solid divider that fills its slot; hover/drag only changes the colour
+        // (no size change → no layout shift, no flicker mid-drag).
+        val vActive = vDividerHover || vDragging
         Box(
             modifier = Modifier
                 .height(SplitPaneDefaults.DividerThickness)
                 .fillMaxWidth()
+                .background(if (vActive) dividerHoverColor else dividerColor)
                 .hoverable { vDividerHover = it }
                 .onDrag(
+                    onStart = { _, _ -> vDragging = true },
+                    onEnd = { vDragging = false },
                     onDrag = { _, y ->
                         // y is relative to the divider's *current* top — add it to
                         // the divider's live offset read from state, not the press-
@@ -149,22 +151,12 @@ fun VerticalSplitPane(
                         vFirstHeight = (vLive + y).coerceIn(vMinFirst, vMax)
                     }
                 ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(if (vDividerHover) SplitPaneDefaults.DividerHoverThickness else SplitPaneDefaults.DividerLineThickness)
-                    .fillMaxWidth()
-                    .background(if (vDividerHover) dividerHoverColor else dividerColor),
-            )
-        }
+        )
 
         Box(modifier = Modifier.height(vSecondHeight.dp).fillMaxWidth()) { second() }
     }
 }
 
 object SplitPaneDefaults {
-    val DividerThickness: Dp = 8.dp        // reserved hit/drag slot (fixed; layout never shifts)
-    val DividerLineThickness: Dp = 1.dp    // visible line at rest
-    val DividerHoverThickness: Dp = 3.dp   // visible line when hovered
+    val DividerThickness: Dp = 4.dp        // divider width = hit/drag area (solid; what you see is what you grab)
 }
