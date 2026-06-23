@@ -148,7 +148,6 @@ private fun App() {
     var vRenameSession by remember { mutableStateOf(false) }
     var vRemovePackTarget by remember { mutableStateOf<PackState?>(null) }
     var vDeleteTarget by remember { mutableStateOf<ReqState?>(null) }
-    var vQuitDialog by remember { mutableStateOf(false) }
     var vImgSeq by remember { mutableStateOf(0) }   // unique-key counter for response images
 
     fun activePack(): PackState? = vPacks.getOrNull(vActivePack)
@@ -156,15 +155,20 @@ private fun App() {
     fun effective(inP: PackState): List<KeyVal> = inP.variables.toList() + vGlobalEnv.toList()
 
     fun persist() {
+        val vSaved = vPacks.map { SavedPack(it.path, it.dirty, it.toPack()) }
+        val vGE = vGlobalEnv.toList()
         saveAppState(AppState(
             launched = true,
             dark = vDark,
-            globalEnv = vGlobalEnv.toList(),
-            packs = vPacks.map { SavedPack(it.path, it.dirty, it.toPack()) },
+            globalEnv = vGE,
+            packs = vSaved,
             activePack = vActivePack,
             currentSession = vSessionPath,
             recentSessions = vRecent.toList(),
         ))
+        // A session opened from / saved to a file auto-saves back to it on every
+        // change — once it has a file, it's always in sync (best-effort).
+        vSessionPath?.let { exportSession(Session(vSaved, vGE, vActivePack), it) }
     }
 
     // ============
@@ -309,22 +313,16 @@ private fun App() {
         vRecent.remove(inPath); vRecent.add(0, inPath)
         while (vRecent.size > 8) vRecent.removeAt(vRecent.size - 1)
     }
-    fun currentSession(): Session = Session(
-        packs = vPacks.map { SavedPack(it.path, it.dirty, it.toPack()) },
-        globalEnv = vGlobalEnv.toList(),
-        activePack = vActivePack,
-    )
     fun saveSessionTo(inPath: String) {
-        val vErr = exportSession(currentSession(), inPath)
-        if (vErr == null) { vSessionPath = inPath; rememberRecent(inPath); vReqMsg = "Session saved."; persist() }
-        else vReqMsg = "Save session failed: $vErr"
+        vSessionPath = inPath; rememberRecent(inPath); persist()   // persist() writes the file
     }
     fun saveSessionAs() {
         showSaveFileDialog("session.json") { vPath -> if (vPath != null) saveSessionTo(vPath) }
     }
+    // First save (no file yet) prompts for a location; afterwards the session
+    // auto-saves on every change, so Ctrl+S just flushes via persist().
     fun saveSession() {
-        val vPath = vSessionPath
-        if (vPath == null) saveSessionAs() else saveSessionTo(vPath)
+        if (vSessionPath == null) saveSessionAs() else persist()
     }
     fun loadSession(inSession: Session, inPath: String?) {
         vPacks.clear()
@@ -359,21 +357,19 @@ private fun App() {
     }
 
     // ============
-    //  Warn-on-quit: persist always; veto if anything is unsaved-to-file.
+    //  Save-and-close: the session is always persisted (state cache + its file
+    //  if it has one), so closing never needs a warning.
     //  Plus app-wide keyboard shortcuts (work even with nothing focused).
     DisposableEffect(Unit) {
-        vWindow.setOnCloseRequest {
-            persist()
-            if (vPacks.any { it.dirty }) { vQuitDialog = true; false } else true
-        }
+        vWindow.setOnCloseRequest { persist(); true }
         vWindow.setOnKeyShortcut { vKey ->
             if (vKey.type != KeyEventType.Down) return@setOnKeyShortcut false
             // Confirm dialogs: Enter confirms, Escape cancels. Only one is ever
             // open at a time, so run whichever action applies and clear them all.
-            if (vRenameTarget != null || vRenamePackTarget != null || vRenameSession || vRemovePackTarget != null || vDeleteTarget != null || vQuitDialog) {
+            if (vRenameTarget != null || vRenamePackTarget != null || vRenameSession || vRemovePackTarget != null || vDeleteTarget != null) {
                 when (vKey.keyCode) {
                     kScEscape -> {
-                        vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null; vQuitDialog = false
+                        vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null
                         return@setOnKeyShortcut true
                     }
                     kScEnter, kScKpEnter -> {
@@ -382,8 +378,7 @@ private fun App() {
                         if (vRenameSession) renameSession(vRenameText)
                         vRemovePackTarget?.let { closePack(vPacks.indexOf(it)) }
                         vDeleteTarget?.let { deleteRequest(it) }
-                        if (vQuitDialog) saveSession()
-                        vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null; vQuitDialog = false
+                        vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null
                         return@setOnKeyShortcut true
                     }
                 }
@@ -433,7 +428,6 @@ private fun App() {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                 SessionMenu(
                                     inPath = vSessionPath,
-                                    inDirty = vPacks.any { it.dirty },
                                     inRecent = vRecent,
                                     inOnSave = { saveSession() },
                                     inOnSaveAs = { saveSessionAs() },
@@ -718,29 +712,6 @@ private fun App() {
                     }
                 }
             }
-
-            if (vQuitDialog) {
-                val vDirty = vPacks.filter { it.dirty }.joinToString(", ") { it.name }
-                Dialog(onDismissRequest = { vQuitDialog = false }) {
-                    Surface(color = c.panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.width(440.dp)) {
-                        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 20.dp)
-                                Text("Unsaved changes", color = c.text, fontSize = 18.sp)
-                            }
-                            Text("Unsaved edits in: $vDirty.", color = c.text, fontSize = 13.sp)
-                            Text("Your session is kept and restored next launch. Save the session to a .json file to keep it permanently.", color = c.dim, fontSize = 12.sp)
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    OutlinedButton(onClick = { vQuitDialog = false }) { Text("Keep editing", color = c.text) }
-                                    Button(onClick = { vQuitDialog = false; saveSession() }) { BtnContent(MaterialSymbols.Save, "Save session", c.onAccent) }
-                                    DangerButton("Quit anyway", MaterialSymbols.Close) { persist(); vWindow.close() }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -814,13 +785,23 @@ private fun AddPackMenu(inOnNew: () -> Unit, inOnImport: () -> Unit, inOnLoadDef
 private fun fileLeaf(inPath: String): String =
     inPath.trimEnd('/', '\\').substringAfterLast('/').substringAfterLast('\\')
 
-/* Header dropdown for the one open session: its file name (or "Untitled
-   session"), with Save / Save as… / Open… / New and a recent-sessions list.
-   A dot marks unsaved pack edits anywhere in the session. */
+/* Shortens a long path to inMax chars keeping the start and end (so the root
+   and file stay visible), joined by an ellipsis. The menu has no text-overflow
+   primitive, so we trim the string ourselves. */
+private fun ellipsizeMiddle(inText: String, inMax: Int = 46): String {
+    if (inText.length <= inMax) return inText
+    val vKeep = inMax - 1
+    val vHead = vKeep / 2
+    return inText.take(vHead) + "…" + inText.takeLast(vKeep - vHead)
+}
+
+/* Header dropdown for the one open session. Shows its file name with the full
+   path underneath when it has a file (so you can see it's saved — file-backed
+   sessions auto-save), or "Untitled session" with a dot when it has no file yet.
+   Menu: Save / Save as… / Rename / Reveal / Open… / New + a recent list. */
 @Composable
 private fun SessionMenu(
     inPath: String?,
-    inDirty: Boolean,
     inRecent: List<String>,
     inOnSave: () -> Unit,
     inOnSaveAs: () -> Unit,
@@ -836,6 +817,7 @@ private fun SessionMenu(
     var vOpen by remember { mutableStateOf(false) }
     val vSaved = inPath != null
     val vName = inPath?.let { fileLeaf(it) } ?: "Untitled session"
+    val vDisabled = c.dim.copy(alpha = 0.5f)
     Box(modifier = inModifier) {
         Row(
             modifier = Modifier.fillMaxWidth().menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
@@ -844,26 +826,31 @@ private fun SessionMenu(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             MaterialSymbolsOutlined(MaterialSymbols.InsertDriveFile, tint = c.dim, size = 15.dp)
-            Text(vName, color = c.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
-            if (inDirty) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(vName, color = c.text, fontSize = 14.sp)
+                inPath?.let { Text(ellipsizeMiddle(it, 34), color = c.dim, fontSize = 9.sp, softWrap = false) }
+            }
+            // No file yet → a dot; once it has a file it auto-saves, so no dot.
+            if (!vSaved) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
             MaterialSymbolsOutlined(MaterialSymbols.ExpandMore, tint = c.dim, size = 18.dp)
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 248.dp) {
             DropdownMenuItem(onClick = { vOpen = false; inOnSave() }) { MenuRow(MaterialSymbols.Save, "Save session") }
             DropdownMenuItem(onClick = { vOpen = false; inOnSaveAs() }) { MenuRow(MaterialSymbols.Download, "Save session as…") }
-            if (vSaved) {
-                DropdownMenuItem(onClick = { vOpen = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename session…") }
-                DropdownMenuItem(onClick = { vOpen = false; inOnReveal() }) { MenuRow(MaterialSymbols.Folder, "Reveal in ${fileManagerName()}") }
-            }
+            DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename session…", if (vSaved) c.text else vDisabled) }
+            DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnReveal() }) { MenuRow(MaterialSymbols.Folder, "Reveal in ${fileManagerName()}", if (vSaved) c.text else vDisabled) }
             Divider(color = c.border)
             DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) { MenuRow(MaterialSymbols.Folder, "Open session…") }
             DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New session") }
             if (inRecent.isNotEmpty()) {
                 Divider(color = c.border)
-                Text("Recent", color = c.dim, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+                Text("Recent", color = c.dim, fontSize = 11.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 2.dp))
                 inRecent.forEach { vPath ->
                     DropdownMenuItem(onClick = { vOpen = false; inOnOpenRecent(vPath) }) {
-                        Text(fileLeaf(vPath), color = c.text, fontSize = 12.sp, modifier = Modifier.fillMaxWidth())
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                            Text(fileLeaf(vPath), color = c.text, fontSize = 12.sp)
+                            Text(ellipsizeMiddle(vPath), color = c.dim, fontSize = 10.sp, softWrap = false)
+                        }
                     }
                 }
             }
@@ -935,7 +922,6 @@ private fun PackSection(
             ) {
                 ColorDot(inPack.color)
                 Text(inPack.name, color = c.text, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                if (inPack.dirty) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
                 Text("${inPack.requests.size}", color = c.dim, fontSize = 11.sp)
             }
             // + (new request) and ⋮ (pack menu) — both reveal on hover only, so the
