@@ -143,7 +143,12 @@ private fun newPackId(): String = "pk-" + kotlin.random.Random.nextLong().toULon
    underlying ReqState / PackState (or the session key) is the stable identity. */
 private const val kSessionTabKey = "session-settings"
 private class StripTab(val pack: PackState?, val req: ReqState?, val isSession: Boolean = false)
-private val StripTab.tabKey: Any get() = req ?: pack ?: kSessionTabKey
+/* Identity of a strip tab. A linked pack shares the source's ReqState objects,
+   so the key must include the pack — otherwise the source's and linked's tabs
+   for the same request collide (double selection, duplicate key()). Data class →
+   structural equality, so compare keys with == (not ===). */
+private data class TabKey(val pack: PackState?, val req: ReqState?)
+private val StripTab.tabKey: Any get() = if (isSession) kSessionTabKey else TabKey(pack, req)
 
 // ==================
 // MARK: App
@@ -748,7 +753,7 @@ private fun App() {
                             // Panel 1 — unified tab strip (session + pack-settings + request tabs).
                             RequestTabStrip(
                                 inTabs = vTabs,
-                                inActiveKey = when { vSessionActive -> kSessionTabKey; vEnvShown && vP != null -> vP; else -> vReqActive },
+                                inActiveKey = when { vSessionActive -> kSessionTabKey; vEnvShown && vP != null -> TabKey(vP, null); vReqActive != null && vP != null -> TabKey(vP, vReqActive); else -> null },
                                 inOnSelect = { vT -> when { vT.isSession -> openSessionTab(); vT.req != null && vT.pack != null -> open(vT.req, vT.pack); vT.pack != null -> openEnv(vT.pack); else -> {} } },
                                 inOnClose = { vT -> when { vT.isSession -> closeSessionTab(); vT.req != null && vT.pack != null -> closeTab(vT.req, vT.pack); vT.pack != null -> closeEnv(vT.pack); else -> {} } },
                                 inOnCloseOthers = { vT -> closeOthers(vT) },
@@ -1433,7 +1438,7 @@ private fun RequestTabStrip(
     val vListAnchor = rememberMenuAnchor()
 
     val vShowBar = vDragKey != null && vDragDx != 0f
-    val vOthers = if (vShowBar) inTabs.filter { it.tabKey !== vDragKey } else emptyList()
+    val vOthers = if (vShowBar) inTabs.filter { it.tabKey != vDragKey } else emptyList()
     val vBarBeforeKey = if (vShowBar) vOthers.getOrNull(vDragTarget)?.tabKey else null
     val vBarAtEnd = vShowBar && vDragTarget >= vOthers.size
 
@@ -1449,10 +1454,10 @@ private fun RequestTabStrip(
     ) {
         inTabs.forEach { vTab ->
             val vKey = vTab.tabKey
-            if (vKey === vBarBeforeKey) DropBar()
+            if (vKey == vBarBeforeKey) DropBar()
             key(vKey) {
-                val vSel = vKey === inActiveKey
-                val vDragged = vKey === vDragKey
+                val vSel = vKey == inActiveKey
+                val vDragged = vKey == vDragKey
 
                 var vMod = Modifier
                     .onGloballyPositioned { vLeft[vKey] = it.x }
@@ -1464,7 +1469,7 @@ private fun RequestTabStrip(
                     .border(1.dp, if (vSel || vDragged) c.accent else c.border, RoundedCornerShape(7.dp))
                     .onDrag(
                         onStart = { vRelX, _ ->
-                            vDragKey = vKey; vPressRelX = vRelX; vDragDx = 0f; vDragTarget = inTabs.indexOfFirst { it.tabKey === vKey }
+                            vDragKey = vKey; vPressRelX = vRelX; vDragDx = 0f; vDragTarget = inTabs.indexOfFirst { it.tabKey == vKey }
                         },
                         onDrag = { vRelX, _ ->
                             val vd = vDragKey ?: return@onDrag
@@ -1472,7 +1477,7 @@ private fun RequestTabStrip(
                             val vCursorX = (vLeft[vd] ?: 0) + vRelX
                             var vCount = 0
                             inTabs.forEach { vT ->
-                                if (vT.tabKey !== vd) {
+                                if (vT.tabKey != vd) {
                                     val vCenter = (vLeft[vT.tabKey] ?: 0) + (vWidth[vT.tabKey] ?: 0) / 2
                                     if (vCursorX > vCenter) vCount++
                                 }
@@ -1482,7 +1487,7 @@ private fun RequestTabStrip(
                         onEnd = {
                             val vd = vDragKey
                             if (vd != null) {
-                                val vFrom = inTabs.indexOfFirst { it.tabKey === vd }
+                                val vFrom = inTabs.indexOfFirst { it.tabKey == vd }
                                 if (vFrom >= 0 && vDragTarget >= 0 && vDragTarget != vFrom) inOnReorder(vFrom, vDragTarget)
                             }
                             vDragKey = null; vDragDx = 0f; vDragTarget = -1
@@ -1541,7 +1546,7 @@ private fun RequestTabStrip(
                         inTabs.forEach { vTab ->
                             DropdownMenuItem(onClick = { vListOpen = false; inOnSelect(vTab) }) {
                                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    val vSel = vTab.tabKey === inActiveKey
+                                    val vSel = vTab.tabKey == inActiveKey
                                     val vRs = vTab.req
                                     if (vRs == null) {
                                         MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = if (vSel) c.accent else c.dim, size = 13.dp)
