@@ -92,13 +92,7 @@ fun toCurl(inReq: ApiRequest): String {
     }
 
     if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
-        val vContentType = when (inReq.bodyType) {
-            BodyType.JSON -> "application/json"
-            BodyType.TEXT -> "text/plain"
-            BodyType.FORM -> "application/x-www-form-urlencoded"
-            BodyType.FILE -> "application/octet-stream"
-            BodyType.NONE -> null
-        }
+        val vContentType = inReq.bodyContentType()
         val vHasCt = inReq.headers.any { it.enabled && it.key.equals("content-type", ignoreCase = true) }
         if (vContentType != null && !vHasCt) {
             vSb.append(" \\\n  -H ").append(shellQuote("Content-Type: $vContentType"))

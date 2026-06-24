@@ -78,15 +78,15 @@ fun defaultSession(): Session = Session(
                     params = listOf(KeyVal("trace", "request"))),     // request's trace wins over the session's
                 ApiRequest(name = "POST — overrides header", method = ReqMethod.POST, url = "{{baseUrl}}/post",
                     headers = listOf(KeyVal("Accept", "text/plain")), // request's Accept wins over the pack's
-                    bodyType = BodyType.JSON, body = "{\n  \"user\": \"{{user}}\",\n  \"api\": \"{{apiVer}}\"\n}"),
+                    bodyType = BodyType.TEXT, bodyFormat = BodyFormat.JSON, body = "{\n  \"user\": \"{{user}}\",\n  \"api\": \"{{apiVer}}\"\n}"),
                 ApiRequest(name = "POST — overrides {{user}} var", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
                     variables = listOf(KeyVal("user", "request-user")),   // request var beats session/pack — see body echo
-                    bodyType = BodyType.JSON, body = "{ \"who\": \"{{user}}\" }"),
+                    bodyType = BodyType.TEXT, bodyFormat = BodyFormat.JSON, body = "{ \"who\": \"{{user}}\" }"),
                 ApiRequest(name = "PUT — replace", method = ReqMethod.PUT, url = "{{baseUrl}}/put",
-                    bodyType = BodyType.JSON, body = "{ \"id\": 1, \"name\": \"updated\" }"),
+                    bodyType = BodyType.TEXT, bodyFormat = BodyFormat.JSON, body = "{ \"id\": 1, \"name\": \"updated\" }"),
                 ApiRequest(name = "DELETE", method = ReqMethod.DELETE, url = "{{baseUrl}}/delete"),
                 ApiRequest(name = "Anything echo", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
-                    bodyType = BodyType.JSON, body = "{ \"hello\": \"world\" }"),
+                    bodyType = BodyType.TEXT, bodyFormat = BodyFormat.JSON, body = "{ \"hello\": \"world\" }"),
             ),
             // Nested sub-pack — inherits Session → Methods → here (apiVer becomes v3,
             // plus its own X-Nested header; trace / source / Accept still flow down).
@@ -145,7 +145,8 @@ data class ApiRequest(
     val variables: List<KeyVal> = emptyList(),   // request-level vars ({{name}}); override inherited ones
     val headers: List<KeyVal> = emptyList(),
     val bodyType: BodyType = BodyType.NONE,
-    val body: String = "",                       // JSON / TEXT content, or the file path when bodyType == FILE
+    val body: String = "",                       // TEXT content, or the file path when bodyType == FILE
+    val bodyFormat: BodyFormat = BodyFormat.RAW, // for a TEXT body: syntax-highlight type + sent Content-Type
     val form: List<KeyVal> = emptyList(),        // key/value fields when bodyType == FORM
     // Client certificate (mutual TLS). When certPath is set, the request is sent
     // through the libcurl path (CurlMtls.kt) with these mapped to CURLOPT_SSLCERT
@@ -201,7 +202,26 @@ val ReqMethod.allowsBody: Boolean
     get() = true
 
 @Serializable
-enum class BodyType { NONE, JSON, TEXT, FORM, FILE }
+enum class BodyType { NONE, TEXT, FORM, FILE }
+
+/* Title-case label for the body-type picker. */
+val BodyType.label: String
+    get() = when (this) {
+        BodyType.NONE -> "None"
+        BodyType.TEXT -> "Text"
+        BodyType.FORM -> "Form"
+        BodyType.FILE -> "File"
+    }
+
+/* The Content-Type the request body implies (null when there's no body). For a
+   TEXT body it comes from the chosen format (Text→text/plain, JSON→application/
+   json, …); FORM / FILE are fixed. Sent unless the request already sets one. */
+fun ApiRequest.bodyContentType(): String? = when (bodyType) {
+    BodyType.NONE -> null
+    BodyType.TEXT -> bodyFormat.contentType
+    BodyType.FORM -> "application/x-www-form-urlencoded"
+    BodyType.FILE -> "application/octet-stream"
+}
 
 // ==================
 // MARK: Response (runtime only — not part of a pack)

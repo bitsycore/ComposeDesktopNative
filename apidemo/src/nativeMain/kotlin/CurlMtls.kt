@@ -304,10 +304,9 @@ private fun requestBodyBytes(inReq: ApiRequest): CurlBody?
 	if (inReq.bodyType == BodyType.NONE) return null
 	return when (inReq.bodyType)
 		{
-		BodyType.JSON -> CurlBody("application/json", inReq.body.encodeToByteArray())
-		BodyType.TEXT -> CurlBody("text/plain", inReq.body.encodeToByteArray())
-		BodyType.FORM -> CurlBody("application/x-www-form-urlencoded", formEncode(inReq.form).encodeToByteArray())
-		BodyType.FILE -> if (inReq.body.isBlank()) null else CurlBody("application/octet-stream", readFileBytes(inReq.body))
+		BodyType.TEXT -> CurlBody(inReq.bodyContentType(), inReq.body.encodeToByteArray())
+		BodyType.FORM -> CurlBody(inReq.bodyContentType(), formEncode(inReq.form).encodeToByteArray())
+		BodyType.FILE -> if (inReq.body.isBlank()) null else CurlBody(inReq.bodyContentType(), readFileBytes(inReq.body))
 		BodyType.NONE -> null
 		}
 	}

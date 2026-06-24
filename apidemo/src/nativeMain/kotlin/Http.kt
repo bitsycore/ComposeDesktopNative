@@ -46,14 +46,15 @@ class HttpRunner {
                     .filter { it.enabled && it.key.isNotBlank() }
                     .forEach { header(it.key, it.value) }
                 if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
+                    // Content-Type comes from the body type / text format, unless the
+                    // request already carries an explicit Content-Type header.
+                    val vCt = inReq.bodyContentType()
+                    val vHasCt = inReq.headers.any { it.enabled && it.key.equals("content-type", ignoreCase = true) }
+                    if (vCt != null && !vHasCt) contentType(ContentType.parse(vCt))
                     when (inReq.bodyType) {
-                        BodyType.JSON -> { contentType(ContentType.Application.Json); if (inReq.body.isNotEmpty()) setBody(inReq.body) }
-                        BodyType.TEXT -> { contentType(ContentType.Text.Plain); if (inReq.body.isNotEmpty()) setBody(inReq.body) }
-                        BodyType.FORM -> { contentType(ContentType.Application.FormUrlEncoded); setBody(formEncode(inReq.form)) }
-                        BodyType.FILE -> if (inReq.body.isNotBlank()) {
-                            contentType(ContentType.Application.OctetStream)
-                            setBody(readFileBytes(inReq.body))
-                        }
+                        BodyType.TEXT -> if (inReq.body.isNotEmpty()) setBody(inReq.body)
+                        BodyType.FORM -> setBody(formEncode(inReq.form))
+                        BodyType.FILE -> if (inReq.body.isNotBlank()) setBody(readFileBytes(inReq.body))
                         BodyType.NONE -> {}
                     }
                 }

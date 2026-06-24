@@ -89,7 +89,6 @@ private class ReqState(inInitial: ApiRequest) {
     var imageKey: String? = null          // memory-resource key when the response is an image
     // null = auto-detect from Content-Type each frame; non-null = user-pinned override.
     var respFormatOverride by mutableStateOf<BodyFormat?>(null)
-    var reqFormat by mutableStateOf(BodyFormat.RAW)  // builder-side: how to highlight the JSON / TEXT body editor
     var tlsChain by mutableStateOf<TlsChain?>(null)  // last fetched server cert chain
     var chainLoading by mutableStateOf(false)
     var showChain by mutableStateOf(false)           // chain dialog open
@@ -2167,13 +2166,13 @@ private fun BodyTypeMenu(inType: BodyType, inEnabled: Boolean, inOnPick: (BodyTy
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(inType.name, color = if (inEnabled) c.text else c.dim, fontSize = 13.sp)
+            Text(inType.label, color = if (inEnabled) c.text else c.dim, fontSize = 13.sp)
             MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = c.dim, size = 15.dp)
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
             BodyType.entries.forEach { vT ->
                 DropdownMenuItem(onClick = { inOnPick(vT); vOpen = false }) {
-                    Text(vT.name, color = if (vT == inType) c.accent else c.text, fontSize = 13.sp)
+                    Text(vT.label, color = if (vT == inType) c.accent else c.text, fontSize = 13.sp)
                 }
             }
         }
@@ -2419,12 +2418,14 @@ private fun RequestBuilder(
                 0 -> QueryTab(inReq, inInheritedParams, inReadOnly, inEdit)
                 1 -> VarTab(inReq, inInheritedVars, inReadOnly, inEdit)
                 2 -> HeadersTab(inReq, inInheritedHeaders, inReadOnly, inEdit)
-                3 -> BodyContent(inReq, inRs) { v -> inEdit(v) }
+                3 -> BodyContent(inReq) { v -> inEdit(v) }
                 else -> RequestCertTab(inReq, inInheritedCert, inReadOnly, inEdit)
             }
         }
 
-        // Body-type selector — only on the Body tab, pinned at the bottom.
+        // Body-type selector — only on the Body tab, pinned at the bottom. For a
+        // Text body the format/type picker sits on the right: it drives both the
+        // syntax colours and the sent Content-Type.
         if (inRs.reqTab == 3) {
             Divider(color = c.border)
             Row(
@@ -2433,37 +2434,30 @@ private fun RequestBuilder(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text("Body", color = c.dim, fontSize = 12.sp)
-                BodyTypeMenu(inReq.bodyType, true) { vT ->
-                    inEdit { it.copy(bodyType = vT) }
-                    // Re-seed the highlighter format from bodyType so JSON →
-                    // JSON colours kicks in automatically when the user picks
-                    // it from the body-type menu.
-                    inRs.reqFormat = when (vT) {
-                        BodyType.JSON -> BodyFormat.JSON
-                        BodyType.TEXT -> inRs.reqFormat
-                        else -> BodyFormat.RAW
-                    }
-                }
-                // Format selector — only relevant for JSON / TEXT bodies.
-                if (inReq.bodyType == BodyType.JSON || inReq.bodyType == BodyType.TEXT) {
-                    BodyFormatSelector(inSelected = inRs.reqFormat, inOnChange = { inRs.reqFormat = it })
+                BodyTypeMenu(inReq.bodyType, true) { vT -> inEdit { it.copy(bodyType = vT) } }
+                Spacer(Modifier.weight(1f))
+                if (inReq.bodyType == BodyType.TEXT) {
+                    Text("Type", color = c.dim, fontSize = 12.sp)
+                    BodyFormatSelector(inSelected = inReq.bodyFormat, inOnChange = { vF -> inEdit { it.copy(bodyFormat = vF) } })
+                    Text(inReq.bodyFormat.contentType, color = c.dim, fontSize = 10.sp)
                 }
             }
         }
     }
 }
 
-/* The body editing area for the current body type (driven by the bottom menu). */
+/* The body editing area for the current body type (driven by the bottom menu). A
+   Text body is highlighted per its chosen format (bodyFormat). */
 @Composable
-private fun BodyContent(inReq: ApiRequest, inRs: ReqState, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
+private fun BodyContent(inReq: ApiRequest, inEdit: ((ApiRequest) -> ApiRequest) -> Unit) {
     when (inReq.bodyType) {
         BodyType.NONE -> ViewerEmpty(MaterialSymbols.Block, "No Body", Modifier.fillMaxWidth().height(240.dp))
-        BodyType.JSON, BodyType.TEXT -> BodyView(
+        BodyType.TEXT -> BodyView(
             inText = inReq.body,
             modifier = Modifier.fillMaxWidth().height(240.dp),
             inOnChange = { v -> inEdit { it.copy(body = v) } },
-            inPlaceholder = if (inReq.bodyType == BodyType.JSON) "{ }" else "text body",
-            inFormat = inRs.reqFormat,
+            inPlaceholder = if (inReq.bodyFormat == BodyFormat.JSON) "{ }" else "text body",
+            inFormat = inReq.bodyFormat,
         )
         BodyType.FORM -> KeyValEditor(inReq.form) { v -> inEdit { it.copy(form = v) } }
         BodyType.FILE -> FileBody(inReq) { v -> inEdit(v) }
@@ -2811,7 +2805,7 @@ private fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                         inOnChange = { vNew ->
                             inRs.respFormatOverride = if (vNew == vAuto) null else vNew
                         },
-                        inAutoLabel = if (inRs.respFormatOverride == null) vAuto.name else null,
+                        inAutoLabel = if (inRs.respFormatOverride == null) vAuto.label else null,
                     )
                 }
                 vMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
@@ -3147,7 +3141,7 @@ private fun synthesizeRequestHeaders(
    (loading the file just for the count would be wasteful — the engine
    sets the field anyway). */
 private fun computedBodyLength(inReq: ApiRequest): Int? = when (inReq.bodyType) {
-    BodyType.JSON, BodyType.TEXT -> inReq.body.encodeToByteArray().size
+    BodyType.TEXT -> inReq.body.encodeToByteArray().size
     BodyType.FORM -> formEncode(inReq.form).encodeToByteArray().size
     BodyType.FILE, BodyType.NONE -> null
 }
@@ -3282,7 +3276,7 @@ private fun BodyFormatSelector(
     val c = LocalAppColors.current
     var vOpen by remember { mutableStateOf(false) }
     val vAnchor = rememberMenuAnchor()
-    val vLabel = if (inAutoLabel != null) "$inAutoLabel (auto)" else inSelected.name
+    val vLabel = if (inAutoLabel != null) "$inAutoLabel (auto)" else inSelected.label
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
@@ -3298,7 +3292,7 @@ private fun BodyFormatSelector(
     DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
         for (vF in BodyFormat.values()) {
             DropdownMenuItem(onClick = { inOnChange(vF); vOpen = false }) {
-                Text(vF.name, color = if (vF == inSelected) c.accent else c.text)
+                Text(vF.label, color = if (vF == inSelected) c.accent else c.text)
             }
         }
     }
@@ -3377,13 +3371,7 @@ private fun headersText(inHeaders: List<Pair<String, String>>): String =
 private fun requestHeadersText(inReq: ApiRequest): String {
     val vLines = mutableListOf<String>()
     inReq.headers.filter { it.enabled && it.key.isNotBlank() }.forEach { vLines.add("${it.key}: ${it.value}") }
-    val vCt = when (inReq.bodyType) {
-        BodyType.JSON -> "application/json"
-        BodyType.TEXT -> "text/plain"
-        BodyType.FORM -> "application/x-www-form-urlencoded"
-        BodyType.FILE -> "application/octet-stream"
-        BodyType.NONE -> null
-    }
+    val vCt = inReq.bodyContentType()
     if (inReq.method.allowsBody && vCt != null && inReq.headers.none { it.enabled && it.key.equals("content-type", ignoreCase = true) }) {
         vLines.add("Content-Type: $vCt")
     }
@@ -3393,7 +3381,7 @@ private fun requestHeadersText(inReq: ApiRequest): String {
 /* The body that would be sent, rendered as text for the preview. */
 private fun requestBodyText(inReq: ApiRequest): String = when (inReq.bodyType) {
     BodyType.NONE -> "(no body)"
-    BodyType.JSON, BodyType.TEXT -> inReq.body.ifEmpty { "(empty)" }
+    BodyType.TEXT -> inReq.body.ifEmpty { "(empty)" }
     BodyType.FORM -> formEncode(inReq.form).ifEmpty { "(empty form)" }
     BodyType.FILE -> if (inReq.body.isBlank()) "(no file)" else "(file) ${inReq.body}"
 }

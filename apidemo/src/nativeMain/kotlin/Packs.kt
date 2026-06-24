@@ -30,7 +30,7 @@ fun exportPack(inPack: Pack, inPath: String): String? = try {
 /* Read a pack back from inPath. */
 fun importPack(inPath: String): Result<Pack> = try {
     val vText = FileSystem.SYSTEM.read(inPath.trim().toPath()) { readUtf8() }
-    Result.success(fJson.decodeFromString<Pack>(vText))
+    Result.success(fJson.decodeFromString<Pack>(migrateLegacyJson(vText)))
 } catch (e: Throwable) {
     Result.failure(e)
 }
@@ -48,7 +48,7 @@ fun exportSession(inSession: Session, inPath: String): String? = try {
 /* Read a session back from inPath. */
 fun importSession(inPath: String): Result<Session> = try {
     val vText = FileSystem.SYSTEM.read(inPath.trim().toPath()) { readUtf8() }
-    Result.success(fJson.decodeFromString<Session>(vText))
+    Result.success(fJson.decodeFromString<Session>(migrateLegacyJson(vText)))
 } catch (e: Throwable) {
     Result.failure(e)
 }

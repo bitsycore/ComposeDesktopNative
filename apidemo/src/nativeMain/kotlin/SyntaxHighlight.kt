@@ -4,15 +4,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import kotlinx.serialization.Serializable
 
 // ==================
 // MARK: BodyFormat — viewer/highlighter selection
 // ==================
 
-/* Format of a body payload as shown in the viewer. RAW disables
-   highlighting and falls back to the selectable BasicTextField. Other
-   values pick a tokeniser and render via Text(AnnotatedString). */
+/* Format of a body payload as shown in the viewer, and (for a TEXT request body)
+   the type the user picks on the right of the Body tab — it drives both syntax
+   highlighting and the sent Content-Type. RAW disables highlighting and falls back
+   to the selectable BasicTextField; other values pick a tokeniser. */
+@Serializable
 enum class BodyFormat { RAW, JSON, XML, YAML, HTML }
+
+/* Short label for the Body-type / format pickers (RAW shows as plain "Text"). */
+val BodyFormat.label: String
+	get() = when (this) {
+		BodyFormat.RAW -> "Text"
+		BodyFormat.JSON -> "JSON"
+		BodyFormat.XML -> "XML"
+		BodyFormat.YAML -> "YAML"
+		BodyFormat.HTML -> "HTML"
+	}
+
+/* The Content-Type a TEXT body of this format is sent with. */
+val BodyFormat.contentType: String
+	get() = when (this) {
+		BodyFormat.RAW -> "text/plain"
+		BodyFormat.JSON -> "application/json"
+		BodyFormat.XML -> "application/xml"
+		BodyFormat.YAML -> "application/yaml"
+		BodyFormat.HTML -> "text/html"
+	}
 
 /* Pick a format from a Content-Type header. JSON / XML / YAML / HTML
    match their canonical types and common variants; anything else
