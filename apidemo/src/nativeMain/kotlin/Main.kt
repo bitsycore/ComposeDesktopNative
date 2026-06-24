@@ -173,6 +173,9 @@ private class TreeDrag {
     var dragPack by mutableStateOf<PackState?>(null)
     var dy by mutableStateOf(0f)            // draw-only follow offset for the grabbed element
     var pressRel by mutableStateOf(0)       // relY at capture (cursor = grabbed-element top + relY)
+    // A press doesn't become a drag until the pointer moves past kDragSlop — so a
+    // plain click (which carries a pixel or two of jitter) still selects / opens.
+    var engaged by mutableStateOf(false)
 
     // Geometry registry (absolute window coords), filled each frame by every section.
     val rowTop = mutableStateMapOf<ReqState, Int>()
@@ -196,11 +199,14 @@ private class TreeDrag {
     val draggingPack: Boolean get() = dragPack != null
 
     fun clear() {
-        dragReq = null; dragReqOwner = null; dragPack = null; dy = 0f
+        dragReq = null; dragReqOwner = null; dragPack = null; dy = 0f; engaged = false
         dropPack = null; dropIndex = -1
         dropParent = null; dropSibIndex = -1; dropInto = null
     }
 }
+
+// Pixels the pointer must travel before a press is treated as a drag (drag slop).
+private const val kDragSlop = 5f
 
 // ==================
 // MARK: App
@@ -714,15 +720,16 @@ private fun App() {
             if (inCursorY < vNear.top + vNear.h / 2) before(vNear) else after(vNear)
         }
     }
-    // Commit the resolved request / pack drop, then clear the drag.
+    // Commit the resolved request / pack drop, then clear the drag. A press that
+    // never passed the slop (engaged == false) is a click, not a drop — skip it.
     fun reqDropEnd() {
         val vRs = vTreeDrag.dragReq; val vFrom = vTreeDrag.dragReqOwner; val vTo = vTreeDrag.dropPack
-        if (vRs != null && vFrom != null && vTo != null && vTreeDrag.dropIndex >= 0) moveRequest(vRs, vFrom, vTo, vTreeDrag.dropIndex)
+        if (vTreeDrag.engaged && vRs != null && vFrom != null && vTo != null && vTreeDrag.dropIndex >= 0) moveRequest(vRs, vFrom, vTo, vTreeDrag.dropIndex)
         vTreeDrag.clear()
     }
     fun packDropEnd() {
         val vP = vTreeDrag.dragPack
-        if (vP != null) {
+        if (vTreeDrag.engaged && vP != null) {
             val vInto = vTreeDrag.dropInto
             if (vInto != null) movePack(vP, vInto, vInto.subPacks.size)
             else if (vTreeDrag.dropSibIndex >= 0) movePack(vP, vTreeDrag.dropParent, vTreeDrag.dropSibIndex)
@@ -909,7 +916,7 @@ private fun App() {
                                 0 -> {
                                     // Loose requests (session root) render headerless at the top.
                                     // Shown even while empty during a request drag, so it's a drop target.
-                                    if (vRoot.requests.isNotEmpty() || vTreeDrag.draggingReq) {
+                                    if (vRoot.requests.isNotEmpty() || (vTreeDrag.draggingReq && vTreeDrag.engaged)) {
                                         PackSection(
                                             inPack = vRoot,
                                             inHeaderless = true,
@@ -967,7 +974,7 @@ private fun App() {
                                         val vHi = if (vSessionActive) null else vP
                                         vPacks.forEach { vPack -> PackTree(vPack, vPacks, 0, vOps, vHi, vEnvActive) }
                                         // Drop bar after the last top-level pack (append-to-root target).
-                                        if (vTreeDrag.draggingPack && vTreeDrag.dy != 0f && vTreeDrag.dropInto == null &&
+                                        if (vTreeDrag.draggingPack && vTreeDrag.engaged && vTreeDrag.dropInto == null &&
                                             vTreeDrag.dropParent == null && vTreeDrag.dropSibIndex == vPacks.size)
                                             RowDropBar()
                                     }
@@ -1473,7 +1480,7 @@ private class PackOps(
 private fun PackTree(inPack: PackState, inSiblings: List<PackState>, inDepth: Int, inOps: PackOps, inActive: PackState?, inEnvActive: Boolean) {
     val vDrag = inOps.drag
     val vMyIndex = inSiblings.indexOf(inPack)
-    val vMoving = vDrag.draggingPack && vDrag.dy != 0f && vDrag.dropInto == null
+    val vMoving = vDrag.draggingPack && vDrag.engaged && vDrag.dropInto == null
     // Pack-reorder indicators (between siblings) sit at this pack's indent.
     val vPad = Modifier.padding(start = (inDepth * 14).dp)
     val vBarBefore = vMoving && vDrag.dropParent === inPack.parent && vDrag.dropSibIndex == vMyIndex
@@ -1558,7 +1565,7 @@ private fun PackSection(
     var vAtCursor by remember { mutableStateOf(false) }
     var vMenuX by remember { mutableStateOf(0) }
     var vMenuY by remember { mutableStateOf(0) }
-    val vMoving = inDrag.dy != 0f   // a press hasn't turned into a real drag until it moves
+    val vMoving = inDrag.engaged   // a press becomes a real drag only past the slop
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // ============
@@ -1582,7 +1589,8 @@ private fun PackSection(
                 onDrag = { _, vRelY ->
                     if (inDrag.dragPack !== inPack) return@onDrag
                     inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
-                    inResolvePackDrop((inDrag.headTop[inPack] ?: 0) + vRelY)
+                    if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
+                    if (inDrag.engaged) inResolvePackDrop((inDrag.headTop[inPack] ?: 0) + vRelY)
                 },
                 onEnd = { inOnPackDropEnd() },
             )
@@ -1680,7 +1688,8 @@ private fun PackSection(
                                 onDrag = { _, vRelY ->
                                     val vd = inDrag.dragReq ?: return@onDrag
                                     inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
-                                    inResolveReqDrop((inDrag.rowTop[vd] ?: 0) + vRelY)
+                                    if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
+                                    if (inDrag.engaged) inResolveReqDrop((inDrag.rowTop[vd] ?: 0) + vRelY)
                                 },
                                 onEnd = { inOnReqDropEnd() },
                             )
