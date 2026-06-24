@@ -318,10 +318,12 @@ private fun App() {
     fun stripTabs(): List<StripTab> = buildList {
         if (vSessionTabOpen) add(StripTab(null, null, isSession = true))
         vRoot.openTabs.forEach { add(StripTab(vRoot, it)) }   // loose request tabs (no env tab)
-        vPacks.forEach { vQ ->
+        fun addPack(vQ: PackState) {
             if (vQ.envOpen) add(StripTab(vQ, null))
             vQ.openTabs.forEach { add(StripTab(vQ, it)) }
+            vQ.subPacks.forEach { addPack(it) }               // recurse into nested packs
         }
+        vPacks.forEach { addPack(it) }
     }
     fun openSessionTab() { vSessionTabOpen = true; vSessionActive = true; vEnvActive = false; vReqMsg = null }
     fun closeSessionTab() { vSessionTabOpen = false; vSessionActive = false }
@@ -380,19 +382,13 @@ private fun App() {
         val vTab = vFlat.getOrNull(inFrom) ?: return
         val vRs = vTab.req ?: return
         val vP = vTab.pack ?: return
-        var vStart = if (vSessionTabOpen) 1 else 0   // session tab sits at flat index 0
-        if (vP === vRoot) {                          // loose tabs come right after the session tab
-            val vFromL = vRoot.openTabs.indexOf(vRs)
-            val vToL = (inTo - vStart).coerceIn(0, (vRoot.openTabs.size - 1).coerceAtLeast(0))
-            if (vFromL >= 0 && vFromL != vToL) vRoot.openTabs.add(vToL, vRoot.openTabs.removeAt(vFromL))
-            return
-        }
-        vStart += vRoot.openTabs.size                // root tabs precede pack tabs
-        for (vQ in vPacks) { if (vQ === vP) break; vStart += (if (vQ.envOpen) 1 else 0) + vQ.openTabs.size }
-        val vReqStart = vStart + (if (vP.envOpen) 1 else 0)
-        val vLocalFrom = vP.openTabs.indexOf(vRs)
-        val vLocalTo = (inTo - vReqStart).coerceIn(0, (vP.openTabs.size - 1).coerceAtLeast(0))
-        if (vLocalFrom >= 0 && vLocalFrom != vLocalTo) vP.openTabs.add(vLocalTo, vP.openTabs.removeAt(vLocalFrom))
+        // Flat index of this pack's first request tab — works for the root and any
+        // (nested) pack without hand-computing offsets.
+        val vReqStart = vFlat.indexOfFirst { it.pack === vP && it.req != null }
+        if (vReqStart < 0) return
+        val vFromL = vP.openTabs.indexOf(vRs)
+        val vToL = (inTo - vReqStart).coerceIn(0, (vP.openTabs.size - 1).coerceAtLeast(0))
+        if (vFromL >= 0 && vFromL != vToL) vP.openTabs.add(vToL, vP.openTabs.removeAt(vFromL))
     }
     fun edit(inT: (ApiRequest) -> ApiRequest) {
         val vP = activePack() ?: return
@@ -511,11 +507,19 @@ private fun App() {
         val vErr = exportPack(vP.toPack(), vPath)
         if (vErr == null) { vP.dirty = false; vReqMsg = "Exported."; persist() } else vReqMsg = "Export failed: $vErr"
     }
-    fun closePack(inIdx: Int) {
-        if (inIdx !in vPacks.indices) return
-        val vRemoved = vPacks.removeAt(inIdx)
-        if (vActivePackRef === vRemoved) vActivePackRef = vPacks.firstOrNull()
+    // Remove a pack from its parent (a sub-pack) or from the top level.
+    fun removePack(inP: PackState) {
+        val vPar = inP.parent
+        if (vPar != null) vPar.subPacks.remove(inP) else vPacks.remove(inP)
+        if (vActivePackRef === inP) vActivePackRef = vPar ?: vPacks.firstOrNull()
         vReqMsg = null; persist()
+    }
+    // A new empty sub-pack inside inParent.
+    fun newSubPack(inParent: PackState) {
+        val vSub = PackState(Pack(name = "Sub-pack ${inParent.subPacks.size + 1}"), null, false)
+        vSub.parent = inParent
+        inParent.subPacks.add(vSub); inParent.expanded = true
+        vActivePackRef = vSub; vEnvActive = false; vSessionActive = false; vReqMsg = null; persist()
     }
     fun duplicatePack(inP: PackState) {
         val vAt = (vPacks.indexOf(inP) + 1).coerceIn(0, vPacks.size)
@@ -623,7 +627,7 @@ private fun App() {
                         vRenameTarget?.let { if (vRenameText.isNotBlank()) renameRequest(it, vRenameText.trim()) }
                         vRenamePackTarget?.let { renamePack(it, vRenameText) }
                         if (vRenameSession) renameSession(vRenameText)
-                        vRemovePackTarget?.let { closePack(vPacks.indexOf(it)) }
+                        vRemovePackTarget?.let { removePack(it) }
                         vDeleteTarget?.let { deleteRequest(it) }
                         vRenameTarget = null; vRenamePackTarget = null; vRenameSession = false; vRemovePackTarget = null; vDeleteTarget = null
                         return@setOnKeyShortcut true
@@ -733,7 +737,7 @@ private fun App() {
                                                 vReqMsg = "Copied cURL."
                                             },
                                             inOnDeleteRequest = { vRs -> selectPack(vRoot); vDeleteTarget = vRs },
-                                            inOnRenamePack = {}, inOnDuplicatePack = {}, inOnLinkedCopy = {},
+                                            inOnRenamePack = {}, inOnDuplicatePack = {}, inOnNewSubPack = {}, inOnLinkedCopy = {},
                                             inOnSavePack = {}, inOnSaveAsPack = {}, inOnRemovePack = {}, inOnSetColor = {},
                                         )
                                         if (vPacks.isNotEmpty()) Divider(color = c.border)
@@ -741,33 +745,29 @@ private fun App() {
                                     if (vPacks.isEmpty() && vRoot.requests.isEmpty()) {
                                         Text("Nothing here yet — use Add (+) for a request or pack, or Open above.", color = c.dim, fontSize = 12.sp)
                                     } else {
-                                        vPacks.forEach { vPack ->
-                                            key(vPack) {
-                                                PackSection(
-                                                    inPack = vPack,
-                                                    inHeaderActive = vEnvActive && vPack === vP,
-                                                    inActiveReq = if (!vEnvActive && vPack === vP) vPack.active else null,
-                                                    inOnSelect = { openEnv(vPack) },
-                                                    inOnToggle = { vPack.expanded = !vPack.expanded },
-                                                    inOnOpenRequest = { vRs -> open(vRs, vPack) },
-                                                    inOnNewRequest = { selectPack(vPack); newRequest() },
-                                                    inOnRenameRequest = { vRs -> selectPack(vPack); vRenameTarget = vRs; vRenameText = vRs.req.name },
-                                                    inOnDuplicateRequest = { vRs -> selectPack(vPack); duplicate(vRs) },
-                                                    inOnCopyCurl = { vRs ->
-                                                        currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vPack)), effective(vPack))))
-                                                        vReqMsg = "Copied cURL."
-                                                    },
-                                                    inOnDeleteRequest = { vRs -> selectPack(vPack); vDeleteTarget = vRs },
-                                                    inOnRenamePack = { vRenamePackTarget = vPack; vRenameText = vPack.name },
-                                                    inOnDuplicatePack = { duplicatePack(vPack) },
-                                                    inOnLinkedCopy = { createLinkedPack(vPack) },
-                                                    inOnSavePack = { selectPack(vPack); savePack() },
-                                                    inOnSaveAsPack = { selectPack(vPack); saveAsPack() },
-                                                    inOnRemovePack = { vRemovePackTarget = vPack },
-                                                    inOnSetColor = { vCol -> vPack.color = vCol; vPack.dirty = true; persist() },
-                                                )
-                                            }
-                                        }
+                                        val vOps = PackOps(
+                                            onEnv = { openEnv(it) },
+                                            onToggle = { it.expanded = !it.expanded },
+                                            onOpenReq = { vQ, vRs -> open(vRs, vQ) },
+                                            onNewReq = { selectPack(it); newRequest() },
+                                            onRenameReq = { vQ, vRs -> selectPack(vQ); vRenameTarget = vRs; vRenameText = vRs.req.name },
+                                            onDupReq = { vQ, vRs -> selectPack(vQ); duplicate(vRs) },
+                                            onCopyCurl = { vQ, vRs ->
+                                                currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vQ)), effective(vQ))))
+                                                vReqMsg = "Copied cURL."
+                                            },
+                                            onDelReq = { vQ, vRs -> selectPack(vQ); vDeleteTarget = vRs },
+                                            onRenamePack = { vRenamePackTarget = it; vRenameText = it.name },
+                                            onDupPack = { duplicatePack(it) },
+                                            onLinkedCopy = { createLinkedPack(it) },
+                                            onNewSubPack = { newSubPack(it) },
+                                            onSave = { selectPack(it); savePack() },
+                                            onSaveAs = { selectPack(it); saveAsPack() },
+                                            onRemove = { vRemovePackTarget = it },
+                                            onSetColor = { vQ, vCol -> vQ.color = vCol; vQ.dirty = true; persist() },
+                                        )
+                                        val vHi = if (vSessionActive) null else vP
+                                        vPacks.forEach { vPack -> PackTree(vPack, 0, vOps, vHi, vEnvActive) }
                                     }
                                 }
                                 1 -> {
@@ -1047,7 +1047,7 @@ private fun App() {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     OutlinedButton(onClick = { vRemovePackTarget = null }) { Text("Cancel", color = c.text) }
-                                    DangerButton("Remove", MaterialSymbols.Delete) { closePack(vPacks.indexOf(vRmPack)); vRemovePackTarget = null }
+                                    DangerButton("Remove", MaterialSymbols.Delete) { removePack(vRmPack); vRemovePackTarget = null }
                                 }
                             }
                         }
@@ -1234,6 +1234,62 @@ private fun SessionMenu(
 }
 
 // ==================
+// MARK: Pack tree (recursive sidebar rendering)
+// ==================
+
+/* The per-pack operations a PackSection needs, bundled so PackTree can bind them
+   recursively for sub-packs while PackSection itself stays callback-driven. */
+private class PackOps(
+    val onEnv: (PackState) -> Unit,
+    val onToggle: (PackState) -> Unit,
+    val onOpenReq: (PackState, ReqState) -> Unit,
+    val onNewReq: (PackState) -> Unit,
+    val onRenameReq: (PackState, ReqState) -> Unit,
+    val onDupReq: (PackState, ReqState) -> Unit,
+    val onCopyCurl: (PackState, ReqState) -> Unit,
+    val onDelReq: (PackState, ReqState) -> Unit,
+    val onRenamePack: (PackState) -> Unit,
+    val onDupPack: (PackState) -> Unit,
+    val onLinkedCopy: (PackState) -> Unit,
+    val onNewSubPack: (PackState) -> Unit,
+    val onSave: (PackState) -> Unit,
+    val onSaveAs: (PackState) -> Unit,
+    val onRemove: (PackState) -> Unit,
+    val onSetColor: (PackState, Int) -> Unit,
+)
+
+/* Renders a pack then its sub-packs recursively, each indented by its depth. */
+@Composable
+private fun PackTree(inPack: PackState, inDepth: Int, inOps: PackOps, inActive: PackState?, inEnvActive: Boolean) {
+    key(inPack) {
+        Box(modifier = Modifier.padding(start = (inDepth * 14).dp)) {
+            PackSection(
+                inPack = inPack,
+                inHeaderActive = inEnvActive && inPack === inActive,
+                inActiveReq = if (!inEnvActive && inPack === inActive) inPack.active else null,
+                inOnSelect = { inOps.onEnv(inPack) },
+                inOnToggle = { inOps.onToggle(inPack) },
+                inOnOpenRequest = { inOps.onOpenReq(inPack, it) },
+                inOnNewRequest = { inOps.onNewReq(inPack) },
+                inOnRenameRequest = { inOps.onRenameReq(inPack, it) },
+                inOnDuplicateRequest = { inOps.onDupReq(inPack, it) },
+                inOnCopyCurl = { inOps.onCopyCurl(inPack, it) },
+                inOnDeleteRequest = { inOps.onDelReq(inPack, it) },
+                inOnRenamePack = { inOps.onRenamePack(inPack) },
+                inOnDuplicatePack = { inOps.onDupPack(inPack) },
+                inOnNewSubPack = { inOps.onNewSubPack(inPack) },
+                inOnLinkedCopy = { inOps.onLinkedCopy(inPack) },
+                inOnSavePack = { inOps.onSave(inPack) },
+                inOnSaveAsPack = { inOps.onSaveAs(inPack) },
+                inOnRemovePack = { inOps.onRemove(inPack) },
+                inOnSetColor = { vCol -> inOps.onSetColor(inPack, vCol) },
+            )
+        }
+    }
+    inPack.subPacks.forEach { PackTree(it, inDepth + 1, inOps, inActive, inEnvActive) }
+}
+
+// ==================
 // MARK: Pack section (foldable pack in the sidebar)
 // ==================
 
@@ -1258,6 +1314,7 @@ private fun PackSection(
     inOnDeleteRequest: (ReqState) -> Unit,
     inOnRenamePack: () -> Unit,
     inOnDuplicatePack: () -> Unit,
+    inOnNewSubPack: () -> Unit,
     inOnLinkedCopy: () -> Unit,
     inOnSavePack: () -> Unit,
     inOnSaveAsPack: () -> Unit,
@@ -1320,6 +1377,7 @@ private fun PackSection(
                     ) {
                         DropdownMenuItem(onClick = { vMenu = false; inOnRenamePack() }) { MenuRow(MaterialSymbols.Edit, "Rename pack") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnDuplicatePack() }) { MenuRow(MaterialSymbols.FileCopy, "Duplicate pack") }
+                        DropdownMenuItem(onClick = { vMenu = false; inOnNewSubPack() }) { MenuRow(MaterialSymbols.Add, "New sub-pack") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnLinkedCopy() }) { MenuRow(MaterialSymbols.Share, "Linked copy") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnSavePack() }) { MenuRow(MaterialSymbols.Save, "Export pack") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnSaveAsPack() }) { MenuRow(MaterialSymbols.Folder, "Export pack as…") }
