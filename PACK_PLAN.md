@@ -89,13 +89,22 @@ Migration: `loadAppState` maps any old flat `packs: List<SavedPack>` → `roots`
 >   (Session→pack→sub-pack, innermost wins — also fixed pack>session order); the
 >   sidebar renders the tree recursively (`PackTree`/`PackOps`, indented); pack ⋮ →
 >   "New sub-pack"; strip / reorder / remove are tree-aware.
-> - REMAINING: **tree slice 3 — cross-pack drag** (drag a request/pack into another
->   pack or the root). Convenience only; create/remove already organise the tree. This is one atomic refactor of the core (~100 interconnected sites:
->   vPacks→vRoots, PackState.requests→children, recursive sidebar + tab strip +
->   recursive NodeData persistence + migration). No compilable sub-step — best
->   landed as a dedicated focused push. When doing it: introduce
->   `sealed interface TreeNode`, `PackState.children`, `vRoots`, migrate all refs,
->   THEN add cross-pack drop + the `+`→New request/sub-pack entries.
+> - DONE: **tree slice 3 — cross-pack drag-and-drop.** Slices 1 & 2 already landed
+>   the tree-aware model (vPacks + vRoot loose-root + `PackState.parent`/`subPacks`,
+>   recursive `PackTree`, scope-chain inheritance), so no big `vRoots`/`children`
+>   refactor was needed — slice 3 was purely the drag UX. A shared `TreeDrag`
+>   controller (hoisted to `App`) holds the dragged request/pack, a window-coord
+>   geometry registry every section fills, and the resolved drop target.
+>   `PackSection` rows drag within and across any pack / sub-pack / loose-root
+>   (`moveRequest`), and pack **headers** drag to reorder among siblings or nest
+>   into another pack / move to top-level (`movePack`, with cycle prevention via
+>   `inSubtree`). `resolveReqDrop` picks the target pack by Y-region then the index
+>   by row-centre count; `resolvePackDrop` uses header thirds (top→before,
+>   bottom→after, middle→nest). Drop indicators: `RowDropBar` between rows/siblings
+>   + an accent header highlight for "drop inside" (and for a request onto a
+>   collapsed pack). The empty loose root shows a "Drop a request here" zone while
+>   dragging. Collapsing a pack now also hides its sub-pack subtree (keeps render +
+>   drop-target walks consistent).
 
 - [ ] **P1 — Tree model + persistence.** TreeNode/PackState.children/sub-packs;
       `vRoots` replaces `vPacks`; recursive serialized NodeData; migrate
@@ -116,8 +125,9 @@ Migration: `loadAppState` maps any old flat `packs: List<SavedPack>` → `roots`
       cert read-only + Override; send/inspect use `effectiveCert`.
 - [ ] **P7 — Linked Copy Pack.** ⋮ → "Linked copy"; read-only mirror of source
       children; own name/vars/headers/cert; persisted via `linkedTo` id.
-- [ ] **P8 — Cross-pack drag-and-drop.** Drag a request/pack into another pack
+- [x] **P8 — Cross-pack drag-and-drop.** Drag a request/pack into another pack
       or to root; updates `parent` + children lists; drop indicators across packs.
+      Also reorders sibling packs / sub-packs. (Landed as tree slice 3.)
 
 ## Open questions (resolved)
 

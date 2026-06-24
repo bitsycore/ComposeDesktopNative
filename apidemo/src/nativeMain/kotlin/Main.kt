@@ -156,6 +156,53 @@ private data class TabKey(val pack: PackState?, val req: ReqState?)
 private val StripTab.tabKey: Any get() = if (isSession) kSessionTabKey else TabKey(pack, req)
 
 // ==================
+// MARK: Cross-pack drag (sidebar tree)
+// ==================
+
+/* Shared state for dragging within and across packs in the sidebar tree. One
+   instance is hoisted to App so any PackSection can be the drag source or the
+   drop target. Two drag kinds: a request row (dragReq, owned by dragReqOwner) or
+   a whole pack header (dragPack). Every rendered row / header registers its
+   absolute window position + height here so onDrag can hit-test across packs,
+   even into collapsed or empty ones. The resolved drop target is published back
+   so the target section draws the indicator. */
+private class TreeDrag {
+    // What's being dragged (at most one is non-null while a drag is live).
+    var dragReq by mutableStateOf<ReqState?>(null)
+    var dragReqOwner by mutableStateOf<PackState?>(null)
+    var dragPack by mutableStateOf<PackState?>(null)
+    var dy by mutableStateOf(0f)            // draw-only follow offset for the grabbed element
+    var pressRel by mutableStateOf(0)       // relY at capture (cursor = grabbed-element top + relY)
+
+    // Geometry registry (absolute window coords), filled each frame by every section.
+    val rowTop = mutableStateMapOf<ReqState, Int>()
+    val rowH = mutableStateMapOf<ReqState, Int>()
+    val headTop = mutableStateMapOf<PackState, Int>()
+    val headH = mutableStateMapOf<PackState, Int>()
+
+    // Resolved request-drop target: the request lands in dropPack at dropIndex
+    // (index among that pack's rows, excluding the dragged one).
+    var dropPack by mutableStateOf<PackState?>(null)
+    var dropIndex by mutableStateOf(-1)
+
+    // Resolved pack-drop target. dropInto != null → nest as the last child of that
+    // pack (header highlight). Otherwise a sibling insert: parent dropParent (null =
+    // top level) at dropSibIndex (a between-siblings bar).
+    var dropParent by mutableStateOf<PackState?>(null)
+    var dropSibIndex by mutableStateOf(-1)
+    var dropInto by mutableStateOf<PackState?>(null)
+
+    val draggingReq: Boolean get() = dragReq != null
+    val draggingPack: Boolean get() = dragPack != null
+
+    fun clear() {
+        dragReq = null; dragReqOwner = null; dragPack = null; dy = 0f
+        dropPack = null; dropIndex = -1
+        dropParent = null; dropSibIndex = -1; dropInto = null
+    }
+}
+
+// ==================
 // MARK: App
 // ==================
 
@@ -202,6 +249,7 @@ private fun App() {
             null, false, if (vFirst) emptyList() else vInitial.rootOpenTabs))
     }
     val vHistory = remember { mutableStateListOf<HistoryEntry>() }
+    val vTreeDrag = remember { TreeDrag() }   // shared cross-pack drag state for the sidebar tree
     // Focus the saved active pack, but fall back to one that actually has tabs so
     // the strip shows whenever any tab is open.
     // The active pack/scope as a reference (a top-level pack, a sub-pack, or the
@@ -544,6 +592,145 @@ private fun App() {
     }
 
     // ============
+    //  Cross-pack drag (move a request or a whole pack across the tree)
+    // True when inMaybe is inRoot itself or nested anywhere beneath it.
+    fun inSubtree(inMaybe: PackState, inRoot: PackState): Boolean {
+        var vCur: PackState? = inMaybe
+        while (vCur != null) { if (vCur === inRoot) return true; vCur = vCur.parent }
+        return false
+    }
+    // Move inRs out of inFrom into inTo at inIndex. inIndex counts inTo's rows
+    // *excluding* the dragged request (so for a same-pack reorder it is already an
+    // index into the post-removal list — no shift needed; resolveReqDrop produces
+    // exactly this). A request that was open / active follows to the new pack so
+    // its tab survives the move.
+    fun moveRequest(inRs: ReqState, inFrom: PackState, inTo: PackState, inIndex: Int) {
+        if (inFrom.isLinked || inTo.isLinked) return            // mirrors are read-only
+        val vFrom = inFrom.requests.indexOf(inRs)
+        if (vFrom < 0) return
+        if (inFrom === inTo && inIndex == vFrom) return         // dropped back in place
+        val vWasActive = inFrom.active === inRs
+        val vWasOpen = inRs in inFrom.openTabs
+        inFrom.requests.removeAt(vFrom)
+        inFrom.openTabs.remove(inRs)
+        if (inFrom.active === inRs) inFrom.active = inFrom.openTabs.lastOrNull()
+        inTo.requests.add(inIndex.coerceIn(0, inTo.requests.size), inRs)
+        if (vWasOpen && inRs !in inTo.openTabs) inTo.openTabs.add(inRs)
+        inFrom.dirty = true; inTo.dirty = true
+        inTo.expanded = true
+        if (vWasActive || vWasOpen) { vActivePackRef = inTo; inTo.active = inRs; vEnvActive = false; vSessionActive = false }
+        vReqMsg = null; persist()
+    }
+    // Reparent inPack under inNewParent (null = top level) at sibling index inIndex.
+    fun movePack(inPack: PackState, inNewParent: PackState?, inIndex: Int) {
+        if (inNewParent != null && inSubtree(inNewParent, inPack)) return   // no cycles
+        if (inNewParent?.isLinked == true) return                          // don't nest into a mirror
+        val vOldList = inPack.parent?.subPacks ?: vPacks
+        val vOldIdx = vOldList.indexOf(inPack)
+        if (vOldIdx < 0) return
+        val vNewList = inNewParent?.subPacks ?: vPacks
+        var vAt = inIndex.coerceIn(0, vNewList.size)
+        if (vOldList === vNewList && (vAt == vOldIdx || vAt == vOldIdx + 1)) return   // no-op
+        vOldList.removeAt(vOldIdx)
+        if (vOldList === vNewList && vOldIdx < vAt) vAt--
+        inPack.parent = inNewParent
+        vNewList.add(vAt.coerceIn(0, vNewList.size), inPack)
+        inNewParent?.expanded = true
+        vReqMsg = null; persist()
+    }
+
+    // Resolve where the dragged request would land for the cursor's absolute Y.
+    // Each non-linked, rendered pack (plus the loose root) owns a contiguous Y
+    // region [header/first-row top .. its own last-row bottom]; the cursor's region
+    // picks the target pack, then the index is how many of that pack's row centres
+    // sit above the cursor.
+    fun resolveReqDrop(inCursorY: Int) {
+        val vDrag = vTreeDrag.dragReq ?: return
+        // (pack, regionTop, regionBottom) for every droppable container in view.
+        val vRegions = ArrayList<Triple<PackState, Int, Int>>()
+        fun rowBottom(inRs: ReqState): Int? = vTreeDrag.rowTop[inRs]?.let { it + (vTreeDrag.rowH[inRs] ?: 0) }
+        fun addRegion(inP: PackState, inHeaderless: Boolean) {
+            if (inP.isLinked) return
+            val vTops = inP.requests.mapNotNull { vTreeDrag.rowTop[it] }
+            val vBots = inP.requests.mapNotNull { rowBottom(it) }
+            val vTop: Int; val vBot: Int
+            if (inHeaderless) {
+                if (vTops.isEmpty()) { vTreeDrag.headTop[inP]?.let { vTop = it; vBot = it + (vTreeDrag.headH[inP] ?: 0); vRegions.add(Triple(inP, vTop, vBot)) }; return }
+                vTop = vTops.min(); vBot = vBots.max()
+            } else {
+                val vHt = vTreeDrag.headTop[inP] ?: return
+                vTop = vHt
+                vBot = if (inP.expanded && vBots.isNotEmpty()) vBots.max() else vHt + (vTreeDrag.headH[inP] ?: 0)
+            }
+            vRegions.add(Triple(inP, vTop, vBot))
+        }
+        fun walk(inP: PackState) {
+            addRegion(inP, false)
+            if (inP.expanded) inP.subPacks.forEach { walk(it) }
+        }
+        addRegion(vRoot, true)
+        vPacks.forEach { walk(it) }
+        if (vRegions.isEmpty()) { vTreeDrag.dropPack = null; vTreeDrag.dropIndex = -1; return }
+        val vTarget = vRegions.firstOrNull { inCursorY >= it.second && inCursorY < it.third }?.first
+            ?: vRegions.minByOrNull { kotlin.math.min(kotlin.math.abs(inCursorY - it.second), kotlin.math.abs(inCursorY - it.third)) }!!.first
+        var vCount = 0
+        vTarget.requests.forEach { vRs ->
+            if (vRs !== vDrag) {
+                val vCenter = (vTreeDrag.rowTop[vRs] ?: return@forEach) + (vTreeDrag.rowH[vRs] ?: 0) / 2
+                if (inCursorY > vCenter) vCount++
+            }
+        }
+        vTreeDrag.dropPack = vTarget; vTreeDrag.dropIndex = vCount
+    }
+    // Resolve where the dragged pack would land. The header the cursor is over (or
+    // nearest) decides it: top third → before it, bottom third → after it (sibling
+    // inserts), middle third → nest inside it as a child.
+    fun resolvePackDrop(inCursorY: Int) {
+        val vDrag = vTreeDrag.dragPack ?: return
+        // Rendered headers (top, height, parent, sibling list), skipping the dragged subtree.
+        data class HEntry(val pack: PackState, val top: Int, val h: Int, val parent: PackState?, val sibs: List<PackState>)
+        val vEntries = ArrayList<HEntry>()
+        fun walk(inP: PackState, inSibs: List<PackState>) {
+            if (!inSubtree(inP, vDrag)) {
+                vTreeDrag.headTop[inP]?.let { vEntries.add(HEntry(inP, it, vTreeDrag.headH[inP] ?: 0, inP.parent, inSibs)) }
+            }
+            if (inP.expanded) inP.subPacks.forEach { walk(it, inP.subPacks) }
+        }
+        vPacks.forEach { walk(it, vPacks) }
+        fun before(inE: HEntry) { vTreeDrag.dropInto = null; vTreeDrag.dropParent = inE.parent; vTreeDrag.dropSibIndex = inE.sibs.indexOf(inE.pack) }
+        fun after(inE: HEntry) { vTreeDrag.dropInto = null; vTreeDrag.dropParent = inE.parent; vTreeDrag.dropSibIndex = inE.sibs.indexOf(inE.pack) + 1 }
+        if (vEntries.isEmpty()) { vTreeDrag.dropInto = null; vTreeDrag.dropParent = null; vTreeDrag.dropSibIndex = 0; return }
+        val vHit = vEntries.firstOrNull { inCursorY >= it.top && inCursorY < it.top + it.h }
+        if (vHit != null) {
+            val vFrac = if (vHit.h > 0) (inCursorY - vHit.top).toFloat() / vHit.h else 0.5f
+            when {
+                vFrac < 0.30f -> before(vHit)
+                vFrac > 0.70f -> after(vHit)
+                !vHit.pack.isLinked -> { vTreeDrag.dropInto = vHit.pack; vTreeDrag.dropParent = null; vTreeDrag.dropSibIndex = -1 }
+                else -> after(vHit)
+            }
+        } else {
+            val vNear = vEntries.minByOrNull { kotlin.math.abs(inCursorY - (it.top + it.h / 2)) }!!
+            if (inCursorY < vNear.top + vNear.h / 2) before(vNear) else after(vNear)
+        }
+    }
+    // Commit the resolved request / pack drop, then clear the drag.
+    fun reqDropEnd() {
+        val vRs = vTreeDrag.dragReq; val vFrom = vTreeDrag.dragReqOwner; val vTo = vTreeDrag.dropPack
+        if (vRs != null && vFrom != null && vTo != null && vTreeDrag.dropIndex >= 0) moveRequest(vRs, vFrom, vTo, vTreeDrag.dropIndex)
+        vTreeDrag.clear()
+    }
+    fun packDropEnd() {
+        val vP = vTreeDrag.dragPack
+        if (vP != null) {
+            val vInto = vTreeDrag.dropInto
+            if (vInto != null) movePack(vP, vInto, vInto.subPacks.size)
+            else if (vTreeDrag.dropSibIndex >= 0) movePack(vP, vTreeDrag.dropParent, vTreeDrag.dropSibIndex)
+        }
+        vTreeDrag.clear()
+    }
+
+    // ============
     //  Session actions (the whole working set; one session at a time)
     fun rememberRecent(inPath: String) {
         vRecent.remove(inPath); vRecent.add(0, inPath)
@@ -721,12 +908,18 @@ private fun App() {
                             when (vSideTab) {
                                 0 -> {
                                     // Loose requests (session root) render headerless at the top.
-                                    if (vRoot.requests.isNotEmpty()) {
+                                    // Shown even while empty during a request drag, so it's a drop target.
+                                    if (vRoot.requests.isNotEmpty() || vTreeDrag.draggingReq) {
                                         PackSection(
                                             inPack = vRoot,
                                             inHeaderless = true,
                                             inHeaderActive = false,
                                             inActiveReq = if (vActivePackRef === vRoot && !vSessionActive) vRoot.active else null,
+                                            inDrag = vTreeDrag,
+                                            inResolveReqDrop = { resolveReqDrop(it) },
+                                            inResolvePackDrop = {},
+                                            inOnReqDropEnd = { reqDropEnd() },
+                                            inOnPackDropEnd = {},
                                             inOnSelect = {}, inOnToggle = {},
                                             inOnOpenRequest = { vRs -> open(vRs, vRoot) },
                                             inOnNewRequest = { newLooseRequest() },
@@ -765,9 +958,18 @@ private fun App() {
                                             onSaveAs = { selectPack(it); saveAsPack() },
                                             onRemove = { vRemovePackTarget = it },
                                             onSetColor = { vQ, vCol -> vQ.color = vCol; vQ.dirty = true; persist() },
+                                            drag = vTreeDrag,
+                                            resolveReqDrop = { resolveReqDrop(it) },
+                                            resolvePackDrop = { resolvePackDrop(it) },
+                                            reqDropEnd = { reqDropEnd() },
+                                            packDropEnd = { packDropEnd() },
                                         )
                                         val vHi = if (vSessionActive) null else vP
-                                        vPacks.forEach { vPack -> PackTree(vPack, 0, vOps, vHi, vEnvActive) }
+                                        vPacks.forEach { vPack -> PackTree(vPack, vPacks, 0, vOps, vHi, vEnvActive) }
+                                        // Drop bar after the last top-level pack (append-to-root target).
+                                        if (vTreeDrag.draggingPack && vTreeDrag.dy != 0f && vTreeDrag.dropInto == null &&
+                                            vTreeDrag.dropParent == null && vTreeDrag.dropSibIndex == vPacks.size)
+                                            RowDropBar()
                                     }
                                 }
                                 1 -> {
@@ -1256,17 +1458,39 @@ private class PackOps(
     val onSaveAs: (PackState) -> Unit,
     val onRemove: (PackState) -> Unit,
     val onSetColor: (PackState, Int) -> Unit,
+    // Cross-pack drag wiring (shared controller + the App-level resolvers / commit).
+    val drag: TreeDrag,
+    val resolveReqDrop: (Int) -> Unit,
+    val resolvePackDrop: (Int) -> Unit,
+    val reqDropEnd: () -> Unit,
+    val packDropEnd: () -> Unit,
 )
 
-/* Renders a pack then its sub-packs recursively, each indented by its depth. */
+/* Renders a pack then its sub-packs recursively, each indented by its depth.
+   inSiblings is the list this pack belongs to (top-level vPacks, or a parent's
+   subPacks) — used to position the pack-reorder drop bars by index. */
 @Composable
-private fun PackTree(inPack: PackState, inDepth: Int, inOps: PackOps, inActive: PackState?, inEnvActive: Boolean) {
+private fun PackTree(inPack: PackState, inSiblings: List<PackState>, inDepth: Int, inOps: PackOps, inActive: PackState?, inEnvActive: Boolean) {
+    val vDrag = inOps.drag
+    val vMyIndex = inSiblings.indexOf(inPack)
+    val vMoving = vDrag.draggingPack && vDrag.dy != 0f && vDrag.dropInto == null
+    // Pack-reorder indicators (between siblings) sit at this pack's indent.
+    val vPad = Modifier.padding(start = (inDepth * 14).dp)
+    val vBarBefore = vMoving && vDrag.dropParent === inPack.parent && vDrag.dropSibIndex == vMyIndex
+    val vBarAfter = vMoving && vDrag.dropParent === inPack.parent &&
+        vMyIndex == inSiblings.size - 1 && vDrag.dropSibIndex == inSiblings.size
     key(inPack) {
-        Box(modifier = Modifier.padding(start = (inDepth * 14).dp)) {
+        if (vBarBefore) Box(modifier = vPad) { RowDropBar() }
+        Box(modifier = vPad) {
             PackSection(
                 inPack = inPack,
                 inHeaderActive = inEnvActive && inPack === inActive,
                 inActiveReq = if (!inEnvActive && inPack === inActive) inPack.active else null,
+                inDrag = vDrag,
+                inResolveReqDrop = inOps.resolveReqDrop,
+                inResolvePackDrop = inOps.resolvePackDrop,
+                inOnReqDropEnd = inOps.reqDropEnd,
+                inOnPackDropEnd = inOps.packDropEnd,
                 inOnSelect = { inOps.onEnv(inPack) },
                 inOnToggle = { inOps.onToggle(inPack) },
                 inOnOpenRequest = { inOps.onOpenReq(inPack, it) },
@@ -1286,7 +1510,8 @@ private fun PackTree(inPack: PackState, inDepth: Int, inOps: PackOps, inActive: 
             )
         }
     }
-    inPack.subPacks.forEach { PackTree(it, inDepth + 1, inOps, inActive, inEnvActive) }
+    if (inPack.expanded) inPack.subPacks.forEach { PackTree(it, inPack.subPacks, inDepth + 1, inOps, inActive, inEnvActive) }
+    if (vBarAfter) Box(modifier = vPad) { RowDropBar() }
 }
 
 // ==================
@@ -1303,6 +1528,11 @@ private fun PackSection(
     inPack: PackState,
     inHeaderActive: Boolean,        // this pack's env tab is the active tab
     inActiveReq: ReqState?,         // the globally-active request (for row highlight)
+    inDrag: TreeDrag,               // shared cross-pack drag controller
+    inResolveReqDrop: (Int) -> Unit,
+    inResolvePackDrop: (Int) -> Unit,
+    inOnReqDropEnd: () -> Unit,
+    inOnPackDropEnd: () -> Unit,
     inHeaderless: Boolean = false,  // root (loose) section: no header, always expanded
     inOnSelect: () -> Unit,
     inOnToggle: () -> Unit,
@@ -1328,24 +1558,37 @@ private fun PackSection(
     var vAtCursor by remember { mutableStateOf(false) }
     var vMenuX by remember { mutableStateOf(0) }
     var vMenuY by remember { mutableStateOf(0) }
-
-    // Per-section drag-to-reorder state (each pack reorders independently).
-    var vDragRs by remember { mutableStateOf<ReqState?>(null) }
-    var vDragPressY by remember { mutableStateOf(0) }
-    var vDragDy by remember { mutableStateOf(0f) }
-    var vDragTarget by remember { mutableStateOf(-1) }
-    val vRowTop = remember { mutableStateMapOf<ReqState, Int>() }
-    val vRowH = remember { mutableStateMapOf<ReqState, Int>() }
+    val vMoving = inDrag.dy != 0f   // a press hasn't turned into a real drag until it moves
 
     Column(modifier = Modifier.fillMaxWidth()) {
         // ============
-        //  Pack header (skipped for the headerless loose-root section)
+        //  Pack header (skipped for the headerless loose-root section). Draggable
+        //  to reorder / reparent; highlighted when it's the "drop inside" target.
+        val vHeaderDragged = inDrag.dragPack === inPack && vMoving
+        val vIntoHi = vMoving && ((inDrag.draggingPack && inDrag.dropInto === inPack) ||
+            (inDrag.draggingReq && inDrag.dropPack === inPack && !inPack.expanded))
+        var vHeadMod = Modifier.fillMaxWidth()
+            .onGloballyPositioned { inDrag.headTop[inPack] = it.y }
+            .onSizeChanged { inDrag.headH[inPack] = it.height }
+        if (vHeaderDragged) vHeadMod = vHeadMod.zIndex(1f).alpha(0.65f).translate(0f, inDrag.dy)
+        vHeadMod = vHeadMod.clip(RoundedCornerShape(6.dp))
+            .background(if (inHeaderActive || vIntoHi) c.accent.copy(alpha = if (vIntoHi) 0.24f else 0.14f) else Color.Transparent, RoundedCornerShape(6.dp))
+        if (vIntoHi) vHeadMod = vHeadMod.border(1.dp, c.accent, RoundedCornerShape(6.dp))
+        vHeadMod = vHeadMod
+            .hoverable { vHover = it }
+            .onSecondaryClick { x, y -> vMenuX = x; vMenuY = y; vAtCursor = true; vMenu = true }
+            .onDrag(
+                onStart = { _, vRelY -> inDrag.clear(); inDrag.dragPack = inPack; inDrag.pressRel = vRelY; inDrag.dy = 0f },
+                onDrag = { _, vRelY ->
+                    if (inDrag.dragPack !== inPack) return@onDrag
+                    inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
+                    inResolvePackDrop((inDrag.headTop[inPack] ?: 0) + vRelY)
+                },
+                onEnd = { inOnPackDropEnd() },
+            )
+            .padding(end = 2.dp)
         if (!inHeaderless) Row(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
-                .background(if (inHeaderActive) c.accent.copy(alpha = 0.14f) else Color.Transparent, RoundedCornerShape(6.dp))
-                .hoverable { vHover = it }
-                .onSecondaryClick { x, y -> vMenuX = x; vMenuY = y; vAtCursor = true; vMenu = true }
-                .padding(end = 2.dp),
+            modifier = vHeadMod,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -1391,55 +1634,55 @@ private fun PackSection(
         }
 
         // ============
-        //  Pack body — request list (expanded, or always for the loose root)
+        //  Pack body — request list (expanded, or always for the loose root).
+        //  Rows drag within and across packs via the shared controller; the drop
+        //  bar shows here whenever this pack is the resolved target.
         if (inPack.expanded || inHeaderless) {
             val vReqs = inPack.requests
-            val vDrag = vDragRs
-            val vShowBar = vDrag != null && vDragDy != 0f
-            val vOthers = if (vShowBar && vDrag != null) vReqs.filter { it !== vDrag } else emptyList()
-            val vBarBefore = if (vShowBar) vOthers.getOrNull(vDragTarget) else null
-            val vBarAtEnd = vShowBar && vDragTarget >= vOthers.size
+            val vIsTarget = vMoving && inDrag.draggingReq && inDrag.dropPack === inPack
+            val vDragReq = inDrag.dragReq
+            val vOthers = if (vIsTarget) vReqs.filter { it !== vDragReq } else emptyList()
+            val vBarBefore = if (vIsTarget) vOthers.getOrNull(inDrag.dropIndex) else null
+            val vBarAtEnd = vIsTarget && inDrag.dropIndex >= vOthers.size
+            // The loose root has no header, so register the body box as its drop
+            // anchor — that gives an empty root a region to target while dragging.
+            var vBodyMod = Modifier.fillMaxWidth().padding(start = 10.dp, top = 2.dp, bottom = 4.dp)
+            if (inHeaderless) vBodyMod = vBodyMod
+                .onGloballyPositioned { inDrag.headTop[inPack] = it.y }
+                .onSizeChanged { inDrag.headH[inPack] = it.height }
             Column(
-                modifier = Modifier.fillMaxWidth().padding(start = 10.dp, top = 2.dp, bottom = 4.dp),
+                modifier = vBodyMod,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
+                if (inHeaderless && vReqs.isEmpty())
+                    Text("Drop a request here to make it loose", color = c.dim, fontSize = 11.sp, modifier = Modifier.padding(vertical = 4.dp))
                 vReqs.forEach { vRs ->
                     if (vRs === vBarBefore) RowDropBar()
                     key(vRs) {
-                        val vDragged = vRs === vDragRs
-                        var vMod = Modifier
-                            .onGloballyPositioned { vRowTop[vRs] = it.y }
-                            .onSizeChanged { vRowH[vRs] = it.height }
+                        val vDragged = vRs === inDrag.dragReq && vMoving
+                        var vMod: Modifier = Modifier
+                        // Linked copies mirror the source's requests — read-only, so
+                        // their rows neither register geometry (would clobber the
+                        // source's) nor drag.
+                        if (!inPack.isLinked) vMod = vMod
+                            .onGloballyPositioned { inDrag.rowTop[vRs] = it.y }
+                            .onSizeChanged { inDrag.rowH[vRs] = it.height }
                         // translate is draw-only (doesn't shift absoluteY), so the
-                        // follow offset below stays correct while dragging.
-                        if (vDragged) vMod = vMod.zIndex(1f).alpha(0.65f).translate(0f, vDragDy)
-                        // Linked copies mirror the source's requests — no reorder.
+                        // cursor offset below stays correct while dragging.
+                        if (vDragged) vMod = vMod.zIndex(1f).alpha(0.65f).translate(0f, inDrag.dy)
                         if (!inPack.isLinked) vMod = vMod.onDrag(
-                                onStart = { _, vRelY -> vDragRs = vRs; vDragPressY = vRelY; vDragDy = 0f; vDragTarget = vReqs.indexOf(vRs) },
+                                onStart = { _, vRelY ->
+                                    inDrag.clear()
+                                    inDrag.dragReq = vRs; inDrag.dragReqOwner = inPack
+                                    inDrag.pressRel = vRelY; inDrag.dy = 0f
+                                    inDrag.dropPack = inPack; inDrag.dropIndex = vReqs.indexOf(vRs)
+                                },
                                 onDrag = { _, vRelY ->
-                                    val vd = vDragRs ?: return@onDrag
-                                    vDragDy = (vRelY - vDragPressY).toFloat()
-                                    val vCursorY = (vRowTop[vd] ?: 0) + vRelY
-                                    // Target slot = how many *other* rows the cursor passed the centre of.
-                                    var vCount = 0
-                                    vReqs.forEach { vT ->
-                                        if (vT !== vd) {
-                                            val vCenter = (vRowTop[vT] ?: 0) + (vRowH[vT] ?: 0) / 2
-                                            if (vCursorY > vCenter) vCount++
-                                        }
-                                    }
-                                    vDragTarget = vCount
+                                    val vd = inDrag.dragReq ?: return@onDrag
+                                    inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
+                                    inResolveReqDrop((inDrag.rowTop[vd] ?: 0) + vRelY)
                                 },
-                                onEnd = {
-                                    val vd = vDragRs
-                                    if (vd != null) {
-                                        val vFrom = vReqs.indexOf(vd)
-                                        if (vFrom >= 0 && vDragTarget >= 0 && vDragTarget != vFrom) {
-                                            vReqs.add(vDragTarget, vReqs.removeAt(vFrom)); inPack.dirty = true
-                                        }
-                                    }
-                                    vDragRs = null; vDragDy = 0f; vDragTarget = -1
-                                },
+                                onEnd = { inOnReqDropEnd() },
                             )
                         Box(modifier = vMod) {
                             RequestRow(
