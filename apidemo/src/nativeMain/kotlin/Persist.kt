@@ -4,11 +4,6 @@ import com.compose.desktop.native.appDataDir
 import com.compose.desktop.native.revealInFileManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -86,38 +81,13 @@ private fun stateFilePath(): String? {
     return vDir + kStateFile
 }
 
-/* Migrate legacy persisted JSON: the old BodyType.JSON value (removed in favour of
-   bodyType=TEXT + bodyFormat=JSON) is rewritten in place so saved sessions keep
-   their JSON bodies + Content-Type. Walks every nested request object. */
-private fun migrateElement(inEl: JsonElement): JsonElement = when (inEl) {
-    is JsonObject -> {
-        val vMap = LinkedHashMap<String, JsonElement>()
-        inEl.forEach { (vK, vV) -> vMap[vK] = migrateElement(vV) }
-        if ((vMap["bodyType"] as? JsonPrimitive)?.contentOrNull == "JSON") {
-            vMap["bodyType"] = JsonPrimitive("TEXT")
-            if (!vMap.containsKey("bodyFormat")) vMap["bodyFormat"] = JsonPrimitive("JSON")
-        }
-        JsonObject(vMap)
-    }
-    is JsonArray -> JsonArray(inEl.map { migrateElement(it) })
-    else -> inEl
-}
-
-/* Apply legacy migrations to a persisted/exported JSON string before decoding.
-   Returns the input unchanged if it isn't valid JSON. */
-internal fun migrateLegacyJson(inText: String): String = try {
-    Json.encodeToString(JsonElement.serializer(), migrateElement(Json.parseToJsonElement(inText)))
-} catch (e: Throwable) {
-    inText
-}
-
 /* Read the persisted app state, or a fresh (first-launch) AppState if there's
    nothing saved yet or it can't be read. */
 fun loadAppState(): AppState {
     val vPath = stateFilePath() ?: return AppState()
     return try {
         val vText = FileSystem.SYSTEM.read(vPath.toPath()) { readUtf8() }
-        fStateJson.decodeFromString<AppState>(migrateLegacyJson(vText))
+        fStateJson.decodeFromString<AppState>(vText)
     } catch (e: Throwable) {
         AppState()
     }
