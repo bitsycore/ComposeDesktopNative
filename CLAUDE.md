@@ -54,7 +54,19 @@ APIs keep their upstream `androidx.compose.*` names, in `core/commonMain`.
   build time from Google) and a single `MaterialSymbols{Style}` object
   with a `@Composable operator fun invoke(...)` that auto-installs the
   font on first call.
-- `demo/` — example app (`Main.kt` → `composeWindow { App() }`), sidebar showcase.
+- `demo/` — flagship example app: a full showcase of the re-implemented
+  Compose + Material widgets and features (30+ sidebar screens; `--gpu` /
+  `--screen` / `--screenshot` CLI). Depends on `:window` + the three
+  `material-symbols` styles. Not published (app only).
+- `apidemo/` — a Postman-style **API Manager** built on the library: HTTP
+  request collections (packs / nested sub-packs / linked copies), a
+  Session → Pack → Request inheritance ladder for variables / headers /
+  query-params / client-certs (innermost wins, with per-level overrides),
+  syntax-highlighted JSON/XML/YAML/HTML body editors, a response viewer with
+  TLS-chain inspection, mTLS client certs, drag-and-drop tree, request history
+  and file-based sessions. Networking is Ktor's Curl engine (one bundled
+  static libcurl per target — Schannel on Windows, OpenSSL on macOS/Linux) +
+  kotlinx.serialization + okio. Not published (app only).
 
 ### How renderer selection works
 
@@ -86,18 +98,26 @@ cinterop export needed.
 - `core/src/commonMain/.../ui/node/LayoutNode.kt` — layout tree, hit testing.
 - `core/src/commonMain/.../ui/Modifier.kt` — modifier elements the renderer reads.
 - `demo/src/nativeMain/kotlin/Main.kt` — sidebar demo with --gpu / --screen / --screenshot CLI.
+- `apidemo/src/nativeMain/kotlin/Main.kt` — the API Manager (`App()` + every
+  UI panel). Siblings: `Model.kt` (serializable packs / requests / certs),
+  `Persist.kt` (session + app-state IO), `Http.kt` (Ktor request runner),
+  `CurlMtls.kt` (client-cert / TLS-chain via libcurl), `Packs.kt`
+  (import/export), `SyntaxHighlight.kt` (body/format tokenizers).
 
 ## Build / Run
 
 ```bash
 # macOS Apple Silicon, default Skia (Metal on macOS, OpenGL on Linux)
 ./gradlew :demo:runDebugExecutableMacosArm64
+./gradlew :apidemo:runDebugExecutableMacosArm64
 
 # Linux x64
 ./gradlew :demo:runDebugExecutableLinuxX64
+./gradlew :apidemo:runDebugExecutableLinuxX64
 
 # Windows
 gradlew.bat :demo:runDebugExecutableMingwX64
+gradlew.bat :apidemo:runDebugExecutableMingwX64
 
 # Skiko-free build on macOS/Linux — SDL3 renderer everywhere
 ./gradlew :demo:runDebugExecutableMacosArm64 -Prenderer=sdl3
@@ -108,7 +128,7 @@ gradlew.bat :demo:runDebugExecutableMingwX64
 ### macOS (default Skia build)
 
 `brew install sdl3` is enough. `sdl3_ttf` only needed if you set
-`-Prenderer=sdl3`. Skiko klibs come from Maven (`org.jetbrains.skiko:0.148.2`).
+`-Prenderer=sdl3`. Skiko klibs come from Maven (`org.jetbrains.skiko:0.150.0`).
 
 ### Linux (default Skia build)
 
@@ -116,84 +136,75 @@ gradlew.bat :demo:runDebugExecutableMingwX64
 
 ### Windows (mingwX64 — always uses SDL3 + SDL3_ttf + SDL3_image + FreeType)
 
-All four libraries must be extracted to fixed paths the cinterop `.def`
-files reference (`C:/Dev/Libs/...` by convention; override via
-`-Psdl3Dir=`/`-Psdl3TtfDir=`/`-Psdl3ImageDir=`/`-PfreetypeDir=`):
+On Windows these four libraries (plus the image codecs, and a static libcurl
+for `:apidemo`) are **linked statically into the executable** — the
+distributable is just `<app>.exe` + `data.kres`, **no runtime DLLs**. They are
+not downloaded as prebuilt binaries; they are **built from source as static
+libs** by the scripts in `tools/` into a gitignored, in-repo `libs/` folder:
+
+```bash
+# From Git Bash on Windows. Needs: git, cmake, a mingw-w64 gcc/g++ on PATH,
+# plus curl + python (to fetch ninja when absent). Idempotent — re-runnable.
+tools/build-all.sh
+```
+
+`build-all.sh` runs `build-freetype.sh` → `build-sdl3.sh` →
+`build-sdl3-image.sh` → `build-sdl3-ttf.sh` in that order (later libs link the
+earlier ones), installing each as a static `.a` under:
 
 ```
-C:\Dev\Libs\SDL3\
-  include\SDL3\*.h
-  lib\libSDL3.dll.a
-  bin\SDL3.dll
-
-C:\Dev\Libs\SDL3_ttf\
-  include\SDL3_ttf\*.h
-  lib\libSDL3_ttf.dll.a
-  bin\SDL3_ttf.dll
-
-C:\Dev\Libs\SDL3_image\
-  include\SDL3_image\*.h
-  lib\libSDL3_image.dll.a
-  bin\SDL3_image.dll
-
-C:\Dev\Libs\FreeType\
-  include\freetype2\ft2build.h
-  include\freetype2\freetype\*.h
-  lib\libfreetype.dll.a
-  bin\libfreetype-6.dll
+libs/FreeType/{include,lib}
+libs/SDL3/{include,lib}
+libs/SDL3_image/{include,lib}      # vendored PNG/JPG/SVG/WEBP
+libs/SDL3_ttf/{include,lib}        # carries our variable-font axis patch
 ```
+
+How the build wires that up:
+
+- **Include paths** — each module's `build.gradle.kts` injects a host-side
+  `-I<repo>/libs/SDL3/include` into the cinterop on Windows (`vHostSdlInclude`);
+  the `.def` files themselves only carry the macOS/Linux system paths
+  (`/opt/homebrew`, `/usr/include`) and a `# mingw_x64: static-linked` note.
+  `sdl3.def` is duplicated in every module that touches SDL — `core`,
+  `renderer-sdl3`, `renderer-skia`, `window` (each
+  `src/nativeInterop/cinterop/`); `sdl3_ttf.def` + `sdl3_image.def` +
+  `freetype.def` live only in `renderer-sdl3`.
+- **Linking** — `demo/build.gradle.kts` and `apidemo/build.gradle.kts` add the
+  static `linkerOpts` for mingwX64: `-L<repo>/libs/.../lib`, a
+  `-Wl,--start-group … --end-group` around the circular static deps
+  (`ttf ↔ freetype ↔ SDL3`, `image ↔ png/webp/zlib`), the Windows system libs
+  SDL3 needs when static, and `-Wl,--gc-sections -Wl,-s` to shrink + strip.
+  `:apidemo` also links `-lcrypt32` for its mTLS cert-store path.
+
+`data.kres` (STORED, no compression) is bundled next to every binary by the
+per-(variant × target) `copy*ComposeResources*` Zip tasks — drawables, files,
+the default `font/Roboto-Regular.ttf` the text renderers load at startup, plus
+each depended `material-symbols` style font. Pass `-PbundleDefaultFont=false`
+to ship without the bundled Roboto (the renderers then fall back to a system
+font).
 
 FreeType is used by the SDL3 renderer for variable-font axis support on
-Material Symbols icons (SDL3_ttf 3.2 has no axis-set API; we go directly
-to FreeType for those families). Easiest source: MSYS2 (`pacman -S
-mingw-w64-x86_64-freetype`) — copy `mingw64/include/freetype2/`,
-`mingw64/lib/libfreetype.dll.a`, and `mingw64/bin/libfreetype-6.dll`
-into the layout above.
+Material Symbols icons (SDL3_ttf has no axis-set API; we go directly to
+FreeType for those families — see `FreeTypeIcons.kt`).
 
-Download the **MinGW** development releases (not MSVC) from:
-- <https://github.com/libsdl-org/SDL/releases>
-- <https://github.com/libsdl-org/SDL_ttf/releases>
-- <https://github.com/libsdl-org/SDL_image/releases>
+### Build errors on Windows
 
-Inside each release zip the right directory is `x86_64-w64-mingw32/`
-(or `i686-w64-mingw32/` for 32-bit, which we don't target). Either copy
-that subtree directly to `C:\SDL3` (so the `include/` and `lib/` dirs
-land at `C:\SDL3\include` etc.), or adjust the include / linker paths in the
-cinterop `.def` files. `sdl3.def` is duplicated in every module that touches
-SDL — `core`, `renderer-sdl3`, `renderer-skia`, `window` (each
-`src/nativeInterop/cinterop/`) — so edit all copies; `sdl3_ttf.def` +
-`sdl3_image.def` + `freetype.def` live only in `renderer-sdl3`.
-Note the two *extension* `.def` files each list **two** include dirs — their
-own plus SDL3's (`-IC:/SDL3_image/include -IC:/SDL3/include`) — because their
-headers `#include <SDL3/SDL.h>`; `depends = sdl3` wires the Kotlin klib but
-does *not* feed SDL3's include path to the clang indexer.
+`fatal error: 'SDL3/SDL.h' file not found` or `cannot find -lSDL3` at the
+cinterop / link step means `libs/` is empty or incomplete — run
+`tools/build-all.sh` (from Git Bash) to build the static deps into `libs/`,
+then rebuild.
 
-The runtime DLLs (`SDL3.dll`, `SDL3_ttf.dll`, `SDL3_image.dll`) are copied
-next to the executable automatically by `demo/build.gradle.kts` (the
-`copy*DllsMingwX64` tasks), sourced from `-Psdl3Dir` / `-Psdl3TtfDir` /
-`-Psdl3ImageDir` (defaults `C:\SDL3` / `C:\SDL3_ttf` / `C:\SDL3_image`; set
-overrides in `~/.gradle/gradle.properties` if your libs live elsewhere).
-That same build also bundles `data.kres` (STORED, no compression)
-next to every binary — drawables, files, plus the default
-`font/Roboto-Regular.ttf` the text renderers load at startup. Pass
-`-PbundleDefaultFont=false` to ship without the bundled Roboto (the renderers
-then fall back to a system font).
+## Native dependency tooling
 
-### Linker errors on Windows
-
-If `cinteropSdl3MingwX64` fails with "cannot find -lSDL3", verify:
-1. `C:\SDL3\lib\libSDL3.dll.a` exists (the MinGW import library).
-2. The `lib\` directory under the SDL release zip has `libSDL3.dll.a`
-   — some older releases name it `SDL3.lib` (MSVC) which Kotlin/Native
-   can't link. Use the MinGW package.
-3. If you put SDL3 somewhere else, edit `compilerOpts.mingw_x64` and
-   `linkerOpts.mingw_x64` in the two `.def` files.
-
-### Header errors on Windows
-
-`fatal error: 'SDL3/SDL.h' file not found` → `C:\SDL3\include\SDL3\`
-doesn't contain the headers. The MinGW zip's `include/` directory has
-them; copy that whole tree.
+- `tools/` — Bash scripts (`build-all.sh`, `build-sdl3.sh`,
+  `build-sdl3-ttf.sh`, `build-sdl3-image.sh`, `build-freetype.sh`) that build
+  the Windows native deps from source as static libs into `libs/`. Not Gradle
+  modules.
+- `libs/` — gitignored output of the above (per-host static libs +
+  headers); referenced by the build via `${rootDir}/libs`.
+- `scripts/subset-material-symbols.py` — scans an app's Kotlin sources for
+  `MaterialSymbols.<Name>` usages and writes a codepoint list so the icon
+  fonts can be hb-subset down to only the glyphs used (`-PsubsetIcons=true`).
 
 ## Architecture Notes
 
@@ -377,7 +388,7 @@ Follow `~/.claude/CLAUDE.md`:
 - **Text appears clipped on the right** — measurement must match the
   glyphs the renderer actually paints. In Skia this means
   `getStringGlyphs() + getWidths().sum()` (not `measureTextWidth`,
-  which is broken in Skiko 0.148.2 Native). In SDL3 it means passing
+  which is broken in Skiko 0.150.0 Native). In SDL3 it means passing
   `0` to `TTF_GetStringSize / TTF_RenderText_Blended` so it strlens
   the UTF-8 — passing `inText.length` truncates non-ASCII strings.
 - **Retina blur** — make sure the back buffer is at pixel size and the
@@ -392,8 +403,9 @@ Follow `~/.claude/CLAUDE.md`:
   Don't add a hard dependency on `:renderer-skia` from a shared source set,
   or mingwX64 (which has no Skia module) won't link.
 - **mingwX64 cross-compile from macOS / Linux fails** at the cinterop
-  step — it can't find `C:/Dev/Libs/SDL3/include/SDL3/SDL.h`. That's
-  expected; build the Windows target on Windows.
+  step — it can't find `<repo>/libs/SDL3/include/SDL3/SDL.h` (and the static
+  libs under `libs/` are built per-host by `tools/` anyway). That's expected;
+  build the Windows target on Windows.
 - **Configuration cache and `-Prenderer=`** — Gradle caches the
   configuration; toggling the renderer property may not invalidate the
   cache. Delete `.gradle/configuration-cache/` between switches if you
@@ -404,6 +416,11 @@ Follow `~/.claude/CLAUDE.md`:
 - `--args="--gpu=sdl3.opengl --screen=Buttons"` to pass CLI to the demo.
 - `--info` to see the cinterop classpath / include paths actually used.
 - `--rerun-tasks` to force-rebuild after toggling `-Prenderer=`.
+- `-PsubsetIcons=true` (default on, see `gradle.properties`) —
+  `scripts/subset-material-symbols.py` scans an app's sources for
+  `MaterialSymbols.<Name>` uses and hb-subsets each bundled icon font to only
+  the glyphs actually used (needs `python3` + `hb-subset` on PATH; falls back
+  to the full font if `hb-subset` is absent).
 
 ## License
 

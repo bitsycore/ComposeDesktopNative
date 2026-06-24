@@ -2,53 +2,54 @@
 
 # ComposeNativeSDL3
 
-A subset of **Compose Desktop** running on **Kotlin/Native** with **SDL3**
-as the windowing / input layer. No JVM. Compiles to native binaries for
-macOS (arm64), Linux (x64/arm64), and Windows (mingwX64).
+A subset of **Compose Desktop** running on **Kotlin/Native** with **SDL3** for
+windowing and input — **no JVM**. Compiles to native binaries for macOS
+(arm64), Linux (x64/arm64) and Windows (mingwX64).
 
-Two renderers behind a shared `RenderBackend` interface:
+Rendering is pluggable behind one `RenderBackend`:
 
 - **Skia** (via Skiko) on macOS + Linux — Metal / OpenGL / CPU raster
-- **SDL3** (via SDL3_ttf + `SDL_RenderGeometry`) on Windows, and on
-  macOS/Linux when you opt in with `-Prenderer=sdl3`
+- **SDL3** (`SDL3_ttf` + `SDL_RenderGeometry`) on Windows, and on macOS/Linux
+  with `-Prenderer=sdl3`
 
-## Prerequisites
+## demo — widget & feature showcase
 
-| Platform | SDL3 | SDL3_ttf |
-|---|---|---|
-| macOS | `brew install sdl3` | `brew install sdl3_ttf` *(only needed when `-Prenderer=sdl3`)* |
-| Linux | `sudo apt install libsdl3-dev` | `sudo apt install libsdl3-ttf-dev` *(only when `-Prenderer=sdl3`)* |
-| Windows | [SDL3 release zip](https://github.com/libsdl-org/SDL/releases) → `C:\SDL3` | [SDL3_ttf release zip](https://github.com/libsdl-org/SDL_ttf/releases) → `C:\SDL3_ttf` |
+<img src="screenshots/demo.png" width="100%" alt="ComposeNativeSDL3 demo" />
 
-On Windows the runtime `SDL3.dll` and `SDL3_ttf.dll` must be findable at
-launch — copy them next to the built `.exe` or put `C:\SDL3\bin` /
-`C:\SDL3_ttf\bin` on `PATH`.
-
-## Build & Run
+`:demo` is a full tour of the re-implemented Compose + Material surface — 30+
+sidebar screens covering buttons, text fields, layout, modifiers, shapes,
+images, state & recomposition, scrolling & lazy lists, dialogs, icons, canvas,
+graphics layers, custom layout, animation and gestures.
 
 ```bash
-# macOS Apple Silicon (default = Skia + Metal)
-./gradlew :demo:runDebugExecutableMacosArm64
-
-# Linux x64 (default = Skia + OpenGL)
-./gradlew :demo:runDebugExecutableLinuxX64
-
-# Windows (SDL3 renderer)
-gradlew.bat :demo:runDebugExecutableMingwX64
-
-# Drop Skiko entirely on macOS/Linux — use the SDL3 renderer
-./gradlew :demo:runDebugExecutableMacosArm64 -Prenderer=sdl3
+./gradlew :demo:runDebugExecutableMacosArm64      # macOS  (Skia / Metal)
+./gradlew :demo:runDebugExecutableLinuxX64        # Linux  (Skia / OpenGL)
+gradlew.bat :demo:runDebugExecutableMingwX64      # Windows (SDL3)
 ```
 
-The demo CLI accepts:
+CLI: `--gpu=…`, `--screen=<Name>` (one screen, no sidebar),
+`--screenshot=out.bmp --frames=N`, `--width=W --height=H`.
 
+## apidemo — API Manager
+
+<img src="screenshots/demoapi.png" width="100%" alt="ComposeNativeSDL3 API Manager" />
+
+`:apidemo` is a Postman-style REST client built entirely on the library:
+request collections (**packs**, nested sub-packs, linked copies), a
+**Session → Pack → Request** inheritance ladder for variables / headers /
+query params / client certs, syntax-highlighted JSON / XML / YAML / HTML body
+editors, a response viewer with timing, size and TLS-chain inspection, mTLS
+client certificates, drag-and-drop tree management, request history and
+file-based sessions.
+
+```bash
+./gradlew :apidemo:runDebugExecutableMacosArm64
+./gradlew :apidemo:runDebugExecutableLinuxX64
+gradlew.bat :apidemo:runDebugExecutableMingwX64
 ```
---gpu=auto | none | skia.metal | skia.opengl |
-      sdl3 | sdl3.metal | sdl3.opengl | sdl3.vulkan | sdl3.d3d11 | sdl3.d3d12
---screen=Window | Buttons | TextField | ...   (single screen, no sidebar)
---screenshot=path.bmp --frames=N              (capture and quit)
---width=W --height=H
-```
+
+Add `-Prenderer=sdl3` on macOS/Linux to drop Skiko and use the pure-SDL3
+renderer everywhere.
 
 ## Minimal app
 
@@ -61,10 +62,22 @@ fun main() = composeWindow(title = "Hello") {
 }
 ```
 
-The lambda gets a `ComposeWindowScope` receiver with `window:
-ComposeNativeWindow` for `setTitle / setSize / minimize / maximize /
-setFullscreen / close / …`. The same handle is also available to any
-nested composable via `LocalComposeNativeWindow.current`.
+The lambda runs with a `ComposeWindowScope` receiver exposing
+`window: ComposeNativeWindow` (`setTitle` / `setSize` / `minimize` /
+`maximize` / `setFullscreen` / `close` / …); the same handle is reachable from
+any nested composable via `LocalComposeNativeWindow.current`.
+
+## Building
+
+- **macOS:** `brew install sdl3` (Skia is the default; Skiko klibs come from
+  Maven).
+- **Linux:** `sudo apt install libsdl3-dev`.
+- **Windows:** SDL3, SDL3_ttf, SDL3_image and FreeType are built from source as
+  **static** libraries by `tools/build-all.sh` into the gitignored in-repo
+  `libs/`, then linked into the executable — the Windows distributable is just
+  `<app>.exe` + `data.kres`, no runtime DLLs.
+
+See [CLAUDE.md](CLAUDE.md) for the full module layout and build details.
 
 ## License
 
