@@ -21,6 +21,7 @@ data class AppState(
     val dark: Boolean = true,
     val globalEnv: List<KeyVal> = emptyList(),        // session-level variables (base of the inheritance ladder)
     val globalHeaders: List<KeyVal> = emptyList(),    // session-level headers (inherited by every request)
+    val globalParams: List<KeyVal> = emptyList(),     // session-level query params (inherited by every request)
     val globalCert: CertConfig? = null,               // session-level client cert (inherited)
     val packs: List<SavedPack> = emptyList(),
     val root: Pack? = null,                           // loose requests at the session root (inherit session only)
@@ -53,6 +54,7 @@ data class Session(
     val root: Pack? = null,                           // loose requests at the session root
     val globalEnv: List<KeyVal> = emptyList(),        // session-level variables
     val globalHeaders: List<KeyVal> = emptyList(),    // session-level headers (inherited)
+    val globalParams: List<KeyVal> = emptyList(),     // session-level query params (inherited)
     val globalCert: CertConfig? = null,               // session-level client cert (inherited)
     val activePack: Int = 0,
 )

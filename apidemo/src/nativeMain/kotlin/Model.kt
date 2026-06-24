@@ -18,6 +18,7 @@ data class Pack(
     val variables: List<KeyVal> = emptyList(),
     val color: Int = 0,   // 1-based index into the pack-colour palette; 0 = none
     val headers: List<KeyVal> = emptyList(),   // pack-level headers, inherited by requests
+    val params: List<KeyVal> = emptyList(),    // pack-level query params, inherited by requests
     val cert: CertConfig? = null,              // pack-level client cert, inherited by requests
     val id: String = "",                       // stable id (used by linked-copy packs)
     val linkedTo: String? = null,              // id of the source pack when this is a linked copy
@@ -38,73 +39,98 @@ data class CertConfig(
 )
 
 /* The starter SESSION loaded on first launch (and on demand from the session
-   menu) — the httpbin tour split into themed packs, with the shared base URL /
-   creds in the session's global env. Loaded as an unsaved (untitled) session. */
+   menu) — a guided tour of every feature against httpbin.org: the inheritance
+   ladder (session → pack → sub-pack → request, for variables / query params /
+   headers / client cert, innermost wins), loose root requests, a nested sub-pack,
+   per-request overrides, a client-cert pack, and a linked-copy pack. Each /get or
+   /anything endpoint echoes the args + headers it received, so the merged,
+   inherited result is visible in the response. Loaded as an unsaved session. */
 fun defaultSession(): Session = Session(
     activePack = 0,
+    // ── Session level — the base of every inheritance ladder ──
     globalEnv = listOf(
         KeyVal("baseUrl", "https://httpbin.org"),
-        KeyVal("token", "my-secret-token"),
-        KeyVal("user", "user"),
+        KeyVal("token", "session-token-abc"),
+        KeyVal("user", "session-user"),
         KeyVal("password", "passwd"),
+        KeyVal("apiVer", "v1"),                                       // overridden by Methods (v2) then Nested (v3)
     ),
-    globalHeaders = listOf(KeyVal("X-Client", "compose-apidemo")),   // inherited by every request
+    globalHeaders = listOf(KeyVal("X-Client", "compose-apidemo")),    // every request sends it (echoed by /headers)
+    globalParams = listOf(KeyVal("trace", "session")),                // every request gets ?trace=session (echoed in /get args)
+    // No session-level cert: it would route every request through mTLS and fail
+    // without a real cert file. Client certs are shown on the "Secure (mTLS)" pack.
+    // ── Loose requests at the session root (in no pack — inherit session only) ──
+    root = Pack(isRoot = true, name = "", requests = listOf(
+        ApiRequest(name = "Ping (loose)", method = ReqMethod.GET, url = "{{baseUrl}}/get"),
+        ApiRequest(name = "Headers echo (loose)", method = ReqMethod.GET, url = "{{baseUrl}}/headers"),
+    )),
     packs = listOf(
+        // ── Methods — pack header/param/var inherited by its requests, plus a
+        //    nested sub-pack and per-request overrides of each kind. ──
         SavedPack(pack = Pack(name = "Methods", id = "pk-methods", color = 1,
-            headers = listOf(KeyVal("Accept", "application/json")),   // pack-level header, inherited by its requests
+            headers = listOf(KeyVal("Accept", "application/json")),   // pack header, inherited by its requests
+            params = listOf(KeyVal("source", "methods")),             // pack query param, inherited (echoed in /get args)
+            variables = listOf(KeyVal("apiVer", "v2")),               // overrides the session's apiVer for this pack
             requests = listOf(
-            ApiRequest(name = "GET — query params", method = ReqMethod.GET, url = "{{baseUrl}}/get",
-                params = listOf(KeyVal("q", "compose"), KeyVal("page", "1"))),
-            ApiRequest(name = "POST — JSON", method = ReqMethod.POST, url = "{{baseUrl}}/post",
-                bodyType = BodyType.JSON, body = "{\n  \"name\": \"{{user}}\",\n  \"active\": true\n}"),
-            ApiRequest(name = "POST — form", method = ReqMethod.POST, url = "{{baseUrl}}/post",
-                bodyType = BodyType.FORM, form = listOf(KeyVal("field1", "value1"), KeyVal("field2", "value2"))),
-            ApiRequest(name = "PUT — replace", method = ReqMethod.PUT, url = "{{baseUrl}}/put",
-                bodyType = BodyType.JSON, body = "{\n  \"id\": 1,\n  \"name\": \"updated\"\n}"),
-            ApiRequest(name = "PATCH — partial", method = ReqMethod.PATCH, url = "{{baseUrl}}/patch",
-                bodyType = BodyType.JSON, body = "{ \"name\": \"patched\" }"),
-            ApiRequest(name = "DELETE", method = ReqMethod.DELETE, url = "{{baseUrl}}/delete"),
-            ApiRequest(name = "HEAD", method = ReqMethod.HEAD, url = "{{baseUrl}}/get"),
-            ApiRequest(name = "OPTIONS", method = ReqMethod.OPTIONS, url = "{{baseUrl}}/anything"),
-            ApiRequest(name = "Anything echo", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
-                bodyType = BodyType.JSON, body = "{ \"hello\": \"world\" }"),
-        ))),
+                ApiRequest(name = "GET — echoes inherited", method = ReqMethod.GET, url = "{{baseUrl}}/get",
+                    params = listOf(KeyVal("q", "compose"))),         // own q + inherited trace=session + source=methods
+                ApiRequest(name = "GET — overrides query param", method = ReqMethod.GET, url = "{{baseUrl}}/get",
+                    params = listOf(KeyVal("trace", "request"))),     // request's trace wins over the session's
+                ApiRequest(name = "POST — overrides header", method = ReqMethod.POST, url = "{{baseUrl}}/post",
+                    headers = listOf(KeyVal("Accept", "text/plain")), // request's Accept wins over the pack's
+                    bodyType = BodyType.JSON, body = "{\n  \"user\": \"{{user}}\",\n  \"api\": \"{{apiVer}}\"\n}"),
+                ApiRequest(name = "POST — overrides {{user}} var", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
+                    variables = listOf(KeyVal("user", "request-user")),   // request var beats session/pack — see body echo
+                    bodyType = BodyType.JSON, body = "{ \"who\": \"{{user}}\" }"),
+                ApiRequest(name = "PUT — replace", method = ReqMethod.PUT, url = "{{baseUrl}}/put",
+                    bodyType = BodyType.JSON, body = "{ \"id\": 1, \"name\": \"updated\" }"),
+                ApiRequest(name = "DELETE", method = ReqMethod.DELETE, url = "{{baseUrl}}/delete"),
+                ApiRequest(name = "Anything echo", method = ReqMethod.POST, url = "{{baseUrl}}/anything",
+                    bodyType = BodyType.JSON, body = "{ \"hello\": \"world\" }"),
+            ),
+            // Nested sub-pack — inherits Session → Methods → here (apiVer becomes v3,
+            // plus its own X-Nested header; trace / source / Accept still flow down).
+            subPacks = listOf(
+                Pack(name = "Nested", color = 4,
+                    variables = listOf(KeyVal("apiVer", "v3")),
+                    headers = listOf(KeyVal("X-Nested", "true")),
+                    requests = listOf(
+                        ApiRequest(name = "GET — deep inheritance", method = ReqMethod.GET, url = "{{baseUrl}}/anything/{{apiVer}}"),
+                    )),
+            ))),
+        // ── Auth & status — uses the inherited {{token}} / {{user}} / {{password}} ──
         SavedPack(pack = Pack(name = "Auth & status", color = 2, requests = listOf(
             ApiRequest(name = "Bearer auth", method = ReqMethod.GET, url = "{{baseUrl}}/bearer",
                 headers = listOf(KeyVal("Authorization", "Bearer {{token}}"))),
             ApiRequest(name = "Basic auth", method = ReqMethod.GET, url = "{{baseUrl}}/basic-auth/{{user}}/{{password}}"),
             ApiRequest(name = "Status 200", method = ReqMethod.GET, url = "{{baseUrl}}/status/200"),
-            ApiRequest(name = "Status 404", method = ReqMethod.GET, url = "{{baseUrl}}/status/404"),
             ApiRequest(name = "Status 500", method = ReqMethod.GET, url = "{{baseUrl}}/status/500"),
             ApiRequest(name = "Redirect x3", method = ReqMethod.GET, url = "{{baseUrl}}/redirect/3"),
             ApiRequest(name = "Delay 3s (try Cancel)", method = ReqMethod.GET, url = "{{baseUrl}}/delay/3"),
-            ApiRequest(name = "Set cookies", method = ReqMethod.GET, url = "{{baseUrl}}/cookies/set",
-                params = listOf(KeyVal("name", "value"))),
-            ApiRequest(name = "Response headers", method = ReqMethod.GET, url = "{{baseUrl}}/response-headers",
-                params = listOf(KeyVal("X-Demo", "compose-native"))),
         ))),
+        // ── Formats — response viewer (JSON / XML / HTML / image) ──
         SavedPack(pack = Pack(name = "Formats", color = 3, requests = listOf(
             ApiRequest(name = "JSON", method = ReqMethod.GET, url = "{{baseUrl}}/json"),
             ApiRequest(name = "XML", method = ReqMethod.GET, url = "{{baseUrl}}/xml"),
             ApiRequest(name = "HTML", method = ReqMethod.GET, url = "{{baseUrl}}/html"),
-            ApiRequest(name = "Gzip (decompressed)", method = ReqMethod.GET, url = "{{baseUrl}}/gzip"),
             ApiRequest(name = "UTF-8 text", method = ReqMethod.GET, url = "{{baseUrl}}/encoding/utf8"),
-            ApiRequest(name = "Base64 decode", method = ReqMethod.GET, url = "{{baseUrl}}/base64/SFRUUEJJTiBpcyBhd2Vzb21l"),
-            ApiRequest(name = "robots.txt", method = ReqMethod.GET, url = "{{baseUrl}}/robots.txt"),
-            ApiRequest(name = "Deny", method = ReqMethod.GET, url = "{{baseUrl}}/deny"),
-            ApiRequest(name = "UUID", method = ReqMethod.GET, url = "{{baseUrl}}/uuid"),
-        ))),
-        SavedPack(pack = Pack(name = "Images & files", color = 4, requests = listOf(
             ApiRequest(name = "PNG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/png"),
-            ApiRequest(name = "JPEG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/jpeg"),
             ApiRequest(name = "SVG image", method = ReqMethod.GET, url = "{{baseUrl}}/image/svg"),
-            ApiRequest(name = "WebP image", method = ReqMethod.GET, url = "{{baseUrl}}/image/webp"),
-            ApiRequest(name = "PDF document", method = ReqMethod.GET, url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"),
-            ApiRequest(name = "Random bytes (binary)", method = ReqMethod.GET, url = "{{baseUrl}}/bytes/64"),
         ))),
-        // Linked copy of "Methods": mirrors its requests read-only but overrides
-        // baseUrl to the httpbingo sibling, so the same calls run against another
-        // host. Showcases linked packs + per-pack variable override.
+        // ── Secure (mTLS) — a PACK-LEVEL client cert, inherited by its requests.
+        //    Open a request's Cert tab to see the inherited cert (source pill +
+        //    Override). Set real cert paths to actually send; the example paths
+        //    won't load. The second request overrides with its own cert. ──
+        SavedPack(pack = Pack(name = "Secure (mTLS)", color = 5,
+            cert = CertConfig(certPath = "/path/to/client.p12", certFormat = CertFormat.PKCS12, certPassword = "changeit"),
+            requests = listOf(
+                ApiRequest(name = "Inherits the pack cert", method = ReqMethod.GET, url = "{{baseUrl}}/get"),
+                ApiRequest(name = "Overrides with own cert", method = ReqMethod.GET, url = "{{baseUrl}}/get",
+                    certPath = "/path/to/other-client.pem", certFormat = CertFormat.PEM, keyPath = "/path/to/other-key.pem"),
+            ))),
+        // ── Linked copy of "Methods": a read-only mirror of its requests, but with
+        //    its own baseUrl var → the same calls run against the httpbingo sibling.
+        //    Showcases linked packs + per-pack variable override. ──
         SavedPack(pack = Pack(name = "Methods · httpbingo", color = 6, requests = emptyList(),
             variables = listOf(KeyVal("baseUrl", "https://httpbingo.org")), linkedTo = "pk-methods")),
     ),
@@ -116,6 +142,7 @@ data class ApiRequest(
     val method: ReqMethod = ReqMethod.GET,
     val url: String = "https://",
     val params: List<KeyVal> = emptyList(),
+    val variables: List<KeyVal> = emptyList(),   // request-level vars ({{name}}); override inherited ones
     val headers: List<KeyVal> = emptyList(),
     val bodyType: BodyType = BodyType.NONE,
     val body: String = "",                       // JSON / TEXT content, or the file path when bodyType == FILE

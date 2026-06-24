@@ -105,6 +105,22 @@ Migration: `loadAppState` maps any old flat `packs: List<SavedPack>` → `roots`
 >   collapsed pack). The empty loose root shows a "Drop a request here" zone while
 >   dragging. Collapsing a pack now also hides its sub-pack subtree (keeps render +
 >   drop-target walks consistent).
+> - DONE: **request variables + query-param inheritance.** Requests now carry their
+>   own `variables` (new `ApiRequest.variables`) — a dedicated **Var** tab shows
+>   inherited vars (source + Override) over the request's own editable vars, which win
+>   on send (`effectiveReqVars`). Query params are now inheritable too: session
+>   (`globalParams`) + `Pack.params` → request, merged by key (`inheritedParams` /
+>   `effectiveParams` / `sourcedParams`), with a **Query** sub-tab added to
+>   ScopeSettings and inherited params shown on the request Query tab. Request tabs
+>   are now Query / Var / Headers / Body / Cert; settings sub-tabs Var / Query /
+>   Header / Cert. `InheritedEditableTab` is the shared inherited-list + own-editor
+>   widget behind all of them.
+> - DONE: **default session = full feature tour.** `defaultSession()` rebuilt to
+>   demonstrate the inheritance ladder (session vars/headers/params → pack → sub-pack
+>   → request, innermost wins), loose root requests, a nested sub-pack, per-request
+>   overrides (header / query param / variable), a pack-level client cert with a
+>   request-level override, and the linked-copy pack. httpbin echoes the merged
+>   result so inheritance is visible in the response.
 > - DONE: **inheritance visibility pass.** Inheritance is now source-aware
 >   everywhere: `sourcedVars/Headers/Cert(chain)` tag each inherited value with the
 >   level it comes from. Every pack/sub-pack settings sub-tab (Var/Header/Cert) and

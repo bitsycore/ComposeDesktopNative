@@ -119,6 +119,7 @@ private class PackState(inPack: Pack, inPath: String?, inDirty: Boolean, inOpenT
     }
     val variables = mutableStateListOf<KeyVal>().apply { addAll(inPack.variables) }
     val headers = mutableStateListOf<KeyVal>().apply { addAll(inPack.headers) }   // pack-level, inherited by requests
+    val params = mutableStateListOf<KeyVal>().apply { addAll(inPack.params) }      // pack-level query params (inherited)
     var cert by mutableStateOf(inPack.cert)                                        // pack-level client cert (inherited)
     val id: String = inPack.id.ifBlank { newPackId() }                            // stable id (linked copies reference it)
     val isRoot: Boolean = inPack.isRoot                                            // the session-root "pack" (loose requests)
@@ -133,7 +134,7 @@ private class PackState(inPack: Pack, inPath: String?, inDirty: Boolean, inOpenT
     fun toPack(): Pack = Pack(
         name = name,
         requests = if (isLinked) emptyList() else requests.map { it.req },   // linked: requests live in the source
-        variables = variables.toList(), color = color, headers = headers.toList(), cert = cert,
+        variables = variables.toList(), color = color, headers = headers.toList(), params = params.toList(), cert = cert,
         id = id, linkedTo = linkedSource?.id, isRoot = isRoot,
         subPacks = subPacks.map { it.toPack() },
     )
@@ -232,7 +233,7 @@ private fun App() {
     val vBoot = remember {
         if (vFirst) defaultSession()
         else Session(packs = vInitial.packs, root = vInitial.root, globalEnv = vInitial.globalEnv,
-            globalHeaders = vInitial.globalHeaders, globalCert = vInitial.globalCert, activePack = vInitial.activePack)
+            globalHeaders = vInitial.globalHeaders, globalParams = vInitial.globalParams, globalCert = vInitial.globalCert, activePack = vInitial.activePack)
     }
     val vPacks = remember {
         mutableStateListOf<PackState>().apply {
@@ -251,6 +252,7 @@ private fun App() {
     }
     val vGlobalEnv = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalEnv) } }
     val vSessionHeaders = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalHeaders) } }
+    val vSessionParams = remember { mutableStateListOf<KeyVal>().apply { addAll(vBoot.globalParams) } }
     var vSessionCert by remember { mutableStateOf(vBoot.globalCert) }
     // The hidden session-root pack holding loose requests (not in any pack). Kept
     // out of vPacks so pack indices / persistence stay untouched; active when
@@ -307,6 +309,22 @@ private fun App() {
     }
     // Variables a request sees: session, then each enclosing pack (inner overrides).
     fun effective(inP: PackState): List<KeyVal> = vGlobalEnv.toList() + scopeChain(inP).flatMap { it.variables }
+    // …plus the request's own variables (innermost — they win over everything above).
+    fun effectiveReqVars(inReq: ApiRequest, inP: PackState): List<KeyVal> = effective(inP) + inReq.variables
+    // Query params a request inherits: session, then each enclosing pack (inner wins by key).
+    fun inheritedParams(inP: PackState?): List<KeyVal> {
+        val vOut = LinkedHashMap<String, KeyVal>()
+        vSessionParams.filter { it.key.isNotBlank() }.forEach { vOut[it.key] = it }
+        scopeChain(inP).forEach { vP -> vP.params.filter { it.key.isNotBlank() }.forEach { vOut[it.key] = it } }
+        return vOut.values.toList()
+    }
+    // The query params actually sent: inherited, then the request's own override by key.
+    fun effectiveParams(inReq: ApiRequest, inP: PackState?): List<KeyVal> {
+        val vOut = LinkedHashMap<String, KeyVal>()
+        inheritedParams(inP).forEach { vOut[it.key] = it }
+        inReq.params.filter { it.key.isNotBlank() }.forEach { vOut[it.key] = it }
+        return vOut.values.toList()
+    }
     // Headers a request inherits: session, then each enclosing pack (inner wins by key).
     fun inheritedHeaders(inP: PackState?): List<KeyVal> {
         val vOut = LinkedHashMap<String, KeyVal>()
@@ -353,6 +371,12 @@ private fun App() {
         inChain.forEach { vP -> vP.headers.filter { it.key.isNotBlank() }.forEach { vOut[it.key.lowercase()] = InheritedKv(it, scopeName(vP)) } }
         return vOut.values.toList()
     }
+    fun sourcedParams(inChain: List<PackState>): List<InheritedKv> {
+        val vOut = LinkedHashMap<String, InheritedKv>()   // query keys are case-sensitive
+        vSessionParams.filter { it.key.isNotBlank() }.forEach { vOut[it.key] = InheritedKv(it, "Session") }
+        inChain.forEach { vP -> vP.params.filter { it.key.isNotBlank() }.forEach { vOut[it.key] = InheritedKv(it, scopeName(vP)) } }
+        return vOut.values.toList()
+    }
     fun sourcedCert(inChain: List<PackState>): InheritedCert? {
         inChain.asReversed().forEach { vP -> vP.cert?.takeIf { it.isSet }?.let { return InheritedCert(it, scopeName(vP)) } }
         return vSessionCert?.takeIf { it.isSet }?.let { InheritedCert(it, "Session") }
@@ -371,6 +395,7 @@ private fun App() {
             dark = vDark,
             globalEnv = vGE,
             globalHeaders = vSessionHeaders.toList(),
+            globalParams = vSessionParams.toList(),
             globalCert = vSessionCert,
             packs = vSaved,
             root = vRootPack,
@@ -385,7 +410,7 @@ private fun App() {
         // change — once it has a file, it's always in sync (best-effort). The
         // Session has no open-tab fields, so the file never carries them.
         vSessionPath?.let { exportSession(Session(packs = vSaved, root = vRootPack, globalEnv = vGE,
-            globalHeaders = vSessionHeaders.toList(), globalCert = vSessionCert, activePack = packIndex(vActivePackRef)), it) }
+            globalHeaders = vSessionHeaders.toList(), globalParams = vSessionParams.toList(), globalCert = vSessionCert, activePack = packIndex(vActivePackRef)), it) }
     }
 
     // ============
@@ -517,9 +542,9 @@ private fun App() {
         val vP = activePack() ?: return
         val vOriginal = inRs.req
         // Fold inherited (session + pack) headers and cert in before resolving vars.
-        var vBase = vOriginal.copy(headers = effectiveHeaders(vOriginal, vP))
+        var vBase = vOriginal.copy(headers = effectiveHeaders(vOriginal, vP), params = effectiveParams(vOriginal, vP))
         if (!vOriginal.hasClientCert) effectiveCert(vOriginal, vP)?.let { vBase = vBase.withCert(it) }
-        val vSend = resolveVars(vBase, effective(vP))
+        val vSend = resolveVars(vBase, effectiveReqVars(vOriginal, vP))
         inRs.loading = true; inRs.response = null; vReqMsg = null
         inRs.sentReq = vSend                      // snapshot what we actually send
         inRs.preview = false; inRs.viewTab = 1    // sending → show the Response tab
@@ -548,7 +573,7 @@ private fun App() {
         val vP = activePack() ?: return
         var vBase = inRs.req
         if (!vBase.hasClientCert) effectiveCert(vBase, vP)?.let { vBase = vBase.withCert(it) }
-        val vSend = resolveVars(vBase, effective(vP))
+        val vSend = resolveVars(vBase, effectiveReqVars(inRs.req, vP))
         inRs.chainLoading = true; inRs.chainUrl = vSend.url
         vScope.launch(Dispatchers.Main) {
             try {
@@ -797,6 +822,7 @@ private fun App() {
         vRoot = PackState(inSession.root ?: Pack(isRoot = true, name = "", requests = emptyList()), null, false)
         vGlobalEnv.clear(); vGlobalEnv.addAll(inSession.globalEnv)
         vSessionHeaders.clear(); vSessionHeaders.addAll(inSession.globalHeaders)
+        vSessionParams.clear(); vSessionParams.addAll(inSession.globalParams)
         vSessionCert = inSession.globalCert
         vActivePackRef = vPacks.getOrNull(inSession.activePack) ?: vPacks.firstOrNull()
         vSessionPath = inPath
@@ -815,7 +841,7 @@ private fun App() {
     fun newSession() {
         vPacks.clear(); vPacks.add(PackState(Pack(name = "My Pack"), null, false))
         vRoot = PackState(Pack(isRoot = true, name = "", requests = emptyList()), null, false)
-        vGlobalEnv.clear(); vSessionHeaders.clear(); vSessionCert = null
+        vGlobalEnv.clear(); vSessionHeaders.clear(); vSessionParams.clear(); vSessionCert = null
         vActivePackRef = vPacks.firstOrNull(); vSessionPath = null; vReqMsg = null; persist()
     }
     fun loadDefaultSession() { loadSession(defaultSession(), null) }
@@ -966,7 +992,7 @@ private fun App() {
                                             inOnRenameRequest = { vRs -> selectPack(vRoot); vRenameTarget = vRs; vRenameText = vRs.req.name },
                                             inOnDuplicateRequest = { vRs -> selectPack(vRoot); duplicate(vRs) },
                                             inOnCopyCurl = { vRs ->
-                                                currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vRoot)), effective(vRoot))))
+                                                currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vRoot), params = effectiveParams(vRs.req, vRoot)), effectiveReqVars(vRs.req, vRoot))))
                                                 vReqMsg = "Copied cURL."
                                             },
                                             inOnDeleteRequest = { vRs -> selectPack(vRoot); vDeleteTarget = vRs },
@@ -986,7 +1012,7 @@ private fun App() {
                                             onRenameReq = { vQ, vRs -> selectPack(vQ); vRenameTarget = vRs; vRenameText = vRs.req.name },
                                             onDupReq = { vQ, vRs -> selectPack(vQ); duplicate(vRs) },
                                             onCopyCurl = { vQ, vRs ->
-                                                currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vQ)), effective(vQ))))
+                                                currentClipboard.setText(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vQ), params = effectiveParams(vRs.req, vQ)), effectiveReqVars(vRs.req, vQ))))
                                                 vReqMsg = "Copied cURL."
                                             },
                                             onDelReq = { vQ, vRs -> selectPack(vQ); vDeleteTarget = vRs },
@@ -1086,6 +1112,8 @@ private fun App() {
                                         },
                                         inVars = vGlobalEnv, inOnVars = { vGlobalEnv.clear(); vGlobalEnv.addAll(it); persist() },
                                         inVarHelp = "Shared across every pack; override a pack's own vars. Used as {{name}}.",
+                                        inParams = vSessionParams, inOnParams = { vSessionParams.clear(); vSessionParams.addAll(it); persist() },
+                                        inParamHelp = "Query params added to every request in the session. Packs and requests can override by key.",
                                         inHeaders = vSessionHeaders, inOnHeaders = { vSessionHeaders.clear(); vSessionHeaders.addAll(it); persist() },
                                         inHeaderHelp = "Sent with every request in the session. Packs and requests can override by key.",
                                         inCert = vSessionCert, inOnCert = { vSessionCert = it; persist() },
@@ -1104,6 +1132,8 @@ private fun App() {
                                         },
                                         inVars = vP.variables, inOnVars = { vP.variables.clear(); vP.variables.addAll(it); vP.dirty = true; persist() },
                                         inVarHelp = "Used by every request in this pack as {{name}}. Session Var overrides these.",
+                                        inParams = vP.params, inOnParams = { vP.params.clear(); vP.params.addAll(it); vP.dirty = true; persist() },
+                                        inParamHelp = "Query params added to every request in this pack. A request can override one by the same key.",
                                         inHeaders = vP.headers, inOnHeaders = { vP.headers.clear(); vP.headers.addAll(it); vP.dirty = true; persist() },
                                         inHeaderHelp = "Sent with every request in this pack. A request can override a header by the same key.",
                                         inCert = vP.cert, inOnCert = { vP.cert = it; vP.dirty = true; persist() },
@@ -1111,6 +1141,7 @@ private fun App() {
                                         inCertHeading = "Pack client certificate",
                                         // What this pack inherits from above (session + ancestor packs — itself excluded).
                                         inInheritedVars = sourcedVars(scopeChain(vP.parent)),
+                                        inInheritedParams = sourcedParams(scopeChain(vP.parent)),
                                         inInheritedHeaders = sourcedHeaders(scopeChain(vP.parent)),
                                         inInheritedCert = sourcedCert(scopeChain(vP.parent)),
                                     )
@@ -1151,9 +1182,10 @@ private fun App() {
                                                 RequestBuilder(
                                                     inReq = vReq,
                                                     inRs = vReqActive,
-                                                    inUnresolved = unresolvedVars(vReq, effective(vP)),
+                                                    inUnresolved = unresolvedVars(vReq, effectiveReqVars(vReq, vP)),
                                                     inMsg = vReqMsg,
                                                     inInheritedVars = sourcedVars(scopeChain(vP)),
+                                                    inInheritedParams = sourcedParams(scopeChain(vP)),
                                                     inInheritedHeaders = sourcedHeaders(scopeChain(vP)),
                                                     inInheritedCert = sourcedCert(scopeChain(vP)),
                                                     inReadOnly = vP.isLinked,
@@ -1163,7 +1195,7 @@ private fun App() {
                                             second = {
                                                 ViewerPanel(
                                                     inRs = vReqActive,
-                                                    inResolved = resolveVars(vReq.copy(headers = effectiveHeaders(vReq, vP)), effective(vP)),
+                                                    inResolved = resolveVars(vReq.copy(headers = effectiveHeaders(vReq, vP), params = effectiveParams(vReq, vP)), effectiveReqVars(vReq, vP)),
                                                 )
                                             },
                                         )
@@ -2320,6 +2352,7 @@ private fun RequestBuilder(
     inUnresolved: List<String>,
     inMsg: String?,
     inInheritedVars: List<InheritedKv>,
+    inInheritedParams: List<InheritedKv>,
     inInheritedHeaders: List<InheritedKv>,
     inInheritedCert: InheritedCert?,
     inReadOnly: Boolean,
@@ -2351,9 +2384,9 @@ private fun RequestBuilder(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TabBar(
-                listOf("Query (${inReq.params.size})", "Headers (${inReq.headers.size})", "Body", "Cert"),
+                listOf("Query (${inReq.params.size})", "Var (${inReq.variables.size})", "Headers (${inReq.headers.size})", "Body", "Cert"),
                 inRs.reqTab,
-                inDots = buildSet { if (vBodySet) add(2); if (inReq.hasClientCert) add(3) },
+                inDots = buildSet { if (vBodySet) add(3); if (inReq.hasClientCert) add(4) },
             ) { inRs.reqTab = it }
             Spacer(Modifier.weight(1f))
             inMsg?.let {
@@ -2379,21 +2412,16 @@ private fun RequestBuilder(
         // Tab content — scrolls. Greyed when read-only (a linked-copy request).
         Box(modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(16.dp).alpha(if (inReadOnly) 0.55f else 1f)) {
             when (inRs.reqTab) {
-                0 -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Inherited variables shown read-only with their source — a request
-                    // can't hold its own vars (only packs / session can), so no Override.
-                    InheritedKvSection("Inherited variables (read-only)", inInheritedVars, emptySet(), inCaseInsensitive = false, inOnOverride = null)
-                    if (inInheritedVars.any { it.kv.key.isNotBlank() }) { Divider(color = c.border); Text("Query params", color = c.dim, fontSize = 11.sp) }
-                    KeyValEditor(inReq.params) { v -> inEdit { it.copy(params = v) } }
-                }
-                1 -> HeadersTab(inReq, inInheritedHeaders, inReadOnly, inEdit)
-                2 -> BodyContent(inReq, inRs) { v -> inEdit(v) }
+                0 -> QueryTab(inReq, inInheritedParams, inReadOnly, inEdit)
+                1 -> VarTab(inReq, inInheritedVars, inReadOnly, inEdit)
+                2 -> HeadersTab(inReq, inInheritedHeaders, inReadOnly, inEdit)
+                3 -> BodyContent(inReq, inRs) { v -> inEdit(v) }
                 else -> RequestCertTab(inReq, inInheritedCert, inReadOnly, inEdit)
             }
         }
 
         // Body-type selector — only on the Body tab, pinned at the bottom.
-        if (inRs.reqTab == 2) {
+        if (inRs.reqTab == 3) {
             Divider(color = c.border)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -2544,18 +2572,22 @@ private fun RequestCertTab(inReq: ApiRequest, inInheritedCert: InheritedCert?, i
     }
 }
 
-/* Scope settings editor (Variables / Headers / Cert sub-tabs) — shared by the
-   session settings tab and each pack's settings tab. */
+/* Scope settings editor (Variables / Query / Headers / Cert sub-tabs) — shared by
+   the session settings tab and each pack's settings tab. Each sub-tab shows what
+   the scope inherits from above (source-tagged, with Override) over its own
+   editable list, mirroring the request panels. */
 @Composable
 private fun ScopeSettings(
     inTab: Int,
     inOnTab: (Int) -> Unit,
     inHeader: @Composable () -> Unit,
     inVars: List<KeyVal>, inOnVars: (List<KeyVal>) -> Unit, inVarHelp: String,
+    inParams: List<KeyVal>, inOnParams: (List<KeyVal>) -> Unit, inParamHelp: String,
     inHeaders: List<KeyVal>, inOnHeaders: (List<KeyVal>) -> Unit, inHeaderHelp: String,
     inCert: CertConfig?, inOnCert: (CertConfig?) -> Unit, inCertHelp: String, inCertHeading: String,
     // What this scope inherits from above (empty for the session — it's the top).
     inInheritedVars: List<InheritedKv> = emptyList(),
+    inInheritedParams: List<InheritedKv> = emptyList(),
     inInheritedHeaders: List<InheritedKv> = emptyList(),
     inInheritedCert: InheritedCert? = null,
 ) {
@@ -2567,23 +2599,28 @@ private fun ScopeSettings(
         inHeader()
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             TogglePill("Var", inTab == 0) { inOnTab(0) }
-            TogglePill("Header", inTab == 1) { inOnTab(1) }
-            TogglePill("Cert", inTab == 2) { inOnTab(2) }
+            TogglePill("Query", inTab == 1) { inOnTab(1) }
+            TogglePill("Header", inTab == 2) { inOnTab(2) }
+            TogglePill("Cert", inTab == 3) { inOnTab(3) }
         }
         when (inTab) {
             0 -> {
                 Text(inVarHelp, color = c.dim, fontSize = 12.sp)
-                val vOwnKeys = inVars.filter { it.key.isNotBlank() }.map { it.key }.toSet()
-                InheritedKvSection("Inherited variables", inInheritedVars, vOwnKeys, inCaseInsensitive = false) { vKv -> inOnVars(inVars + vKv) }
-                if (inInheritedVars.any { it.kv.key.isNotBlank() }) { Divider(color = c.border); Text("This scope's variables", color = c.dim, fontSize = 11.sp) }
-                KeyValEditor(inVars, inOnChange = inOnVars, inOverrideInfo = { vR -> if (vR.key.isBlank()) null else inInheritedVars.firstOrNull { it.kv.key == vR.key }?.source })
+                InheritedEditableTab(inInheritedVars, inVars, inCaseInsensitive = false, inReadOnly = false,
+                    inOwnTitle = "This scope's variables", inInheritedTitle = "Inherited variables",
+                    inOnOverride = { vKv -> inOnVars(inVars + vKv) }, inOnChange = inOnVars)
             }
             1 -> {
+                Text(inParamHelp, color = c.dim, fontSize = 12.sp)
+                InheritedEditableTab(inInheritedParams, inParams, inCaseInsensitive = false, inReadOnly = false,
+                    inOwnTitle = "This scope's query params", inInheritedTitle = "Inherited query params",
+                    inOnOverride = { vKv -> inOnParams(inParams + vKv) }, inOnChange = inOnParams)
+            }
+            2 -> {
                 Text(inHeaderHelp, color = c.dim, fontSize = 12.sp)
-                val vOwnKeys = inHeaders.filter { it.key.isNotBlank() }.map { it.key.lowercase() }.toSet()
-                InheritedKvSection("Inherited headers", inInheritedHeaders, vOwnKeys, inCaseInsensitive = true) { vKv -> inOnHeaders(inHeaders + vKv) }
-                if (inInheritedHeaders.any { it.kv.key.isNotBlank() }) { Divider(color = c.border); Text("This scope's headers", color = c.dim, fontSize = 11.sp) }
-                KeyValEditor(inHeaders, inOnChange = inOnHeaders, inOverrideInfo = { vR -> if (vR.key.isBlank()) null else inInheritedHeaders.firstOrNull { it.kv.key.equals(vR.key, ignoreCase = true) }?.source })
+                InheritedEditableTab(inInheritedHeaders, inHeaders, inCaseInsensitive = true, inReadOnly = false,
+                    inOwnTitle = "This scope's headers", inInheritedTitle = "Inherited headers",
+                    inOnOverride = { vKv -> inOnHeaders(inHeaders + vKv) }, inOnChange = inOnHeaders)
             }
             else -> {
                 Text(inCertHelp, color = c.dim, fontSize = 12.sp)
@@ -3369,25 +3406,56 @@ private fun StatusPill(inStatus: Int, inLabel: String) {
 // MARK: Headers tab (inherited read-only + own editable)
 // ==================
 
-/* The request Headers tab: inherited session/pack headers shown read-only, each
-   tagged with its source, with an Override action (copies the header into the
-   request's own editable list, where a same-key value wins on send). The request's
-   own header editor flags any row that shadows an inherited header. */
+/* A request tab pairing an inherited (read-only, source-tagged) list with the
+   request's own editable list: Override copies an inherited entry down, and own
+   rows that shadow an inherited one get an OverrideMark. Used by Query / Var /
+   Headers — the only differences are the key case-sensitivity and the labels. */
 @Composable
-private fun HeadersTab(inReq: ApiRequest, inInherited: List<InheritedKv>, inReadOnly: Boolean, inEdit: (((ApiRequest) -> ApiRequest)) -> Unit) {
+private fun InheritedEditableTab(
+    inInherited: List<InheritedKv>,
+    inOwn: List<KeyVal>,
+    inCaseInsensitive: Boolean,
+    inReadOnly: Boolean,
+    inOwnTitle: String,
+    inOnOverride: (KeyVal) -> Unit,        // copy an inherited entry into the own list
+    inOnChange: (List<KeyVal>) -> Unit,    // own editor change
+    inInheritedTitle: String = "Inherited — session / pack",
+) {
     val c = LocalAppColors.current
-    val vOwnKeys = inReq.headers.filter { it.key.isNotBlank() }.map { it.key.lowercase() }.toSet()
-    val vOnOverride: ((KeyVal) -> Unit)? = if (inReadOnly) null else ({ vKv -> inEdit { it.copy(headers = it.headers + vKv) } })
+    fun norm(inKey: String) = if (inCaseInsensitive) inKey.lowercase() else inKey
+    val vOwnKeys = inOwn.filter { it.key.isNotBlank() }.map { norm(it.key) }.toSet()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        InheritedKvSection("Inherited — session / pack", inInherited, vOwnKeys, inCaseInsensitive = true, inOnOverride = vOnOverride)
-        if (inInherited.any { it.kv.key.isNotBlank() }) { Divider(color = c.border); Text("Request headers", color = c.dim, fontSize = 11.sp) }
-        KeyValEditor(
-            inReq.headers,
-            inOnChange = { v -> inEdit { it.copy(headers = v) } },
-            inOverrideInfo = { vR -> if (vR.key.isBlank()) null else inInherited.firstOrNull { it.kv.key.equals(vR.key, ignoreCase = true) }?.source },
-        )
+        InheritedKvSection(inInheritedTitle, inInherited, vOwnKeys, inCaseInsensitive,
+            inOnOverride = if (inReadOnly) null else inOnOverride)
+        if (inInherited.any { it.kv.key.isNotBlank() }) { Divider(color = c.border); Text(inOwnTitle, color = c.dim, fontSize = 11.sp) }
+        KeyValEditor(inOwn, inOnChange = inOnChange, inOverrideInfo = { vR ->
+            if (vR.key.isBlank()) null else inInherited.firstOrNull { norm(it.kv.key) == norm(vR.key) }?.source
+        })
     }
 }
+
+/* Request Headers tab: inherited headers (case-insensitive) + the request's own. */
+@Composable
+private fun HeadersTab(inReq: ApiRequest, inInherited: List<InheritedKv>, inReadOnly: Boolean, inEdit: (((ApiRequest) -> ApiRequest)) -> Unit) =
+    InheritedEditableTab(inInherited, inReq.headers, inCaseInsensitive = true, inReadOnly = inReadOnly, inOwnTitle = "Request headers",
+        inOnOverride = { vKv -> inEdit { it.copy(headers = it.headers + vKv) } },
+        inOnChange = { v -> inEdit { it.copy(headers = v) } })
+
+/* Request Query tab: inherited query params (case-sensitive) + the request's own. */
+@Composable
+private fun QueryTab(inReq: ApiRequest, inInherited: List<InheritedKv>, inReadOnly: Boolean, inEdit: (((ApiRequest) -> ApiRequest)) -> Unit) =
+    InheritedEditableTab(inInherited, inReq.params, inCaseInsensitive = false, inReadOnly = inReadOnly, inOwnTitle = "Request query params",
+        inOnOverride = { vKv -> inEdit { it.copy(params = it.params + vKv) } },
+        inOnChange = { v -> inEdit { it.copy(params = v) } })
+
+/* Request Var tab: inherited variables (case-sensitive {{name}}) + the request's
+   own. A request's own variable overrides the same name inherited from a pack /
+   the session when the request is sent. */
+@Composable
+private fun VarTab(inReq: ApiRequest, inInherited: List<InheritedKv>, inReadOnly: Boolean, inEdit: (((ApiRequest) -> ApiRequest)) -> Unit) =
+    InheritedEditableTab(inInherited, inReq.variables, inCaseInsensitive = false, inReadOnly = inReadOnly, inOwnTitle = "Request variables",
+        inOnOverride = { vKv -> inEdit { it.copy(variables = it.variables + vKv) } },
+        inOnChange = { v -> inEdit { it.copy(variables = v) } })
 
 // ==================
 // MARK: Inheritance UI (source tags / override markers / inherited lists)
