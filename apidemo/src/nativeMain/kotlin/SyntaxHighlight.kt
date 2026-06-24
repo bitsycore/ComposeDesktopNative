@@ -17,10 +17,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class BodyFormat { RAW, JSON, XML, YAML, HTML }
 
-/* Short label for the Body-type / format pickers (RAW shows as plain "Text"). */
+/* Short label for the format / "type" picker (RAW = plain text, no highlighting). */
 val BodyFormat.label: String
 	get() = when (this) {
-		BodyFormat.RAW -> "Text"
+		BodyFormat.RAW -> "RAW"
 		BodyFormat.JSON -> "JSON"
 		BodyFormat.XML -> "XML"
 		BodyFormat.YAML -> "YAML"
