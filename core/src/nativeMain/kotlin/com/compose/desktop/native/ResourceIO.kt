@@ -1,7 +1,5 @@
 package com.compose.desktop.native
 
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
@@ -12,21 +10,15 @@ import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
-import platform.posix.SEEK_END
-import platform.posix.SEEK_SET
-import platform.posix.FILE
-import platform.posix.fclose
-import platform.posix.fopen
-import platform.posix.fread
-import platform.posix.fseek
-import platform.posix.ftell
+import okio.FileHandle
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import platform.zlib.Z_FINISH
 import platform.zlib.Z_OK
 import platform.zlib.Z_STREAM_END
 import platform.zlib.inflate
 import platform.zlib.inflateEnd
 import platform.zlib.inflateInit2_
-import platform.zlib.uByteVar
 import platform.zlib.z_stream
 import platform.zlib.zlibVersion
 import sdl3.SDL_GetBasePath
@@ -38,16 +30,20 @@ import sdl3.SDL_GetBasePath
 // by the demo's Gradle Zip task (".kres" = a zip with a project-specific
 // extension so the bundle reads as a single opaque blob next to the binary).
 // At runtime we open the archive once via SDL_GetBasePath(), parse its
-// central directory, then serve each resource by fseek+fread per entry —
+// central directory, then serve each resource by a positioned read per entry —
 // no whole-archive memory load.
+//
+// File IO goes through okio's FileHandle (a multiplatform positioned-read API)
+// rather than raw platform.posix (fseek/ftell/fread): the posix long/off_t
+// bit-widths differ across LLP64 Windows vs LP64 Unix, which breaks the shared
+// nativeMain metadata compilation that Maven publishing requires.
 //
 // Supports STORED (method 0) and DEFLATED (method 8) entries. Deflated
 // entries are inflated on read via the system zlib (raw deflate stream,
 // no zlib/gzip wrapper). ZIP64 is not supported — the resource set is
 // small enough that the standard 4 GB / 65535-entry limits don't apply.
 
-@OptIn(ExperimentalForeignApi::class)
-private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
+private class ComposeResourceArchive(private val fHandle: FileHandle) {
 
 	// One entry's location + sizing + compression method from the central
 	// directory. method 0 = stored, 8 = deflated.
@@ -76,14 +72,14 @@ private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
 		// (e.g. when a writer adds an extra to only one), so always read the local
 		// header's lengths.
 		val vHeader = ByteArray(30)
-		if (!seekAndRead(vEntry.localOffset, vHeader)) return null
+		if (!readAt(vEntry.localOffset, vHeader)) return null
 		if (le32(vHeader, 0) != 0x04034b50) return null
 		val vNameLen = le16(vHeader, 26)
 		val vExtraLen = le16(vHeader, 28)
 		val vDataOffset = vEntry.localOffset + 30L + vNameLen + vExtraLen
 
 		val vRaw = ByteArray(vEntry.compressedSize.toInt())
-		if (!seekAndRead(vDataOffset, vRaw)) return null
+		if (!readAt(vDataOffset, vRaw)) return null
 
 		return when (vEntry.method) {
 			0 -> vRaw
@@ -95,6 +91,7 @@ private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
 	/* Decompress a raw-deflate stream (no zlib/gzip header) into a buffer
 	   of the known uncompressed length. windowBits = -MAX_WBITS (-15) is
 	   what zlib calls "raw deflate" — matches the zip entry payload. */
+	@OptIn(ExperimentalForeignApi::class)
 	private fun inflateRawDeflate(inRaw: ByteArray, inOutLen: Int): ByteArray? {
 		val vOut = ByteArray(inOutLen)
 		memScoped {
@@ -129,13 +126,12 @@ private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
 		// End of Central Directory record: 22 bytes minimum, with up to 65535
 		// bytes of comment trailing. Read the last 64 KiB + 22 and scan backward
 		// for the EOCD signature.
-		fseek(fFile, 0.convert(), SEEK_END)
-		val vFileLen: Long = ftell(fFile).convert()
+		val vFileLen: Long = fHandle.size()
 		if (vFileLen < 22L) return emptyMap()
 		val vTailLen = minOf(vFileLen, 65557L).toInt()
 		val vTail = ByteArray(vTailLen)
 		val vTailStart = vFileLen - vTailLen
-		if (!seekAndRead(vTailStart, vTail)) return emptyMap()
+		if (!readAt(vTailStart, vTail)) return emptyMap()
 
 		var vEocd = -1
 		var i = vTailLen - 22
@@ -150,7 +146,7 @@ private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
 		if (vCdSize <= 0L || vCdOffset < 0L) return emptyMap()
 
 		val vCd = ByteArray(vCdSize.toInt())
-		if (!seekAndRead(vCdOffset, vCd)) return emptyMap()
+		if (!readAt(vCdOffset, vCd)) return emptyMap()
 
 		val vMap = HashMap<String, Entry>()
 		var vP = 0
@@ -177,16 +173,23 @@ private class ComposeResourceArchive(private val fFile: CPointer<FILE>) {
 	}
 
 	// ==================
-	// MARK: stdio helpers
+	// MARK: positioned read
 	// ==================
 
-	private fun seekAndRead(inOffset: Long, outBuf: ByteArray): Boolean {
-		if (fseek(fFile, inOffset.convert(), SEEK_SET) != 0) return false
+	// Read exactly outBuf.size bytes at inOffset (okio.FileHandle.read may
+	// return a short count, so loop until filled). False on EOF / short file.
+	private fun readAt(inOffset: Long, outBuf: ByteArray): Boolean {
 		if (outBuf.isEmpty()) return true
-		return outBuf.usePinned { vPinned ->
-			fread(vPinned.addressOf(0), 1.convert(), outBuf.size.convert(), fFile).toInt() == outBuf.size
+		var vRead = 0
+		while (vRead < outBuf.size) {
+			val vN = fHandle.read(inOffset + vRead, outBuf, vRead, outBuf.size - vRead)
+			if (vN <= 0) return false
+			vRead += vN
 		}
+		return true
 	}
+
+	fun close() = fHandle.close()
 
 	private fun le16(inBuf: ByteArray, inOff: Int): Int =
 		(inBuf[inOff].toInt() and 0xFF) or
@@ -208,11 +211,13 @@ private val kArchive: ComposeResourceArchive? by lazy {
 	val vBase = SDL_GetBasePath()?.toKString() ?: return@lazy null
 	if (vBase.isEmpty()) return@lazy null
 	val vPath = vBase + "data.kres"
-	val vFile = fopen(vPath, "rb") ?: run {
+	val vHandle = try {
+		FileSystem.SYSTEM.openReadOnly(vPath.toPath())
+	} catch (t: Throwable) {
 		println("ComposeResourceArchive: not found at $vPath")
 		return@lazy null
 	}
-	ComposeResourceArchive(vFile)
+	ComposeResourceArchive(vHandle)
 }
 
 // ==================
@@ -232,11 +237,9 @@ fun removeMemoryResource(inKey: String) { kMemoryResources.remove(inKey) }
 
 /* Reads a resource's raw bytes — an in-memory resource if registered under the
    path, otherwise the bundled entry inside data.kres. Null when neither exists. */
-@OptIn(ExperimentalForeignApi::class)
 fun loadComposeResourceBytes(inRelativePath: String): ByteArray? =
 	kMemoryResources[inRelativePath] ?: kArchive?.readBytes(inRelativePath)
 
 /* True when an entry exists in memory or the bundled archive. Cheap. */
-@OptIn(ExperimentalForeignApi::class)
 fun hasComposeResource(inRelativePath: String): Boolean =
 	kMemoryResources.containsKey(inRelativePath) || kArchive?.has(inRelativePath) == true

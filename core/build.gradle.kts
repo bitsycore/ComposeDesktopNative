@@ -60,6 +60,11 @@ kotlin {
         commonMain.dependencies {
             api("org.jetbrains.compose.runtime:runtime:1.11.1")
             implementation(libs.kotlinx.coroutines.core)
+            // Multiplatform file IO for the data.kres reader (ResourceIO.kt).
+            // Replaces raw platform.posix (fseek/ftell/fread), whose long/off_t
+            // bit-widths differ across LLP64 Windows vs LP64 Unix and break the
+            // shared nativeMain metadata compilation used by Maven publishing.
+            implementation(libs.okio)
         }
     }
 

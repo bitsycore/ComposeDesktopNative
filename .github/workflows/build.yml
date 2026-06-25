@@ -1,0 +1,130 @@
+name: Build apps
+
+# Builds the demo + apidemo native executables for every target:
+#   linuxX64 / linuxArm64 (Skia/OpenGL), macosArm64 (Skia/Metal), mingwX64 (SDL3, fully static).
+# Each job uploads <app>/<target> = the executable + data.kres.
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linuxX64
+            os: ubuntu-24.04
+            gradle: LinuxX64
+            multiarch: x86_64-linux-gnu
+          - target: linuxArm64
+            os: ubuntu-24.04-arm
+            gradle: LinuxArm64
+            multiarch: aarch64-linux-gnu
+          - target: macosArm64
+            os: macos-14
+            gradle: MacosArm64
+          - target: mingwX64
+            os: windows-2022
+            gradle: MingwX64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache Kotlin/Native (~/.konan)
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: konan-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # ---------------- Linux (x64 + arm64) ----------------
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build pkg-config \
+            libfontconfig-dev libgl-dev libx11-dev libxext-dev libxrandr-dev \
+            libxi-dev libxcursor-dev libxinerama-dev
+
+      - name: Build & install SDL3 from source (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          git clone --depth 1 -b release-3.4.10 https://github.com/libsdl-org/SDL.git /tmp/SDL
+          cmake -S /tmp/SDL -B /tmp/SDL/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF \
+            -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib/${{ matrix.multiarch }}
+          cmake --build /tmp/SDL/build
+          sudo cmake --install /tmp/SDL/build
+          sudo ldconfig
+
+      # ---------------- macOS ----------------
+      - name: Install macOS deps
+        if: runner.os == 'macOS'
+        run: brew install sdl3
+
+      # ---------------- Windows (static libs) ----------------
+      # The mingwX64 build links SDL3 / SDL3_ttf / SDL3_image / FreeType
+      # statically (clean <app>.exe + data.kres). tools/build-all.sh builds
+      # them from source into libs/ using the runner's mingw-w64 gcc.
+      - name: Cache Windows static libs (libs/)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: libs
+          key: winlibs-${{ hashFiles('tools/**') }}
+
+      - name: Build Windows static deps (libs/)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          if [ ! -f libs/SDL3/lib/libSDL3.a ]; then
+            export PATH="/c/mingw64/bin:$PATH"   # runner-preinstalled mingw-w64
+            command -v gcc >/dev/null || { echo "::error::mingw-w64 gcc not found"; exit 1; }
+            tools/build-all.sh
+          else
+            echo "libs/ restored from cache"
+          fi
+
+      # ---------------- Build ----------------
+      - name: Build demo + apidemo (${{ matrix.target }})
+        shell: bash
+        run: |
+          export PATH="/c/mingw64/bin:$PATH"
+          ./gradlew --no-daemon -PsubsetIcons=false \
+            :demo:linkReleaseExecutable${{ matrix.gradle }} \
+            :apidemo:linkReleaseExecutable${{ matrix.gradle }}
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p dist/demo dist/apidemo
+          cp -r demo/build/bin/${{ matrix.target }}/releaseExecutable/. dist/demo/
+          cp -r apidemo/build/bin/${{ matrix.target }}/releaseExecutable/. dist/apidemo/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist
+          if-no-files-found: error
