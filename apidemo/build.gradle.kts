@@ -31,11 +31,12 @@ kotlin {
     targets.withType<KotlinNativeTarget>().all {
         val isMingw = name == "mingwX64"
         val isLinuxX64 = name == "linuxX64"
+        val isApple = name.startsWith("macos") || name.startsWith("ios")
         binaries.executable {
             if (buildType == NativeBuildType.RELEASE) {
-                linkerOpts(
-                    "-Wl,--gc-sections"
-                )
+                // --gc-sections is a GNU ld/lld flag; Apple's ld64 rejects it
+                // (it dead-strips at -O anyway). Only pass it on GNU-ld targets.
+                if (!isApple) linkerOpts("-Wl,--gc-sections")
                 compilerOptions {
                     freeCompilerArgs.add("-opt")
                 }

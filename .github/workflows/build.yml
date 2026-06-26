@@ -92,36 +92,41 @@ jobs:
 
       # ---------------- Windows (static libs) ----------------
       # The mingwX64 build links SDL3 / SDL3_ttf / SDL3_image / FreeType
-      # statically (clean <app>.exe + data.kres). tools/build-all.sh builds
-      # them from source into libs/ using the runner's mingw-w64 gcc.
+      # statically (clean <app>.exe + data.kres). tools/build-all.sh builds them
+      # from source with Kotlin/Native's OWN bundled mingw gcc (9.2) so the libs
+      # match the CRT K/N links them against — a newer host gcc (11+) emits
+      # __intrinsic_setjmpex, which K/N's bundled mingw doesn't define.
       - name: Cache Windows static libs (libs/)
         if: runner.os == 'Windows'
         uses: actions/cache@v4
         with:
           path: libs
-          key: winlibs-${{ hashFiles('tools/**') }}
+          key: winlibs-${{ hashFiles('tools/**') }}-v2
+
+      # build-all.sh wants K/N's mingw, normally fetched lazily by the first
+      # mingw cinterop — but that needs libs/ (circular). Fetch the exact bundle
+      # K/N 2.4 uses up front (skipped if a ~/.konan cache already has it).
+      - name: Pre-fetch Kotlin/Native mingw toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dep = Join-Path $HOME ".konan/dependencies"
+          $have = Get-ChildItem -Path $dep -Recurse -Filter gcc.exe -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -match 'mingw' }
+          if (-not $have) {
+            New-Item -ItemType Directory -Force -Path $dep | Out-Null
+            $zip = Join-Path $env:RUNNER_TEMP "knmingw.zip"
+            Invoke-WebRequest -Uri "https://download.jetbrains.com/kotlin/native/msys2-mingw-w64-x86_64-2.zip" -OutFile $zip
+            Expand-Archive -Path $zip -DestinationPath $dep -Force
+          }
+          Get-ChildItem -Path $dep -Recurse -Filter gcc.exe | Where-Object { $_.FullName -match 'mingw' } | Select-Object -First 1 -ExpandProperty FullName
 
       - name: Build Windows static deps (libs/)
         if: runner.os == 'Windows'
         shell: bash
         run: |
           if [ -f libs/SDL3/lib/libSDL3.a ]; then echo "libs/ restored from cache"; exit 0; fi
-          # tools/build-all.sh needs a system mingw-w64 gcc (K/N uses its OWN
-          # bundled mingw for the Kotlin link — this is only for the static libs).
-          for d in /c/mingw64/bin "/c/ProgramData/mingw64/mingw64/bin" \
-                   "/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" /c/msys64/mingw64/bin; do
-            [ -x "$d/gcc.exe" ] && PATH="$d:$PATH" && break
-          done
-          if ! command -v gcc >/dev/null; then
-            choco install -y mingw >/dev/null
-            for d in "/c/ProgramData/chocolatey/lib/mingw/tools/install/mingw64/bin" /c/mingw64/bin; do
-              [ -x "$d/gcc.exe" ] && PATH="$d:$PATH" && break
-            done
-          fi
-          command -v gcc >/dev/null || { echo "::error::mingw-w64 gcc not found on runner"; exit 1; }
-          export PATH
-          gcc --version | head -1
-          tools/build-all.sh
+          tools/build-all.sh   # picks K/N's bundled mingw gcc (see the script)
 
       # ---------------- Build ----------------
       - name: Build demo + apidemo (${{ matrix.target }})

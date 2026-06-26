@@ -24,6 +24,25 @@ set -euo pipefail
 
 TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Build with Kotlin/Native's OWN bundled mingw-w64 gcc when present, so the
+# static libs match the exact CRT K/N links them against. A newer host gcc
+# (11+) emits __intrinsic_setjmpex for x64 setjmp, which K/N's bundled mingw
+# CRT (gcc 9.2) doesn't define -> "undefined symbol: __intrinsic_setjmpex" at
+# the final K/N link. Prepend K/N's mingw bin to PATH; set KN_MINGW=0 to force
+# the system gcc.
+if [ "${KN_MINGW:-1}" != "0" ]; then
+	KN_MINGW_BIN="$(ls -d "${KONAN_DATA_DIR:-$HOME/.konan}"/dependencies/*mingw*/bin 2>/dev/null | head -1 || true)"
+	if [ -n "${KN_MINGW_BIN:-}" ] && [ -x "$KN_MINGW_BIN/gcc.exe" ]; then
+		export PATH="$KN_MINGW_BIN:$PATH"
+		echo ">> using Kotlin/Native bundled mingw: $(gcc --version | head -1)"
+	else
+		echo ">> WARNING: K/N bundled mingw not found under ${KONAN_DATA_DIR:-$HOME/.konan}/dependencies;"
+		echo ">>          using system gcc: $(gcc --version 2>/dev/null | head -1 || echo none)."
+		echo ">>          If the K/N link later fails with 'undefined symbol: __intrinsic_setjmpex',"
+		echo ">>          build a K/N mingw target once (to fetch its mingw) and re-run, or set KONAN_DATA_DIR."
+	fi
+fi
+
 step() {
 	echo ""
 	echo "============================================================"
