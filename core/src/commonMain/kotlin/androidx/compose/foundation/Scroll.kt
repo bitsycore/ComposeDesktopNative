@@ -20,14 +20,26 @@ import androidx.compose.ui.VerticalScrollModifier
 class ScrollState(initial: Int = 0) {
     private var _value by mutableStateOf(initial.coerceAtLeast(0))
     private var _maxValue by mutableStateOf(Int.MAX_VALUE)
+    private var _viewportSize by mutableStateOf(0)
 
     val value: Int get() = _value
     val maxValue: Int get() = _maxValue
 
-    /* Internal: the layout sets the max each frame as content / viewport sizes change. */
-    fun setMaxInternal(inMax: Int) {
+    /* Viewport length along the scroll axis, in px — set by layout each frame.
+       Used by a Scrollbar to size its thumb (viewport / content). */
+    val viewportSize: Int get() = _viewportSize
+
+    /* Total content length along the scroll axis = scroll range + viewport.
+       Before the first layout pass (maxValue still Int.MAX_VALUE) this is just
+       the viewport so a Scrollbar treats the content as non-scrollable. */
+    val contentSize: Int get() = if (_maxValue == Int.MAX_VALUE) _viewportSize else _maxValue + _viewportSize
+
+    /* Internal: the layout sets the max + viewport each frame as content /
+       viewport sizes change. */
+    fun setMaxInternal(inMax: Int, inViewport: Int = _viewportSize) {
         val vClamped = inMax.coerceAtLeast(0)
         _maxValue = vClamped
+        _viewportSize = inViewport.coerceAtLeast(0)
         if (_value > vClamped) _value = vClamped
     }
 

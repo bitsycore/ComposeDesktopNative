@@ -2982,9 +2982,14 @@ private fun HttpFlowView(
     inSoftWrap: Boolean = true,
 ) {
     val c = LocalAppColors.current
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-    ) {
+    val vScroll = rememberScrollState()
+    // contentAlignment pins the narrow scrollbar to the right edge; the
+    // fillMaxSize Column fills the rest (this project's Box has no BoxScope, so
+    // there's no Modifier.align — alignment is via contentAlignment).
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(vScroll),
+        ) {
         // Status line: collapse arrow + optional lock + status text.
         Row(
             modifier = Modifier
@@ -3029,6 +3034,20 @@ private fun HttpFlowView(
             }
         }
         Spacer(Modifier.height(8.dp))
+        }
+        // Overlay scrollbar on the right, themed for the dark panel.
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(vScroll),
+            modifier = Modifier.fillMaxHeight(),
+            style = ScrollbarStyle(
+                minimalHeight = 24.dp,
+                thickness = 8.dp,
+                shape = RoundedCornerShape(4.dp),
+                hoverDurationMillis = 300,
+                unhoverColor = c.text.copy(alpha = 0.16f),
+                hoverColor = c.text.copy(alpha = 0.42f),
+            ),
+        )
     }
 }
 

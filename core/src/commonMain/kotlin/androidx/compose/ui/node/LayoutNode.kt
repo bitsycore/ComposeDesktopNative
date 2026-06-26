@@ -269,12 +269,12 @@ class LayoutNode {
         val result = measurePolicy.measure(this, childConstraints)
 
         val vCapHeight = if (vScrollV != null && adjusted.maxHeight != Constraints.Infinity) {
-            vScrollV.setMaxInternal((result.height - adjusted.maxHeight).coerceAtLeast(0))
+            vScrollV.setMaxInternal((result.height - adjusted.maxHeight).coerceAtLeast(0), adjusted.maxHeight)
             adjusted.maxHeight
         } else result.height
 
         val vCapWidth = if (vScrollH != null && adjusted.maxWidth != Constraints.Infinity) {
-            vScrollH.setMaxInternal((result.width - adjusted.maxWidth).coerceAtLeast(0))
+            vScrollH.setMaxInternal((result.width - adjusted.maxWidth).coerceAtLeast(0), adjusted.maxWidth)
             adjusted.maxWidth
         } else result.width
 
