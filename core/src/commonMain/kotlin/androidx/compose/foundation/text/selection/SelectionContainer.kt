@@ -2,6 +2,9 @@ package androidx.compose.foundation.text.selection
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.text.kMultiClickMs
+import androidx.compose.foundation.text.kMultiClickSlopPx
+import androidx.compose.foundation.text.monotonicMillis
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -40,6 +43,11 @@ fun SelectionContainer(modifier: Modifier = Modifier, content: @Composable () ->
 	val vReg = remember { SelectionRegistrar() }
 	var vWinX by remember { mutableStateOf(0) }
 	var vWinY by remember { mutableStateOf(0) }
+	// Multi-click: 1 = caret, 2 = word, 3 = line (wraps back to 1).
+	var vClicks by remember { mutableStateOf(0) }
+	var vLastClickMs by remember { mutableStateOf(0L) }
+	var vLastClickX by remember { mutableStateOf(0) }
+	var vLastClickY by remember { mutableStateOf(0) }
 	val vClipboard = currentClipboard
 	CompositionLocalProvider(
 		LocalInSelectionContainer provides true,
@@ -65,7 +73,22 @@ fun SelectionContainer(modifier: Modifier = Modifier, content: @Composable () ->
 				// onDrag coords are relative to this Box; add its window origin
 				// to get the window coords the registrar matches against blocks.
 				.onDrag(
-					onStart = { rx, ry -> vReg.startAt(vWinX + rx, vWinY + ry) },
+					onStart = { rx, ry ->
+						val vWx = vWinX + rx
+						val vWy = vWinY + ry
+						val vNow = monotonicMillis()
+						// Same spot within the window steps the count 1→2→3→1.
+						val vMulti = kotlin.math.abs(vWx - vLastClickX) <= kMultiClickSlopPx &&
+							kotlin.math.abs(vWy - vLastClickY) <= kMultiClickSlopPx &&
+							(vNow - vLastClickMs) < kMultiClickMs
+						vClicks = if (vMulti) (vClicks % 3) + 1 else 1
+						vLastClickMs = vNow; vLastClickX = vWx; vLastClickY = vWy
+						when (vClicks) {
+							2 -> vReg.selectWordAt(vWx, vWy)   // double-click: word
+							3 -> vReg.selectLineAt(vWx, vWy)   // triple-click: line
+							else -> vReg.startAt(vWx, vWy)     // single: caret
+						}
+					},
 					onDrag = { rx, ry -> vReg.dragTo(vWinX + rx, vWinY + ry) },
 				)
 		) { content() }

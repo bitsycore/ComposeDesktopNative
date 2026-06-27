@@ -78,6 +78,24 @@ class SelectionRegistrar {
 		headId = vS.id; headOffset = vS.offsetAt(inWindowX - vS.windowX, inWindowY - vS.windowY)
 	}
 
+	/* Double-click: select the word under the point (within one block). */
+	fun selectWordAt(inWindowX: Int, inWindowY: Int) {
+		val vS = resolve(inWindowX, inWindowY) ?: run { clear(); return }
+		val vOff = vS.offsetAt(inWindowX - vS.windowX, inWindowY - vS.windowY)
+		val vR = androidx.compose.foundation.text.wordRangeAt(vS.text, vOff)
+		anchorId = vS.id; anchorOffset = vR.start
+		headId = vS.id; headOffset = vR.end
+	}
+
+	/* Triple-click: select the whole line under the point (within one block). */
+	fun selectLineAt(inWindowX: Int, inWindowY: Int) {
+		val vS = resolve(inWindowX, inWindowY) ?: run { clear(); return }
+		val vOff = vS.offsetAt(inWindowX - vS.windowX, inWindowY - vS.windowY)
+		val vR = androidx.compose.foundation.text.lineRangeAt(vS.text, vOff)
+		anchorId = vS.id; anchorOffset = vR.start
+		headId = vS.id; headOffset = vR.end
+	}
+
 	fun clear() { anchorId = -1L; headId = -1L; anchorOffset = 0; headOffset = 0 }
 
 	/* Select every registered block, from the start of the first to the end of

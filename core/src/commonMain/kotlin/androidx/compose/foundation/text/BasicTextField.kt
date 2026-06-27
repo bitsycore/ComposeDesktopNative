@@ -109,6 +109,8 @@ fun BasicTextField(
     var dragAnchor by remember { mutableStateOf(-1) }
     var lastPressMs by remember { mutableStateOf(0L) }
     var lastPressIndex by remember { mutableStateOf(-1) }
+    // Multi-click: 1 = caret, 2 = word, 3 = line (wraps back to 1).
+    var clickCount by remember { mutableStateOf(0) }
     var preferredCol by remember { mutableStateOf(-1) }
     // Measured width of the field used for soft-wrap. Updated by onSizeChanged
     // after every measure pass; stays Int.MAX_VALUE until the first measure
@@ -219,19 +221,19 @@ fun BasicTextField(
                     if (!enabled) return@onDrag
                     val vIndex = charIndexAtWrappedPoint(vWrap, vFontSize, relX + vScrollX, relY, vLineHeight, fontFamily)
                     val vNow = nowMillis()
-                    val vIsDoubleClick = vIndex == lastPressIndex && (vNow - lastPressMs) < 350
+                    // Same spot within the window steps the count 1→2→3→1.
+                    val vMulti = vIndex == lastPressIndex && (vNow - lastPressMs) < kMultiClickMs
+                    clickCount = if (vMulti) (clickCount % 3) + 1 else 1
                     lastPressMs = vNow
                     lastPressIndex = vIndex
                     preferredCol = -1
-                    if (vIsDoubleClick) {
-                        val vWordStart = wordBoundaryLeft(value.text, vIndex + 1)
-                        val vWordEnd = wordBoundaryRight(value.text, vIndex)
-                        dragAnchor = vWordStart
-                        cursorOnlyEdit(value.copy(selection = TextRange(vWordStart, vWordEnd)))
-                    } else {
-                        dragAnchor = vIndex
-                        cursorOnlyEdit(value.copy(selection = TextRange(vIndex)))
+                    val vRange = when (clickCount) {
+                        2 -> wordRangeAt(value.text, vIndex)   // double-click: word
+                        3 -> lineRangeAt(value.text, vIndex)   // triple-click: line
+                        else -> TextRange(vIndex)              // single: caret
                     }
+                    dragAnchor = vRange.start
+                    cursorOnlyEdit(value.copy(selection = vRange))
                 },
                 onDrag = { relX, relY ->
                     if (!enabled || dragAnchor < 0) return@onDrag
