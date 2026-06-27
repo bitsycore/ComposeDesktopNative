@@ -14,6 +14,16 @@ plugins {
     alias(libs.plugins.kotlin.plugin.compose) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.compose.multiplatform) apply false
+    // Public-ABI dumps (api/<module>.klib.api). Used by scripts/compose-fidelity-check.sh
+    // to diff our androidx.compose.* surface against the official Compose klib ABI.
+    alias(libs.plugins.binary.compatibility.validator)
+}
+
+// Generate klib ABI dumps; the apps and icon-font modules carry no public API
+// surface worth tracking, so skip them.
+apiValidation {
+    klib { enabled = true }
+    ignoredProjects.addAll(listOf("demo", "apidemo", "outlined", "rounded", "sharp"))
 }
 
 // ==================
