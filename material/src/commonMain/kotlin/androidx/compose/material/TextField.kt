@@ -10,6 +10,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -305,10 +308,10 @@ private fun TextFieldImpl(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = vPad.start,
-                        end   = vPad.end,
-                        top   = vPad.top,
-                        bottom = vPad.bottom,
+                        start = vPad.calculateStartPadding(LayoutDirection.Ltr),
+                        end   = vPad.calculateEndPadding(LayoutDirection.Ltr),
+                        top   = vPad.calculateTopPadding(),
+                        bottom = vPad.calculateBottomPadding(),
                     ),
             ) {
                 if (label != null) {

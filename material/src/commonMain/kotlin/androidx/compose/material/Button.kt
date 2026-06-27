@@ -13,6 +13,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import com.compose.desktop.native.modifier.pressable
@@ -59,10 +62,10 @@ fun Button(
         .hoverable { isHovered = it }
         .pressable { isPressed = it }
         .padding(
-            start = contentPadding.start,
-            top = contentPadding.top,
-            end = contentPadding.end,
-            bottom = contentPadding.bottom
+            start = contentPadding.calculateStartPadding(LayoutDirection.Ltr),
+            top = contentPadding.calculateTopPadding(),
+            end = contentPadding.calculateEndPadding(LayoutDirection.Ltr),
+            bottom = contentPadding.calculateBottomPadding()
         )
         .clickable { if (enabled) onClick() }
 
