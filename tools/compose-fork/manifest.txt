@@ -18,6 +18,8 @@ compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt
 # Replaces the hand-written IntSize.kt (IntSize + IntOffset data classes).
 # Dp / Sp(TextUnit) / Constraints / Density stay hand-written for now.
 compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt      core/src/commonMain/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt    core/src/commonMain/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt                     core/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt
 compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntOffset.kt              core/src/commonMain/kotlin/androidx/compose/ui/unit/IntOffset.kt
 compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntSize.kt                core/src/commonMain/kotlin/androidx/compose/ui/unit/IntSize.kt
 compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntRect.kt                core/src/commonMain/kotlin/androidx/compose/ui/unit/IntRect.kt
