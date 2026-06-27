@@ -57,14 +57,24 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            api("org.jetbrains.compose.runtime:runtime:1.11.1")
-            implementation(libs.kotlinx.coroutines.core)
-            // Multiplatform file IO for the data.kres reader (ResourceIO.kt).
-            // Replaces raw platform.posix (fseek/ftell/fread), whose long/off_t
-            // bit-widths differ across LLP64 Windows vs LP64 Unix and break the
-            // shared nativeMain metadata compilation used by Maven publishing.
-            implementation(libs.okio)
+        commonMain {
+            // Files vendored VERBATIM from upstream Compose by
+            // tools/compose-fork/sync.sh. Kept in their own folder so it's
+            // obvious they are generated — never hand-edit; re-run sync instead.
+            kotlin.srcDir("src/vendor/common/kotlin")
+            dependencies {
+                api("org.jetbrains.compose.runtime:runtime:1.11.1")
+                implementation(libs.kotlinx.coroutines.core)
+                // Multiplatform file IO for the data.kres reader (ResourceIO.kt).
+                // Replaces raw platform.posix (fseek/ftell/fread), whose long/off_t
+                // bit-widths differ across LLP64 Windows vs LP64 Unix and break the
+                // shared nativeMain metadata compilation used by Maven publishing.
+                implementation(libs.okio)
+            }
+        }
+        // Vendored platform `actual`s (e.g. ui.util InlineClassHelper.native.kt).
+        nativeMain {
+            kotlin.srcDir("src/vendor/native/kotlin")
         }
     }
 

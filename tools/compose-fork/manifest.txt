@@ -10,61 +10,61 @@
 # Re-sync with: tools/compose-fork/sync.sh   (after bumping compose-ref.txt)
 
 # ── androidx.compose.ui.util ──────────────────────────────────────────────
-compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt          core/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt
-compose/ui/ui-util/src/nonJvmMain/kotlin/androidx/compose/ui/util/InlineClassHelper.nonJvm.kt    core/src/nativeMain/kotlin/androidx/compose/ui/util/InlineClassHelper.native.kt
-compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt                 core/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt          core/src/vendor/common/kotlin/androidx/compose/ui/util/InlineClassHelper.kt
+compose/ui/ui-util/src/nonJvmMain/kotlin/androidx/compose/ui/util/InlineClassHelper.nonJvm.kt    core/src/vendor/native/kotlin/androidx/compose/ui/util/InlineClassHelper.native.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/util/MathHelpers.kt
 
 # ── androidx.compose.ui.unit (packed int value types) ─────────────────────
 # Replaces the hand-written IntSize.kt (IntSize + IntOffset data classes).
 # Dp / Sp(TextUnit) / Constraints / Density stay hand-written for now.
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt      core/src/commonMain/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt    core/src/commonMain/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt                     core/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntOffset.kt              core/src/commonMain/kotlin/androidx/compose/ui/unit/IntOffset.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntSize.kt                core/src/commonMain/kotlin/androidx/compose/ui/unit/IntSize.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntRect.kt                core/src/commonMain/kotlin/androidx/compose/ui/unit/IntRect.kt
-compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Velocity.kt               core/src/commonMain/kotlin/androidx/compose/ui/unit/Velocity.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt      core/src/vendor/common/kotlin/androidx/compose/ui/unit/InlineClassHelper.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt    core/src/vendor/common/kotlin/androidx/compose/ui/unit/ExperimentalUnitApi.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Dp.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/unit/Dp.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntOffset.kt              core/src/vendor/common/kotlin/androidx/compose/ui/unit/IntOffset.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntSize.kt                core/src/vendor/common/kotlin/androidx/compose/ui/unit/IntSize.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/IntRect.kt                core/src/vendor/common/kotlin/androidx/compose/ui/unit/IntRect.kt
+compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Velocity.kt               core/src/vendor/common/kotlin/androidx/compose/ui/unit/Velocity.kt
 
 # ── androidx.compose.ui.graphics.Color (+ colorspace subsystem) ───────────
 # Color is a value class over a packed ULong whose bits encode a ColorSpace, so
 # the whole (pure, no-expect/actual) colorspace package comes with it. Our
 # non-official extras (r8/g8/b8/a8, lighten/darken/blend) live in the
 # hand-written ColorExtensions.kt beside it.
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt                              core/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt                            core/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt                  core/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt              core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt              core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt              core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt             core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt               core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt              core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt                     core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt                   core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt            core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt                     core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt      core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt              core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt                     core/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Color.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Float16.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/ColorModel.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpace.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt             core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/ColorSpaces.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Connector.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Illuminant.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Lab.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Oklab.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/RenderIntent.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Rgb.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/TransferParameters.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/WhitePoint.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Xyz.kt
 
 # ── androidx.compose.ui.graphics value types ──────────────────────────────
 # TileMode replaces the hand-written enum in Brush.kt (value class over Int).
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/TileMode.kt           core/src/commonMain/kotlin/androidx/compose/ui/graphics/TileMode.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/TileMode.kt           core/src/vendor/common/kotlin/androidx/compose/ui/graphics/TileMode.kt
 
 # ── androidx.compose.ui.text value types ──────────────────────────────────
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt  core/src/commonMain/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextRange.kt                   core/src/commonMain/kotlin/androidx/compose/ui/text/TextRange.kt
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/style/TextAlign.kt             core/src/commonMain/kotlin/androidx/compose/ui/text/style/TextAlign.kt
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/style/TextOverflow.kt          core/src/commonMain/kotlin/androidx/compose/ui/text/style/TextOverflow.kt
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontStyle.kt              core/src/commonMain/kotlin/androidx/compose/ui/text/font/FontStyle.kt
-compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontWeight.kt             core/src/commonMain/kotlin/androidx/compose/ui/text/font/FontWeight.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextRange.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/text/TextRange.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/style/TextAlign.kt             core/src/vendor/common/kotlin/androidx/compose/ui/text/style/TextAlign.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/style/TextOverflow.kt          core/src/vendor/common/kotlin/androidx/compose/ui/text/style/TextOverflow.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontStyle.kt              core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontStyle.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontWeight.kt             core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontWeight.kt
 
 # ── androidx.compose.ui.geometry ──────────────────────────────────────────
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/InlineClassHelper.kt   core/src/commonMain/kotlin/androidx/compose/ui/geometry/InlineClassHelper.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Offset.kt              core/src/commonMain/kotlin/androidx/compose/ui/geometry/Offset.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Size.kt                core/src/commonMain/kotlin/androidx/compose/ui/geometry/Size.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/CornerRadius.kt        core/src/commonMain/kotlin/androidx/compose/ui/geometry/CornerRadius.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Rect.kt                core/src/commonMain/kotlin/androidx/compose/ui/geometry/Rect.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundRect.kt           core/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundRect.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/MutableRect.kt         core/src/commonMain/kotlin/androidx/compose/ui/geometry/MutableRect.kt
-compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt       core/src/commonMain/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/InlineClassHelper.kt   core/src/vendor/common/kotlin/androidx/compose/ui/geometry/InlineClassHelper.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Offset.kt              core/src/vendor/common/kotlin/androidx/compose/ui/geometry/Offset.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Size.kt                core/src/vendor/common/kotlin/androidx/compose/ui/geometry/Size.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/CornerRadius.kt        core/src/vendor/common/kotlin/androidx/compose/ui/geometry/CornerRadius.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Rect.kt                core/src/vendor/common/kotlin/androidx/compose/ui/geometry/Rect.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundRect.kt           core/src/vendor/common/kotlin/androidx/compose/ui/geometry/RoundRect.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/MutableRect.kt         core/src/vendor/common/kotlin/androidx/compose/ui/geometry/MutableRect.kt
+compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt       core/src/vendor/common/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt
