@@ -76,9 +76,34 @@ fun Text(
     fontFamily: String? = null,
     fontVariationSettings: List<FontVariation>? = null,
 ) {
-    // Each per-run BasicText is selection-aware, so inside a SelectionContainer
-    // the whole styled block becomes selectable (cross-run via the registrar)
-    // while keeping its colours / decoration — no separate selectable path.
+    // Fast path: when every span is colour-only (the common case — syntax
+    // highlighting), render the whole thing as ONE BasicText. BasicText paints
+    // per-span colours from text.spanStyles in a single node, so a huge
+    // highlighted body stays one node (a SelectionContainer would otherwise turn
+    // the per-run path below into one node per token → freeze). It's also
+    // selection-aware as a single block.
+    val vColorOnly = text.spanStyles.all { vR ->
+        val vS = vR.item
+        !vS.fontSize.isSpecified && vS.fontWeight == null && vS.fontStyle == null &&
+            vS.fontFamily == null && (vS.textDecoration == null || vS.textDecoration == TextDecoration.None) &&
+            vS.background == Color.Unspecified && !vS.letterSpacing.isSpecified
+    }
+    if (vColorOnly) {
+        BasicText(
+            text = text,
+            modifier = modifier,
+            color = color,
+            fontSize = fontSize,
+            textAlign = textAlign,
+            softWrap = softWrap,
+            fontFamily = fontFamily,
+            fontVariationSettings = fontVariationSettings,
+        )
+        return
+    }
+
+    // Otherwise (per-span size / weight / family / background / decoration) lay
+    // out each run separately so those styles apply per run.
     val vLines = splitIntoRunLines(text)
     androidx.compose.foundation.layout.Column(modifier = modifier) {
         for (vLine in vLines) {

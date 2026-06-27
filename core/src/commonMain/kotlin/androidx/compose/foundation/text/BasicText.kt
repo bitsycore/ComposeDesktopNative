@@ -162,7 +162,10 @@ private fun BasicTextLayer(
                 vLine++
             }
         }
-        TextLeaf(text, spans, Modifier.fillMaxWidth(), color, fontSize, textAlign, softWrap, fontFamily, fontVariationSettings)
+        // Fill width only when wrapping (a paragraph) so highlight geometry spans
+        // the line; inline/non-wrapping text must size to its content, or it
+        // breaks layouts that place text in a Row (each run would fill the width).
+        TextLeaf(text, spans, if (softWrap) Modifier.fillMaxWidth() else Modifier, color, fontSize, textAlign, softWrap, fontFamily, fontVariationSettings)
     }
 }
 
