@@ -1664,7 +1664,15 @@ private fun PackSection(
             .onSizeChanged { inDrag.headH[inPack] = it.height }
         if (vHeaderDragged) vHeadMod = vHeadMod.zIndex(1f).alpha(0.65f).graphicsLayer(translationX = 0f, translationY = inDrag.dy)
         vHeadMod = vHeadMod.clip(RoundedCornerShape(6.dp))
-            .background(if (inHeaderActive || vIntoHi) c.accent.copy(alpha = if (vIntoHi) 0.24f else 0.14f) else Color.Transparent, RoundedCornerShape(6.dp))
+            .background(
+                when {
+                    vIntoHi -> c.accent.copy(alpha = 0.24f)
+                    inHeaderActive -> c.accent.copy(alpha = 0.14f)
+                    vHover -> c.accent.copy(alpha = 0.08f)
+                    else -> Color.Transparent
+                },
+                RoundedCornerShape(6.dp),
+            )
         if (vIntoHi) vHeadMod = vHeadMod.border(1.dp, c.accent, RoundedCornerShape(6.dp))
         vHeadMod = vHeadMod
             .hoverable { vHover = it }
@@ -1824,7 +1832,14 @@ private fun RequestRow(
     var vMenuY by remember { mutableStateOf(0) }
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
-            .background(if (inSelected) c.accent.copy(alpha = 0.22f) else Color.Transparent, RoundedCornerShape(6.dp))
+            .background(
+                when {
+                    inSelected -> c.accent.copy(alpha = 0.22f)
+                    vHover -> c.accent.copy(alpha = 0.10f)
+                    else -> Color.Transparent
+                },
+                RoundedCornerShape(6.dp),
+            )
             .hoverable { vHover = it }
             .clickable { inOnOpen() }
             .onSecondaryClick { x, y -> vMenuX = x; vMenuY = y; vAtCursor = true; vMenu = true }
@@ -2136,17 +2151,20 @@ private fun UrlBar(
         }
 
         // Inspect the server's TLS certificate chain (handshake-only probe).
-        if (inChainLoading) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = c.accent, strokeWidth = 2.dp)
-        else {
-            var vLockHover by remember { mutableStateOf(false) }
-            TooltipBox(text = "Inspect TLS certificate chain") {
-                Box(
-                    modifier = Modifier.clip(RoundedCornerShape(6.dp))
-                        .background(if (vLockHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(6.dp))
-                        .hoverable { vLockHover = it }
-                        .clickable(onClick = inOnInspectChain)
-                        .padding(6.dp),
-                ) {
+        // During the probe the lock glyph swaps to a spinner IN PLACE — same
+        // box, padding and size — so the bar doesn't shift.
+        var vLockHover by remember { mutableStateOf(false) }
+        TooltipBox(text = "Inspect TLS certificate chain") {
+            Box(
+                modifier = Modifier.clip(RoundedCornerShape(6.dp))
+                    .background(if (vLockHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(6.dp))
+                    .hoverable { vLockHover = it }
+                    .clickable(onClick = inOnInspectChain)
+                    .padding(6.dp),
+            ) {
+                if (inChainLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = c.accent, strokeWidth = 2.dp)
+                } else {
                     MaterialSymbolsOutlined(MaterialSymbols.Lock, contentDescription = "Inspect TLS chain",
                         tint = if (vLockHover) c.accent else c.dim, size = 18.dp)
                 }
@@ -3878,8 +3896,16 @@ private fun ThinField(inValue: String, inOnChange: (String) -> Unit, inModifier:
 @Composable
 private fun IconBtn(inIcon: Int, inDesc: String, inModifier: Modifier = Modifier, inSize: Dp = 18.dp, inPadding: Dp = 6.dp, inOnClick: () -> Unit) {
     val c = LocalAppColors.current
-    Box(modifier = inModifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = inOnClick).padding(inPadding)) {
-        MaterialSymbolsOutlined(inIcon, contentDescription = inDesc, tint = c.dim, size = inSize)
+    var vHover by remember { mutableStateOf(false) }
+    Box(
+        modifier = inModifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (vHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(6.dp))
+            .hoverable { vHover = it }
+            .clickable(onClick = inOnClick)
+            .padding(inPadding),
+    ) {
+        MaterialSymbolsOutlined(inIcon, contentDescription = inDesc, tint = if (vHover) c.accent else c.dim, size = inSize)
     }
 }
 
