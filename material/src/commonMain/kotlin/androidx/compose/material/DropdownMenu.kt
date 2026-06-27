@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.currentViewportHeight
 import androidx.compose.ui.text.currentViewportWidth
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupOutsideDismiss
+import com.compose.desktop.native.window.PopupOutsideDismiss
 
 // ==================
 // MARK: DropdownMenu

@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.drawscope.StrokeCap
 import androidx.compose.ui.unit.Dp
@@ -100,8 +101,6 @@ object CheckboxDefaults {
 // ==================
 // MARK: TriStateCheckbox
 // ==================
-
-enum class ToggleableState { On, Off, Indeterminate }
 
 /* Three-state variant with an em-dash for the Indeterminate state. Useful for
    "select all" parent checkboxes whose children are partially selected. */

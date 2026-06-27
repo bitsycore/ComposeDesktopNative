@@ -463,12 +463,15 @@ factory stays in `androidx.compose.foundation.interaction`.
 Irreducible exceptions (custom code that must stay in `androidx.compose.*` for
 now — mark each non-official in its doc comment): the render-bridge
 `Modifier.Element` data classes + `Outline` / `PathCommand` /
-`GraphicsLayerModifier` / `TextMeasurer` / `currentImageLoader` (public for
-cross-module renderer access — can't be `internal`); `FontFamily.Named` (a
-`sealed` subclass, load-bearing for icon fonts); the `androidx.compose.ui.res`
-resource system (`Res` / `ImageLoader` / `ResourceKind` /
-`painterResource(path, kind)` — generated-accessor-facing, and the one-arg
-`painterResource` overlaps official).
+`GraphicsLayerModifier` / `TextMeasurer` / `currentImageLoader` / the mutable
+`currentClipboard` wiring global (all public for cross-module renderer/backend
+access — can't be `internal`); the `Clipboard` interface itself (official name +
+package `androidx.compose.ui.platform.Clipboard`, kept here as a reduced
+synchronous text-only impl of the official suspend/ClipEntry surface);
+`FontFamily.Named` (a `sealed` subclass, load-bearing for icon fonts); the
+`androidx.compose.ui.res` resource system (`Res` / `ImageLoader` /
+`ResourceKind` / `painterResource(path, kind)` — generated-accessor-facing, and
+the one-arg `painterResource` overlaps official).
 
 ### Universal rules
 
@@ -586,8 +589,11 @@ in `androidx.compose.animation`).
   `PointerEvent.changes/type/buttons`). `KeyEventType.KeyDown/KeyUp/Unknown`
   (not `Down`/`Up`); `PointerButton.Primary/Secondary/Tertiary/Back/Forward`
   (not `Middle`); `PointerInputChange.isConsumed`. `awaitPointerEvent(pass =
-  PointerEventPass.Main): PointerEvent`. No public `KeyModifiers`, no mutable
-  `currentClipboard`. `Popup(alignment = Alignment.TopStart, offset =
+  PointerEventPass.Main): PointerEvent`. No public `KeyModifiers`. The
+  `Clipboard` interface + its `currentClipboard` wiring global stay in
+  `androidx.compose.ui.platform` as documented irreducible exceptions (reduced
+  impl of the official suspend/ClipEntry `Clipboard`; the backend installs the
+  SDL3 impl at startup like `currentImageLoader`). `Popup(alignment = Alignment.TopStart, offset =
   IntOffset(0,0), onDismissRequest: (() -> Unit)? = null, properties =
   PopupProperties(), content)` + a `PopupPositionProvider` overload — not
   `modal`/`scrimColor`.

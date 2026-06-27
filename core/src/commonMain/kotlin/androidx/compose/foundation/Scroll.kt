@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.HorizontalScrollModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.VerticalScrollModifier
+import com.compose.desktop.native.scroll.ScrollAnimator
 import kotlin.math.roundToInt
 
 // ==================
@@ -86,27 +87,6 @@ class ScrollState(initial: Int = 0) {
     companion object {
         private const val kSmoothFactor = 0.5f
         private const val kSnapPx = 2
-    }
-}
-
-// ==================
-// MARK: ScrollAnimator
-// ==================
-
-/* Per-frame driver for smoothScrollBy easing. ScrollStates register here when a
-   smooth scroll starts; the window's main loop calls tick() once per frame and
-   states drop out when they reach their target. No-op (cheap) when idle. */
-object ScrollAnimator {
-    private val fActive = mutableSetOf<ScrollState>()
-
-    fun register(inState: ScrollState) { fActive.add(inState) }
-
-    fun tick() {
-        if (fActive.isEmpty()) return
-        val vIt = fActive.iterator()
-        while (vIt.hasNext()) {
-            if (!vIt.next().tickSmooth()) vIt.remove()
-        }
     }
 }
 

@@ -101,6 +101,18 @@ final enum class androidx.compose.ui.res/ResourceKind : kotlin/Enum<androidx.com
     final fun values(): kotlin/Array<androidx.compose.ui.res/ResourceKind> // androidx.compose.ui.res/ResourceKind.values|values#static(){}[0]
 }
 
+final enum class androidx.compose.ui.state/ToggleableState : kotlin/Enum<androidx.compose.ui.state/ToggleableState> { // androidx.compose.ui.state/ToggleableState|null[0]
+    enum entry Indeterminate // androidx.compose.ui.state/ToggleableState.Indeterminate|null[0]
+    enum entry Off // androidx.compose.ui.state/ToggleableState.Off|null[0]
+    enum entry On // androidx.compose.ui.state/ToggleableState.On|null[0]
+
+    final val entries // androidx.compose.ui.state/ToggleableState.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<androidx.compose.ui.state/ToggleableState> // androidx.compose.ui.state/ToggleableState.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): androidx.compose.ui.state/ToggleableState // androidx.compose.ui.state/ToggleableState.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<androidx.compose.ui.state/ToggleableState> // androidx.compose.ui.state/ToggleableState.values|values#static(){}[0]
+}
+
 final enum class androidx.compose.ui.text.font/FontStyle : kotlin/Enum<androidx.compose.ui.text.font/FontStyle> { // androidx.compose.ui.text.font/FontStyle|null[0]
     enum entry Italic // androidx.compose.ui.text.font/FontStyle.Italic|null[0]
     enum entry Normal // androidx.compose.ui.text.font/FontStyle.Normal|null[0]
@@ -582,6 +594,30 @@ final class androidx.compose.animation.core/CubicBezierEasing : androidx.compose
 }
 
 final class androidx.compose.animation.core/InfiniteTransition // androidx.compose.animation.core/InfiniteTransition|null[0]
+
+final class androidx.compose.foundation.layout/PaddingValues { // androidx.compose.foundation.layout/PaddingValues|null[0]
+    constructor <init>(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...) // androidx.compose.foundation.layout/PaddingValues.<init>|<init>(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+    constructor <init>(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...) // androidx.compose.foundation.layout/PaddingValues.<init>|<init>(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+    constructor <init>(androidx.compose.ui.unit/Dp) // androidx.compose.foundation.layout/PaddingValues.<init>|<init>(androidx.compose.ui.unit.Dp){}[0]
+
+    final val bottom // androidx.compose.foundation.layout/PaddingValues.bottom|{}bottom[0]
+        final fun <get-bottom>(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.bottom.<get-bottom>|<get-bottom>(){}[0]
+    final val end // androidx.compose.foundation.layout/PaddingValues.end|{}end[0]
+        final fun <get-end>(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.end.<get-end>|<get-end>(){}[0]
+    final val start // androidx.compose.foundation.layout/PaddingValues.start|{}start[0]
+        final fun <get-start>(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.start.<get-start>|<get-start>(){}[0]
+    final val top // androidx.compose.foundation.layout/PaddingValues.top|{}top[0]
+        final fun <get-top>(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.top.<get-top>|<get-top>(){}[0]
+
+    final fun component1(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.component1|component1(){}[0]
+    final fun component2(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.component2|component2(){}[0]
+    final fun component3(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.component3|component3(){}[0]
+    final fun component4(): androidx.compose.ui.unit/Dp // androidx.compose.foundation.layout/PaddingValues.component4|component4(){}[0]
+    final fun copy(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...): androidx.compose.foundation.layout/PaddingValues // androidx.compose.foundation.layout/PaddingValues.copy|copy(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.layout/PaddingValues.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.foundation.layout/PaddingValues.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // androidx.compose.foundation.layout/PaddingValues.toString|toString(){}[0]
+}
 
 final class androidx.compose.foundation.lazy/LazyListState { // androidx.compose.foundation.lazy/LazyListState|null[0]
     constructor <init>(kotlin/Int = ...) // androidx.compose.foundation.lazy/LazyListState.<init>|<init>(kotlin.Int){}[0]
@@ -1409,17 +1445,6 @@ final class androidx.compose.ui.text/AnnotatedString { // androidx.compose.ui.te
     }
 }
 
-final class androidx.compose.ui.text/ColorRun { // androidx.compose.ui.text/ColorRun|null[0]
-    constructor <init>(kotlin/Int, kotlin/Int, androidx.compose.ui.graphics/Color) // androidx.compose.ui.text/ColorRun.<init>|<init>(kotlin.Int;kotlin.Int;androidx.compose.ui.graphics.Color){}[0]
-
-    final val color // androidx.compose.ui.text/ColorRun.color|{}color[0]
-        final fun <get-color>(): androidx.compose.ui.graphics/Color // androidx.compose.ui.text/ColorRun.color.<get-color>|<get-color>(){}[0]
-    final val end // androidx.compose.ui.text/ColorRun.end|{}end[0]
-        final fun <get-end>(): kotlin/Int // androidx.compose.ui.text/ColorRun.end.<get-end>|<get-end>(){}[0]
-    final val start // androidx.compose.ui.text/ColorRun.start|{}start[0]
-        final fun <get-start>(): kotlin/Int // androidx.compose.ui.text/ColorRun.start.<get-start>|<get-start>(){}[0]
-}
-
 final class androidx.compose.ui.text/ParagraphStyle { // androidx.compose.ui.text/ParagraphStyle|null[0]
     constructor <init>(androidx.compose.ui.text.style/TextAlign? = ..., androidx.compose.ui.unit/Sp = ..., kotlin/Float = ...) // androidx.compose.ui.text/ParagraphStyle.<init>|<init>(androidx.compose.ui.text.style.TextAlign?;androidx.compose.ui.unit.Sp;kotlin.Float){}[0]
 
@@ -1691,10 +1716,6 @@ final class androidx.compose.ui.unit/IntSize { // androidx.compose.ui.unit/IntSi
         final val Zero // androidx.compose.ui.unit/IntSize.Companion.Zero|{}Zero[0]
             final fun <get-Zero>(): androidx.compose.ui.unit/IntSize // androidx.compose.ui.unit/IntSize.Companion.Zero.<get-Zero>|<get-Zero>(){}[0]
     }
-}
-
-final class androidx.compose.ui.window/PopupHostState { // androidx.compose.ui.window/PopupHostState|null[0]
-    final fun notifyOutsidePress(kotlin/Int, kotlin/Int) // androidx.compose.ui.window/PopupHostState.notifyOutsidePress|notifyOutsidePress(kotlin.Int;kotlin.Int){}[0]
 }
 
 final class androidx.compose.ui.window/PopupProperties { // androidx.compose.ui.window/PopupProperties|null[0]
@@ -2012,6 +2033,21 @@ final class androidx.compose.ui/ZIndexModifier : androidx.compose.ui/Modifier.El
     final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/ZIndexModifier.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // androidx.compose.ui/ZIndexModifier.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // androidx.compose.ui/ZIndexModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.text/ColorRun { // com.compose.desktop.native.text/ColorRun|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int, androidx.compose.ui.graphics/Color) // com.compose.desktop.native.text/ColorRun.<init>|<init>(kotlin.Int;kotlin.Int;androidx.compose.ui.graphics.Color){}[0]
+
+    final val color // com.compose.desktop.native.text/ColorRun.color|{}color[0]
+        final fun <get-color>(): androidx.compose.ui.graphics/Color // com.compose.desktop.native.text/ColorRun.color.<get-color>|<get-color>(){}[0]
+    final val end // com.compose.desktop.native.text/ColorRun.end|{}end[0]
+        final fun <get-end>(): kotlin/Int // com.compose.desktop.native.text/ColorRun.end.<get-end>|<get-end>(){}[0]
+    final val start // com.compose.desktop.native.text/ColorRun.start|{}start[0]
+        final fun <get-start>(): kotlin/Int // com.compose.desktop.native.text/ColorRun.start.<get-start>|<get-start>(){}[0]
+}
+
+final class com.compose.desktop.native.window/PopupHostState { // com.compose.desktop.native.window/PopupHostState|null[0]
+    final fun notifyOutsidePress(kotlin/Int, kotlin/Int) // com.compose.desktop.native.window/PopupHostState.notifyOutsidePress|notifyOutsidePress(kotlin.Int;kotlin.Int){}[0]
 }
 
 final class com.compose.desktop.native/ComposeNativeWindow { // com.compose.desktop.native/ComposeNativeWindow|null[0]
@@ -2503,11 +2539,6 @@ final object androidx.compose.foundation.layout/RowScope { // androidx.compose.f
     final fun (androidx.compose.ui/Modifier).weight(kotlin/Float, kotlin/Boolean = ...): androidx.compose.ui/Modifier // androidx.compose.foundation.layout/RowScope.weight|weight@androidx.compose.ui.Modifier(kotlin.Float;kotlin.Boolean){}[0]
 }
 
-final object androidx.compose.foundation/ScrollAnimator { // androidx.compose.foundation/ScrollAnimator|null[0]
-    final fun register(androidx.compose.foundation/ScrollState) // androidx.compose.foundation/ScrollAnimator.register|register(androidx.compose.foundation.ScrollState){}[0]
-    final fun tick() // androidx.compose.foundation/ScrollAnimator.tick|tick(){}[0]
-}
-
 final object androidx.compose.ui.graphics.drawscope/Fill : androidx.compose.ui.graphics.drawscope/DrawStyle // androidx.compose.ui.graphics.drawscope/Fill|null[0]
 
 final object androidx.compose.ui.layout/PlacementScope // androidx.compose.ui.layout/PlacementScope|null[0]
@@ -2538,6 +2569,11 @@ final object com.compose.desktop.native.icons/IconFont { // com.compose.desktop.
     final fun isIconFamily(kotlin/String): kotlin/Boolean // com.compose.desktop.native.icons/IconFont.isIconFamily|isIconFamily(kotlin.String){}[0]
     final fun register(kotlin/String, kotlin/ByteArray) // com.compose.desktop.native.icons/IconFont.register|register(kotlin.String;kotlin.ByteArray){}[0]
     final fun registerIcon(kotlin/String, kotlin/ByteArray) // com.compose.desktop.native.icons/IconFont.registerIcon|registerIcon(kotlin.String;kotlin.ByteArray){}[0]
+}
+
+final object com.compose.desktop.native.scroll/ScrollAnimator { // com.compose.desktop.native.scroll/ScrollAnimator|null[0]
+    final fun register(androidx.compose.foundation/ScrollState) // com.compose.desktop.native.scroll/ScrollAnimator.register|register(androidx.compose.foundation.ScrollState){}[0]
+    final fun tick() // com.compose.desktop.native.scroll/ScrollAnimator.tick|tick(){}[0]
 }
 
 final object com.compose.desktop.native.widgets/SplitPaneDefaults { // com.compose.desktop.native.widgets/SplitPaneDefaults|null[0]
@@ -2581,6 +2617,7 @@ final val androidx.compose.foundation.interaction/androidx_compose_foundation_in
 final val androidx.compose.foundation.interaction/androidx_compose_foundation_interaction_PressInteraction_Release$stableprop // androidx.compose.foundation.interaction/androidx_compose_foundation_interaction_PressInteraction_Release$stableprop|#static{}androidx_compose_foundation_interaction_PressInteraction_Release$stableprop[0]
 final val androidx.compose.foundation.layout/androidx_compose_foundation_layout_Arrangement$stableprop // androidx.compose.foundation.layout/androidx_compose_foundation_layout_Arrangement$stableprop|#static{}androidx_compose_foundation_layout_Arrangement$stableprop[0]
 final val androidx.compose.foundation.layout/androidx_compose_foundation_layout_ColumnScope$stableprop // androidx.compose.foundation.layout/androidx_compose_foundation_layout_ColumnScope$stableprop|#static{}androidx_compose_foundation_layout_ColumnScope$stableprop[0]
+final val androidx.compose.foundation.layout/androidx_compose_foundation_layout_PaddingValues$stableprop // androidx.compose.foundation.layout/androidx_compose_foundation_layout_PaddingValues$stableprop|#static{}androidx_compose_foundation_layout_PaddingValues$stableprop[0]
 final val androidx.compose.foundation.layout/androidx_compose_foundation_layout_RowScope$stableprop // androidx.compose.foundation.layout/androidx_compose_foundation_layout_RowScope$stableprop|#static{}androidx_compose_foundation_layout_RowScope$stableprop[0]
 final val androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells$stableprop // androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells$stableprop|#static{}androidx_compose_foundation_lazy_grid_GridCells$stableprop[0]
 final val androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells_Adaptive$stableprop // androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells_Adaptive$stableprop|#static{}androidx_compose_foundation_lazy_grid_GridCells_Adaptive$stableprop[0]
@@ -2594,7 +2631,6 @@ final val androidx.compose.foundation.text.selection/LocalInSelectionContainer /
 final val androidx.compose.foundation/LocalScrollbarStyle // androidx.compose.foundation/LocalScrollbarStyle|{}LocalScrollbarStyle[0]
     final fun <get-LocalScrollbarStyle>(): androidx.compose.runtime/ProvidableCompositionLocal<androidx.compose.foundation/ScrollbarStyle> // androidx.compose.foundation/LocalScrollbarStyle.<get-LocalScrollbarStyle>|<get-LocalScrollbarStyle>(){}[0]
 final val androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop // androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop|#static{}androidx_compose_foundation_BorderStroke$stableprop[0]
-final val androidx.compose.foundation/androidx_compose_foundation_ScrollAnimator$stableprop // androidx.compose.foundation/androidx_compose_foundation_ScrollAnimator$stableprop|#static{}androidx_compose_foundation_ScrollAnimator$stableprop[0]
 final val androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop // androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop|#static{}androidx_compose_foundation_ScrollState$stableprop[0]
 final val androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop // androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop|#static{}androidx_compose_foundation_ScrollbarStyle$stableprop[0]
 final val androidx.compose.ui.focus/LocalFocusManager // androidx.compose.ui.focus/LocalFocusManager|{}LocalFocusManager[0]
@@ -2676,7 +2712,6 @@ final val androidx.compose.ui.text.input/androidx_compose_ui_text_input_TextFiel
 final val androidx.compose.ui.text.style/androidx_compose_ui_text_style_TextDecoration$stableprop // androidx.compose.ui.text.style/androidx_compose_ui_text_style_TextDecoration$stableprop|#static{}androidx_compose_ui_text_style_TextDecoration$stableprop[0]
 final val androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString$stableprop|#static{}androidx_compose_ui_text_AnnotatedString$stableprop[0]
 final val androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString_Builder$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString_Builder$stableprop|#static{}androidx_compose_ui_text_AnnotatedString_Builder$stableprop[0]
-final val androidx.compose.ui.text/androidx_compose_ui_text_ColorRun$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_ColorRun$stableprop|#static{}androidx_compose_ui_text_ColorRun$stableprop[0]
 final val androidx.compose.ui.text/androidx_compose_ui_text_ParagraphStyle$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_ParagraphStyle$stableprop|#static{}androidx_compose_ui_text_ParagraphStyle$stableprop[0]
 final val androidx.compose.ui.text/androidx_compose_ui_text_Range$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_Range$stableprop|#static{}androidx_compose_ui_text_Range$stableprop[0]
 final val androidx.compose.ui.text/androidx_compose_ui_text_SpanStyle$stableprop // androidx.compose.ui.text/androidx_compose_ui_text_SpanStyle$stableprop|#static{}androidx_compose_ui_text_SpanStyle$stableprop[0]
@@ -2707,9 +2742,6 @@ final val androidx.compose.ui.unit/sp // androidx.compose.ui.unit/sp|@kotlin.Flo
     final inline fun (kotlin/Float).<get-sp>(): androidx.compose.ui.unit/Sp // androidx.compose.ui.unit/sp.<get-sp>|<get-sp>@kotlin.Float(){}[0]
 final val androidx.compose.ui.unit/sp // androidx.compose.ui.unit/sp|@kotlin.Int{}sp[0]
     final inline fun (kotlin/Int).<get-sp>(): androidx.compose.ui.unit/Sp // androidx.compose.ui.unit/sp.<get-sp>|<get-sp>@kotlin.Int(){}[0]
-final val androidx.compose.ui.window/LocalPopupHost // androidx.compose.ui.window/LocalPopupHost|{}LocalPopupHost[0]
-    final fun <get-LocalPopupHost>(): androidx.compose.runtime/ProvidableCompositionLocal<androidx.compose.ui.window/PopupHostState> // androidx.compose.ui.window/LocalPopupHost.<get-LocalPopupHost>|<get-LocalPopupHost>(){}[0]
-final val androidx.compose.ui.window/androidx_compose_ui_window_PopupHostState$stableprop // androidx.compose.ui.window/androidx_compose_ui_window_PopupHostState$stableprop|#static{}androidx_compose_ui_window_PopupHostState$stableprop[0]
 final val androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop // androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop|#static{}androidx_compose_ui_window_PopupProperties$stableprop[0]
 final val androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop // androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop|#static{}androidx_compose_ui_AlphaModifier$stableprop[0]
 final val androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop // androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop|#static{}androidx_compose_ui_BackgroundModifier$stableprop[0]
@@ -2737,7 +2769,12 @@ final val androidx.compose.ui/androidx_compose_ui_SizeModifier$stableprop // and
 final val androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop // androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop|#static{}androidx_compose_ui_VerticalScrollModifier$stableprop[0]
 final val androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop // androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop|#static{}androidx_compose_ui_ZIndexModifier$stableprop[0]
 final val com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop // com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop|#static{}com_compose_desktop_native_icons_IconFont$stableprop[0]
+final val com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop // com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop|#static{}com_compose_desktop_native_scroll_ScrollAnimator$stableprop[0]
+final val com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop // com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop|#static{}com_compose_desktop_native_text_ColorRun$stableprop[0]
 final val com.compose.desktop.native.widgets/com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop // com.compose.desktop.native.widgets/com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop|#static{}com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop[0]
+final val com.compose.desktop.native.window/LocalPopupHost // com.compose.desktop.native.window/LocalPopupHost|{}LocalPopupHost[0]
+    final fun <get-LocalPopupHost>(): androidx.compose.runtime/ProvidableCompositionLocal<com.compose.desktop.native.window/PopupHostState> // com.compose.desktop.native.window/LocalPopupHost.<get-LocalPopupHost>|<get-LocalPopupHost>(){}[0]
+final val com.compose.desktop.native.window/com_compose_desktop_native_window_PopupHostState$stableprop // com.compose.desktop.native.window/com_compose_desktop_native_window_PopupHostState$stableprop|#static{}com_compose_desktop_native_window_PopupHostState$stableprop[0]
 final val com.compose.desktop.native/LocalComposeNativeWindow // com.compose.desktop.native/LocalComposeNativeWindow|{}LocalComposeNativeWindow[0]
     final fun <get-LocalComposeNativeWindow>(): androidx.compose.runtime/ProvidableCompositionLocal<com.compose.desktop.native/ComposeNativeWindow> // com.compose.desktop.native/LocalComposeNativeWindow.<get-LocalComposeNativeWindow>|<get-LocalComposeNativeWindow>(){}[0]
 final val com.compose.desktop.native/com_compose_desktop_native_AppEvent$stableprop // com.compose.desktop.native/com_compose_desktop_native_AppEvent$stableprop|#static{}com_compose_desktop_native_AppEvent$stableprop[0]
@@ -2897,6 +2934,7 @@ final fun androidx.compose.foundation.layout/Row(androidx.compose.ui/Modifier?, 
 final fun androidx.compose.foundation.layout/Spacer(androidx.compose.ui/Modifier?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation.layout/Spacer|Spacer(androidx.compose.ui.Modifier?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation.layout/androidx_compose_foundation_layout_Arrangement$stableprop_getter(): kotlin/Int // androidx.compose.foundation.layout/androidx_compose_foundation_layout_Arrangement$stableprop_getter|androidx_compose_foundation_layout_Arrangement$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.layout/androidx_compose_foundation_layout_ColumnScope$stableprop_getter(): kotlin/Int // androidx.compose.foundation.layout/androidx_compose_foundation_layout_ColumnScope$stableprop_getter|androidx_compose_foundation_layout_ColumnScope$stableprop_getter(){}[0]
+final fun androidx.compose.foundation.layout/androidx_compose_foundation_layout_PaddingValues$stableprop_getter(): kotlin/Int // androidx.compose.foundation.layout/androidx_compose_foundation_layout_PaddingValues$stableprop_getter|androidx_compose_foundation_layout_PaddingValues$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.layout/androidx_compose_foundation_layout_RowScope$stableprop_getter(): kotlin/Int // androidx.compose.foundation.layout/androidx_compose_foundation_layout_RowScope$stableprop_getter|androidx_compose_foundation_layout_RowScope$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.lazy.grid/LazyVerticalGrid(androidx.compose.foundation.lazy.grid/GridCells, androidx.compose.ui/Modifier?, androidx.compose.foundation.lazy/LazyListState?, androidx.compose.foundation.layout/Arrangement.Vertical?, androidx.compose.foundation.layout/Arrangement.Horizontal?, kotlin/Function1<androidx.compose.foundation.lazy.grid/LazyGridScope, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation.lazy.grid/LazyVerticalGrid|LazyVerticalGrid(androidx.compose.foundation.lazy.grid.GridCells;androidx.compose.ui.Modifier?;androidx.compose.foundation.lazy.LazyListState?;androidx.compose.foundation.layout.Arrangement.Vertical?;androidx.compose.foundation.layout.Arrangement.Horizontal?;kotlin.Function1<androidx.compose.foundation.lazy.grid.LazyGridScope,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells$stableprop_getter(): kotlin/Int // androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells$stableprop_getter|androidx_compose_foundation_lazy_grid_GridCells$stableprop_getter(){}[0]
@@ -2920,7 +2958,6 @@ final fun androidx.compose.foundation/HorizontalScrollbar(androidx.compose.found
 final fun androidx.compose.foundation/Image(androidx.compose.ui.graphics.painter/Painter, kotlin/String?, androidx.compose.ui/Modifier?, androidx.compose.ui.layout/ContentScale?, kotlin/Float, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation/Image|Image(androidx.compose.ui.graphics.painter.Painter;kotlin.String?;androidx.compose.ui.Modifier?;androidx.compose.ui.layout.ContentScale?;kotlin.Float;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation/VerticalScrollbar(androidx.compose.foundation/ScrollbarAdapter, androidx.compose.ui/Modifier?, kotlin/Boolean, androidx.compose.foundation/ScrollbarStyle?, androidx.compose.foundation.interaction/MutableInteractionSource?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation/VerticalScrollbar|VerticalScrollbar(androidx.compose.foundation.ScrollbarAdapter;androidx.compose.ui.Modifier?;kotlin.Boolean;androidx.compose.foundation.ScrollbarStyle?;androidx.compose.foundation.interaction.MutableInteractionSource?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop_getter|androidx_compose_foundation_BorderStroke$stableprop_getter(){}[0]
-final fun androidx.compose.foundation/androidx_compose_foundation_ScrollAnimator$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_ScrollAnimator$stableprop_getter|androidx_compose_foundation_ScrollAnimator$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop_getter|androidx_compose_foundation_ScrollState$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop_getter|androidx_compose_foundation_ScrollbarStyle$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/defaultScrollbarStyle(): androidx.compose.foundation/ScrollbarStyle // androidx.compose.foundation/defaultScrollbarStyle|defaultScrollbarStyle(){}[0]
@@ -2977,6 +3014,7 @@ final fun androidx.compose.ui.res/androidx_compose_ui_res_Res_files$stableprop_g
 final fun androidx.compose.ui.res/painterResource(kotlin/String): androidx.compose.ui.graphics.painter/Painter // androidx.compose.ui.res/painterResource|painterResource(kotlin.String){}[0]
 final fun androidx.compose.ui.res/painterResource(kotlin/String, androidx.compose.ui.res/ResourceKind): androidx.compose.ui.graphics.painter/Painter // androidx.compose.ui.res/painterResource|painterResource(kotlin.String;androidx.compose.ui.res.ResourceKind){}[0]
 final fun androidx.compose.ui.res/resourceKindForPath(kotlin/String): androidx.compose.ui.res/ResourceKind // androidx.compose.ui.res/resourceKindForPath|resourceKindForPath(kotlin.String){}[0]
+final fun androidx.compose.ui.state/ToggleableState(kotlin/Boolean): androidx.compose.ui.state/ToggleableState // androidx.compose.ui.state/ToggleableState|ToggleableState(kotlin.Boolean){}[0]
 final fun androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily$stableprop_getter(): kotlin/Int // androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily$stableprop_getter|androidx_compose_ui_text_font_FontFamily$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily_Cursive$stableprop_getter(): kotlin/Int // androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily_Cursive$stableprop_getter|androidx_compose_ui_text_font_FontFamily_Cursive$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily_Default$stableprop_getter(): kotlin/Int // androidx.compose.ui.text.font/androidx_compose_ui_text_font_FontFamily_Default$stableprop_getter|androidx_compose_ui_text_font_FontFamily_Default$stableprop_getter(){}[0]
@@ -2992,7 +3030,6 @@ final fun androidx.compose.ui.text/AnnotatedString(kotlin/String): androidx.comp
 final fun androidx.compose.ui.text/TextRange(kotlin/Int): androidx.compose.ui.text/TextRange // androidx.compose.ui.text/TextRange|TextRange(kotlin.Int){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString$stableprop_getter|androidx_compose_ui_text_AnnotatedString$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString_Builder$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_AnnotatedString_Builder$stableprop_getter|androidx_compose_ui_text_AnnotatedString_Builder$stableprop_getter(){}[0]
-final fun androidx.compose.ui.text/androidx_compose_ui_text_ColorRun$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_ColorRun$stableprop_getter|androidx_compose_ui_text_ColorRun$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_ParagraphStyle$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_ParagraphStyle$stableprop_getter|androidx_compose_ui_text_ParagraphStyle$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_Range$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_Range$stableprop_getter|androidx_compose_ui_text_Range$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_SpanStyle$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_SpanStyle$stableprop_getter|androidx_compose_ui_text_SpanStyle$stableprop_getter(){}[0]
@@ -3000,7 +3037,6 @@ final fun androidx.compose.ui.text/androidx_compose_ui_text_TextRange$stableprop
 final fun androidx.compose.ui.text/androidx_compose_ui_text_TextRendererCapabilities$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_TextRendererCapabilities$stableprop_getter|androidx_compose_ui_text_TextRendererCapabilities$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_TextStyle$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_TextStyle$stableprop_getter|androidx_compose_ui_text_TextStyle$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_WrappedText$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_WrappedText$stableprop_getter|androidx_compose_ui_text_WrappedText$stableprop_getter(){}[0]
-final fun androidx.compose.ui.text/lineColorRuns(kotlin/String, kotlin/Int, kotlin.collections/List<androidx.compose.ui.text/Range<androidx.compose.ui.text/SpanStyle>>, androidx.compose.ui.graphics/Color): kotlin.collections/List<androidx.compose.ui.text/ColorRun> // androidx.compose.ui.text/lineColorRuns|lineColorRuns(kotlin.String;kotlin.Int;kotlin.collections.List<androidx.compose.ui.text.Range<androidx.compose.ui.text.SpanStyle>>;androidx.compose.ui.graphics.Color){}[0]
 final fun androidx.compose.ui.unit/androidx_compose_ui_unit_Constraints$stableprop_getter(): kotlin/Int // androidx.compose.ui.unit/androidx_compose_ui_unit_Constraints$stableprop_getter|androidx_compose_ui_unit_Constraints$stableprop_getter(){}[0]
 final fun androidx.compose.ui.unit/androidx_compose_ui_unit_DpOffset$stableprop_getter(): kotlin/Int // androidx.compose.ui.unit/androidx_compose_ui_unit_DpOffset$stableprop_getter|androidx_compose_ui_unit_DpOffset$stableprop_getter(){}[0]
 final fun androidx.compose.ui.unit/androidx_compose_ui_unit_DpSize$stableprop_getter(): kotlin/Int // androidx.compose.ui.unit/androidx_compose_ui_unit_DpSize$stableprop_getter|androidx_compose_ui_unit_DpSize$stableprop_getter(){}[0]
@@ -3010,12 +3046,7 @@ final fun androidx.compose.ui.unit/lerp(androidx.compose.ui.unit/Dp, androidx.co
 final fun androidx.compose.ui.unit/max(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/max|max(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
 final fun androidx.compose.ui.unit/min(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/min|min(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
 final fun androidx.compose.ui.window/Popup(androidx.compose.ui/Alignment?, androidx.compose.ui.unit/IntOffset?, kotlin/Function0<kotlin/Unit>?, androidx.compose.ui.window/PopupProperties?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.ui.window/Popup|Popup(androidx.compose.ui.Alignment?;androidx.compose.ui.unit.IntOffset?;kotlin.Function0<kotlin.Unit>?;androidx.compose.ui.window.PopupProperties?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
-final fun androidx.compose.ui.window/PopupLayer(androidx.compose.ui.window/PopupHostState, androidx.compose.runtime/Composer?, kotlin/Int) // androidx.compose.ui.window/PopupLayer|PopupLayer(androidx.compose.ui.window.PopupHostState;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
-final fun androidx.compose.ui.window/PopupOutsideDismiss(kotlin/Int, kotlin/Int, kotlin/Int, kotlin/Int, kotlin/Function0<kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // androidx.compose.ui.window/PopupOutsideDismiss|PopupOutsideDismiss(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Function0<kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
-final fun androidx.compose.ui.window/PositionedPopup(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, kotlin/Function0<kotlin/Unit>, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // androidx.compose.ui.window/PositionedPopup|PositionedPopup(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;kotlin.Function0<kotlin.Unit>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
-final fun androidx.compose.ui.window/androidx_compose_ui_window_PopupHostState$stableprop_getter(): kotlin/Int // androidx.compose.ui.window/androidx_compose_ui_window_PopupHostState$stableprop_getter|androidx_compose_ui_window_PopupHostState$stableprop_getter(){}[0]
 final fun androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop_getter(): kotlin/Int // androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop_getter|androidx_compose_ui_window_PopupProperties$stableprop_getter(){}[0]
-final fun androidx.compose.ui.window/createPopupHostState(): androidx.compose.ui.window/PopupHostState // androidx.compose.ui.window/createPopupHostState|createPopupHostState(){}[0]
 final fun androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop_getter|androidx_compose_ui_AlphaModifier$stableprop_getter(){}[0]
 final fun androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop_getter|androidx_compose_ui_BackgroundModifier$stableprop_getter(){}[0]
 final fun androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop_getter|androidx_compose_ui_BorderModifier$stableprop_getter(){}[0]
@@ -3043,9 +3074,17 @@ final fun androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stablep
 final fun androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop_getter|androidx_compose_ui_ZIndexModifier$stableprop_getter(){}[0]
 final fun com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop_getter(): kotlin/Int // com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop_getter|com_compose_desktop_native_icons_IconFont$stableprop_getter(){}[0]
 final fun com.compose.desktop.native.modifier/rememberMutableInteractionSource(androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.foundation.interaction/MutableInteractionSource // com.compose.desktop.native.modifier/rememberMutableInteractionSource|rememberMutableInteractionSource(androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter(): kotlin/Int // com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter|com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop_getter(): kotlin/Int // com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop_getter|com_compose_desktop_native_text_ColorRun$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.text/lineColorRuns(kotlin/String, kotlin/Int, kotlin.collections/List<androidx.compose.ui.text/Range<androidx.compose.ui.text/SpanStyle>>, androidx.compose.ui.graphics/Color): kotlin.collections/List<com.compose.desktop.native.text/ColorRun> // com.compose.desktop.native.text/lineColorRuns|lineColorRuns(kotlin.String;kotlin.Int;kotlin.collections.List<androidx.compose.ui.text.Range<androidx.compose.ui.text.SpanStyle>>;androidx.compose.ui.graphics.Color){}[0]
 final fun com.compose.desktop.native.widgets/HorizontalSplitPane(androidx.compose.ui/Modifier?, androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, androidx.compose.ui.graphics/Color?, androidx.compose.ui.graphics/Color?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.compose.desktop.native.widgets/HorizontalSplitPane|HorizontalSplitPane(androidx.compose.ui.Modifier?;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.graphics.Color?;androidx.compose.ui.graphics.Color?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun com.compose.desktop.native.widgets/VerticalSplitPane(androidx.compose.ui/Modifier?, androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, androidx.compose.ui.graphics/Color?, androidx.compose.ui.graphics/Color?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.compose.desktop.native.widgets/VerticalSplitPane|VerticalSplitPane(androidx.compose.ui.Modifier?;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.graphics.Color?;androidx.compose.ui.graphics.Color?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun com.compose.desktop.native.widgets/com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop_getter(): kotlin/Int // com.compose.desktop.native.widgets/com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop_getter|com_compose_desktop_native_widgets_SplitPaneDefaults$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.window/PopupLayer(com.compose.desktop.native.window/PopupHostState, androidx.compose.runtime/Composer?, kotlin/Int) // com.compose.desktop.native.window/PopupLayer|PopupLayer(com.compose.desktop.native.window.PopupHostState;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.compose.desktop.native.window/PopupOutsideDismiss(kotlin/Int, kotlin/Int, kotlin/Int, kotlin/Int, kotlin/Function0<kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // com.compose.desktop.native.window/PopupOutsideDismiss|PopupOutsideDismiss(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Function0<kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.compose.desktop.native.window/PositionedPopup(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp, kotlin/Function0<kotlin/Unit>, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // com.compose.desktop.native.window/PositionedPopup|PositionedPopup(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;kotlin.Function0<kotlin.Unit>;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
+final fun com.compose.desktop.native.window/com_compose_desktop_native_window_PopupHostState$stableprop_getter(): kotlin/Int // com.compose.desktop.native.window/com_compose_desktop_native_window_PopupHostState$stableprop_getter|com_compose_desktop_native_window_PopupHostState$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.window/createPopupHostState(): com.compose.desktop.native.window/PopupHostState // com.compose.desktop.native.window/createPopupHostState|createPopupHostState(){}[0]
 final fun com.compose.desktop.native/appDataDir(kotlin/String, kotlin/String): kotlin/String? // com.compose.desktop.native/appDataDir|appDataDir(kotlin.String;kotlin.String){}[0]
 final fun com.compose.desktop.native/com_compose_desktop_native_AppEvent$stableprop_getter(): kotlin/Int // com.compose.desktop.native/com_compose_desktop_native_AppEvent$stableprop_getter|com_compose_desktop_native_AppEvent$stableprop_getter(){}[0]
 final fun com.compose.desktop.native/com_compose_desktop_native_AppEvent_Key$stableprop_getter(): kotlin/Int // com.compose.desktop.native/com_compose_desktop_native_AppEvent_Key$stableprop_getter|com_compose_desktop_native_AppEvent_Key$stableprop_getter(){}[0]

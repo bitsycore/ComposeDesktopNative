@@ -1,6 +1,5 @@
 package com.compose.desktop.native
 
-import androidx.compose.foundation.ScrollAnimator
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -10,6 +9,7 @@ import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.KeyEventDispatch
 import androidx.compose.ui.Modifier
+import com.compose.desktop.native.scroll.ScrollAnimator
 import androidx.compose.ui.OnDragModifier
 import androidx.compose.ui.OnPressedModifier
 import androidx.compose.ui.geometry.Offset
@@ -22,9 +22,9 @@ import androidx.compose.ui.platform.currentClipboard
 import androidx.compose.ui.res.currentImageLoader
 import androidx.compose.ui.text.currentTextMeasurer
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.window.LocalPopupHost
-import androidx.compose.ui.window.PopupLayer
-import androidx.compose.ui.window.createPopupHostState
+import com.compose.desktop.native.window.LocalPopupHost
+import com.compose.desktop.native.window.PopupLayer
+import com.compose.desktop.native.window.createPopupHostState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain

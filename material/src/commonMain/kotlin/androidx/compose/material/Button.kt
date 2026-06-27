@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import com.compose.desktop.native.modifier.pressable
@@ -119,21 +120,6 @@ fun TextButton(
         contentPadding = contentPadding,
         content = content
     )
-}
-
-// ==================
-// MARK: PaddingValues
-// ==================
-
-data class PaddingValues(
-    val start: Dp = 0.dp,
-    val top: Dp = 0.dp,
-    val end: Dp = 0.dp,
-    val bottom: Dp = 0.dp
-) {
-    constructor(all: Dp) : this(all, all, all, all)
-    constructor(horizontal: Dp = 0.dp, vertical: Dp = 0.dp)
-        : this(horizontal, vertical, horizontal, vertical)
 }
 
 // ==================

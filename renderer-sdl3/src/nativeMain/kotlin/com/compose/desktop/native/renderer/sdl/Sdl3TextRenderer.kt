@@ -9,7 +9,7 @@ import androidx.compose.ui.text.TextRendererCapabilities
 import androidx.compose.ui.text.WrappedText
 import androidx.compose.ui.text.Range
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.lineColorRuns
+import com.compose.desktop.native.text.lineColorRuns
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import kotlinx.cinterop.*
