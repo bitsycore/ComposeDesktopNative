@@ -1,6 +1,7 @@
 package androidx.compose.foundation.layout
 
 import androidx.compose.ui.*
+import com.compose.desktop.native.element.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 

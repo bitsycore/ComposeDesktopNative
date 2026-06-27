@@ -1,8 +1,8 @@
 package androidx.compose.ui.layout
 
-import androidx.compose.ui.GloballyPositionedModifier
+import com.compose.desktop.native.element.GloballyPositionedModifier
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.OnSizeChangedModifier
+import com.compose.desktop.native.element.OnSizeChangedModifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 

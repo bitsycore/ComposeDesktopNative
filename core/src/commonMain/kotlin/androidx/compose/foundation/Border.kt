@@ -1,6 +1,6 @@
 package androidx.compose.foundation
 
-import androidx.compose.ui.BorderModifier
+import com.compose.desktop.native.element.BorderModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape

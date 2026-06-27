@@ -1,6 +1,6 @@
 package androidx.compose.ui.draw
 
-import androidx.compose.ui.ClipModifier
+import com.compose.desktop.native.element.ClipModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 

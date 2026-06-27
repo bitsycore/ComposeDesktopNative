@@ -1,6 +1,6 @@
 package androidx.compose.foundation
 
-import androidx.compose.ui.FocusableModifier
+import com.compose.desktop.native.element.FocusableModifier
 import androidx.compose.ui.Modifier
 
 // ==================

@@ -1436,17 +1436,17 @@ final class androidx.compose.ui.node/LayoutNode { // androidx.compose.ui.node/La
         final fun <get-y>(): kotlin/Int // androidx.compose.ui.node/LayoutNode.y.<get-y>|<get-y>(){}[0]
 
     final fun cachedWrap(): androidx.compose.ui.text/WrappedText // androidx.compose.ui.node/LayoutNode.cachedWrap|cachedWrap(){}[0]
-    final fun collectHoverableChain(): kotlin.collections/List<kotlin/Pair<androidx.compose.ui.node/LayoutNode, androidx.compose.ui/HoverableModifier>> // androidx.compose.ui.node/LayoutNode.collectHoverableChain|collectHoverableChain(){}[0]
+    final fun collectHoverableChain(): kotlin.collections/List<kotlin/Pair<androidx.compose.ui.node/LayoutNode, com.compose.desktop.native.element/HoverableModifier>> // androidx.compose.ui.node/LayoutNode.collectHoverableChain|collectHoverableChain(){}[0]
     final fun dispatchGloballyPositioned() // androidx.compose.ui.node/LayoutNode.dispatchGloballyPositioned|dispatchGloballyPositioned(){}[0]
-    final fun dispatchKeyEvent(androidx.compose.ui/KeyEventDispatch): kotlin/Boolean // androidx.compose.ui.node/LayoutNode.dispatchKeyEvent|dispatchKeyEvent(androidx.compose.ui.KeyEventDispatch){}[0]
+    final fun dispatchKeyEvent(com.compose.desktop.native.element/KeyEventDispatch): kotlin/Boolean // androidx.compose.ui.node/LayoutNode.dispatchKeyEvent|dispatchKeyEvent(com.compose.desktop.native.element.KeyEventDispatch){}[0]
     final fun dispatchTextInput(kotlin/String) // androidx.compose.ui.node/LayoutNode.dispatchTextInput|dispatchTextInput(kotlin.String){}[0]
     final fun findClickHandler(): kotlin/Function0<kotlin/Unit>? // androidx.compose.ui.node/LayoutNode.findClickHandler|findClickHandler(){}[0]
     final fun findClickableNode(): androidx.compose.ui.node/LayoutNode? // androidx.compose.ui.node/LayoutNode.findClickableNode|findClickableNode(){}[0]
-    final fun findDraggable(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, androidx.compose.ui/OnDragModifier>? // androidx.compose.ui.node/LayoutNode.findDraggable|findDraggable(){}[0]
-    final fun findFocusableNode(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, androidx.compose.ui/FocusableModifier>? // androidx.compose.ui.node/LayoutNode.findFocusableNode|findFocusableNode(){}[0]
+    final fun findDraggable(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, com.compose.desktop.native.element/OnDragModifier>? // androidx.compose.ui.node/LayoutNode.findDraggable|findDraggable(){}[0]
+    final fun findFocusableNode(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, com.compose.desktop.native.element/FocusableModifier>? // androidx.compose.ui.node/LayoutNode.findFocusableNode|findFocusableNode(){}[0]
     final fun findHorizontalScrollAncestor(): androidx.compose.foundation/ScrollState? // androidx.compose.ui.node/LayoutNode.findHorizontalScrollAncestor|findHorizontalScrollAncestor(){}[0]
     final fun findMiddleClickHandler(): kotlin/Function0<kotlin/Unit>? // androidx.compose.ui.node/LayoutNode.findMiddleClickHandler|findMiddleClickHandler(){}[0]
-    final fun findPressable(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, androidx.compose.ui/PressableModifier>? // androidx.compose.ui.node/LayoutNode.findPressable|findPressable(){}[0]
+    final fun findPressable(): kotlin/Pair<androidx.compose.ui.node/LayoutNode, com.compose.desktop.native.element/PressableModifier>? // androidx.compose.ui.node/LayoutNode.findPressable|findPressable(){}[0]
     final fun findSecondaryClickHandler(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>? // androidx.compose.ui.node/LayoutNode.findSecondaryClickHandler|findSecondaryClickHandler(){}[0]
     final fun findVerticalScrollAncestor(): androidx.compose.foundation/ScrollState? // androidx.compose.ui.node/LayoutNode.findVerticalScrollAncestor|findVerticalScrollAncestor(){}[0]
     final fun hitTest(kotlin/Int, kotlin/Int): androidx.compose.ui.node/LayoutNode? // androidx.compose.ui.node/LayoutNode.hitTest|hitTest(kotlin.Int;kotlin.Int){}[0]
@@ -1827,292 +1827,6 @@ final class androidx.compose.ui.window/PopupProperties { // androidx.compose.ui.
     final fun hashCode(): kotlin/Int // androidx.compose.ui.window/PopupProperties.hashCode|hashCode(){}[0]
 }
 
-final class androidx.compose.ui/AlphaModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/AlphaModifier|null[0]
-    constructor <init>(kotlin/Float) // androidx.compose.ui/AlphaModifier.<init>|<init>(kotlin.Float){}[0]
-
-    final val alpha // androidx.compose.ui/AlphaModifier.alpha|{}alpha[0]
-        final fun <get-alpha>(): kotlin/Float // androidx.compose.ui/AlphaModifier.alpha.<get-alpha>|<get-alpha>(){}[0]
-
-    final fun component1(): kotlin/Float // androidx.compose.ui/AlphaModifier.component1|component1(){}[0]
-    final fun copy(kotlin/Float = ...): androidx.compose.ui/AlphaModifier // androidx.compose.ui/AlphaModifier.copy|copy(kotlin.Float){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/AlphaModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/AlphaModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/AlphaModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/BackgroundModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/BackgroundModifier|null[0]
-    constructor <init>(androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Shape = ...) // androidx.compose.ui/BackgroundModifier.<init>|<init>(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
-
-    final val color // androidx.compose.ui/BackgroundModifier.color|{}color[0]
-        final fun <get-color>(): androidx.compose.ui.graphics/Color // androidx.compose.ui/BackgroundModifier.color.<get-color>|<get-color>(){}[0]
-    final val shape // androidx.compose.ui/BackgroundModifier.shape|{}shape[0]
-        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/BackgroundModifier.shape.<get-shape>|<get-shape>(){}[0]
-
-    final fun component1(): androidx.compose.ui.graphics/Color // androidx.compose.ui/BackgroundModifier.component1|component1(){}[0]
-    final fun component2(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/BackgroundModifier.component2|component2(){}[0]
-    final fun copy(androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Shape = ...): androidx.compose.ui/BackgroundModifier // androidx.compose.ui/BackgroundModifier.copy|copy(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/BackgroundModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/BackgroundModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/BackgroundModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/BorderModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/BorderModifier|null[0]
-    constructor <init>(kotlin/Int, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Shape = ...) // androidx.compose.ui/BorderModifier.<init>|<init>(kotlin.Int;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
-
-    final val color // androidx.compose.ui/BorderModifier.color|{}color[0]
-        final fun <get-color>(): androidx.compose.ui.graphics/Color // androidx.compose.ui/BorderModifier.color.<get-color>|<get-color>(){}[0]
-    final val shape // androidx.compose.ui/BorderModifier.shape|{}shape[0]
-        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/BorderModifier.shape.<get-shape>|<get-shape>(){}[0]
-    final val width // androidx.compose.ui/BorderModifier.width|{}width[0]
-        final fun <get-width>(): kotlin/Int // androidx.compose.ui/BorderModifier.width.<get-width>|<get-width>(){}[0]
-
-    final fun component1(): kotlin/Int // androidx.compose.ui/BorderModifier.component1|component1(){}[0]
-    final fun component2(): androidx.compose.ui.graphics/Color // androidx.compose.ui/BorderModifier.component2|component2(){}[0]
-    final fun component3(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/BorderModifier.component3|component3(){}[0]
-    final fun copy(kotlin/Int = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Shape = ...): androidx.compose.ui/BorderModifier // androidx.compose.ui/BorderModifier.copy|copy(kotlin.Int;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/BorderModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/BorderModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/BorderModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/ClickableModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/ClickableModifier|null[0]
-    constructor <init>(kotlin/Function0<kotlin/Unit>) // androidx.compose.ui/ClickableModifier.<init>|<init>(kotlin.Function0<kotlin.Unit>){}[0]
-
-    final val onClick // androidx.compose.ui/ClickableModifier.onClick|{}onClick[0]
-        final fun <get-onClick>(): kotlin/Function0<kotlin/Unit> // androidx.compose.ui/ClickableModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
-
-    final fun component1(): kotlin/Function0<kotlin/Unit> // androidx.compose.ui/ClickableModifier.component1|component1(){}[0]
-    final fun copy(kotlin/Function0<kotlin/Unit> = ...): androidx.compose.ui/ClickableModifier // androidx.compose.ui/ClickableModifier.copy|copy(kotlin.Function0<kotlin.Unit>){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/ClickableModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/ClickableModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/ClickableModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/ClipModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/ClipModifier|null[0]
-    constructor <init>(androidx.compose.ui.graphics/Shape) // androidx.compose.ui/ClipModifier.<init>|<init>(androidx.compose.ui.graphics.Shape){}[0]
-
-    final val shape // androidx.compose.ui/ClipModifier.shape|{}shape[0]
-        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/ClipModifier.shape.<get-shape>|<get-shape>(){}[0]
-
-    final fun component1(): androidx.compose.ui.graphics/Shape // androidx.compose.ui/ClipModifier.component1|component1(){}[0]
-    final fun copy(androidx.compose.ui.graphics/Shape = ...): androidx.compose.ui/ClipModifier // androidx.compose.ui/ClipModifier.copy|copy(androidx.compose.ui.graphics.Shape){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/ClipModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/ClipModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/ClipModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/DrawBehindModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/DrawBehindModifier|null[0]
-    constructor <init>(kotlin/Function1<androidx.compose.ui.graphics.drawscope/DrawScope, kotlin/Unit>) // androidx.compose.ui/DrawBehindModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.graphics.drawscope.DrawScope,kotlin.Unit>){}[0]
-
-    final val onDraw // androidx.compose.ui/DrawBehindModifier.onDraw|{}onDraw[0]
-        final fun <get-onDraw>(): kotlin/Function1<androidx.compose.ui.graphics.drawscope/DrawScope, kotlin/Unit> // androidx.compose.ui/DrawBehindModifier.onDraw.<get-onDraw>|<get-onDraw>(){}[0]
-}
-
-final class androidx.compose.ui/FocusableModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/FocusableModifier|null[0]
-    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // androidx.compose.ui/FocusableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
-
-    final val onFocusChanged // androidx.compose.ui/FocusableModifier.onFocusChanged|{}onFocusChanged[0]
-        final fun <get-onFocusChanged>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // androidx.compose.ui/FocusableModifier.onFocusChanged.<get-onFocusChanged>|<get-onFocusChanged>(){}[0]
-}
-
-final class androidx.compose.ui/GloballyPositionedModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/GloballyPositionedModifier|null[0]
-    constructor <init>(kotlin/Function1<androidx.compose.ui.unit/IntOffset, kotlin/Unit>) // androidx.compose.ui/GloballyPositionedModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.unit.IntOffset,kotlin.Unit>){}[0]
-
-    final val onChange // androidx.compose.ui/GloballyPositionedModifier.onChange|{}onChange[0]
-        final fun <get-onChange>(): kotlin/Function1<androidx.compose.ui.unit/IntOffset, kotlin/Unit> // androidx.compose.ui/GloballyPositionedModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
-}
-
-final class androidx.compose.ui/HorizontalScrollModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/HorizontalScrollModifier|null[0]
-    constructor <init>(androidx.compose.foundation/ScrollState) // androidx.compose.ui/HorizontalScrollModifier.<init>|<init>(androidx.compose.foundation.ScrollState){}[0]
-
-    final val state // androidx.compose.ui/HorizontalScrollModifier.state|{}state[0]
-        final fun <get-state>(): androidx.compose.foundation/ScrollState // androidx.compose.ui/HorizontalScrollModifier.state.<get-state>|<get-state>(){}[0]
-}
-
-final class androidx.compose.ui/HoverableModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/HoverableModifier|null[0]
-    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // androidx.compose.ui/HoverableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
-
-    final val onChange // androidx.compose.ui/HoverableModifier.onChange|{}onChange[0]
-        final fun <get-onChange>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // androidx.compose.ui/HoverableModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
-}
-
-final class androidx.compose.ui/KeyEventDispatch { // androidx.compose.ui/KeyEventDispatch|null[0]
-    constructor <init>(androidx.compose.ui.input.key/KeyEvent) // androidx.compose.ui/KeyEventDispatch.<init>|<init>(androidx.compose.ui.input.key.KeyEvent){}[0]
-
-    final val key // androidx.compose.ui/KeyEventDispatch.key|{}key[0]
-        final fun <get-key>(): androidx.compose.ui.input.key/KeyEvent // androidx.compose.ui/KeyEventDispatch.key.<get-key>|<get-key>(){}[0]
-}
-
-final class androidx.compose.ui/LayoutWeightModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/LayoutWeightModifier|null[0]
-    constructor <init>(kotlin/Float, kotlin/Boolean) // androidx.compose.ui/LayoutWeightModifier.<init>|<init>(kotlin.Float;kotlin.Boolean){}[0]
-
-    final val fill // androidx.compose.ui/LayoutWeightModifier.fill|{}fill[0]
-        final fun <get-fill>(): kotlin/Boolean // androidx.compose.ui/LayoutWeightModifier.fill.<get-fill>|<get-fill>(){}[0]
-    final val weight // androidx.compose.ui/LayoutWeightModifier.weight|{}weight[0]
-        final fun <get-weight>(): kotlin/Float // androidx.compose.ui/LayoutWeightModifier.weight.<get-weight>|<get-weight>(){}[0]
-
-    final fun component1(): kotlin/Float // androidx.compose.ui/LayoutWeightModifier.component1|component1(){}[0]
-    final fun component2(): kotlin/Boolean // androidx.compose.ui/LayoutWeightModifier.component2|component2(){}[0]
-    final fun copy(kotlin/Float = ..., kotlin/Boolean = ...): androidx.compose.ui/LayoutWeightModifier // androidx.compose.ui/LayoutWeightModifier.copy|copy(kotlin.Float;kotlin.Boolean){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/LayoutWeightModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/LayoutWeightModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/LayoutWeightModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/MiddleClickModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/MiddleClickModifier|null[0]
-    constructor <init>(kotlin/Function0<kotlin/Unit>) // androidx.compose.ui/MiddleClickModifier.<init>|<init>(kotlin.Function0<kotlin.Unit>){}[0]
-
-    final val onClick // androidx.compose.ui/MiddleClickModifier.onClick|{}onClick[0]
-        final fun <get-onClick>(): kotlin/Function0<kotlin/Unit> // androidx.compose.ui/MiddleClickModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
-
-    final fun component1(): kotlin/Function0<kotlin/Unit> // androidx.compose.ui/MiddleClickModifier.component1|component1(){}[0]
-    final fun copy(kotlin/Function0<kotlin/Unit> = ...): androidx.compose.ui/MiddleClickModifier // androidx.compose.ui/MiddleClickModifier.copy|copy(kotlin.Function0<kotlin.Unit>){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/MiddleClickModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/MiddleClickModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/MiddleClickModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/OffsetModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OffsetModifier|null[0]
-    constructor <init>(kotlin/Int, kotlin/Int) // androidx.compose.ui/OffsetModifier.<init>|<init>(kotlin.Int;kotlin.Int){}[0]
-
-    final val x // androidx.compose.ui/OffsetModifier.x|{}x[0]
-        final fun <get-x>(): kotlin/Int // androidx.compose.ui/OffsetModifier.x.<get-x>|<get-x>(){}[0]
-    final val y // androidx.compose.ui/OffsetModifier.y|{}y[0]
-        final fun <get-y>(): kotlin/Int // androidx.compose.ui/OffsetModifier.y.<get-y>|<get-y>(){}[0]
-
-    final fun component1(): kotlin/Int // androidx.compose.ui/OffsetModifier.component1|component1(){}[0]
-    final fun component2(): kotlin/Int // androidx.compose.ui/OffsetModifier.component2|component2(){}[0]
-    final fun copy(kotlin/Int = ..., kotlin/Int = ...): androidx.compose.ui/OffsetModifier // androidx.compose.ui/OffsetModifier.copy|copy(kotlin.Int;kotlin.Int){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/OffsetModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/OffsetModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/OffsetModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/OnDragModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OnDragModifier|null[0]
-    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>, kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>, kotlin/Function0<kotlin/Unit>) // androidx.compose.ui/OnDragModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function0<kotlin.Unit>){}[0]
-
-    final val onDrag // androidx.compose.ui/OnDragModifier.onDrag|{}onDrag[0]
-        final fun <get-onDrag>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // androidx.compose.ui/OnDragModifier.onDrag.<get-onDrag>|<get-onDrag>(){}[0]
-    final val onEnd // androidx.compose.ui/OnDragModifier.onEnd|{}onEnd[0]
-        final fun <get-onEnd>(): kotlin/Function0<kotlin/Unit> // androidx.compose.ui/OnDragModifier.onEnd.<get-onEnd>|<get-onEnd>(){}[0]
-    final val onStart // androidx.compose.ui/OnDragModifier.onStart|{}onStart[0]
-        final fun <get-onStart>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // androidx.compose.ui/OnDragModifier.onStart.<get-onStart>|<get-onStart>(){}[0]
-}
-
-final class androidx.compose.ui/OnKeyEventModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OnKeyEventModifier|null[0]
-    constructor <init>(kotlin/Function1<androidx.compose.ui/KeyEventDispatch, kotlin/Boolean>) // androidx.compose.ui/OnKeyEventModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.KeyEventDispatch,kotlin.Boolean>){}[0]
-
-    final val handler // androidx.compose.ui/OnKeyEventModifier.handler|{}handler[0]
-        final fun <get-handler>(): kotlin/Function1<androidx.compose.ui/KeyEventDispatch, kotlin/Boolean> // androidx.compose.ui/OnKeyEventModifier.handler.<get-handler>|<get-handler>(){}[0]
-}
-
-final class androidx.compose.ui/OnPressedModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OnPressedModifier|null[0]
-    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>) // androidx.compose.ui/OnPressedModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
-
-    final val handler // androidx.compose.ui/OnPressedModifier.handler|{}handler[0]
-        final fun <get-handler>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // androidx.compose.ui/OnPressedModifier.handler.<get-handler>|<get-handler>(){}[0]
-}
-
-final class androidx.compose.ui/OnSizeChangedModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OnSizeChangedModifier|null[0]
-    constructor <init>(kotlin/Function1<androidx.compose.ui.unit/IntSize, kotlin/Unit>) // androidx.compose.ui/OnSizeChangedModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.unit.IntSize,kotlin.Unit>){}[0]
-
-    final val onChange // androidx.compose.ui/OnSizeChangedModifier.onChange|{}onChange[0]
-        final fun <get-onChange>(): kotlin/Function1<androidx.compose.ui.unit/IntSize, kotlin/Unit> // androidx.compose.ui/OnSizeChangedModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
-}
-
-final class androidx.compose.ui/OnTextInputModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/OnTextInputModifier|null[0]
-    constructor <init>(kotlin/Function1<kotlin/String, kotlin/Unit>) // androidx.compose.ui/OnTextInputModifier.<init>|<init>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
-
-    final val handler // androidx.compose.ui/OnTextInputModifier.handler|{}handler[0]
-        final fun <get-handler>(): kotlin/Function1<kotlin/String, kotlin/Unit> // androidx.compose.ui/OnTextInputModifier.handler.<get-handler>|<get-handler>(){}[0]
-}
-
-final class androidx.compose.ui/PaddingModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/PaddingModifier|null[0]
-    constructor <init>(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...) // androidx.compose.ui/PaddingModifier.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
-
-    final val bottom // androidx.compose.ui/PaddingModifier.bottom|{}bottom[0]
-        final fun <get-bottom>(): kotlin/Int // androidx.compose.ui/PaddingModifier.bottom.<get-bottom>|<get-bottom>(){}[0]
-    final val end // androidx.compose.ui/PaddingModifier.end|{}end[0]
-        final fun <get-end>(): kotlin/Int // androidx.compose.ui/PaddingModifier.end.<get-end>|<get-end>(){}[0]
-    final val start // androidx.compose.ui/PaddingModifier.start|{}start[0]
-        final fun <get-start>(): kotlin/Int // androidx.compose.ui/PaddingModifier.start.<get-start>|<get-start>(){}[0]
-    final val top // androidx.compose.ui/PaddingModifier.top|{}top[0]
-        final fun <get-top>(): kotlin/Int // androidx.compose.ui/PaddingModifier.top.<get-top>|<get-top>(){}[0]
-
-    final fun component1(): kotlin/Int // androidx.compose.ui/PaddingModifier.component1|component1(){}[0]
-    final fun component2(): kotlin/Int // androidx.compose.ui/PaddingModifier.component2|component2(){}[0]
-    final fun component3(): kotlin/Int // androidx.compose.ui/PaddingModifier.component3|component3(){}[0]
-    final fun component4(): kotlin/Int // androidx.compose.ui/PaddingModifier.component4|component4(){}[0]
-    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.ui/PaddingModifier // androidx.compose.ui/PaddingModifier.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/PaddingModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/PaddingModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/PaddingModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/PressableModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/PressableModifier|null[0]
-    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // androidx.compose.ui/PressableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
-
-    final val onChange // androidx.compose.ui/PressableModifier.onChange|{}onChange[0]
-        final fun <get-onChange>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // androidx.compose.ui/PressableModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
-}
-
-final class androidx.compose.ui/SecondaryClickModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/SecondaryClickModifier|null[0]
-    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>) // androidx.compose.ui/SecondaryClickModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
-
-    final val onClick // androidx.compose.ui/SecondaryClickModifier.onClick|{}onClick[0]
-        final fun <get-onClick>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // androidx.compose.ui/SecondaryClickModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
-
-    final fun component1(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // androidx.compose.ui/SecondaryClickModifier.component1|component1(){}[0]
-    final fun copy(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> = ...): androidx.compose.ui/SecondaryClickModifier // androidx.compose.ui/SecondaryClickModifier.copy|copy(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/SecondaryClickModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/SecondaryClickModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/SecondaryClickModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/SizeModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/SizeModifier|null[0]
-    constructor <init>(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // androidx.compose.ui/SizeModifier.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
-
-    final val fillMaxHeight // androidx.compose.ui/SizeModifier.fillMaxHeight|{}fillMaxHeight[0]
-        final fun <get-fillMaxHeight>(): kotlin/Boolean // androidx.compose.ui/SizeModifier.fillMaxHeight.<get-fillMaxHeight>|<get-fillMaxHeight>(){}[0]
-    final val fillMaxWidth // androidx.compose.ui/SizeModifier.fillMaxWidth|{}fillMaxWidth[0]
-        final fun <get-fillMaxWidth>(): kotlin/Boolean // androidx.compose.ui/SizeModifier.fillMaxWidth.<get-fillMaxWidth>|<get-fillMaxWidth>(){}[0]
-    final val height // androidx.compose.ui/SizeModifier.height|{}height[0]
-        final fun <get-height>(): kotlin/Int // androidx.compose.ui/SizeModifier.height.<get-height>|<get-height>(){}[0]
-    final val isDefaultMin // androidx.compose.ui/SizeModifier.isDefaultMin|{}isDefaultMin[0]
-        final fun <get-isDefaultMin>(): kotlin/Boolean // androidx.compose.ui/SizeModifier.isDefaultMin.<get-isDefaultMin>|<get-isDefaultMin>(){}[0]
-    final val maxHeight // androidx.compose.ui/SizeModifier.maxHeight|{}maxHeight[0]
-        final fun <get-maxHeight>(): kotlin/Int // androidx.compose.ui/SizeModifier.maxHeight.<get-maxHeight>|<get-maxHeight>(){}[0]
-    final val maxWidth // androidx.compose.ui/SizeModifier.maxWidth|{}maxWidth[0]
-        final fun <get-maxWidth>(): kotlin/Int // androidx.compose.ui/SizeModifier.maxWidth.<get-maxWidth>|<get-maxWidth>(){}[0]
-    final val minHeight // androidx.compose.ui/SizeModifier.minHeight|{}minHeight[0]
-        final fun <get-minHeight>(): kotlin/Int // androidx.compose.ui/SizeModifier.minHeight.<get-minHeight>|<get-minHeight>(){}[0]
-    final val minWidth // androidx.compose.ui/SizeModifier.minWidth|{}minWidth[0]
-        final fun <get-minWidth>(): kotlin/Int // androidx.compose.ui/SizeModifier.minWidth.<get-minWidth>|<get-minWidth>(){}[0]
-    final val width // androidx.compose.ui/SizeModifier.width|{}width[0]
-        final fun <get-width>(): kotlin/Int // androidx.compose.ui/SizeModifier.width.<get-width>|<get-width>(){}[0]
-
-    final fun component1(): kotlin/Int // androidx.compose.ui/SizeModifier.component1|component1(){}[0]
-    final fun component2(): kotlin/Int // androidx.compose.ui/SizeModifier.component2|component2(){}[0]
-    final fun component3(): kotlin/Int // androidx.compose.ui/SizeModifier.component3|component3(){}[0]
-    final fun component4(): kotlin/Int // androidx.compose.ui/SizeModifier.component4|component4(){}[0]
-    final fun component5(): kotlin/Int // androidx.compose.ui/SizeModifier.component5|component5(){}[0]
-    final fun component6(): kotlin/Int // androidx.compose.ui/SizeModifier.component6|component6(){}[0]
-    final fun component7(): kotlin/Boolean // androidx.compose.ui/SizeModifier.component7|component7(){}[0]
-    final fun component8(): kotlin/Boolean // androidx.compose.ui/SizeModifier.component8|component8(){}[0]
-    final fun component9(): kotlin/Boolean // androidx.compose.ui/SizeModifier.component9|component9(){}[0]
-    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): androidx.compose.ui/SizeModifier // androidx.compose.ui/SizeModifier.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
-    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/SizeModifier.equals|equals(kotlin.Any?){}[0]
-    final fun hashCode(): kotlin/Int // androidx.compose.ui/SizeModifier.hashCode|hashCode(){}[0]
-    final fun toString(): kotlin/String // androidx.compose.ui/SizeModifier.toString|toString(){}[0]
-}
-
-final class androidx.compose.ui/VerticalScrollModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/VerticalScrollModifier|null[0]
-    constructor <init>(androidx.compose.foundation/ScrollState) // androidx.compose.ui/VerticalScrollModifier.<init>|<init>(androidx.compose.foundation.ScrollState){}[0]
-
-    final val state // androidx.compose.ui/VerticalScrollModifier.state|{}state[0]
-        final fun <get-state>(): androidx.compose.foundation/ScrollState // androidx.compose.ui/VerticalScrollModifier.state.<get-state>|<get-state>(){}[0]
-}
-
 final class androidx.compose.ui/ZIndexModifier : androidx.compose.ui/Modifier.Element { // androidx.compose.ui/ZIndexModifier|null[0]
     constructor <init>(kotlin/Float) // androidx.compose.ui/ZIndexModifier.<init>|<init>(kotlin.Float){}[0]
 
@@ -2124,6 +1838,292 @@ final class androidx.compose.ui/ZIndexModifier : androidx.compose.ui/Modifier.El
     final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui/ZIndexModifier.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // androidx.compose.ui/ZIndexModifier.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // androidx.compose.ui/ZIndexModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/AlphaModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/AlphaModifier|null[0]
+    constructor <init>(kotlin/Float) // com.compose.desktop.native.element/AlphaModifier.<init>|<init>(kotlin.Float){}[0]
+
+    final val alpha // com.compose.desktop.native.element/AlphaModifier.alpha|{}alpha[0]
+        final fun <get-alpha>(): kotlin/Float // com.compose.desktop.native.element/AlphaModifier.alpha.<get-alpha>|<get-alpha>(){}[0]
+
+    final fun component1(): kotlin/Float // com.compose.desktop.native.element/AlphaModifier.component1|component1(){}[0]
+    final fun copy(kotlin/Float = ...): com.compose.desktop.native.element/AlphaModifier // com.compose.desktop.native.element/AlphaModifier.copy|copy(kotlin.Float){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/AlphaModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/AlphaModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/AlphaModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/BackgroundModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/BackgroundModifier|null[0]
+    constructor <init>(androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Shape = ...) // com.compose.desktop.native.element/BackgroundModifier.<init>|<init>(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
+
+    final val color // com.compose.desktop.native.element/BackgroundModifier.color|{}color[0]
+        final fun <get-color>(): androidx.compose.ui.graphics/Color // com.compose.desktop.native.element/BackgroundModifier.color.<get-color>|<get-color>(){}[0]
+    final val shape // com.compose.desktop.native.element/BackgroundModifier.shape|{}shape[0]
+        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/BackgroundModifier.shape.<get-shape>|<get-shape>(){}[0]
+
+    final fun component1(): androidx.compose.ui.graphics/Color // com.compose.desktop.native.element/BackgroundModifier.component1|component1(){}[0]
+    final fun component2(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/BackgroundModifier.component2|component2(){}[0]
+    final fun copy(androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Shape = ...): com.compose.desktop.native.element/BackgroundModifier // com.compose.desktop.native.element/BackgroundModifier.copy|copy(androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/BackgroundModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/BackgroundModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/BackgroundModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/BorderModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/BorderModifier|null[0]
+    constructor <init>(kotlin/Int, androidx.compose.ui.graphics/Color, androidx.compose.ui.graphics/Shape = ...) // com.compose.desktop.native.element/BorderModifier.<init>|<init>(kotlin.Int;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
+
+    final val color // com.compose.desktop.native.element/BorderModifier.color|{}color[0]
+        final fun <get-color>(): androidx.compose.ui.graphics/Color // com.compose.desktop.native.element/BorderModifier.color.<get-color>|<get-color>(){}[0]
+    final val shape // com.compose.desktop.native.element/BorderModifier.shape|{}shape[0]
+        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/BorderModifier.shape.<get-shape>|<get-shape>(){}[0]
+    final val width // com.compose.desktop.native.element/BorderModifier.width|{}width[0]
+        final fun <get-width>(): kotlin/Int // com.compose.desktop.native.element/BorderModifier.width.<get-width>|<get-width>(){}[0]
+
+    final fun component1(): kotlin/Int // com.compose.desktop.native.element/BorderModifier.component1|component1(){}[0]
+    final fun component2(): androidx.compose.ui.graphics/Color // com.compose.desktop.native.element/BorderModifier.component2|component2(){}[0]
+    final fun component3(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/BorderModifier.component3|component3(){}[0]
+    final fun copy(kotlin/Int = ..., androidx.compose.ui.graphics/Color = ..., androidx.compose.ui.graphics/Shape = ...): com.compose.desktop.native.element/BorderModifier // com.compose.desktop.native.element/BorderModifier.copy|copy(kotlin.Int;androidx.compose.ui.graphics.Color;androidx.compose.ui.graphics.Shape){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/BorderModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/BorderModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/BorderModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/ClickableModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/ClickableModifier|null[0]
+    constructor <init>(kotlin/Function0<kotlin/Unit>) // com.compose.desktop.native.element/ClickableModifier.<init>|<init>(kotlin.Function0<kotlin.Unit>){}[0]
+
+    final val onClick // com.compose.desktop.native.element/ClickableModifier.onClick|{}onClick[0]
+        final fun <get-onClick>(): kotlin/Function0<kotlin/Unit> // com.compose.desktop.native.element/ClickableModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
+
+    final fun component1(): kotlin/Function0<kotlin/Unit> // com.compose.desktop.native.element/ClickableModifier.component1|component1(){}[0]
+    final fun copy(kotlin/Function0<kotlin/Unit> = ...): com.compose.desktop.native.element/ClickableModifier // com.compose.desktop.native.element/ClickableModifier.copy|copy(kotlin.Function0<kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/ClickableModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/ClickableModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/ClickableModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/ClipModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/ClipModifier|null[0]
+    constructor <init>(androidx.compose.ui.graphics/Shape) // com.compose.desktop.native.element/ClipModifier.<init>|<init>(androidx.compose.ui.graphics.Shape){}[0]
+
+    final val shape // com.compose.desktop.native.element/ClipModifier.shape|{}shape[0]
+        final fun <get-shape>(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/ClipModifier.shape.<get-shape>|<get-shape>(){}[0]
+
+    final fun component1(): androidx.compose.ui.graphics/Shape // com.compose.desktop.native.element/ClipModifier.component1|component1(){}[0]
+    final fun copy(androidx.compose.ui.graphics/Shape = ...): com.compose.desktop.native.element/ClipModifier // com.compose.desktop.native.element/ClipModifier.copy|copy(androidx.compose.ui.graphics.Shape){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/ClipModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/ClipModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/ClipModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/DrawBehindModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/DrawBehindModifier|null[0]
+    constructor <init>(kotlin/Function1<androidx.compose.ui.graphics.drawscope/DrawScope, kotlin/Unit>) // com.compose.desktop.native.element/DrawBehindModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.graphics.drawscope.DrawScope,kotlin.Unit>){}[0]
+
+    final val onDraw // com.compose.desktop.native.element/DrawBehindModifier.onDraw|{}onDraw[0]
+        final fun <get-onDraw>(): kotlin/Function1<androidx.compose.ui.graphics.drawscope/DrawScope, kotlin/Unit> // com.compose.desktop.native.element/DrawBehindModifier.onDraw.<get-onDraw>|<get-onDraw>(){}[0]
+}
+
+final class com.compose.desktop.native.element/FocusableModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/FocusableModifier|null[0]
+    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // com.compose.desktop.native.element/FocusableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
+
+    final val onFocusChanged // com.compose.desktop.native.element/FocusableModifier.onFocusChanged|{}onFocusChanged[0]
+        final fun <get-onFocusChanged>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // com.compose.desktop.native.element/FocusableModifier.onFocusChanged.<get-onFocusChanged>|<get-onFocusChanged>(){}[0]
+}
+
+final class com.compose.desktop.native.element/GloballyPositionedModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/GloballyPositionedModifier|null[0]
+    constructor <init>(kotlin/Function1<androidx.compose.ui.unit/IntOffset, kotlin/Unit>) // com.compose.desktop.native.element/GloballyPositionedModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.unit.IntOffset,kotlin.Unit>){}[0]
+
+    final val onChange // com.compose.desktop.native.element/GloballyPositionedModifier.onChange|{}onChange[0]
+        final fun <get-onChange>(): kotlin/Function1<androidx.compose.ui.unit/IntOffset, kotlin/Unit> // com.compose.desktop.native.element/GloballyPositionedModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
+}
+
+final class com.compose.desktop.native.element/HorizontalScrollModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/HorizontalScrollModifier|null[0]
+    constructor <init>(androidx.compose.foundation/ScrollState) // com.compose.desktop.native.element/HorizontalScrollModifier.<init>|<init>(androidx.compose.foundation.ScrollState){}[0]
+
+    final val state // com.compose.desktop.native.element/HorizontalScrollModifier.state|{}state[0]
+        final fun <get-state>(): androidx.compose.foundation/ScrollState // com.compose.desktop.native.element/HorizontalScrollModifier.state.<get-state>|<get-state>(){}[0]
+}
+
+final class com.compose.desktop.native.element/HoverableModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/HoverableModifier|null[0]
+    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // com.compose.desktop.native.element/HoverableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
+
+    final val onChange // com.compose.desktop.native.element/HoverableModifier.onChange|{}onChange[0]
+        final fun <get-onChange>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // com.compose.desktop.native.element/HoverableModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
+}
+
+final class com.compose.desktop.native.element/KeyEventDispatch { // com.compose.desktop.native.element/KeyEventDispatch|null[0]
+    constructor <init>(androidx.compose.ui.input.key/KeyEvent) // com.compose.desktop.native.element/KeyEventDispatch.<init>|<init>(androidx.compose.ui.input.key.KeyEvent){}[0]
+
+    final val key // com.compose.desktop.native.element/KeyEventDispatch.key|{}key[0]
+        final fun <get-key>(): androidx.compose.ui.input.key/KeyEvent // com.compose.desktop.native.element/KeyEventDispatch.key.<get-key>|<get-key>(){}[0]
+}
+
+final class com.compose.desktop.native.element/LayoutWeightModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/LayoutWeightModifier|null[0]
+    constructor <init>(kotlin/Float, kotlin/Boolean) // com.compose.desktop.native.element/LayoutWeightModifier.<init>|<init>(kotlin.Float;kotlin.Boolean){}[0]
+
+    final val fill // com.compose.desktop.native.element/LayoutWeightModifier.fill|{}fill[0]
+        final fun <get-fill>(): kotlin/Boolean // com.compose.desktop.native.element/LayoutWeightModifier.fill.<get-fill>|<get-fill>(){}[0]
+    final val weight // com.compose.desktop.native.element/LayoutWeightModifier.weight|{}weight[0]
+        final fun <get-weight>(): kotlin/Float // com.compose.desktop.native.element/LayoutWeightModifier.weight.<get-weight>|<get-weight>(){}[0]
+
+    final fun component1(): kotlin/Float // com.compose.desktop.native.element/LayoutWeightModifier.component1|component1(){}[0]
+    final fun component2(): kotlin/Boolean // com.compose.desktop.native.element/LayoutWeightModifier.component2|component2(){}[0]
+    final fun copy(kotlin/Float = ..., kotlin/Boolean = ...): com.compose.desktop.native.element/LayoutWeightModifier // com.compose.desktop.native.element/LayoutWeightModifier.copy|copy(kotlin.Float;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/LayoutWeightModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/LayoutWeightModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/LayoutWeightModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/MiddleClickModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/MiddleClickModifier|null[0]
+    constructor <init>(kotlin/Function0<kotlin/Unit>) // com.compose.desktop.native.element/MiddleClickModifier.<init>|<init>(kotlin.Function0<kotlin.Unit>){}[0]
+
+    final val onClick // com.compose.desktop.native.element/MiddleClickModifier.onClick|{}onClick[0]
+        final fun <get-onClick>(): kotlin/Function0<kotlin/Unit> // com.compose.desktop.native.element/MiddleClickModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
+
+    final fun component1(): kotlin/Function0<kotlin/Unit> // com.compose.desktop.native.element/MiddleClickModifier.component1|component1(){}[0]
+    final fun copy(kotlin/Function0<kotlin/Unit> = ...): com.compose.desktop.native.element/MiddleClickModifier // com.compose.desktop.native.element/MiddleClickModifier.copy|copy(kotlin.Function0<kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/MiddleClickModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/MiddleClickModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/MiddleClickModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/OffsetModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OffsetModifier|null[0]
+    constructor <init>(kotlin/Int, kotlin/Int) // com.compose.desktop.native.element/OffsetModifier.<init>|<init>(kotlin.Int;kotlin.Int){}[0]
+
+    final val x // com.compose.desktop.native.element/OffsetModifier.x|{}x[0]
+        final fun <get-x>(): kotlin/Int // com.compose.desktop.native.element/OffsetModifier.x.<get-x>|<get-x>(){}[0]
+    final val y // com.compose.desktop.native.element/OffsetModifier.y|{}y[0]
+        final fun <get-y>(): kotlin/Int // com.compose.desktop.native.element/OffsetModifier.y.<get-y>|<get-y>(){}[0]
+
+    final fun component1(): kotlin/Int // com.compose.desktop.native.element/OffsetModifier.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.compose.desktop.native.element/OffsetModifier.component2|component2(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ...): com.compose.desktop.native.element/OffsetModifier // com.compose.desktop.native.element/OffsetModifier.copy|copy(kotlin.Int;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/OffsetModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/OffsetModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/OffsetModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/OnDragModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OnDragModifier|null[0]
+    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>, kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>, kotlin/Function0<kotlin/Unit>) // com.compose.desktop.native.element/OnDragModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function0<kotlin.Unit>){}[0]
+
+    final val onDrag // com.compose.desktop.native.element/OnDragModifier.onDrag|{}onDrag[0]
+        final fun <get-onDrag>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // com.compose.desktop.native.element/OnDragModifier.onDrag.<get-onDrag>|<get-onDrag>(){}[0]
+    final val onEnd // com.compose.desktop.native.element/OnDragModifier.onEnd|{}onEnd[0]
+        final fun <get-onEnd>(): kotlin/Function0<kotlin/Unit> // com.compose.desktop.native.element/OnDragModifier.onEnd.<get-onEnd>|<get-onEnd>(){}[0]
+    final val onStart // com.compose.desktop.native.element/OnDragModifier.onStart|{}onStart[0]
+        final fun <get-onStart>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // com.compose.desktop.native.element/OnDragModifier.onStart.<get-onStart>|<get-onStart>(){}[0]
+}
+
+final class com.compose.desktop.native.element/OnKeyEventModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OnKeyEventModifier|null[0]
+    constructor <init>(kotlin/Function1<com.compose.desktop.native.element/KeyEventDispatch, kotlin/Boolean>) // com.compose.desktop.native.element/OnKeyEventModifier.<init>|<init>(kotlin.Function1<com.compose.desktop.native.element.KeyEventDispatch,kotlin.Boolean>){}[0]
+
+    final val handler // com.compose.desktop.native.element/OnKeyEventModifier.handler|{}handler[0]
+        final fun <get-handler>(): kotlin/Function1<com.compose.desktop.native.element/KeyEventDispatch, kotlin/Boolean> // com.compose.desktop.native.element/OnKeyEventModifier.handler.<get-handler>|<get-handler>(){}[0]
+}
+
+final class com.compose.desktop.native.element/OnPressedModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OnPressedModifier|null[0]
+    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>) // com.compose.desktop.native.element/OnPressedModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
+
+    final val handler // com.compose.desktop.native.element/OnPressedModifier.handler|{}handler[0]
+        final fun <get-handler>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // com.compose.desktop.native.element/OnPressedModifier.handler.<get-handler>|<get-handler>(){}[0]
+}
+
+final class com.compose.desktop.native.element/OnSizeChangedModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OnSizeChangedModifier|null[0]
+    constructor <init>(kotlin/Function1<androidx.compose.ui.unit/IntSize, kotlin/Unit>) // com.compose.desktop.native.element/OnSizeChangedModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.unit.IntSize,kotlin.Unit>){}[0]
+
+    final val onChange // com.compose.desktop.native.element/OnSizeChangedModifier.onChange|{}onChange[0]
+        final fun <get-onChange>(): kotlin/Function1<androidx.compose.ui.unit/IntSize, kotlin/Unit> // com.compose.desktop.native.element/OnSizeChangedModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
+}
+
+final class com.compose.desktop.native.element/OnTextInputModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/OnTextInputModifier|null[0]
+    constructor <init>(kotlin/Function1<kotlin/String, kotlin/Unit>) // com.compose.desktop.native.element/OnTextInputModifier.<init>|<init>(kotlin.Function1<kotlin.String,kotlin.Unit>){}[0]
+
+    final val handler // com.compose.desktop.native.element/OnTextInputModifier.handler|{}handler[0]
+        final fun <get-handler>(): kotlin/Function1<kotlin/String, kotlin/Unit> // com.compose.desktop.native.element/OnTextInputModifier.handler.<get-handler>|<get-handler>(){}[0]
+}
+
+final class com.compose.desktop.native.element/PaddingModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/PaddingModifier|null[0]
+    constructor <init>(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...) // com.compose.desktop.native.element/PaddingModifier.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+
+    final val bottom // com.compose.desktop.native.element/PaddingModifier.bottom|{}bottom[0]
+        final fun <get-bottom>(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.bottom.<get-bottom>|<get-bottom>(){}[0]
+    final val end // com.compose.desktop.native.element/PaddingModifier.end|{}end[0]
+        final fun <get-end>(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.end.<get-end>|<get-end>(){}[0]
+    final val start // com.compose.desktop.native.element/PaddingModifier.start|{}start[0]
+        final fun <get-start>(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.start.<get-start>|<get-start>(){}[0]
+    final val top // com.compose.desktop.native.element/PaddingModifier.top|{}top[0]
+        final fun <get-top>(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.top.<get-top>|<get-top>(){}[0]
+
+    final fun component1(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.component3|component3(){}[0]
+    final fun component4(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.component4|component4(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): com.compose.desktop.native.element/PaddingModifier // com.compose.desktop.native.element/PaddingModifier.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/PaddingModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/PaddingModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/PaddingModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/PressableModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/PressableModifier|null[0]
+    constructor <init>(kotlin/Function1<kotlin/Boolean, kotlin/Unit>) // com.compose.desktop.native.element/PressableModifier.<init>|<init>(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
+
+    final val onChange // com.compose.desktop.native.element/PressableModifier.onChange|{}onChange[0]
+        final fun <get-onChange>(): kotlin/Function1<kotlin/Boolean, kotlin/Unit> // com.compose.desktop.native.element/PressableModifier.onChange.<get-onChange>|<get-onChange>(){}[0]
+}
+
+final class com.compose.desktop.native.element/SecondaryClickModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/SecondaryClickModifier|null[0]
+    constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit>) // com.compose.desktop.native.element/SecondaryClickModifier.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
+
+    final val onClick // com.compose.desktop.native.element/SecondaryClickModifier.onClick|{}onClick[0]
+        final fun <get-onClick>(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // com.compose.desktop.native.element/SecondaryClickModifier.onClick.<get-onClick>|<get-onClick>(){}[0]
+
+    final fun component1(): kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> // com.compose.desktop.native.element/SecondaryClickModifier.component1|component1(){}[0]
+    final fun copy(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> = ...): com.compose.desktop.native.element/SecondaryClickModifier // com.compose.desktop.native.element/SecondaryClickModifier.copy|copy(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/SecondaryClickModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/SecondaryClickModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/SecondaryClickModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/SizeModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/SizeModifier|null[0]
+    constructor <init>(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...) // com.compose.desktop.native.element/SizeModifier.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val fillMaxHeight // com.compose.desktop.native.element/SizeModifier.fillMaxHeight|{}fillMaxHeight[0]
+        final fun <get-fillMaxHeight>(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.fillMaxHeight.<get-fillMaxHeight>|<get-fillMaxHeight>(){}[0]
+    final val fillMaxWidth // com.compose.desktop.native.element/SizeModifier.fillMaxWidth|{}fillMaxWidth[0]
+        final fun <get-fillMaxWidth>(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.fillMaxWidth.<get-fillMaxWidth>|<get-fillMaxWidth>(){}[0]
+    final val height // com.compose.desktop.native.element/SizeModifier.height|{}height[0]
+        final fun <get-height>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.height.<get-height>|<get-height>(){}[0]
+    final val isDefaultMin // com.compose.desktop.native.element/SizeModifier.isDefaultMin|{}isDefaultMin[0]
+        final fun <get-isDefaultMin>(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.isDefaultMin.<get-isDefaultMin>|<get-isDefaultMin>(){}[0]
+    final val maxHeight // com.compose.desktop.native.element/SizeModifier.maxHeight|{}maxHeight[0]
+        final fun <get-maxHeight>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.maxHeight.<get-maxHeight>|<get-maxHeight>(){}[0]
+    final val maxWidth // com.compose.desktop.native.element/SizeModifier.maxWidth|{}maxWidth[0]
+        final fun <get-maxWidth>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.maxWidth.<get-maxWidth>|<get-maxWidth>(){}[0]
+    final val minHeight // com.compose.desktop.native.element/SizeModifier.minHeight|{}minHeight[0]
+        final fun <get-minHeight>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.minHeight.<get-minHeight>|<get-minHeight>(){}[0]
+    final val minWidth // com.compose.desktop.native.element/SizeModifier.minWidth|{}minWidth[0]
+        final fun <get-minWidth>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.minWidth.<get-minWidth>|<get-minWidth>(){}[0]
+    final val width // com.compose.desktop.native.element/SizeModifier.width|{}width[0]
+        final fun <get-width>(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.width.<get-width>|<get-width>(){}[0]
+
+    final fun component1(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component1|component1(){}[0]
+    final fun component2(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component3|component3(){}[0]
+    final fun component4(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component4|component4(){}[0]
+    final fun component5(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component5|component5(){}[0]
+    final fun component6(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.component6|component6(){}[0]
+    final fun component7(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.component7|component7(){}[0]
+    final fun component8(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.component8|component8(){}[0]
+    final fun component9(): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.component9|component9(){}[0]
+    final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Boolean = ..., kotlin/Boolean = ..., kotlin/Boolean = ...): com.compose.desktop.native.element/SizeModifier // com.compose.desktop.native.element/SizeModifier.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // com.compose.desktop.native.element/SizeModifier.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // com.compose.desktop.native.element/SizeModifier.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // com.compose.desktop.native.element/SizeModifier.toString|toString(){}[0]
+}
+
+final class com.compose.desktop.native.element/VerticalScrollModifier : androidx.compose.ui/Modifier.Element { // com.compose.desktop.native.element/VerticalScrollModifier|null[0]
+    constructor <init>(androidx.compose.foundation/ScrollState) // com.compose.desktop.native.element/VerticalScrollModifier.<init>|<init>(androidx.compose.foundation.ScrollState){}[0]
+
+    final val state // com.compose.desktop.native.element/VerticalScrollModifier.state|{}state[0]
+        final fun <get-state>(): androidx.compose.foundation/ScrollState // com.compose.desktop.native.element/VerticalScrollModifier.state.<get-state>|<get-state>(){}[0]
 }
 
 final class com.compose.desktop.native.text/ColorRun { // com.compose.desktop.native.text/ColorRun|null[0]
@@ -3470,31 +3470,31 @@ final val androidx.compose.ui.unit/sp // androidx.compose.ui.unit/sp|@kotlin.Int
 final val androidx.compose.ui.unit/width // androidx.compose.ui.unit/width|@androidx.compose.ui.unit.DpRect{}width[0]
     final inline fun (androidx.compose.ui.unit/DpRect).<get-width>(): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/width.<get-width>|<get-width>@androidx.compose.ui.unit.DpRect(){}[0]
 final val androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop // androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop|#static{}androidx_compose_ui_window_PopupProperties$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop // androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop|#static{}androidx_compose_ui_AlphaModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop // androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop|#static{}androidx_compose_ui_BackgroundModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop // androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop|#static{}androidx_compose_ui_BorderModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_ClickableModifier$stableprop // androidx.compose.ui/androidx_compose_ui_ClickableModifier$stableprop|#static{}androidx_compose_ui_ClickableModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_ClipModifier$stableprop // androidx.compose.ui/androidx_compose_ui_ClipModifier$stableprop|#static{}androidx_compose_ui_ClipModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_DrawBehindModifier$stableprop // androidx.compose.ui/androidx_compose_ui_DrawBehindModifier$stableprop|#static{}androidx_compose_ui_DrawBehindModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_FocusableModifier$stableprop // androidx.compose.ui/androidx_compose_ui_FocusableModifier$stableprop|#static{}androidx_compose_ui_FocusableModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_GloballyPositionedModifier$stableprop // androidx.compose.ui/androidx_compose_ui_GloballyPositionedModifier$stableprop|#static{}androidx_compose_ui_GloballyPositionedModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_HorizontalScrollModifier$stableprop // androidx.compose.ui/androidx_compose_ui_HorizontalScrollModifier$stableprop|#static{}androidx_compose_ui_HorizontalScrollModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_HoverableModifier$stableprop // androidx.compose.ui/androidx_compose_ui_HoverableModifier$stableprop|#static{}androidx_compose_ui_HoverableModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_KeyEventDispatch$stableprop // androidx.compose.ui/androidx_compose_ui_KeyEventDispatch$stableprop|#static{}androidx_compose_ui_KeyEventDispatch$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_LayoutWeightModifier$stableprop // androidx.compose.ui/androidx_compose_ui_LayoutWeightModifier$stableprop|#static{}androidx_compose_ui_LayoutWeightModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_MiddleClickModifier$stableprop // androidx.compose.ui/androidx_compose_ui_MiddleClickModifier$stableprop|#static{}androidx_compose_ui_MiddleClickModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OffsetModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OffsetModifier$stableprop|#static{}androidx_compose_ui_OffsetModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OnDragModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OnDragModifier$stableprop|#static{}androidx_compose_ui_OnDragModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OnKeyEventModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OnKeyEventModifier$stableprop|#static{}androidx_compose_ui_OnKeyEventModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OnPressedModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OnPressedModifier$stableprop|#static{}androidx_compose_ui_OnPressedModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OnSizeChangedModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OnSizeChangedModifier$stableprop|#static{}androidx_compose_ui_OnSizeChangedModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_OnTextInputModifier$stableprop // androidx.compose.ui/androidx_compose_ui_OnTextInputModifier$stableprop|#static{}androidx_compose_ui_OnTextInputModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_PaddingModifier$stableprop // androidx.compose.ui/androidx_compose_ui_PaddingModifier$stableprop|#static{}androidx_compose_ui_PaddingModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_PressableModifier$stableprop // androidx.compose.ui/androidx_compose_ui_PressableModifier$stableprop|#static{}androidx_compose_ui_PressableModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_SecondaryClickModifier$stableprop // androidx.compose.ui/androidx_compose_ui_SecondaryClickModifier$stableprop|#static{}androidx_compose_ui_SecondaryClickModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_SizeModifier$stableprop // androidx.compose.ui/androidx_compose_ui_SizeModifier$stableprop|#static{}androidx_compose_ui_SizeModifier$stableprop[0]
-final val androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop // androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop|#static{}androidx_compose_ui_VerticalScrollModifier$stableprop[0]
 final val androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop // androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop|#static{}androidx_compose_ui_ZIndexModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_AlphaModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_AlphaModifier$stableprop|#static{}com_compose_desktop_native_element_AlphaModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_BackgroundModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_BackgroundModifier$stableprop|#static{}com_compose_desktop_native_element_BackgroundModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_BorderModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_BorderModifier$stableprop|#static{}com_compose_desktop_native_element_BorderModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_ClickableModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_ClickableModifier$stableprop|#static{}com_compose_desktop_native_element_ClickableModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_ClipModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_ClipModifier$stableprop|#static{}com_compose_desktop_native_element_ClipModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_DrawBehindModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_DrawBehindModifier$stableprop|#static{}com_compose_desktop_native_element_DrawBehindModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_FocusableModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_FocusableModifier$stableprop|#static{}com_compose_desktop_native_element_FocusableModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_GloballyPositionedModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_GloballyPositionedModifier$stableprop|#static{}com_compose_desktop_native_element_GloballyPositionedModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_HorizontalScrollModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_HorizontalScrollModifier$stableprop|#static{}com_compose_desktop_native_element_HorizontalScrollModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_HoverableModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_HoverableModifier$stableprop|#static{}com_compose_desktop_native_element_HoverableModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_KeyEventDispatch$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_KeyEventDispatch$stableprop|#static{}com_compose_desktop_native_element_KeyEventDispatch$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_LayoutWeightModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_LayoutWeightModifier$stableprop|#static{}com_compose_desktop_native_element_LayoutWeightModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_MiddleClickModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_MiddleClickModifier$stableprop|#static{}com_compose_desktop_native_element_MiddleClickModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OffsetModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OffsetModifier$stableprop|#static{}com_compose_desktop_native_element_OffsetModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OnDragModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OnDragModifier$stableprop|#static{}com_compose_desktop_native_element_OnDragModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OnKeyEventModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OnKeyEventModifier$stableprop|#static{}com_compose_desktop_native_element_OnKeyEventModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OnPressedModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OnPressedModifier$stableprop|#static{}com_compose_desktop_native_element_OnPressedModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OnSizeChangedModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OnSizeChangedModifier$stableprop|#static{}com_compose_desktop_native_element_OnSizeChangedModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_OnTextInputModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_OnTextInputModifier$stableprop|#static{}com_compose_desktop_native_element_OnTextInputModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_PaddingModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_PaddingModifier$stableprop|#static{}com_compose_desktop_native_element_PaddingModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_PressableModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_PressableModifier$stableprop|#static{}com_compose_desktop_native_element_PressableModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_SecondaryClickModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_SecondaryClickModifier$stableprop|#static{}com_compose_desktop_native_element_SecondaryClickModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_SizeModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_SizeModifier$stableprop|#static{}com_compose_desktop_native_element_SizeModifier$stableprop[0]
+final val com.compose.desktop.native.element/com_compose_desktop_native_element_VerticalScrollModifier$stableprop // com.compose.desktop.native.element/com_compose_desktop_native_element_VerticalScrollModifier$stableprop|#static{}com_compose_desktop_native_element_VerticalScrollModifier$stableprop[0]
 final val com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop // com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop|#static{}com_compose_desktop_native_icons_IconFont$stableprop[0]
 final val com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop // com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop|#static{}com_compose_desktop_native_scroll_ScrollAnimator$stableprop[0]
 final val com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop // com.compose.desktop.native.text/com_compose_desktop_native_text_ColorRun$stableprop|#static{}com_compose_desktop_native_text_ColorRun$stableprop[0]
@@ -3624,7 +3624,7 @@ final fun (androidx.compose.ui/Modifier).androidx.compose.ui.draw/scale(kotlin/F
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.focus/focusRequester(androidx.compose.ui.focus/FocusRequester): androidx.compose.ui/Modifier // androidx.compose.ui.focus/focusRequester|focusRequester@androidx.compose.ui.Modifier(androidx.compose.ui.focus.FocusRequester){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.focus/onFocusChanged(kotlin/Function1<kotlin/Boolean, kotlin/Unit>): androidx.compose.ui/Modifier // androidx.compose.ui.focus/onFocusChanged|onFocusChanged@androidx.compose.ui.Modifier(kotlin.Function1<kotlin.Boolean,kotlin.Unit>){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.graphics/graphicsLayer(kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., androidx.compose.ui.graphics/TransformOrigin = ..., kotlin/Any? = ...): androidx.compose.ui/Modifier // androidx.compose.ui.graphics/graphicsLayer|graphicsLayer@androidx.compose.ui.Modifier(kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.graphics.TransformOrigin;kotlin.Any?){}[0]
-final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.key/onKeyEvent(kotlin/Function1<androidx.compose.ui/KeyEventDispatch, kotlin/Boolean>): androidx.compose.ui/Modifier // androidx.compose.ui.input.key/onKeyEvent|onKeyEvent@androidx.compose.ui.Modifier(kotlin.Function1<androidx.compose.ui.KeyEventDispatch,kotlin.Boolean>){}[0]
+final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.key/onKeyEvent(kotlin/Function1<com.compose.desktop.native.element/KeyEventDispatch, kotlin/Boolean>): androidx.compose.ui/Modifier // androidx.compose.ui.input.key/onKeyEvent|onKeyEvent@androidx.compose.ui.Modifier(kotlin.Function1<com.compose.desktop.native.element.KeyEventDispatch,kotlin.Boolean>){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.pointer/pointerInput(kotlin/Any?, kotlin.coroutines/SuspendFunction1<androidx.compose.ui.input.pointer/PointerInputScope, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.ui/Modifier // androidx.compose.ui.input.pointer/pointerInput|pointerInput@androidx.compose.ui.Modifier(kotlin.Any?;kotlin.coroutines.SuspendFunction1<androidx.compose.ui.input.pointer.PointerInputScope,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.pointer/pointerInput(kotlin/Any?, kotlin/Any?, kotlin.coroutines/SuspendFunction1<androidx.compose.ui.input.pointer/PointerInputScope, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.ui/Modifier // androidx.compose.ui.input.pointer/pointerInput|pointerInput@androidx.compose.ui.Modifier(kotlin.Any?;kotlin.Any?;kotlin.coroutines.SuspendFunction1<androidx.compose.ui.input.pointer.PointerInputScope,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.pointer/pointerInput(kotlin/Array<out kotlin/Any?>..., kotlin.coroutines/SuspendFunction1<androidx.compose.ui.input.pointer/PointerInputScope, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.ui/Modifier // androidx.compose.ui.input.pointer/pointerInput|pointerInput@androidx.compose.ui.Modifier(kotlin.Array<out|kotlin.Any?>...;kotlin.coroutines.SuspendFunction1<androidx.compose.ui.input.pointer.PointerInputScope,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
@@ -3836,31 +3836,31 @@ final fun androidx.compose.ui.util/lerp(kotlin/Int, kotlin/Int, kotlin/Float): k
 final fun androidx.compose.ui.util/lerp(kotlin/Long, kotlin/Long, kotlin/Float): kotlin/Long // androidx.compose.ui.util/lerp|lerp(kotlin.Long;kotlin.Long;kotlin.Float){}[0]
 final fun androidx.compose.ui.window/Popup(androidx.compose.ui/Alignment?, androidx.compose.ui.unit/IntOffset, kotlin/Function0<kotlin/Unit>?, androidx.compose.ui.window/PopupProperties?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.ui.window/Popup|Popup(androidx.compose.ui.Alignment?;androidx.compose.ui.unit.IntOffset;kotlin.Function0<kotlin.Unit>?;androidx.compose.ui.window.PopupProperties?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop_getter(): kotlin/Int // androidx.compose.ui.window/androidx_compose_ui_window_PopupProperties$stableprop_getter|androidx_compose_ui_window_PopupProperties$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_AlphaModifier$stableprop_getter|androidx_compose_ui_AlphaModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_BackgroundModifier$stableprop_getter|androidx_compose_ui_BackgroundModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_BorderModifier$stableprop_getter|androidx_compose_ui_BorderModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_ClickableModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_ClickableModifier$stableprop_getter|androidx_compose_ui_ClickableModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_ClipModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_ClipModifier$stableprop_getter|androidx_compose_ui_ClipModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_DrawBehindModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_DrawBehindModifier$stableprop_getter|androidx_compose_ui_DrawBehindModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_FocusableModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_FocusableModifier$stableprop_getter|androidx_compose_ui_FocusableModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_GloballyPositionedModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_GloballyPositionedModifier$stableprop_getter|androidx_compose_ui_GloballyPositionedModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_HorizontalScrollModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_HorizontalScrollModifier$stableprop_getter|androidx_compose_ui_HorizontalScrollModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_HoverableModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_HoverableModifier$stableprop_getter|androidx_compose_ui_HoverableModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_KeyEventDispatch$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_KeyEventDispatch$stableprop_getter|androidx_compose_ui_KeyEventDispatch$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_LayoutWeightModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_LayoutWeightModifier$stableprop_getter|androidx_compose_ui_LayoutWeightModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_MiddleClickModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_MiddleClickModifier$stableprop_getter|androidx_compose_ui_MiddleClickModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OffsetModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OffsetModifier$stableprop_getter|androidx_compose_ui_OffsetModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OnDragModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OnDragModifier$stableprop_getter|androidx_compose_ui_OnDragModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OnKeyEventModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OnKeyEventModifier$stableprop_getter|androidx_compose_ui_OnKeyEventModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OnPressedModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OnPressedModifier$stableprop_getter|androidx_compose_ui_OnPressedModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OnSizeChangedModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OnSizeChangedModifier$stableprop_getter|androidx_compose_ui_OnSizeChangedModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_OnTextInputModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_OnTextInputModifier$stableprop_getter|androidx_compose_ui_OnTextInputModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_PaddingModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_PaddingModifier$stableprop_getter|androidx_compose_ui_PaddingModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_PressableModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_PressableModifier$stableprop_getter|androidx_compose_ui_PressableModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_SecondaryClickModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_SecondaryClickModifier$stableprop_getter|androidx_compose_ui_SecondaryClickModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_SizeModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_SizeModifier$stableprop_getter|androidx_compose_ui_SizeModifier$stableprop_getter(){}[0]
-final fun androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_VerticalScrollModifier$stableprop_getter|androidx_compose_ui_VerticalScrollModifier$stableprop_getter(){}[0]
 final fun androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui/androidx_compose_ui_ZIndexModifier$stableprop_getter|androidx_compose_ui_ZIndexModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_AlphaModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_AlphaModifier$stableprop_getter|com_compose_desktop_native_element_AlphaModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_BackgroundModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_BackgroundModifier$stableprop_getter|com_compose_desktop_native_element_BackgroundModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_BorderModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_BorderModifier$stableprop_getter|com_compose_desktop_native_element_BorderModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_ClickableModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_ClickableModifier$stableprop_getter|com_compose_desktop_native_element_ClickableModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_ClipModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_ClipModifier$stableprop_getter|com_compose_desktop_native_element_ClipModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_DrawBehindModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_DrawBehindModifier$stableprop_getter|com_compose_desktop_native_element_DrawBehindModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_FocusableModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_FocusableModifier$stableprop_getter|com_compose_desktop_native_element_FocusableModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_GloballyPositionedModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_GloballyPositionedModifier$stableprop_getter|com_compose_desktop_native_element_GloballyPositionedModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_HorizontalScrollModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_HorizontalScrollModifier$stableprop_getter|com_compose_desktop_native_element_HorizontalScrollModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_HoverableModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_HoverableModifier$stableprop_getter|com_compose_desktop_native_element_HoverableModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_KeyEventDispatch$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_KeyEventDispatch$stableprop_getter|com_compose_desktop_native_element_KeyEventDispatch$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_LayoutWeightModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_LayoutWeightModifier$stableprop_getter|com_compose_desktop_native_element_LayoutWeightModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_MiddleClickModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_MiddleClickModifier$stableprop_getter|com_compose_desktop_native_element_MiddleClickModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OffsetModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OffsetModifier$stableprop_getter|com_compose_desktop_native_element_OffsetModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OnDragModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OnDragModifier$stableprop_getter|com_compose_desktop_native_element_OnDragModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OnKeyEventModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OnKeyEventModifier$stableprop_getter|com_compose_desktop_native_element_OnKeyEventModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OnPressedModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OnPressedModifier$stableprop_getter|com_compose_desktop_native_element_OnPressedModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OnSizeChangedModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OnSizeChangedModifier$stableprop_getter|com_compose_desktop_native_element_OnSizeChangedModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_OnTextInputModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_OnTextInputModifier$stableprop_getter|com_compose_desktop_native_element_OnTextInputModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_PaddingModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_PaddingModifier$stableprop_getter|com_compose_desktop_native_element_PaddingModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_PressableModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_PressableModifier$stableprop_getter|com_compose_desktop_native_element_PressableModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_SecondaryClickModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_SecondaryClickModifier$stableprop_getter|com_compose_desktop_native_element_SecondaryClickModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_SizeModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_SizeModifier$stableprop_getter|com_compose_desktop_native_element_SizeModifier$stableprop_getter(){}[0]
+final fun com.compose.desktop.native.element/com_compose_desktop_native_element_VerticalScrollModifier$stableprop_getter(): kotlin/Int // com.compose.desktop.native.element/com_compose_desktop_native_element_VerticalScrollModifier$stableprop_getter|com_compose_desktop_native_element_VerticalScrollModifier$stableprop_getter(){}[0]
 final fun com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop_getter(): kotlin/Int // com.compose.desktop.native.icons/com_compose_desktop_native_icons_IconFont$stableprop_getter|com_compose_desktop_native_icons_IconFont$stableprop_getter(){}[0]
 final fun com.compose.desktop.native.modifier/rememberMutableInteractionSource(androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.foundation.interaction/MutableInteractionSource // com.compose.desktop.native.modifier/rememberMutableInteractionSource|rememberMutableInteractionSource(androidx.compose.runtime.Composer?;kotlin.Int){}[0]
 final fun com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter(): kotlin/Int // com.compose.desktop.native.scroll/com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter|com_compose_desktop_native_scroll_ScrollAnimator$stableprop_getter(){}[0]

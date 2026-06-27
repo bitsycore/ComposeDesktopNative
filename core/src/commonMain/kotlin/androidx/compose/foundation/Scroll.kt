@@ -5,9 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.HorizontalScrollModifier
+import com.compose.desktop.native.element.HorizontalScrollModifier
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.VerticalScrollModifier
+import com.compose.desktop.native.element.VerticalScrollModifier
 import com.compose.desktop.native.scroll.ScrollAnimator
 import kotlin.math.roundToInt
 

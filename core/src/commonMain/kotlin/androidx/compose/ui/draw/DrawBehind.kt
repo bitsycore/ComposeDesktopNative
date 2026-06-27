@@ -1,6 +1,6 @@
 package androidx.compose.ui.draw
 
-import androidx.compose.ui.DrawBehindModifier
+import com.compose.desktop.native.element.DrawBehindModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.DrawScope
 

@@ -3,7 +3,7 @@ package androidx.compose.foundation.layout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ComposeNode
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.LayoutWeightModifier
+import com.compose.desktop.native.element.LayoutWeightModifier
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.LayoutNode
 import androidx.compose.ui.node.MeasurePolicy

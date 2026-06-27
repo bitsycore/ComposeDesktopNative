@@ -3,11 +3,11 @@ import androidx.compose.ui.zIndex
 
 import com.compose.desktop.native.*
 
-import androidx.compose.ui.BackgroundModifier
-import androidx.compose.ui.BorderModifier
-import androidx.compose.ui.ClipModifier
-import androidx.compose.ui.HorizontalScrollModifier
-import androidx.compose.ui.VerticalScrollModifier
+import com.compose.desktop.native.element.BackgroundModifier
+import com.compose.desktop.native.element.BorderModifier
+import com.compose.desktop.native.element.ClipModifier
+import com.compose.desktop.native.element.HorizontalScrollModifier
+import com.compose.desktop.native.element.VerticalScrollModifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.r8
 import androidx.compose.ui.graphics.g8
@@ -388,7 +388,7 @@ internal class Sdl3Renderer(
         //  so per-modifier draw order is preserved (later modifiers paint
         //  on top of earlier ones).
         inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is androidx.compose.ui.DrawBehindModifier) {
+            if (element is com.compose.desktop.native.element.DrawBehindModifier) {
                 val vScope = Sdl3DrawScope(
                     fRenderer = vRenderer,
                     fOriginX = vAx,

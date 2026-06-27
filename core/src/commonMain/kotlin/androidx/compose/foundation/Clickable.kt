@@ -1,7 +1,7 @@
 package androidx.compose.foundation
 
-import androidx.compose.ui.ClickableModifier
-import androidx.compose.ui.HoverableModifier
+import com.compose.desktop.native.element.ClickableModifier
+import com.compose.desktop.native.element.HoverableModifier
 import androidx.compose.ui.Modifier
 
 // ==================

@@ -2,12 +2,12 @@ package com.compose.desktop.native.renderer.skia
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 
-import androidx.compose.ui.BackgroundModifier
-import androidx.compose.ui.BorderModifier
-import androidx.compose.ui.ClipModifier
-import androidx.compose.ui.DrawBehindModifier
-import androidx.compose.ui.HorizontalScrollModifier
-import androidx.compose.ui.VerticalScrollModifier
+import com.compose.desktop.native.element.BackgroundModifier
+import com.compose.desktop.native.element.BorderModifier
+import com.compose.desktop.native.element.ClipModifier
+import com.compose.desktop.native.element.DrawBehindModifier
+import com.compose.desktop.native.element.HorizontalScrollModifier
+import com.compose.desktop.native.element.VerticalScrollModifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.GraphicsLayerModifier
 import androidx.compose.ui.graphics.Outline

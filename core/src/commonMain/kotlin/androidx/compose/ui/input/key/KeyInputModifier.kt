@@ -1,8 +1,8 @@
 package androidx.compose.ui.input.key
 
-import androidx.compose.ui.KeyEventDispatch
+import com.compose.desktop.native.element.KeyEventDispatch
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.OnKeyEventModifier
+import com.compose.desktop.native.element.OnKeyEventModifier
 
 // ==================
 // MARK: Modifier.onKeyEvent

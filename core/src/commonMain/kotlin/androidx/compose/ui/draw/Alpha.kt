@@ -1,7 +1,7 @@
 package androidx.compose.ui.draw
 
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.AlphaModifier
+import com.compose.desktop.native.element.AlphaModifier
 import androidx.compose.ui.Modifier
 
 // ==================

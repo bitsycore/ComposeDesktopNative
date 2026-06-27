@@ -1,6 +1,6 @@
 package androidx.compose.foundation.layout
 
-import androidx.compose.ui.LayoutWeightModifier
+import com.compose.desktop.native.element.LayoutWeightModifier
 import androidx.compose.ui.Modifier
 
 // ==================

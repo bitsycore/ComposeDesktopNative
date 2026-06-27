@@ -3,13 +3,13 @@ package com.compose.desktop.native.modifier
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.MiddleClickModifier
+import com.compose.desktop.native.element.MiddleClickModifier
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.OnDragModifier
-import androidx.compose.ui.OnPressedModifier
-import androidx.compose.ui.OnTextInputModifier
-import androidx.compose.ui.PressableModifier
-import androidx.compose.ui.SecondaryClickModifier
+import com.compose.desktop.native.element.OnDragModifier
+import com.compose.desktop.native.element.OnPressedModifier
+import com.compose.desktop.native.element.OnTextInputModifier
+import com.compose.desktop.native.element.PressableModifier
+import com.compose.desktop.native.element.SecondaryClickModifier
 
 // ==================
 // MARK: Non-official Modifier extensions ("layer on top")

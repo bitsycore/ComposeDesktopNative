@@ -7,11 +7,11 @@ import androidx.compose.runtime.Composition
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.Snapshot
-import androidx.compose.ui.KeyEventDispatch
+import com.compose.desktop.native.element.KeyEventDispatch
 import androidx.compose.ui.Modifier
 import com.compose.desktop.native.scroll.ScrollAnimator
-import androidx.compose.ui.OnDragModifier
-import androidx.compose.ui.OnPressedModifier
+import com.compose.desktop.native.element.OnDragModifier
+import com.compose.desktop.native.element.OnPressedModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -179,7 +179,7 @@ fun nativeComposeWindow(
             override fun focusOnNode(node: LayoutNode) {
                 var vCallback: ((Boolean) -> Unit)? = null
                 node.modifier.foldIn(Unit) { _, vEl ->
-                    if (vEl is androidx.compose.ui.FocusableModifier) vCallback = vEl.onFocusChanged
+                    if (vEl is com.compose.desktop.native.element.FocusableModifier) vCallback = vEl.onFocusChanged
                 }
                 setFocus(node, vCallback)
             }
