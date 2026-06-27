@@ -52,8 +52,8 @@ class LayoutNode {
        textColor), but measurement / wrap use the plain text, so a text field's
        cursor & selection math is unaffected. */
     var textSpans: List<androidx.compose.ui.text.Range<androidx.compose.ui.text.SpanStyle>>? = null
-    /* Pixel font size — Composables that take a Sp param resolve it to an
-       integer pixel count before storing here so the renderer never sees Sp. */
+    /* Pixel font size — Composables that take a TextUnit param resolve it to an
+       integer pixel count before storing here so the renderer never sees TextUnit. */
     var fontSize: Int = 16
     var textAlign: TextAlign = TextAlign.Start
     /* Whether text auto-wraps at constraints.maxWidth. BasicTextField sets

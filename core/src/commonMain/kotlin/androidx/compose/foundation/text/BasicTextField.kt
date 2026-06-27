@@ -33,7 +33,7 @@ import androidx.compose.ui.text.WrappedText
 import androidx.compose.ui.text.currentTextMeasurer
 import androidx.compose.ui.text.currentViewportHeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.time.TimeSource
@@ -56,7 +56,7 @@ fun BasicTextField(
     color: Color = Color.Black,
     cursorColor: Color = Color.Black,
     selectionColor: Color = Color(0x661E88E5L),
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     fontFamily: String? = null,
     visualTransform: ((String) -> AnnotatedString)? = null,
     enabled: Boolean = true,
@@ -96,7 +96,7 @@ fun BasicTextField(
     color: Color = Color.Black,
     cursorColor: Color = Color.Black,
     selectionColor: Color = Color(0x661E88E5L),
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     fontFamily: String? = null,
     visualTransform: ((String) -> AnnotatedString)? = null,
     enabled: Boolean = true,

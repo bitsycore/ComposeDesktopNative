@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.blend
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -58,9 +58,9 @@ data class TextFieldColors(
 object TextFieldDefaults {
     val MinHeight: Dp = 56.dp
     val MinWidth: Dp = 200.dp
-    val FontSize: Sp = 16.sp
-    val LabelFontSize: Sp = 12.sp
-    val SupportingFontSize: Sp = 12.sp
+    val FontSize: TextUnit = 16.sp
+    val LabelFontSize: TextUnit = 12.sp
+    val SupportingFontSize: TextUnit = 12.sp
 
     val FilledShape: Shape = RoundedCornerShape(4.dp)
     val OutlinedShape: Shape = RoundedCornerShape(4.dp)
@@ -122,7 +122,7 @@ fun TextField(
     placeholder: String? = null,
     supportingText: String? = null,
     isError: Boolean = false,
-    fontSize: Sp = TextFieldDefaults.FontSize,
+    fontSize: TextUnit = TextFieldDefaults.FontSize,
     shape: Shape = TextFieldDefaults.FilledShape,
     colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
 ) {
@@ -155,7 +155,7 @@ fun TextField(
     placeholder: String? = null,
     supportingText: String? = null,
     isError: Boolean = false,
-    fontSize: Sp = TextFieldDefaults.FontSize,
+    fontSize: TextUnit = TextFieldDefaults.FontSize,
     shape: Shape = TextFieldDefaults.FilledShape,
     colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
 ) {
@@ -185,7 +185,7 @@ fun OutlinedTextField(
     placeholder: String? = null,
     supportingText: String? = null,
     isError: Boolean = false,
-    fontSize: Sp = TextFieldDefaults.FontSize,
+    fontSize: TextUnit = TextFieldDefaults.FontSize,
     shape: Shape = TextFieldDefaults.OutlinedShape,
     colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
 ) {
@@ -218,7 +218,7 @@ fun OutlinedTextField(
     placeholder: String? = null,
     supportingText: String? = null,
     isError: Boolean = false,
-    fontSize: Sp = TextFieldDefaults.FontSize,
+    fontSize: TextUnit = TextFieldDefaults.FontSize,
     shape: Shape = TextFieldDefaults.OutlinedShape,
     colors: TextFieldColors = TextFieldDefaults.outlinedTextFieldColors(),
 ) {
@@ -248,7 +248,7 @@ private fun TextFieldImpl(
     placeholder: String?,
     supportingText: String?,
     isError: Boolean,
-    fontSize: Sp,
+    fontSize: TextUnit,
     shape: Shape,
     colors: TextFieldColors,
     outlined: Boolean,

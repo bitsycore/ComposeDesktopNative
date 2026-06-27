@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -61,7 +60,7 @@ fun Icon(
         Text(
             text = codepointToString(codepoint),
             color = tint,
-            fontSize = Sp(size.value),
+            fontSize = size.value.sp,
             fontFamily = fontFamily,
             fontVariationSettings = fontVariationSettings,
         )

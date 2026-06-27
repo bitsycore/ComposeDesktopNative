@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.TextUnit
 
 // ==================
 // MARK: SpanStyle / ParagraphStyle / TextStyle
@@ -19,20 +19,20 @@ import androidx.compose.ui.unit.Sp
    surrounding TextStyle. */
 data class SpanStyle(
 	val color: Color = Color.Unspecified,
-	val fontSize: Sp = Sp.Unspecified,
+	val fontSize: TextUnit = TextUnit.Unspecified,
 	val fontWeight: FontWeight? = null,
 	val fontStyle: FontStyle? = null,
 	val fontFamily: FontFamily? = null,
 	val textDecoration: TextDecoration? = null,
 	val background: Color = Color.Unspecified,
-	val letterSpacing: Sp = Sp.Unspecified,
+	val letterSpacing: TextUnit = TextUnit.Unspecified,
 )
 
 /* Paragraph-level style: text alignment, line height, max-width-based
    overflow. */
 data class ParagraphStyle(
 	val textAlign: TextAlign? = null,
-	val lineHeight: Sp = Sp.Unspecified,
+	val lineHeight: TextUnit = TextUnit.Unspecified,
 	val textIndent: Float = 0f,
 )
 
@@ -40,13 +40,13 @@ data class ParagraphStyle(
    defaults. */
 data class TextStyle(
 	val color: Color = Color.Unspecified,
-	val fontSize: Sp = Sp.Unspecified,
+	val fontSize: TextUnit = TextUnit.Unspecified,
 	val fontWeight: FontWeight? = null,
 	val fontStyle: FontStyle? = null,
 	val fontFamily: FontFamily? = null,
 	val textAlign: TextAlign? = null,
-	val lineHeight: Sp = Sp.Unspecified,
-	val letterSpacing: Sp = Sp.Unspecified,
+	val lineHeight: TextUnit = TextUnit.Unspecified,
+	val letterSpacing: TextUnit = TextUnit.Unspecified,
 	val textDecoration: TextDecoration? = null,
 ) {
 	companion object {

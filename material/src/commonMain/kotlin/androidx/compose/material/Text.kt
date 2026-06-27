@@ -14,7 +14,8 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 
 // ==================
@@ -26,7 +27,7 @@ fun Text(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colors.onBackground,
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
@@ -69,7 +70,7 @@ fun Text(
     text: AnnotatedString,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colors.onBackground,
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
@@ -90,7 +91,7 @@ fun Text(
                 } else for (vRun in vLine) {
                     val vStyle = vRun.style
                     val vColor = if (vStyle != null && vStyle.color != Color.Unspecified) vStyle.color else color
-                    val vSize = if (vStyle != null && vStyle.fontSize.value.isFinite()) vStyle.fontSize else fontSize
+                    val vSize = if (vStyle != null && vStyle.fontSize.isSpecified) vStyle.fontSize else fontSize
                     val vFamily = if (vStyle?.fontFamily != null) familyName(vStyle.fontFamily) ?: fontFamily else fontFamily
                     val vBgModifier = if (vStyle != null && vStyle.background != Color.Unspecified)
                         Modifier.background(vStyle.background) else Modifier

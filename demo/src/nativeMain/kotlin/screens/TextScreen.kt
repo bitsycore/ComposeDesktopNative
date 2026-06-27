@@ -14,7 +14,7 @@ internal fun TextScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ScreenTitle("Text", "fontSize / color / textAlign / softWrap")
 
-        Section("Font sizes", "All Sp-typed, scale with theme") {
+        Section("Font sizes", "All TextUnit-typed, scale with theme") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Default text", color = MaterialTheme.colors.onSurface)
                 Text("fontSize 12.sp", fontSize = 12.sp, color = MaterialTheme.colors.onSurface)

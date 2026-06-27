@@ -28,7 +28,7 @@ import androidx.compose.ui.text.currentViewportHeight
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
 // ==================
@@ -40,7 +40,7 @@ fun BasicText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.White,
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
@@ -60,7 +60,7 @@ fun BasicText(
     text: AnnotatedString,
     modifier: Modifier = Modifier,
     color: Color = Color.White,
-    fontSize: Sp = 16.sp,
+    fontSize: TextUnit = 16.sp,
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
@@ -84,7 +84,7 @@ private fun BasicTextLayer(
     spans: List<Range<SpanStyle>>?,
     modifier: Modifier,
     color: Color,
-    fontSize: Sp,
+    fontSize: TextUnit,
     textAlign: TextAlign,
     softWrap: Boolean,
     fontFamily: String?,
@@ -173,7 +173,7 @@ private fun TextLeaf(
     spans: List<Range<SpanStyle>>?,
     modifier: Modifier,
     color: Color,
-    fontSize: Sp,
+    fontSize: TextUnit,
     textAlign: TextAlign,
     softWrap: Boolean,
     fontFamily: String?,
