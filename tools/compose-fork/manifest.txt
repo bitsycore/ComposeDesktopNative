@@ -564,6 +564,11 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MutableVectorWithMu
 # fall back to a full measure).
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/IntrinsicMeasurable.kt                                             core/src/vendor/common/kotlin/androidx/compose/ui/layout/IntrinsicMeasurable.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measurable.kt                                                      core/src/vendor/common/kotlin/androidx/compose/ui/layout/Measurable.kt
+# IntrinsicMeasureScope (interface extends Density, holds layoutDirection)
+# + MeasureBlocks (deprecated). Pure leaf types depending only on
+# already-vendored Density / IntrinsicMeasurable / Measurable / MeasureScope.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/IntrinsicMeasureScope.kt                                           core/src/vendor/common/kotlin/androidx/compose/ui/layout/IntrinsicMeasureScope.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MeasureBlocks.kt                                                     core/src/vendor/common/kotlin/androidx/compose/ui/node/MeasureBlocks.kt
 # InteropView / InteroperableComposeUiNode skipped — the macos actual
 # carries an `internal actual typealias InteropViewGroup` whose expect
 # lives in InteropView.skiko.kt (which has deep deps we'd need to port),
@@ -571,6 +576,12 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measurable.kt    
 # Not needed — these support a layout-inspector hook (Studio) we don't have.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusDirection.kt                                                   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusDirection.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/modifier/ModifierLocal.kt                                                 core/src/vendor/common/kotlin/androidx/compose/ui/modifier/ModifierLocal.kt
+# ModifierLocalConsumer + ModifierLocalProvider — pure Modifier.Element
+# based (no node-engine deps), use our existing InspectorInfo helpers.
+# Provides the `Modifier.modifierLocalConsumer { ... }` and
+# `Modifier.modifierLocalProvider(key) { value }` factory functions.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/modifier/ModifierLocalConsumer.kt                                          core/src/vendor/common/kotlin/androidx/compose/ui/modifier/ModifierLocalConsumer.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/modifier/ModifierLocalProvider.kt                                          core/src/vendor/common/kotlin/androidx/compose/ui/modifier/ModifierLocalProvider.kt
 # ui.text.platform.Dispatcher — single internal val.
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/platform/Dispatcher.kt                                          core/src/vendor/common/kotlin/androidx/compose/ui/text/platform/Dispatcher.kt
 
