@@ -20,8 +20,9 @@ sealed class Brush {
 }
 
 /* The Brush for a single flat colour — created implicitly when a draw
-   call takes a Color. */
-data class SolidColor(val color: Color) : Brush()
+   call takes a Color. Field name `value` (not `color`) matches upstream
+   `class SolidColor(val value: Color) : Brush()`. */
+data class SolidColor(val value: Color) : Brush()
 
 /* Linear gradient. start and end are anchor points in the *shape's* local
    coordinate space (DrawScope's coordinates). When start.x = -1 or end.x

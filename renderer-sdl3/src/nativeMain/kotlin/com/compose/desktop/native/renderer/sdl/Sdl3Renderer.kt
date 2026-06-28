@@ -14,9 +14,12 @@ import androidx.compose.ui.graphics.g8
 import androidx.compose.ui.graphics.b8
 import androidx.compose.ui.graphics.a8
 import com.compose.desktop.native.element.GraphicsLayerModifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import com.compose.desktop.native.node.LayoutNode
 import kotlinx.cinterop.*
 import sdl3.*
@@ -46,6 +49,10 @@ internal class Sdl3Renderer(
     private val kClearR: UByte = 0x12u
     private val kClearG: UByte = 0x12u
     private val kClearB: UByte = 0x12u
+
+    // Shapes resolve their outlines at density = 1; the renderer paints in
+    // logical points (HiDPI applied via SDL_SetRenderScale in beginFrame).
+    private val kShapeDensity = Density(1f)
 
     // Offscreen layer pool for Modifier.alpha + graphicsLayer transforms.
     // Each entry is a window-physical-sized TARGET texture; pool grows with
@@ -363,7 +370,7 @@ internal class Sdl3Renderer(
         inNode.modifier.foldIn(Unit) { _, element ->
             if (element is BackgroundModifier && element.color.alpha > 0f) {
                 setColor(vRenderer, element.color)
-                fillOutline(vRenderer, vAx, vAy, vW, vH, element.shape.outline(inNode.width, inNode.height))
+                fillOutline(vRenderer, vAx, vAy, vW, vH, element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity))
             }
         }
 
@@ -375,7 +382,7 @@ internal class Sdl3Renderer(
                 strokeOutline(
                     vRenderer,
                     vAx, vAy, vW, vH,
-                    element.shape.outline(inNode.width, inNode.height),
+                    element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity),
                     element.width.toFloat(),
                 )
             }
@@ -560,7 +567,10 @@ internal class Sdl3Renderer(
     ) {
         when (inOutline) {
             is Outline.Rectangle -> fillRect(inRenderer, inX, inY, inW, inH)
-            is Outline.RoundedRect -> fillRoundedRect(inRenderer, inX, inY, inW, inH, inOutline.cornerRadius.toFloat())
+            is Outline.Rounded -> fillRoundedRect(inRenderer, inX, inY, inW, inH, inOutline.roundRect.bottomLeftCornerRadius.x)
+            is Outline.Generic -> {
+                // No built-in shape produces Generic outlines yet.
+            }
         }
     }
 
@@ -575,7 +585,8 @@ internal class Sdl3Renderer(
     ) {
         val vR = when (inOutline) {
             is Outline.Rectangle -> 0f
-            is Outline.RoundedRect -> inOutline.cornerRadius.toFloat()
+            is Outline.Rounded -> inOutline.roundRect.bottomLeftCornerRadius.x
+            is Outline.Generic -> 0f
         }.coerceAtMost(kotlin.math.min(inW, inH) / 2f)
 
         // Straight edges: top, bottom, left, right strips, inset by the

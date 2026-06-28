@@ -13,6 +13,8 @@ import com.compose.desktop.native.element.GraphicsLayerModifier
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import com.compose.desktop.native.node.LayoutNode
 import org.jetbrains.skia.Canvas
 import org.jetbrains.skia.Image
@@ -32,6 +34,9 @@ class SkiaRenderer internal constructor(
 ) {
 
     private val kClearColor = 0xFF121212.toInt() // matches Material dark background
+    // Renderer paints in logical points; HiDPI scaling is applied separately in
+    // beginFrame, so shapes resolve their outlines at density = 1.
+    private val kShapeDensity = Density(1f)
 
     // Per-node cached subtree image, keyed by the GraphicsLayer's cacheKey.
     // Held by LayoutNode identity. Subject to a coarse cleanup pass each
@@ -200,7 +205,7 @@ class SkiaRenderer internal constructor(
                     isAntiAlias = true
                     mode = PaintMode.FILL
                 }
-                drawOutline(inCanvas, vAx, vAy, vW, vH, element.shape.outline(inNode.width, inNode.height), vPaint)
+                drawOutline(inCanvas, vAx, vAy, vW, vH, element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity), vPaint)
                 vPaint.close()
             }
         }
@@ -222,7 +227,7 @@ class SkiaRenderer internal constructor(
                     inCanvas,
                     vAx + vInset, vAy + vInset,
                     vW - element.width.toFloat(), vH - element.width.toFloat(),
-                    element.shape.outline(inNode.width, inNode.height),
+                    element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity),
                     vPaint,
                     cornerRadiusAdjust = -vInset
                 )
@@ -311,7 +316,7 @@ class SkiaRenderer internal constructor(
             inNode.children.sortedBy { it.zIndex } else inNode.children
         if (vChildClip != null && inNode.children.isNotEmpty()) {
             inCanvas.save()
-            applyClip(inCanvas, vAx, vAy, vW, vH, vChildClip.outline(inNode.width, inNode.height))
+            applyClip(inCanvas, vAx, vAy, vW, vH, vChildClip.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity))
             for (child in vChildren) drawNode(child, inCanvas)
             inCanvas.restore()
         } else {
@@ -331,13 +336,16 @@ class SkiaRenderer internal constructor(
             is Outline.Rectangle -> {
                 inCanvas.clipRect(Rect.makeXYWH(inX, inY, inW, inH), antiAlias = true)
             }
-            is Outline.RoundedRect -> {
-                val vRad = inOutline.cornerRadius.toFloat()
+            is Outline.Rounded -> {
+                val vRad = inOutline.roundRect.bottomLeftCornerRadius.x
                 if (vRad <= 0f) {
                     inCanvas.clipRect(Rect.makeXYWH(inX, inY, inW, inH), antiAlias = true)
                 } else {
                     inCanvas.clipRRect(RRect.makeXYWH(inX, inY, inW, inH, vRad), antiAlias = true)
                 }
+            }
+            is Outline.Generic -> {
+                // Generic paths aren't used by the built-in shapes; skip clip.
             }
         }
     }
@@ -357,13 +365,16 @@ class SkiaRenderer internal constructor(
             is Outline.Rectangle -> {
                 inCanvas.drawRect(Rect.makeXYWH(inX, inY, inW, inH), inPaint)
             }
-            is Outline.RoundedRect -> {
-                val vRad = (inOutline.cornerRadius.toFloat() + cornerRadiusAdjust).coerceAtLeast(0f)
+            is Outline.Rounded -> {
+                val vRad = (inOutline.roundRect.bottomLeftCornerRadius.x + cornerRadiusAdjust).coerceAtLeast(0f)
                 if (vRad <= 0f) {
                     inCanvas.drawRect(Rect.makeXYWH(inX, inY, inW, inH), inPaint)
                 } else {
                     inCanvas.drawRRect(RRect.makeXYWH(inX, inY, inW, inH, vRad), inPaint)
                 }
+            }
+            is Outline.Generic -> {
+                // No built-in shape produces Generic outlines yet.
             }
         }
     }

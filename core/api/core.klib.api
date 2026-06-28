@@ -390,7 +390,7 @@ abstract interface androidx.compose.ui.graphics/Interpolatable { // androidx.com
 }
 
 abstract interface androidx.compose.ui.graphics/Shape { // androidx.compose.ui.graphics/Shape|null[0]
-    abstract fun outline(kotlin/Int, kotlin/Int): androidx.compose.ui.graphics/Outline // androidx.compose.ui.graphics/Shape.outline|outline(kotlin.Int;kotlin.Int){}[0]
+    abstract fun createOutline(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, androidx.compose.ui.unit/Density): androidx.compose.ui.graphics/Outline // androidx.compose.ui.graphics/Shape.createOutline|createOutline(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.LayoutDirection;androidx.compose.ui.unit.Density){}[0]
 }
 
 abstract interface androidx.compose.ui.input.pointer/AwaitPointerEventScope { // androidx.compose.ui.input.pointer/AwaitPointerEventScope|null[0]
@@ -459,6 +459,20 @@ abstract interface androidx.compose.ui.text/TextMeasurer { // androidx.compose.u
     abstract fun lineHeight(kotlin/Int, kotlin/String? = ..., kotlin.collections/List<androidx.compose.ui.text.font/FontVariation>? = ...): kotlin/Float // androidx.compose.ui.text/TextMeasurer.lineHeight|lineHeight(kotlin.Int;kotlin.String?;kotlin.collections.List<androidx.compose.ui.text.font.FontVariation>?){}[0]
     abstract fun measure(kotlin/String, kotlin/Int, kotlin/Int = ..., kotlin/String? = ..., kotlin.collections/List<androidx.compose.ui.text.font/FontVariation>? = ...): androidx.compose.ui.unit/IntSize // androidx.compose.ui.text/TextMeasurer.measure|measure(kotlin.String;kotlin.Int;kotlin.Int;kotlin.String?;kotlin.collections.List<androidx.compose.ui.text.font.FontVariation>?){}[0]
     abstract fun wrap(kotlin/String, kotlin/Int, kotlin/Int = ..., kotlin/String? = ..., kotlin.collections/List<androidx.compose.ui.text.font/FontVariation>? = ...): androidx.compose.ui.text/WrappedText // androidx.compose.ui.text/TextMeasurer.wrap|wrap(kotlin.String;kotlin.Int;kotlin.Int;kotlin.String?;kotlin.collections.List<androidx.compose.ui.text.font.FontVariation>?){}[0]
+}
+
+abstract interface androidx.compose.ui.unit/Density { // androidx.compose.ui.unit/Density|null[0]
+    abstract val density // androidx.compose.ui.unit/Density.density|{}density[0]
+        abstract fun <get-density>(): kotlin/Float // androidx.compose.ui.unit/Density.density.<get-density>|<get-density>(){}[0]
+    abstract val fontScale // androidx.compose.ui.unit/Density.fontScale|{}fontScale[0]
+        abstract fun <get-fontScale>(): kotlin/Float // androidx.compose.ui.unit/Density.fontScale.<get-fontScale>|<get-fontScale>(){}[0]
+
+    open fun (androidx.compose.ui.unit/Dp).toPx(): kotlin/Float // androidx.compose.ui.unit/Density.toPx|toPx@androidx.compose.ui.unit.Dp(){}[0]
+    open fun (androidx.compose.ui.unit/Dp).toSp(): androidx.compose.ui.unit/TextUnit // androidx.compose.ui.unit/Density.toSp|toSp@androidx.compose.ui.unit.Dp(){}[0]
+    open fun (androidx.compose.ui.unit/TextUnit).toDp(): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/Density.toDp|toDp@androidx.compose.ui.unit.TextUnit(){}[0]
+    open fun (androidx.compose.ui.unit/TextUnit).toPx(): kotlin/Float // androidx.compose.ui.unit/Density.toPx|toPx@androidx.compose.ui.unit.TextUnit(){}[0]
+    open fun (kotlin/Float).toDp(): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/Density.toDp|toDp@kotlin.Float(){}[0]
+    open fun (kotlin/Int).toDp(): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/Density.toDp|toDp@kotlin.Int(){}[0]
 }
 
 abstract interface androidx.compose.ui/Modifier { // androidx.compose.ui/Modifier|null[0]
@@ -766,9 +780,10 @@ final class androidx.compose.foundation.lazy/LazyListState { // androidx.compose
 final class androidx.compose.foundation.shape/RoundedCornerShape : androidx.compose.ui.graphics/Shape { // androidx.compose.foundation.shape/RoundedCornerShape|null[0]
     constructor <init>(androidx.compose.ui.unit/Dp) // androidx.compose.foundation.shape/RoundedCornerShape.<init>|<init>(androidx.compose.ui.unit.Dp){}[0]
 
+    final fun createOutline(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, androidx.compose.ui.unit/Density): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/RoundedCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.LayoutDirection;androidx.compose.ui.unit.Density){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/RoundedCornerShape.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/RoundedCornerShape.hashCode|hashCode(){}[0]
-    final fun outline(kotlin/Int, kotlin/Int): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/RoundedCornerShape.outline|outline(kotlin.Int;kotlin.Int){}[0]
+    final fun toString(): kotlin/String // androidx.compose.foundation.shape/RoundedCornerShape.toString|toString(){}[0]
 }
 
 final class androidx.compose.foundation/BorderStroke { // androidx.compose.foundation/BorderStroke|null[0]
@@ -1285,8 +1300,8 @@ final class androidx.compose.ui.graphics/Shadow { // androidx.compose.ui.graphic
 final class androidx.compose.ui.graphics/SolidColor : androidx.compose.ui.graphics/Brush { // androidx.compose.ui.graphics/SolidColor|null[0]
     constructor <init>(androidx.compose.ui.graphics/Color) // androidx.compose.ui.graphics/SolidColor.<init>|<init>(androidx.compose.ui.graphics.Color){}[0]
 
-    final val color // androidx.compose.ui.graphics/SolidColor.color|{}color[0]
-        final fun <get-color>(): androidx.compose.ui.graphics/Color // androidx.compose.ui.graphics/SolidColor.color.<get-color>|<get-color>(){}[0]
+    final val value // androidx.compose.ui.graphics/SolidColor.value|{}value[0]
+        final fun <get-value>(): androidx.compose.ui.graphics/Color // androidx.compose.ui.graphics/SolidColor.value.<get-value>|<get-value>(){}[0]
 
     final fun component1(): androidx.compose.ui.graphics/Color // androidx.compose.ui.graphics/SolidColor.component1|component1(){}[0]
     final fun copy(androidx.compose.ui.graphics/Color = ...): androidx.compose.ui.graphics/SolidColor // androidx.compose.ui.graphics/SolidColor.copy|copy(androidx.compose.ui.graphics.Color){}[0]
@@ -3454,39 +3469,40 @@ sealed class androidx.compose.ui.graphics/Brush { // androidx.compose.ui.graphic
 }
 
 sealed class androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline|null[0]
-    final class Rectangle : androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline.Rectangle|null[0]
-        constructor <init>(kotlin/Int, kotlin/Int) // androidx.compose.ui.graphics/Outline.Rectangle.<init>|<init>(kotlin.Int;kotlin.Int){}[0]
+    abstract val bounds // androidx.compose.ui.graphics/Outline.bounds|{}bounds[0]
+        abstract fun <get-bounds>(): androidx.compose.ui.geometry/Rect // androidx.compose.ui.graphics/Outline.bounds.<get-bounds>|<get-bounds>(){}[0]
 
-        final val height // androidx.compose.ui.graphics/Outline.Rectangle.height|{}height[0]
-            final fun <get-height>(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.height.<get-height>|<get-height>(){}[0]
-        final val width // androidx.compose.ui.graphics/Outline.Rectangle.width|{}width[0]
-            final fun <get-width>(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.width.<get-width>|<get-width>(){}[0]
+    final class Generic : androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline.Generic|null[0]
+        constructor <init>(androidx.compose.ui.graphics/Path) // androidx.compose.ui.graphics/Outline.Generic.<init>|<init>(androidx.compose.ui.graphics.Path){}[0]
 
-        final fun component1(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.component1|component1(){}[0]
-        final fun component2(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.component2|component2(){}[0]
-        final fun copy(kotlin/Int = ..., kotlin/Int = ...): androidx.compose.ui.graphics/Outline.Rectangle // androidx.compose.ui.graphics/Outline.Rectangle.copy|copy(kotlin.Int;kotlin.Int){}[0]
-        final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui.graphics/Outline.Rectangle.equals|equals(kotlin.Any?){}[0]
-        final fun hashCode(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.hashCode|hashCode(){}[0]
-        final fun toString(): kotlin/String // androidx.compose.ui.graphics/Outline.Rectangle.toString|toString(){}[0]
+        final val bounds // androidx.compose.ui.graphics/Outline.Generic.bounds|{}bounds[0]
+            final fun <get-bounds>(): androidx.compose.ui.geometry/Rect // androidx.compose.ui.graphics/Outline.Generic.bounds.<get-bounds>|<get-bounds>(){}[0]
+        final val path // androidx.compose.ui.graphics/Outline.Generic.path|{}path[0]
+            final fun <get-path>(): androidx.compose.ui.graphics/Path // androidx.compose.ui.graphics/Outline.Generic.path.<get-path>|<get-path>(){}[0]
     }
 
-    final class RoundedRect : androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline.RoundedRect|null[0]
-        constructor <init>(kotlin/Int, kotlin/Int, kotlin/Int) // androidx.compose.ui.graphics/Outline.RoundedRect.<init>|<init>(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final class Rectangle : androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline.Rectangle|null[0]
+        constructor <init>(androidx.compose.ui.geometry/Rect) // androidx.compose.ui.graphics/Outline.Rectangle.<init>|<init>(androidx.compose.ui.geometry.Rect){}[0]
 
-        final val cornerRadius // androidx.compose.ui.graphics/Outline.RoundedRect.cornerRadius|{}cornerRadius[0]
-            final fun <get-cornerRadius>(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.cornerRadius.<get-cornerRadius>|<get-cornerRadius>(){}[0]
-        final val height // androidx.compose.ui.graphics/Outline.RoundedRect.height|{}height[0]
-            final fun <get-height>(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.height.<get-height>|<get-height>(){}[0]
-        final val width // androidx.compose.ui.graphics/Outline.RoundedRect.width|{}width[0]
-            final fun <get-width>(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.width.<get-width>|<get-width>(){}[0]
+        final val bounds // androidx.compose.ui.graphics/Outline.Rectangle.bounds|{}bounds[0]
+            final fun <get-bounds>(): androidx.compose.ui.geometry/Rect // androidx.compose.ui.graphics/Outline.Rectangle.bounds.<get-bounds>|<get-bounds>(){}[0]
+        final val rect // androidx.compose.ui.graphics/Outline.Rectangle.rect|{}rect[0]
+            final fun <get-rect>(): androidx.compose.ui.geometry/Rect // androidx.compose.ui.graphics/Outline.Rectangle.rect.<get-rect>|<get-rect>(){}[0]
 
-        final fun component1(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.component1|component1(){}[0]
-        final fun component2(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.component2|component2(){}[0]
-        final fun component3(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.component3|component3(){}[0]
-        final fun copy(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.ui.graphics/Outline.RoundedRect // androidx.compose.ui.graphics/Outline.RoundedRect.copy|copy(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
-        final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui.graphics/Outline.RoundedRect.equals|equals(kotlin.Any?){}[0]
-        final fun hashCode(): kotlin/Int // androidx.compose.ui.graphics/Outline.RoundedRect.hashCode|hashCode(){}[0]
-        final fun toString(): kotlin/String // androidx.compose.ui.graphics/Outline.RoundedRect.toString|toString(){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui.graphics/Outline.Rectangle.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rectangle.hashCode|hashCode(){}[0]
+    }
+
+    final class Rounded : androidx.compose.ui.graphics/Outline { // androidx.compose.ui.graphics/Outline.Rounded|null[0]
+        constructor <init>(androidx.compose.ui.geometry/RoundRect) // androidx.compose.ui.graphics/Outline.Rounded.<init>|<init>(androidx.compose.ui.geometry.RoundRect){}[0]
+
+        final val bounds // androidx.compose.ui.graphics/Outline.Rounded.bounds|{}bounds[0]
+            final fun <get-bounds>(): androidx.compose.ui.geometry/Rect // androidx.compose.ui.graphics/Outline.Rounded.bounds.<get-bounds>|<get-bounds>(){}[0]
+        final val roundRect // androidx.compose.ui.graphics/Outline.Rounded.roundRect|{}roundRect[0]
+            final fun <get-roundRect>(): androidx.compose.ui.geometry/RoundRect // androidx.compose.ui.graphics/Outline.Rounded.roundRect.<get-roundRect>|<get-roundRect>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui.graphics/Outline.Rounded.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // androidx.compose.ui.graphics/Outline.Rounded.hashCode|hashCode(){}[0]
     }
 }
 
@@ -4105,8 +4121,9 @@ final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Brush$stable
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_LayerOutsets$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_LayerOutsets$stableprop|#static{}androidx_compose_ui_graphics_LayerOutsets$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_LinearGradient$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_LinearGradient$stableprop|#static{}androidx_compose_ui_graphics_LinearGradient$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline$stableprop|#static{}androidx_compose_ui_graphics_Outline$stableprop[0]
+final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Generic$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Generic$stableprop|#static{}androidx_compose_ui_graphics_Outline_Generic$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rectangle$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rectangle$stableprop|#static{}androidx_compose_ui_graphics_Outline_Rectangle$stableprop[0]
-final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_RoundedRect$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_RoundedRect$stableprop|#static{}androidx_compose_ui_graphics_Outline_RoundedRect$stableprop[0]
+final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rounded$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rounded$stableprop|#static{}androidx_compose_ui_graphics_Outline_Rounded$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_Path$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Path$stableprop|#static{}androidx_compose_ui_graphics_Path$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_PathSegment$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_PathSegment$stableprop|#static{}androidx_compose_ui_graphics_PathSegment$stableprop[0]
 final val androidx.compose.ui.graphics/androidx_compose_ui_graphics_RadialGradient$stableprop // androidx.compose.ui.graphics/androidx_compose_ui_graphics_RadialGradient$stableprop|#static{}androidx_compose_ui_graphics_RadialGradient$stableprop[0]
@@ -4552,8 +4569,9 @@ final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Brush$stable
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_LayerOutsets$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_LayerOutsets$stableprop_getter|androidx_compose_ui_graphics_LayerOutsets$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_LinearGradient$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_LinearGradient$stableprop_getter|androidx_compose_ui_graphics_LinearGradient$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline$stableprop_getter|androidx_compose_ui_graphics_Outline$stableprop_getter(){}[0]
+final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Generic$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Generic$stableprop_getter|androidx_compose_ui_graphics_Outline_Generic$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rectangle$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rectangle$stableprop_getter|androidx_compose_ui_graphics_Outline_Rectangle$stableprop_getter(){}[0]
-final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_RoundedRect$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_RoundedRect$stableprop_getter|androidx_compose_ui_graphics_Outline_RoundedRect$stableprop_getter(){}[0]
+final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rounded$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Outline_Rounded$stableprop_getter|androidx_compose_ui_graphics_Outline_Rounded$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_Path$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_Path$stableprop_getter|androidx_compose_ui_graphics_Path$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_PathSegment$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_PathSegment$stableprop_getter|androidx_compose_ui_graphics_PathSegment$stableprop_getter(){}[0]
 final fun androidx.compose.ui.graphics/androidx_compose_ui_graphics_RadialGradient$stableprop_getter(): kotlin/Int // androidx.compose.ui.graphics/androidx_compose_ui_graphics_RadialGradient$stableprop_getter|androidx_compose_ui_graphics_RadialGradient$stableprop_getter(){}[0]
@@ -4622,6 +4640,7 @@ final fun androidx.compose.ui.text/androidx_compose_ui_text_TextRendererCapabili
 final fun androidx.compose.ui.text/androidx_compose_ui_text_TextStyle$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_TextStyle$stableprop_getter|androidx_compose_ui_text_TextStyle$stableprop_getter(){}[0]
 final fun androidx.compose.ui.text/androidx_compose_ui_text_WrappedText$stableprop_getter(): kotlin/Int // androidx.compose.ui.text/androidx_compose_ui_text_WrappedText$stableprop_getter|androidx_compose_ui_text_WrappedText$stableprop_getter(){}[0]
 final fun androidx.compose.ui.unit/Constraints(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.ui.unit/Constraints // androidx.compose.ui.unit/Constraints|Constraints(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun androidx.compose.ui.unit/Density(kotlin/Float, kotlin/Float = ...): androidx.compose.ui.unit/Density // androidx.compose.ui.unit/Density|Density(kotlin.Float;kotlin.Float){}[0]
 final fun androidx.compose.ui.unit/DpSize(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp): androidx.compose.ui.unit/DpSize // androidx.compose.ui.unit/DpSize|DpSize(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
 final fun androidx.compose.ui.unit/IntRect(androidx.compose.ui.unit/IntOffset, androidx.compose.ui.unit/IntOffset): androidx.compose.ui.unit/IntRect // androidx.compose.ui.unit/IntRect|IntRect(androidx.compose.ui.unit.IntOffset;androidx.compose.ui.unit.IntOffset){}[0]
 final fun androidx.compose.ui.unit/IntRect(androidx.compose.ui.unit/IntOffset, androidx.compose.ui.unit/IntSize): androidx.compose.ui.unit/IntRect // androidx.compose.ui.unit/IntRect|IntRect(androidx.compose.ui.unit.IntOffset;androidx.compose.ui.unit.IntSize){}[0]

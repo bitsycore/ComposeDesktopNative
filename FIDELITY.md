@@ -111,6 +111,7 @@ All of the above already verified working on Windows/SDL3.
   `ResolvedTextDirection`/`TextDirection`/`TextGeometricTransform`/`TextMotion`/
   `LineBreak`/`Hyphens`/`BaselineShift`, `FontStyle`/`FontWeight`,
   `ui.layout.ScaleFactor`/`ContentScale`/`AlignmentLine`,
+  `ui.graphics.RectangleShape` (after the Outline/Shape reshape),
   `ui.Alignment` (incl. `BiasAlignment`, `BiasAbsoluteAlignment`,
   `AbsoluteAlignment`), `ui.UiComposable`, `ui.ComposeUiFlags`,
   `ui.unit.ComposeUiUnitFlags`, `ui.FrameRateCategory`, `ui.state.ToggleableState`,
@@ -153,12 +154,17 @@ All of the above already verified working on Windows/SDL3.
   + `currentTextMeasurer` / `currentViewportHeight/Width` → `native.text`
 - `ui.input` render-bridge: `PointerInputElement` / `PointerInputEvent` /
   `PointerInputScopeImpl` / `KeyModifiers` → `native.input`
-- `ui.graphics` `PathCommand` → native; `foundation` `ScrollbarAdapter` → native
+- `foundation` `ScrollbarAdapter` → native
+  (`PathCommand` already relocated.)
 - (bigger, app-facing) the `ui.res` system (`Res`/`ImageLoader`/`ResourceKind`/…)
 
 **Match-upstream reshapes**: `SpanStyle`/`TextStyle`/`ParagraphStyle` + the
 animation specs (`SpringSpec`/`TweenSpec`/…) `data class` → plain class with
-manual equals/hashCode (drop `component*`/`copy`); `BorderStroke` → wraps a `Brush`.
+manual equals/hashCode (drop `component*`/`copy`). (`BorderStroke` →
+wraps a `Brush`: done. `Outline`/`Shape`/`Density` reshape: done —
+`Shape.createOutline(size, layoutDirection, density)`, `Outline.Rectangle(rect)`,
+`Outline.Rounded(roundRect)`, `Outline.Generic(path)` now match upstream;
+`SolidColor.color` renamed to `.value`.)
 
 **Runtime-critical (do last, screenshot-test)**: `KeyEvent` / `PointerEvent` /
 `PointerEventType` / `PointerButton` enum/data-class → official value classes —

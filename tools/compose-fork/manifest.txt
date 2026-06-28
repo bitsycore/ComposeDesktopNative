@@ -83,6 +83,8 @@ compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathSe
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Vertices.kt            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Vertices.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Interpolatable.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Interpolatable.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt
+# RectangleShape now compatible with our reshaped Shape/Outline.
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RectangleShape.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/RectangleShape.kt
 
 # ── androidx.compose.ui.text value types ──────────────────────────────────
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/internal/InlineClassHelper.kt

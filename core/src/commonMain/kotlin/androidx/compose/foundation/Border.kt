@@ -22,6 +22,6 @@ fun Modifier.border(width: Dp, color: Color, shape: Shape = RectangleShape): Mod
     then(BorderModifier(width.value.toInt(), color, shape))
 
 fun Modifier.border(border: BorderStroke, shape: Shape = RectangleShape): Modifier {
-    val vColor = (border.brush as? SolidColor)?.color ?: return this
+    val vColor = (border.brush as? SolidColor)?.value ?: return this
     return then(BorderModifier(border.width.value.toInt(), vColor, shape))
 }

@@ -217,7 +217,7 @@ internal class SkiaDrawScope(
 			}
 		}
 		when (inBrush) {
-			is SolidColor -> vPaint.color = inBrush.color.withAlphaScaled(inAlpha).toSkiaColor()
+			is SolidColor -> vPaint.color = inBrush.value.withAlphaScaled(inAlpha).toSkiaColor()
 			is LinearGradient -> {
 				vPaint.color = Color.makeARGB(((inAlpha) * 255).toInt().coerceIn(0, 255), 255, 255, 255)
 				vPaint.shader = makeLinearShader(inBrush, inShapeSize)

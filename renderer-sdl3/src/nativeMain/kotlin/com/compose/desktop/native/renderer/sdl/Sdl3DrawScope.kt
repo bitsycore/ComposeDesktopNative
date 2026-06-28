@@ -523,7 +523,7 @@ private fun Sdl3DrawScope.samplerFor(
 	inAlpha: Float,
 ): Sampler = when (inBrush) {
 	is SolidColor -> {
-		val vC = inBrush.color.withAlphaScaled(inAlpha)
+		val vC = inBrush.value.withAlphaScaled(inAlpha)
 		val vS: Sampler = { _, _ -> vC }
 		vS
 	}
