@@ -492,6 +492,13 @@ compose/ui/ui/src/nativeMain/kotlin/androidx/compose/ui/node/WeakReference.nativ
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/AtomicReference.kt                                              core/src/vendor/common/kotlin/androidx/compose/ui/text/AtomicReference.kt
 compose/ui/ui-text/src/nonJvmMain/kotlin/androidx/compose/ui/text/AtomicReference.nonJvm.kt                                       core/src/vendor/native/kotlin/androidx/compose/ui/text/AtomicReference.native.kt
 
+# Path geometry utilities — pure math, no engine deps.
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/IntervalTree.kt                                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/IntervalTree.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathGeometry.kt                                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathGeometry.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathHitTester.kt                                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathHitTester.kt
+# PathEasing — easing-along-a-Path AnimationSpec; needs IntervalTree/PathGeometry above.
+compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/PathEasing.kt                              core/src/vendor/common/kotlin/androidx/compose/animation/core/PathEasing.kt
+
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
