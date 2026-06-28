@@ -477,6 +477,10 @@ compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/
 # Skiko-side sibling of our common ComposeUiFlags — adds SkikoComposeUiFlags object.
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/ComposeUiFlags.skiko.kt                                                    core/src/vendor/native/kotlin/androidx/compose/ui/ComposeUiFlags.native.kt
 
+# AtomicInt pair (ui.platform).
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/AtomicInt.kt                                                     core/src/vendor/common/kotlin/androidx/compose/ui/platform/AtomicInt.kt
+compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/platform/Atomic.nonJvm.kt                                                 core/src/vendor/native/kotlin/androidx/compose/ui/platform/Atomic.native.kt
+
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
