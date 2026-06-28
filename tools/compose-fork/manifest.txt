@@ -577,6 +577,11 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measurable.kt    
 # already-vendored Density / IntrinsicMeasurable / Measurable / MeasureScope.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/IntrinsicMeasureScope.kt                                           core/src/vendor/common/kotlin/androidx/compose/ui/layout/IntrinsicMeasureScope.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MeasureBlocks.kt                                                     core/src/vendor/common/kotlin/androidx/compose/ui/node/MeasureBlocks.kt
+# Measured (measuredWidth/Height + parentData + alignmentLine lookup) and
+# RemeasurementModifier (Modifier.Element with a Remeasurement handle).
+# Pure interfaces, no node-engine deps.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measured.kt                                                        core/src/vendor/common/kotlin/androidx/compose/ui/layout/Measured.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RemeasurementModifier.kt                                           core/src/vendor/common/kotlin/androidx/compose/ui/layout/RemeasurementModifier.kt
 # InteropView / InteroperableComposeUiNode skipped — the macos actual
 # carries an `internal actual typealias InteropViewGroup` whose expect
 # lives in InteropView.skiko.kt (which has deep deps we'd need to port),
