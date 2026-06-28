@@ -116,7 +116,11 @@ All of the above already verified working on Windows/SDL3.
   `AbsoluteAlignment`), `ui.UiComposable`, `ui.ComposeUiFlags`,
   `ui.unit.ComposeUiUnitFlags`, `ui.FrameRateCategory`, `ui.state.ToggleableState`,
   `ui.draw.{Alpha, Rotate, Scale}` (one-liners over `graphicsLayer`),
-  `foundation.BorderStroke`, `foundation.interaction.{Interaction,
+  `foundation.BorderStroke`, the full `foundation.shape` package
+  (`CornerSize`, `CornerBasedShape`, `RoundedCornerShape` with per-corner
+  `CornerSize` + RTL mirroring + `lerp`, `CircleShape`, `CutCornerShape`,
+  `AbsoluteRoundedCornerShape`, `AbsoluteCutCornerShape`, `GenericShape`),
+  `foundation.interaction.{Interaction,
   InteractionSource, DragInteraction, HoverInteraction, FocusInteraction}`,
   `foundation.gestures.Orientation`, `foundation.lazy.LazyListItemInfo`,
   `foundation.layout.LayoutScopeMarker`, `animation.core.AnimationEndReason`/

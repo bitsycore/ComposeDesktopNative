@@ -309,7 +309,7 @@ final object androidx.compose.material/ChipDefaults { // androidx.compose.materi
     final val MinHeight // androidx.compose.material/ChipDefaults.MinHeight|{}MinHeight[0]
         final fun <get-MinHeight>(): androidx.compose.ui.unit/Dp // androidx.compose.material/ChipDefaults.MinHeight.<get-MinHeight>|<get-MinHeight>(){}[0]
     final val Shape // androidx.compose.material/ChipDefaults.Shape|{}Shape[0]
-        final fun <get-Shape>(): androidx.compose.ui.graphics/Shape // androidx.compose.material/ChipDefaults.Shape.<get-Shape>|<get-Shape>(){}[0]
+        final fun <get-Shape>(): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.material/ChipDefaults.Shape.<get-Shape>|<get-Shape>(){}[0]
     final val outlinedBorder // androidx.compose.material/ChipDefaults.outlinedBorder|{}outlinedBorder[0]
         final fun <get-outlinedBorder>(): androidx.compose.foundation/BorderStroke // androidx.compose.material/ChipDefaults.outlinedBorder.<get-outlinedBorder>|<get-outlinedBorder>(){}[0]
 }

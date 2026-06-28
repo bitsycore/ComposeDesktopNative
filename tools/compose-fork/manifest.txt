@@ -115,6 +115,12 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/AlignmentLine.kt 
 
 # ── androidx.compose.ui (top-level types) ─────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt             core/src/vendor/common/kotlin/androidx/compose/ui/Alignment.kt
+# Supporting types for the foundation.shape vendor: InspectableValue is the
+# marker interface CornerSize/CornerBasedShape implement (debug/tooling
+# hooks; no-op at runtime), and JvmDefaultWithCompatibility is an optional
+# expectation annotation (dropped when no actual is provided).
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InspectableValue.kt   core/src/vendor/common/kotlin/androidx/compose/ui/platform/InspectableValue.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/internal/JvmDefaultWithCompatibility.kt   core/src/vendor/common/kotlin/androidx/compose/ui/internal/JvmDefaultWithCompatibility.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/UiComposable.kt          core/src/vendor/common/kotlin/androidx/compose/ui/UiComposable.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/ComposeUiFlags.kt        core/src/vendor/common/kotlin/androidx/compose/ui/ComposeUiFlags.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/FrameRateCategory.kt     core/src/vendor/common/kotlin/androidx/compose/ui/FrameRateCategory.kt
@@ -138,6 +144,19 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt                         core/src/vendor/common/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/InternalFoundationApi.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/InternalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyListItemInfo.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyListItemInfo.kt
+# Foundation internal precondition helpers (requirePrecondition etc.)
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/internal/InlineClassHelper.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/internal/InlineClassHelper.kt
+# foundation.shape — the full upstream package now that Shape/Outline/Density
+# match upstream. Replaces our hand-written Shapes.kt (uniform-radius
+# RoundedCornerShape + CircleShape) with the proper per-corner CornerSize
+# version + LayoutDirection mirroring + lerp.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerSize.kt                                   core/src/vendor/common/kotlin/androidx/compose/foundation/shape/CornerSize.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CornerBasedShape.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/shape/CornerBasedShape.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/GenericShape.kt                                 core/src/vendor/common/kotlin/androidx/compose/foundation/shape/GenericShape.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/RoundedCornerShape.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/shape/RoundedCornerShape.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/CutCornerShape.kt                               core/src/vendor/common/kotlin/androidx/compose/foundation/shape/CutCornerShape.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/AbsoluteRoundedCornerShape.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/shape/AbsoluteRoundedCornerShape.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/shape/AbsoluteCutCornerShape.kt                       core/src/vendor/common/kotlin/androidx/compose/foundation/shape/AbsoluteCutCornerShape.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/LayoutScopeMarker.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/layout/LayoutScopeMarker.kt
 
 # ── androidx.compose.animation.core ───────────────────────────────────────

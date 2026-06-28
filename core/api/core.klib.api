@@ -343,6 +343,10 @@ abstract interface androidx.compose.foundation.lazy/LazyListScope { // androidx.
     abstract fun items(kotlin/Int, kotlin/Function3<kotlin/Int, androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>) // androidx.compose.foundation.lazy/LazyListScope.items|items(kotlin.Int;kotlin.Function3<kotlin.Int,androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>){}[0]
 }
 
+abstract interface androidx.compose.foundation.shape/CornerSize { // androidx.compose.foundation.shape/CornerSize|null[0]
+    abstract fun toPx(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/Density): kotlin/Float // androidx.compose.foundation.shape/CornerSize.toPx|toPx(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.Density){}[0]
+}
+
 abstract interface androidx.compose.foundation/ScrollbarAdapter { // androidx.compose.foundation/ScrollbarAdapter|null[0]
     abstract val contentSize // androidx.compose.foundation/ScrollbarAdapter.contentSize|{}contentSize[0]
         abstract fun <get-contentSize>(): kotlin/Double // androidx.compose.foundation/ScrollbarAdapter.contentSize.<get-contentSize>|<get-contentSize>(){}[0]
@@ -448,6 +452,15 @@ abstract interface androidx.compose.ui.platform/ClipboardManager { // androidx.c
     abstract fun getText(): androidx.compose.ui.text/AnnotatedString? // androidx.compose.ui.platform/ClipboardManager.getText|getText(){}[0]
     abstract fun setText(androidx.compose.ui.text/AnnotatedString) // androidx.compose.ui.platform/ClipboardManager.setText|setText(androidx.compose.ui.text.AnnotatedString){}[0]
     open fun hasText(): kotlin/Boolean // androidx.compose.ui.platform/ClipboardManager.hasText|hasText(){}[0]
+}
+
+abstract interface androidx.compose.ui.platform/InspectableValue { // androidx.compose.ui.platform/InspectableValue|null[0]
+    open val inspectableElements // androidx.compose.ui.platform/InspectableValue.inspectableElements|{}inspectableElements[0]
+        open fun <get-inspectableElements>(): kotlin.sequences/Sequence<androidx.compose.ui.platform/ValueElement> // androidx.compose.ui.platform/InspectableValue.inspectableElements.<get-inspectableElements>|<get-inspectableElements>(){}[0]
+    open val nameFallback // androidx.compose.ui.platform/InspectableValue.nameFallback|{}nameFallback[0]
+        open fun <get-nameFallback>(): kotlin/String? // androidx.compose.ui.platform/InspectableValue.nameFallback.<get-nameFallback>|<get-nameFallback>(){}[0]
+    open val valueOverride // androidx.compose.ui.platform/InspectableValue.valueOverride|{}valueOverride[0]
+        open fun <get-valueOverride>(): kotlin/Any? // androidx.compose.ui.platform/InspectableValue.valueOverride.<get-valueOverride>|<get-valueOverride>(){}[0]
 }
 
 abstract interface androidx.compose.ui.res/ImageLoader { // androidx.compose.ui.res/ImageLoader|null[0]
@@ -570,6 +583,25 @@ sealed interface com.compose.desktop.native.graphics/PathCommand { // com.compos
     }
 }
 
+abstract class androidx.compose.foundation.shape/CornerBasedShape : androidx.compose.ui.graphics/Interpolatable, androidx.compose.ui.graphics/Shape { // androidx.compose.foundation.shape/CornerBasedShape|null[0]
+    constructor <init>(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize) // androidx.compose.foundation.shape/CornerBasedShape.<init>|<init>(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+
+    final val bottomEnd // androidx.compose.foundation.shape/CornerBasedShape.bottomEnd|{}bottomEnd[0]
+        final fun <get-bottomEnd>(): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerBasedShape.bottomEnd.<get-bottomEnd>|<get-bottomEnd>(){}[0]
+    final val bottomStart // androidx.compose.foundation.shape/CornerBasedShape.bottomStart|{}bottomStart[0]
+        final fun <get-bottomStart>(): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerBasedShape.bottomStart.<get-bottomStart>|<get-bottomStart>(){}[0]
+    final val topEnd // androidx.compose.foundation.shape/CornerBasedShape.topEnd|{}topEnd[0]
+        final fun <get-topEnd>(): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerBasedShape.topEnd.<get-topEnd>|<get-topEnd>(){}[0]
+    final val topStart // androidx.compose.foundation.shape/CornerBasedShape.topStart|{}topStart[0]
+        final fun <get-topStart>(): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerBasedShape.topStart.<get-topStart>|<get-topStart>(){}[0]
+
+    abstract fun copy(androidx.compose.foundation.shape/CornerSize = ..., androidx.compose.foundation.shape/CornerSize = ..., androidx.compose.foundation.shape/CornerSize = ..., androidx.compose.foundation.shape/CornerSize = ...): androidx.compose.foundation.shape/CornerBasedShape // androidx.compose.foundation.shape/CornerBasedShape.copy|copy(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+    abstract fun createOutline(androidx.compose.ui.geometry/Size, kotlin/Float, kotlin/Float, kotlin/Float, kotlin/Float, androidx.compose.ui.unit/LayoutDirection): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/CornerBasedShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.unit.LayoutDirection){}[0]
+    final fun copy(androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/CornerBasedShape // androidx.compose.foundation.shape/CornerBasedShape.copy|copy(androidx.compose.foundation.shape.CornerSize){}[0]
+    final fun createOutline(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, androidx.compose.ui.unit/Density): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/CornerBasedShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.LayoutDirection;androidx.compose.ui.unit.Density){}[0]
+    open fun lerp(kotlin/Any?, kotlin/Float): kotlin/Any? // androidx.compose.foundation.shape/CornerBasedShape.lerp|lerp(kotlin.Any?;kotlin.Float){}[0]
+}
+
 abstract class androidx.compose.ui.graphics.colorspace/Adaptation { // androidx.compose.ui.graphics.colorspace/Adaptation|null[0]
     final object Companion { // androidx.compose.ui.graphics.colorspace/Adaptation.Companion|null[0]
         final val Bradford // androidx.compose.ui.graphics.colorspace/Adaptation.Companion.Bradford|{}Bradford[0]
@@ -615,6 +647,17 @@ abstract class androidx.compose.ui.layout/Placeable { // androidx.compose.ui.lay
         abstract fun <get-width>(): kotlin/Int // androidx.compose.ui.layout/Placeable.width.<get-width>|<get-width>(){}[0]
 
     abstract fun placeAt(kotlin/Int, kotlin/Int) // androidx.compose.ui.layout/Placeable.placeAt|placeAt(kotlin.Int;kotlin.Int){}[0]
+}
+
+abstract class androidx.compose.ui.platform/InspectorValueInfo : androidx.compose.ui.platform/InspectableValue { // androidx.compose.ui.platform/InspectorValueInfo|null[0]
+    constructor <init>(kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit>) // androidx.compose.ui.platform/InspectorValueInfo.<init>|<init>(kotlin.Function1<androidx.compose.ui.platform.InspectorInfo,kotlin.Unit>){}[0]
+
+    open val inspectableElements // androidx.compose.ui.platform/InspectorValueInfo.inspectableElements|{}inspectableElements[0]
+        open fun <get-inspectableElements>(): kotlin.sequences/Sequence<androidx.compose.ui.platform/ValueElement> // androidx.compose.ui.platform/InspectorValueInfo.inspectableElements.<get-inspectableElements>|<get-inspectableElements>(){}[0]
+    open val nameFallback // androidx.compose.ui.platform/InspectorValueInfo.nameFallback|{}nameFallback[0]
+        open fun <get-nameFallback>(): kotlin/String? // androidx.compose.ui.platform/InspectorValueInfo.nameFallback.<get-nameFallback>|<get-nameFallback>(){}[0]
+    open val valueOverride // androidx.compose.ui.platform/InspectorValueInfo.valueOverride|{}valueOverride[0]
+        open fun <get-valueOverride>(): kotlin/Any? // androidx.compose.ui.platform/InspectorValueInfo.valueOverride.<get-valueOverride>|<get-valueOverride>(){}[0]
 }
 
 final class <#A: kotlin/Any?> androidx.compose.animation.core/Animatable { // androidx.compose.animation.core/Animatable|null[0]
@@ -777,12 +820,55 @@ final class androidx.compose.foundation.lazy/LazyListState { // androidx.compose
     final fun scrollTo(kotlin/Int) // androidx.compose.foundation.lazy/LazyListState.scrollTo|scrollTo(kotlin.Int){}[0]
 }
 
-final class androidx.compose.foundation.shape/RoundedCornerShape : androidx.compose.ui.graphics/Shape { // androidx.compose.foundation.shape/RoundedCornerShape|null[0]
-    constructor <init>(androidx.compose.ui.unit/Dp) // androidx.compose.foundation.shape/RoundedCornerShape.<init>|<init>(androidx.compose.ui.unit.Dp){}[0]
+final class androidx.compose.foundation.shape/AbsoluteCutCornerShape : androidx.compose.foundation.shape/CornerBasedShape { // androidx.compose.foundation.shape/AbsoluteCutCornerShape|null[0]
+    constructor <init>(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize) // androidx.compose.foundation.shape/AbsoluteCutCornerShape.<init>|<init>(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
 
-    final fun createOutline(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, androidx.compose.ui.unit/Density): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/RoundedCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.LayoutDirection;androidx.compose.ui.unit.Density){}[0]
+    final fun copy(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape.copy|copy(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+    final fun createOutline(androidx.compose.ui.geometry/Size, kotlin/Float, kotlin/Float, kotlin/Float, kotlin/Float, androidx.compose.ui.unit/LayoutDirection): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/AbsoluteCutCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.unit.LayoutDirection){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/AbsoluteCutCornerShape.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/AbsoluteCutCornerShape.hashCode|hashCode(){}[0]
+    final fun lerp(kotlin/Any?, kotlin/Float): kotlin/Any? // androidx.compose.foundation.shape/AbsoluteCutCornerShape.lerp|lerp(kotlin.Any?;kotlin.Float){}[0]
+    final fun toString(): kotlin/String // androidx.compose.foundation.shape/AbsoluteCutCornerShape.toString|toString(){}[0]
+}
+
+final class androidx.compose.foundation.shape/AbsoluteRoundedCornerShape : androidx.compose.foundation.shape/CornerBasedShape { // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|null[0]
+    constructor <init>(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize) // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.<init>|<init>(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+
+    final fun copy(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.copy|copy(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+    final fun createOutline(androidx.compose.ui.geometry/Size, kotlin/Float, kotlin/Float, kotlin/Float, kotlin/Float, androidx.compose.ui.unit/LayoutDirection): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.unit.LayoutDirection){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.hashCode|hashCode(){}[0]
+    final fun lerp(kotlin/Any?, kotlin/Float): kotlin/Any? // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.lerp|lerp(kotlin.Any?;kotlin.Float){}[0]
+    final fun toString(): kotlin/String // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape.toString|toString(){}[0]
+}
+
+final class androidx.compose.foundation.shape/CutCornerShape : androidx.compose.foundation.shape/CornerBasedShape { // androidx.compose.foundation.shape/CutCornerShape|null[0]
+    constructor <init>(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize) // androidx.compose.foundation.shape/CutCornerShape.<init>|<init>(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+
+    final fun copy(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape.copy|copy(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+    final fun createOutline(androidx.compose.ui.geometry/Size, kotlin/Float, kotlin/Float, kotlin/Float, kotlin/Float, androidx.compose.ui.unit/LayoutDirection): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/CutCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.unit.LayoutDirection){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/CutCornerShape.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/CutCornerShape.hashCode|hashCode(){}[0]
+    final fun lerp(kotlin/Any?, kotlin/Float): kotlin/Any? // androidx.compose.foundation.shape/CutCornerShape.lerp|lerp(kotlin.Any?;kotlin.Float){}[0]
+    final fun toString(): kotlin/String // androidx.compose.foundation.shape/CutCornerShape.toString|toString(){}[0]
+}
+
+final class androidx.compose.foundation.shape/GenericShape : androidx.compose.ui.graphics/Shape { // androidx.compose.foundation.shape/GenericShape|null[0]
+    constructor <init>(kotlin/Function3<androidx.compose.ui.graphics/Path, androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, kotlin/Unit>) // androidx.compose.foundation.shape/GenericShape.<init>|<init>(kotlin.Function3<androidx.compose.ui.graphics.Path,androidx.compose.ui.geometry.Size,androidx.compose.ui.unit.LayoutDirection,kotlin.Unit>){}[0]
+
+    final fun createOutline(androidx.compose.ui.geometry/Size, androidx.compose.ui.unit/LayoutDirection, androidx.compose.ui.unit/Density): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/GenericShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;androidx.compose.ui.unit.LayoutDirection;androidx.compose.ui.unit.Density){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/GenericShape.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/GenericShape.hashCode|hashCode(){}[0]
+}
+
+final class androidx.compose.foundation.shape/RoundedCornerShape : androidx.compose.foundation.shape/CornerBasedShape { // androidx.compose.foundation.shape/RoundedCornerShape|null[0]
+    constructor <init>(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize) // androidx.compose.foundation.shape/RoundedCornerShape.<init>|<init>(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+
+    final fun copy(androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize, androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape.copy|copy(androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize;androidx.compose.foundation.shape.CornerSize){}[0]
+    final fun createOutline(androidx.compose.ui.geometry/Size, kotlin/Float, kotlin/Float, kotlin/Float, kotlin/Float, androidx.compose.ui.unit/LayoutDirection): androidx.compose.ui.graphics/Outline // androidx.compose.foundation.shape/RoundedCornerShape.createOutline|createOutline(androidx.compose.ui.geometry.Size;kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float;androidx.compose.ui.unit.LayoutDirection){}[0]
     final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.foundation.shape/RoundedCornerShape.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // androidx.compose.foundation.shape/RoundedCornerShape.hashCode|hashCode(){}[0]
+    final fun lerp(kotlin/Any?, kotlin/Float): kotlin/Any? // androidx.compose.foundation.shape/RoundedCornerShape.lerp|lerp(kotlin.Any?;kotlin.Float){}[0]
     final fun toString(): kotlin/String // androidx.compose.foundation.shape/RoundedCornerShape.toString|toString(){}[0]
 }
 
@@ -1492,6 +1578,54 @@ final class androidx.compose.ui.layout/HorizontalAlignmentLine : androidx.compos
 
 final class androidx.compose.ui.layout/VerticalAlignmentLine : androidx.compose.ui.layout/AlignmentLine { // androidx.compose.ui.layout/VerticalAlignmentLine|null[0]
     constructor <init>(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Int>) // androidx.compose.ui.layout/VerticalAlignmentLine.<init>|<init>(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Int>){}[0]
+}
+
+final class androidx.compose.ui.platform/InspectableModifier : androidx.compose.ui.platform/InspectorValueInfo, androidx.compose.ui/Modifier.Element { // androidx.compose.ui.platform/InspectableModifier|null[0]
+    constructor <init>(kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit>) // androidx.compose.ui.platform/InspectableModifier.<init>|<init>(kotlin.Function1<androidx.compose.ui.platform.InspectorInfo,kotlin.Unit>){}[0]
+
+    final val end // androidx.compose.ui.platform/InspectableModifier.end|{}end[0]
+        final fun <get-end>(): androidx.compose.ui.platform/InspectableModifier.End // androidx.compose.ui.platform/InspectableModifier.end.<get-end>|<get-end>(){}[0]
+
+    final inner class End : androidx.compose.ui/Modifier.Element { // androidx.compose.ui.platform/InspectableModifier.End|null[0]
+        constructor <init>() // androidx.compose.ui.platform/InspectableModifier.End.<init>|<init>(){}[0]
+    }
+}
+
+final class androidx.compose.ui.platform/InspectorInfo { // androidx.compose.ui.platform/InspectorInfo|null[0]
+    constructor <init>() // androidx.compose.ui.platform/InspectorInfo.<init>|<init>(){}[0]
+
+    final val properties // androidx.compose.ui.platform/InspectorInfo.properties|{}properties[0]
+        final fun <get-properties>(): androidx.compose.ui.platform/ValueElementSequence // androidx.compose.ui.platform/InspectorInfo.properties.<get-properties>|<get-properties>(){}[0]
+
+    final var name // androidx.compose.ui.platform/InspectorInfo.name|{}name[0]
+        final fun <get-name>(): kotlin/String? // androidx.compose.ui.platform/InspectorInfo.name.<get-name>|<get-name>(){}[0]
+        final fun <set-name>(kotlin/String?) // androidx.compose.ui.platform/InspectorInfo.name.<set-name>|<set-name>(kotlin.String?){}[0]
+    final var value // androidx.compose.ui.platform/InspectorInfo.value|{}value[0]
+        final fun <get-value>(): kotlin/Any? // androidx.compose.ui.platform/InspectorInfo.value.<get-value>|<get-value>(){}[0]
+        final fun <set-value>(kotlin/Any?) // androidx.compose.ui.platform/InspectorInfo.value.<set-value>|<set-value>(kotlin.Any?){}[0]
+}
+
+final class androidx.compose.ui.platform/ValueElement { // androidx.compose.ui.platform/ValueElement|null[0]
+    constructor <init>(kotlin/String, kotlin/Any?) // androidx.compose.ui.platform/ValueElement.<init>|<init>(kotlin.String;kotlin.Any?){}[0]
+
+    final val name // androidx.compose.ui.platform/ValueElement.name|{}name[0]
+        final fun <get-name>(): kotlin/String // androidx.compose.ui.platform/ValueElement.name.<get-name>|<get-name>(){}[0]
+    final val value // androidx.compose.ui.platform/ValueElement.value|{}value[0]
+        final fun <get-value>(): kotlin/Any? // androidx.compose.ui.platform/ValueElement.value.<get-value>|<get-value>(){}[0]
+
+    final fun component1(): kotlin/String // androidx.compose.ui.platform/ValueElement.component1|component1(){}[0]
+    final fun component2(): kotlin/Any? // androidx.compose.ui.platform/ValueElement.component2|component2(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Any? = ...): androidx.compose.ui.platform/ValueElement // androidx.compose.ui.platform/ValueElement.copy|copy(kotlin.String;kotlin.Any?){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // androidx.compose.ui.platform/ValueElement.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // androidx.compose.ui.platform/ValueElement.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // androidx.compose.ui.platform/ValueElement.toString|toString(){}[0]
+}
+
+final class androidx.compose.ui.platform/ValueElementSequence : kotlin.sequences/Sequence<androidx.compose.ui.platform/ValueElement> { // androidx.compose.ui.platform/ValueElementSequence|null[0]
+    constructor <init>() // androidx.compose.ui.platform/ValueElementSequence.<init>|<init>(){}[0]
+
+    final fun iterator(): kotlin.collections/Iterator<androidx.compose.ui.platform/ValueElement> // androidx.compose.ui.platform/ValueElementSequence.iterator|iterator(){}[0]
+    final fun set(kotlin/String, kotlin/Any?) // androidx.compose.ui.platform/ValueElementSequence.set|set(kotlin.String;kotlin.Any?){}[0]
 }
 
 final class androidx.compose.ui.text.font/FontVariation { // androidx.compose.ui.text.font/FontVariation|null[0]
@@ -4048,7 +4182,14 @@ final val androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy
 final val androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells_Fixed$stableprop // androidx.compose.foundation.lazy.grid/androidx_compose_foundation_lazy_grid_GridCells_Fixed$stableprop|#static{}androidx_compose_foundation_lazy_grid_GridCells_Fixed$stableprop[0]
 final val androidx.compose.foundation.lazy/androidx_compose_foundation_lazy_LazyListState$stableprop // androidx.compose.foundation.lazy/androidx_compose_foundation_lazy_LazyListState$stableprop|#static{}androidx_compose_foundation_lazy_LazyListState$stableprop[0]
 final val androidx.compose.foundation.shape/CircleShape // androidx.compose.foundation.shape/CircleShape|{}CircleShape[0]
-    final fun <get-CircleShape>(): androidx.compose.ui.graphics/Shape // androidx.compose.foundation.shape/CircleShape.<get-CircleShape>|<get-CircleShape>(){}[0]
+    final fun <get-CircleShape>(): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/CircleShape.<get-CircleShape>|<get-CircleShape>(){}[0]
+final val androidx.compose.foundation.shape/ZeroCornerSize // androidx.compose.foundation.shape/ZeroCornerSize|{}ZeroCornerSize[0]
+    final fun <get-ZeroCornerSize>(): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/ZeroCornerSize.<get-ZeroCornerSize>|<get-ZeroCornerSize>(){}[0]
+final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop|#static{}androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop[0]
+final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop|#static{}androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop[0]
+final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_CornerBasedShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_CornerBasedShape$stableprop|#static{}androidx_compose_foundation_shape_CornerBasedShape$stableprop[0]
+final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_CutCornerShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_CutCornerShape$stableprop|#static{}androidx_compose_foundation_shape_CutCornerShape$stableprop[0]
+final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_GenericShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_GenericShape$stableprop|#static{}androidx_compose_foundation_shape_GenericShape$stableprop[0]
 final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_RoundedCornerShape$stableprop // androidx.compose.foundation.shape/androidx_compose_foundation_shape_RoundedCornerShape$stableprop|#static{}androidx_compose_foundation_shape_RoundedCornerShape$stableprop[0]
 final val androidx.compose.foundation/LocalScrollbarStyle // androidx.compose.foundation/LocalScrollbarStyle|{}LocalScrollbarStyle[0]
     final fun <get-LocalScrollbarStyle>(): androidx.compose.runtime/ProvidableCompositionLocal<androidx.compose.foundation/ScrollbarStyle> // androidx.compose.foundation/LocalScrollbarStyle.<get-LocalScrollbarStyle>|<get-LocalScrollbarStyle>(){}[0]
@@ -4175,6 +4316,13 @@ final val androidx.compose.ui.layout/isUnspecified // androidx.compose.ui.layout
     final inline fun (androidx.compose.ui.layout/ScaleFactor).<get-isUnspecified>(): kotlin/Boolean // androidx.compose.ui.layout/isUnspecified.<get-isUnspecified>|<get-isUnspecified>@androidx.compose.ui.layout.ScaleFactor(){}[0]
 final val androidx.compose.ui.platform/LocalClipboardManager // androidx.compose.ui.platform/LocalClipboardManager|{}LocalClipboardManager[0]
     final fun <get-LocalClipboardManager>(): androidx.compose.runtime/ProvidableCompositionLocal<androidx.compose.ui.platform/ClipboardManager> // androidx.compose.ui.platform/LocalClipboardManager.<get-LocalClipboardManager>|<get-LocalClipboardManager>(){}[0]
+final val androidx.compose.ui.platform/NoInspectorInfo // androidx.compose.ui.platform/NoInspectorInfo|{}NoInspectorInfo[0]
+    final fun <get-NoInspectorInfo>(): kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit> // androidx.compose.ui.platform/NoInspectorInfo.<get-NoInspectorInfo>|<get-NoInspectorInfo>(){}[0]
+final val androidx.compose.ui.platform/androidx_compose_ui_platform_InspectableModifier$stableprop // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectableModifier$stableprop|#static{}androidx_compose_ui_platform_InspectableModifier$stableprop[0]
+final val androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorInfo$stableprop // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorInfo$stableprop|#static{}androidx_compose_ui_platform_InspectorInfo$stableprop[0]
+final val androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorValueInfo$stableprop // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorValueInfo$stableprop|#static{}androidx_compose_ui_platform_InspectorValueInfo$stableprop[0]
+final val androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElement$stableprop // androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElement$stableprop|#static{}androidx_compose_ui_platform_ValueElement$stableprop[0]
+final val androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElementSequence$stableprop // androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElementSequence$stableprop|#static{}androidx_compose_ui_platform_ValueElementSequence$stableprop[0]
 final val androidx.compose.ui.platform/platformClipboardManager // androidx.compose.ui.platform/platformClipboardManager|{}platformClipboardManager[0]
     final fun <get-platformClipboardManager>(): androidx.compose.ui.platform/ClipboardManager // androidx.compose.ui.platform/platformClipboardManager.<get-platformClipboardManager>|<get-platformClipboardManager>(){}[0]
 final val androidx.compose.ui.res/androidx_compose_ui_res_AndroidVectorToSvg$stableprop // androidx.compose.ui.res/androidx_compose_ui_res_AndroidVectorToSvg$stableprop|#static{}androidx_compose_ui_res_AndroidVectorToSvg$stableprop[0]
@@ -4340,6 +4488,9 @@ final val com.compose.desktop.native/com_compose_desktop_native_TextLayoutConfig
 final var androidx.compose.ui.platform/currentClipboard // androidx.compose.ui.platform/currentClipboard|{}currentClipboard[0]
     final fun <get-currentClipboard>(): androidx.compose.ui.platform/Clipboard // androidx.compose.ui.platform/currentClipboard.<get-currentClipboard>|<get-currentClipboard>(){}[0]
     final fun <set-currentClipboard>(androidx.compose.ui.platform/Clipboard) // androidx.compose.ui.platform/currentClipboard.<set-currentClipboard>|<set-currentClipboard>(androidx.compose.ui.platform.Clipboard){}[0]
+final var androidx.compose.ui.platform/isDebugInspectorInfoEnabled // androidx.compose.ui.platform/isDebugInspectorInfoEnabled|{}isDebugInspectorInfoEnabled[0]
+    final fun <get-isDebugInspectorInfoEnabled>(): kotlin/Boolean // androidx.compose.ui.platform/isDebugInspectorInfoEnabled.<get-isDebugInspectorInfoEnabled>|<get-isDebugInspectorInfoEnabled>(){}[0]
+    final fun <set-isDebugInspectorInfoEnabled>(kotlin/Boolean) // androidx.compose.ui.platform/isDebugInspectorInfoEnabled.<set-isDebugInspectorInfoEnabled>|<set-isDebugInspectorInfoEnabled>(kotlin.Boolean){}[0]
 final var androidx.compose.ui.res/currentImageLoader // androidx.compose.ui.res/currentImageLoader|{}currentImageLoader[0]
     final fun <get-currentImageLoader>(): androidx.compose.ui.res/ImageLoader // androidx.compose.ui.res/currentImageLoader.<get-currentImageLoader>|<get-currentImageLoader>(){}[0]
     final fun <set-currentImageLoader>(androidx.compose.ui.res/ImageLoader) // androidx.compose.ui.res/currentImageLoader.<set-currentImageLoader>|<set-currentImageLoader>(androidx.compose.ui.res.ImageLoader){}[0]
@@ -4442,6 +4593,7 @@ final fun (androidx.compose.ui/Modifier).androidx.compose.ui.input.pointer/point
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.layout/layout(kotlin/Function3<androidx.compose.ui.layout/MeasureScope, androidx.compose.ui.layout/Measurable, androidx.compose.ui.unit/Constraints, androidx.compose.ui.layout/MeasureResult>): androidx.compose.ui/Modifier // androidx.compose.ui.layout/layout|layout@androidx.compose.ui.Modifier(kotlin.Function3<androidx.compose.ui.layout.MeasureScope,androidx.compose.ui.layout.Measurable,androidx.compose.ui.unit.Constraints,androidx.compose.ui.layout.MeasureResult>){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.layout/onGloballyPositioned(kotlin/Function1<androidx.compose.ui.unit/IntOffset, kotlin/Unit>): androidx.compose.ui/Modifier // androidx.compose.ui.layout/onGloballyPositioned|onGloballyPositioned@androidx.compose.ui.Modifier(kotlin.Function1<androidx.compose.ui.unit.IntOffset,kotlin.Unit>){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui.layout/onSizeChanged(kotlin/Function1<androidx.compose.ui.unit/IntSize, kotlin/Unit>): androidx.compose.ui/Modifier // androidx.compose.ui.layout/onSizeChanged|onSizeChanged@androidx.compose.ui.Modifier(kotlin.Function1<androidx.compose.ui.unit.IntSize,kotlin.Unit>){}[0]
+final fun (androidx.compose.ui/Modifier).androidx.compose.ui.platform/inspectableWrapper(kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit>, androidx.compose.ui/Modifier): androidx.compose.ui/Modifier // androidx.compose.ui.platform/inspectableWrapper|inspectableWrapper@androidx.compose.ui.Modifier(kotlin.Function1<androidx.compose.ui.platform.InspectorInfo,kotlin.Unit>;androidx.compose.ui.Modifier){}[0]
 final fun (androidx.compose.ui/Modifier).androidx.compose.ui/zIndex(kotlin/Float): androidx.compose.ui/Modifier // androidx.compose.ui/zIndex|zIndex@androidx.compose.ui.Modifier(kotlin.Float){}[0]
 final fun (androidx.compose.ui/Modifier).com.compose.desktop.native.modifier/onDrag(kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> = ..., kotlin/Function2<kotlin/Int, kotlin/Int, kotlin/Unit> = ..., kotlin/Function0<kotlin/Unit> = ...): androidx.compose.ui/Modifier // com.compose.desktop.native.modifier/onDrag|onDrag@androidx.compose.ui.Modifier(kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function2<kotlin.Int,kotlin.Int,kotlin.Unit>;kotlin.Function0<kotlin.Unit>){}[0]
 final fun (androidx.compose.ui/Modifier).com.compose.desktop.native.modifier/onMiddleClick(kotlin/Function0<kotlin/Unit>): androidx.compose.ui/Modifier // com.compose.desktop.native.modifier/onMiddleClick|onMiddleClick@androidx.compose.ui.Modifier(kotlin.Function0<kotlin.Unit>){}[0]
@@ -4502,7 +4654,42 @@ final fun androidx.compose.foundation.lazy/LazyColumn(androidx.compose.ui/Modifi
 final fun androidx.compose.foundation.lazy/LazyRow(androidx.compose.ui/Modifier?, androidx.compose.foundation.lazy/LazyListState?, androidx.compose.foundation.layout/Arrangement.Horizontal?, androidx.compose.ui/Alignment.Vertical?, kotlin/Function1<androidx.compose.foundation.lazy/LazyListScope, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation.lazy/LazyRow|LazyRow(androidx.compose.ui.Modifier?;androidx.compose.foundation.lazy.LazyListState?;androidx.compose.foundation.layout.Arrangement.Horizontal?;androidx.compose.ui.Alignment.Vertical?;kotlin.Function1<androidx.compose.foundation.lazy.LazyListScope,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation.lazy/androidx_compose_foundation_lazy_LazyListState$stableprop_getter(): kotlin/Int // androidx.compose.foundation.lazy/androidx_compose_foundation_lazy_LazyListState$stableprop_getter|androidx_compose_foundation_lazy_LazyListState$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.lazy/rememberLazyListState(androidx.compose.runtime/Composer?, kotlin/Int): androidx.compose.foundation.lazy/LazyListState // androidx.compose.foundation.lazy/rememberLazyListState|rememberLazyListState(androidx.compose.runtime.Composer?;kotlin.Int){}[0]
-final fun androidx.compose.foundation.shape/RoundedCornerShape(kotlin/Int): androidx.compose.ui.graphics/Shape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(androidx.compose.foundation.shape.CornerSize){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(androidx.compose.ui.unit/Dp): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ...): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(kotlin/Float): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteCutCornerShape(kotlin/Int): androidx.compose.foundation.shape/AbsoluteCutCornerShape // androidx.compose.foundation.shape/AbsoluteCutCornerShape|AbsoluteCutCornerShape(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(androidx.compose.foundation.shape.CornerSize){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(androidx.compose.ui.unit/Dp): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ...): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(kotlin/Float): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/AbsoluteRoundedCornerShape(kotlin/Int): androidx.compose.foundation.shape/AbsoluteRoundedCornerShape // androidx.compose.foundation.shape/AbsoluteRoundedCornerShape|AbsoluteRoundedCornerShape(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/CornerSize(androidx.compose.ui.unit/Dp): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerSize|CornerSize(androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/CornerSize(kotlin/Float): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerSize|CornerSize(kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/CornerSize(kotlin/Int): androidx.compose.foundation.shape/CornerSize // androidx.compose.foundation.shape/CornerSize|CornerSize(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(androidx.compose.foundation.shape.CornerSize){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(androidx.compose.ui.unit/Dp): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ...): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(kotlin/Float): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/CutCornerShape(kotlin/Int): androidx.compose.foundation.shape/CutCornerShape // androidx.compose.foundation.shape/CutCornerShape|CutCornerShape(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(androidx.compose.foundation.shape/CornerSize): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(androidx.compose.foundation.shape.CornerSize){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ..., androidx.compose.ui.unit/Dp = ...): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(androidx.compose.ui.unit/Dp): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(androidx.compose.ui.unit.Dp){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ..., kotlin/Float = ...): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(kotlin.Float;kotlin.Float;kotlin.Float;kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(kotlin/Float): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(kotlin.Float){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(kotlin.Int;kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/RoundedCornerShape(kotlin/Int): androidx.compose.foundation.shape/RoundedCornerShape // androidx.compose.foundation.shape/RoundedCornerShape|RoundedCornerShape(kotlin.Int){}[0]
+final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop_getter|androidx_compose_foundation_shape_AbsoluteCutCornerShape$stableprop_getter(){}[0]
+final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop_getter|androidx_compose_foundation_shape_AbsoluteRoundedCornerShape$stableprop_getter(){}[0]
+final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_CornerBasedShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_CornerBasedShape$stableprop_getter|androidx_compose_foundation_shape_CornerBasedShape$stableprop_getter(){}[0]
+final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_CutCornerShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_CutCornerShape$stableprop_getter|androidx_compose_foundation_shape_CutCornerShape$stableprop_getter(){}[0]
+final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_GenericShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_GenericShape$stableprop_getter|androidx_compose_foundation_shape_GenericShape$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.shape/androidx_compose_foundation_shape_RoundedCornerShape$stableprop_getter(): kotlin/Int // androidx.compose.foundation.shape/androidx_compose_foundation_shape_RoundedCornerShape$stableprop_getter|androidx_compose_foundation_shape_RoundedCornerShape$stableprop_getter(){}[0]
 final fun androidx.compose.foundation.text.selection/DisableSelection(kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int) // androidx.compose.foundation.text.selection/DisableSelection|DisableSelection(kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int){}[0]
 final fun androidx.compose.foundation.text.selection/SelectionContainer(androidx.compose.ui/Modifier?, kotlin/Function2<androidx.compose.runtime/Composer, kotlin/Int, kotlin/Unit>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation.text.selection/SelectionContainer|SelectionContainer(androidx.compose.ui.Modifier?;kotlin.Function2<androidx.compose.runtime.Composer,kotlin.Int,kotlin.Unit>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
@@ -4604,6 +4791,11 @@ final fun androidx.compose.ui.layout/androidx_compose_ui_layout_Placeable$stable
 final fun androidx.compose.ui.layout/androidx_compose_ui_layout_PlacementScope$stableprop_getter(): kotlin/Int // androidx.compose.ui.layout/androidx_compose_ui_layout_PlacementScope$stableprop_getter|androidx_compose_ui_layout_PlacementScope$stableprop_getter(){}[0]
 final fun androidx.compose.ui.layout/androidx_compose_ui_layout_VerticalAlignmentLine$stableprop_getter(): kotlin/Int // androidx.compose.ui.layout/androidx_compose_ui_layout_VerticalAlignmentLine$stableprop_getter|androidx_compose_ui_layout_VerticalAlignmentLine$stableprop_getter(){}[0]
 final fun androidx.compose.ui.layout/lerp(androidx.compose.ui.layout/ScaleFactor, androidx.compose.ui.layout/ScaleFactor, kotlin/Float): androidx.compose.ui.layout/ScaleFactor // androidx.compose.ui.layout/lerp|lerp(androidx.compose.ui.layout.ScaleFactor;androidx.compose.ui.layout.ScaleFactor;kotlin.Float){}[0]
+final fun androidx.compose.ui.platform/androidx_compose_ui_platform_InspectableModifier$stableprop_getter(): kotlin/Int // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectableModifier$stableprop_getter|androidx_compose_ui_platform_InspectableModifier$stableprop_getter(){}[0]
+final fun androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorInfo$stableprop_getter(): kotlin/Int // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorInfo$stableprop_getter|androidx_compose_ui_platform_InspectorInfo$stableprop_getter(){}[0]
+final fun androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorValueInfo$stableprop_getter(): kotlin/Int // androidx.compose.ui.platform/androidx_compose_ui_platform_InspectorValueInfo$stableprop_getter|androidx_compose_ui_platform_InspectorValueInfo$stableprop_getter(){}[0]
+final fun androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElement$stableprop_getter(): kotlin/Int // androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElement$stableprop_getter|androidx_compose_ui_platform_ValueElement$stableprop_getter(){}[0]
+final fun androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElementSequence$stableprop_getter(): kotlin/Int // androidx.compose.ui.platform/androidx_compose_ui_platform_ValueElementSequence$stableprop_getter|androidx_compose_ui_platform_ValueElementSequence$stableprop_getter(){}[0]
 final fun androidx.compose.ui.res/androidx_compose_ui_res_AndroidVectorToSvg$stableprop_getter(): kotlin/Int // androidx.compose.ui.res/androidx_compose_ui_res_AndroidVectorToSvg$stableprop_getter|androidx_compose_ui_res_AndroidVectorToSvg$stableprop_getter(){}[0]
 final fun androidx.compose.ui.res/androidx_compose_ui_res_Res$stableprop_getter(): kotlin/Int // androidx.compose.ui.res/androidx_compose_ui_res_Res$stableprop_getter|androidx_compose_ui_res_Res$stableprop_getter(){}[0]
 final fun androidx.compose.ui.res/androidx_compose_ui_res_Res_drawable$stableprop_getter(): kotlin/Int // androidx.compose.ui.res/androidx_compose_ui_res_Res_drawable$stableprop_getter|androidx_compose_ui_res_Res_drawable$stableprop_getter(){}[0]
@@ -4773,6 +4965,7 @@ final inline fun (androidx.compose.ui.unit/DpOffset).androidx.compose.ui.unit/ta
 final inline fun (androidx.compose.ui.unit/DpSize).androidx.compose.ui.unit/takeOrElse(kotlin/Function0<androidx.compose.ui.unit/DpSize>): androidx.compose.ui.unit/DpSize // androidx.compose.ui.unit/takeOrElse|takeOrElse@androidx.compose.ui.unit.DpSize(kotlin.Function0<androidx.compose.ui.unit.DpSize>){}[0]
 final inline fun (androidx.compose.ui.unit/IntOffset).androidx.compose.ui.unit/toOffset(): androidx.compose.ui.geometry/Offset // androidx.compose.ui.unit/toOffset|toOffset@androidx.compose.ui.unit.IntOffset(){}[0]
 final inline fun (androidx.compose.ui.unit/TextUnit).androidx.compose.ui.unit/takeOrElse(kotlin/Function0<androidx.compose.ui.unit/TextUnit>): androidx.compose.ui.unit/TextUnit // androidx.compose.ui.unit/takeOrElse|takeOrElse@androidx.compose.ui.unit.TextUnit(kotlin.Function0<androidx.compose.ui.unit.TextUnit>){}[0]
+final inline fun (androidx.compose.ui/Modifier).androidx.compose.ui.platform/inspectable(noinline kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit>, kotlin/Function1<androidx.compose.ui/Modifier, androidx.compose.ui/Modifier>): androidx.compose.ui/Modifier // androidx.compose.ui.platform/inspectable|inspectable@androidx.compose.ui.Modifier(kotlin.Function1<androidx.compose.ui.platform.InspectorInfo,kotlin.Unit>;kotlin.Function1<androidx.compose.ui.Modifier,androidx.compose.ui.Modifier>){}[0]
 final inline fun (kotlin/Double).androidx.compose.ui.geometry/times(androidx.compose.ui.geometry/Size): androidx.compose.ui.geometry/Size // androidx.compose.ui.geometry/times|times@kotlin.Double(androidx.compose.ui.geometry.Size){}[0]
 final inline fun (kotlin/Double).androidx.compose.ui.unit/times(androidx.compose.ui.unit/Dp): androidx.compose.ui.unit/Dp // androidx.compose.ui.unit/times|times@kotlin.Double(androidx.compose.ui.unit.Dp){}[0]
 final inline fun (kotlin/Double).androidx.compose.ui.unit/times(androidx.compose.ui.unit/TextUnit): androidx.compose.ui.unit/TextUnit // androidx.compose.ui.unit/times|times@kotlin.Double(androidx.compose.ui.unit.TextUnit){}[0]
@@ -4831,6 +5024,7 @@ final inline fun androidx.compose.ui.geometry/CornerRadius(kotlin/Float, kotlin/
 final inline fun androidx.compose.ui.geometry/Offset(kotlin/Float, kotlin/Float): androidx.compose.ui.geometry/Offset // androidx.compose.ui.geometry/Offset|Offset(kotlin.Float;kotlin.Float){}[0]
 final inline fun androidx.compose.ui.geometry/Size(kotlin/Float, kotlin/Float): androidx.compose.ui.geometry/Size // androidx.compose.ui.geometry/Size|Size(kotlin.Float;kotlin.Float){}[0]
 final inline fun androidx.compose.ui.layout/ScaleFactor(kotlin/Float, kotlin/Float): androidx.compose.ui.layout/ScaleFactor // androidx.compose.ui.layout/ScaleFactor|ScaleFactor(kotlin.Float;kotlin.Float){}[0]
+final inline fun androidx.compose.ui.platform/debugInspectorInfo(crossinline kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit>): kotlin/Function1<androidx.compose.ui.platform/InspectorInfo, kotlin/Unit> // androidx.compose.ui.platform/debugInspectorInfo|debugInspectorInfo(kotlin.Function1<androidx.compose.ui.platform.InspectorInfo,kotlin.Unit>){}[0]
 final inline fun androidx.compose.ui.text/buildAnnotatedString(kotlin/Function1<androidx.compose.ui.text/AnnotatedString.Builder, kotlin/Unit>): androidx.compose.ui.text/AnnotatedString // androidx.compose.ui.text/buildAnnotatedString|buildAnnotatedString(kotlin.Function1<androidx.compose.ui.text.AnnotatedString.Builder,kotlin.Unit>){}[0]
 final inline fun androidx.compose.ui.unit/DpOffset(androidx.compose.ui.unit/Dp, androidx.compose.ui.unit/Dp): androidx.compose.ui.unit/DpOffset // androidx.compose.ui.unit/DpOffset|DpOffset(androidx.compose.ui.unit.Dp;androidx.compose.ui.unit.Dp){}[0]
 final inline fun androidx.compose.ui.unit/IntOffset(kotlin/Int, kotlin/Int): androidx.compose.ui.unit/IntOffset // androidx.compose.ui.unit/IntOffset|IntOffset(kotlin.Int;kotlin.Int){}[0]
