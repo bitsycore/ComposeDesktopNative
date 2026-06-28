@@ -167,6 +167,20 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt            
 # expectation annotation (dropped when no actual is provided).
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InspectableValue.kt   core/src/vendor/common/kotlin/androidx/compose/ui/platform/InspectableValue.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/internal/JvmDefaultWithCompatibility.kt   core/src/vendor/common/kotlin/androidx/compose/ui/internal/JvmDefaultWithCompatibility.kt
+# ui/internal/InlineClassHelper.kt — checkPrecondition / checkPreconditionNotNull
+# / requirePrecondition family used pervasively by the node engine.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/internal/InlineClassHelper.kt              core/src/vendor/common/kotlin/androidx/compose/ui/internal/InlineClassHelper.kt
+# DebugUtils (simpleIdentityToString) — small expect/actual pair.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/DebugUtils.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/platform/DebugUtils.kt
+compose/ui/ui/src/nativeMain/kotlin/androidx/compose/ui/platform/NativeActuals.kt                  core/src/vendor/native/kotlin/androidx/compose/ui/platform/NativeActuals.kt
+# SemanticsInfo + SemanticsConfiguration SKIPPED — SemanticsConfiguration
+# pulls SemanticsProperties (1739 lines) which transitively pulls
+# androidx.compose.ui.text.TextLayoutResult + the whole paragraph engine,
+# plus autofill engine (ContentDataType / ContentType / FillableData).
+# That whole subtree is out of scope for this session.
+# Until vendored, DelegatableNode can't be vendored verbatim either —
+# it imports SemanticsInfo. Path forward: port semantics engine first,
+# or carve a smaller shim.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/UiComposable.kt          core/src/vendor/common/kotlin/androidx/compose/ui/UiComposable.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/ComposeUiFlags.kt        core/src/vendor/common/kotlin/androidx/compose/ui/ComposeUiFlags.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/FrameRateCategory.kt     core/src/vendor/common/kotlin/androidx/compose/ui/FrameRateCategory.kt
