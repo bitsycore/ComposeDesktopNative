@@ -34,6 +34,16 @@ abstract class Placeable {
 	 */
 	@androidx.compose.ui.layout.PlacementScopeMarker
 	abstract class PlacementScope {
+		/**
+		 * Phase 4b: read the current value of [Ruler] in this PlacementScope,
+		 * or [defaultValue] if not provided. Mirrors upstream
+		 * `Placeable.PlacementScope.kt` line 199 (open fun with the same
+		 * default). Vendored Ruler.mergeRulerValues calls this — but no
+		 * Ruler instances are constructed in our pipeline, so this is
+		 * never invoked at runtime.
+		 */
+		open fun Ruler.current(@Suppress("UNUSED_PARAMETER") defaultValue: Float): Float = defaultValue
+
 		internal companion object Default : PlacementScope()
 	}
 }

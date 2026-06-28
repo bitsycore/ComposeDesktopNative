@@ -634,9 +634,14 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measurable.kt    
 # Phase 4a: MeasureResult vendored verbatim. Our hand-written version
 # (in MeasureScope.kt) was reshaped to upstream's exact members
 # (alignmentLines + rulers + isRulerProvided + rulerProvider), so the
-# vendor is a drop-in. Stub `Ruler` + `RulerScope` types live in
-# Ruler.shim.kt — only used as defaulted type references.
+# vendor is a drop-in.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/MeasureResult.kt                                                    core/src/vendor/common/kotlin/androidx/compose/ui/layout/MeasureResult.kt
+# Phase 4b: Ruler.kt vendored verbatim, replacing Ruler.shim.kt.
+# Needs additions on our existing types: LayoutCoordinates.localPositionOf
+# (default no-op) + Placeable.PlacementScope.Ruler.current (open fun
+# returning the default). No Ruler instances exist in our pipeline, so
+# the runtime path is dormant.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Ruler.kt                                                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/Ruler.kt
 # IntrinsicMeasureScope (interface extends Density, holds layoutDirection)
 # + MeasureBlocks (deprecated). Pure leaf types depending only on
 # already-vendored Density / IntrinsicMeasurable / Measurable / MeasureScope.

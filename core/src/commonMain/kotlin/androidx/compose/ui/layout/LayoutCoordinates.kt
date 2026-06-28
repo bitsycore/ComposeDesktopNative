@@ -24,4 +24,16 @@ interface LayoutCoordinates {
 	 */
 	val isAttached: Boolean
 		get() = true
+
+	/**
+	 * Phase 4b: vendored Ruler.kt calls
+	 * `targetCoordinates.localPositionOf(sourceCoordinates, offset)` in
+	 * VerticalRuler / HorizontalRuler's `calculateCoordinate`. No Ruler
+	 * instances are constructed in our pipeline, so this is never
+	 * invoked at runtime; default returns the offset unchanged.
+	 */
+	fun localPositionOf(
+		inSourceCoordinates: LayoutCoordinates,
+		inRelativeToSource: androidx.compose.ui.geometry.Offset,
+	): androidx.compose.ui.geometry.Offset = inRelativeToSource
 }
