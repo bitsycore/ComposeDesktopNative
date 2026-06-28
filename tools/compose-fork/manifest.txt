@@ -484,6 +484,14 @@ compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/platform/Atomic.nonJvm.k
 # TextDecorationLineStyle — skiko-only value class (no common counterpart).
 compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/TextDecorationLineStyle.kt                                       core/src/vendor/common/kotlin/androidx/compose/ui/text/TextDecorationLineStyle.kt
 
+# WeakReference (ui.node) — expect class + native actual using kotlin.native.ref.WeakReference.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/WeakReference.kt                                                     core/src/vendor/common/kotlin/androidx/compose/ui/node/WeakReference.kt
+compose/ui/ui/src/nativeMain/kotlin/androidx/compose/ui/node/WeakReference.native.kt                                              core/src/vendor/native/kotlin/androidx/compose/ui/node/WeakReference.native.kt
+
+# AtomicReference (ui.text) — expect class + nonJvm actual using kotlinx.atomicfu.
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/AtomicReference.kt                                              core/src/vendor/common/kotlin/androidx/compose/ui/text/AtomicReference.kt
+compose/ui/ui-text/src/nonJvmMain/kotlin/androidx/compose/ui/text/AtomicReference.nonJvm.kt                                       core/src/vendor/native/kotlin/androidx/compose/ui/text/AtomicReference.native.kt
+
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
