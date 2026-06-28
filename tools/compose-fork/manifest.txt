@@ -350,6 +350,7 @@ compose/ui/ui-unit/src/commonMain/kotlin/androidx/compose/ui/unit/Density.kt    
 # AnnotatedActuals.native.kt. MathUtils — internal Int overflow helpers.
 compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/Trace.kt                                       core/src/vendor/common/kotlin/androidx/compose/ui/util/Trace.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/MathUtils.kt                             core/src/vendor/common/kotlin/androidx/compose/ui/text/input/MathUtils.kt
+compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/gestures/BringIntoViewSpec.skiko.kt    core/src/vendor/native/kotlin/androidx/compose/foundation/gestures/BringIntoViewSpec.native.kt
 # More opt-in annotations.
 compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/ExperimentalSharedTransitionApi.kt   core/src/vendor/common/kotlin/androidx/compose/animation/ExperimentalSharedTransitionApi.kt
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.

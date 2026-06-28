@@ -1857,9 +1857,6 @@ final class androidx.compose.foundation.gestures/GestureCancellationException : 
 final class androidx.compose.foundation.lazy/LazyListState { // androidx.compose.foundation.lazy/LazyListState|null[0]
     constructor <init>(kotlin/Int = ...) // androidx.compose.foundation.lazy/LazyListState.<init>|<init>(kotlin.Int){}[0]
 
-    final val scrollState // androidx.compose.foundation.lazy/LazyListState.scrollState|{}scrollState[0]
-        final fun <get-scrollState>(): androidx.compose.foundation/ScrollState // androidx.compose.foundation.lazy/LazyListState.scrollState.<get-scrollState>|<get-scrollState>(){}[0]
-
     final fun dispatchRawDelta(kotlin/Float): kotlin/Float // androidx.compose.foundation.lazy/LazyListState.dispatchRawDelta|dispatchRawDelta(kotlin.Float){}[0]
 }
 
