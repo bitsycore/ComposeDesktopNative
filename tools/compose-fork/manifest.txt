@@ -1178,6 +1178,10 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnRemeasuredModif
 # require the LayoutModifierNodeCoordinator + OwnedLayer chain. Deferred.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/FrameRate.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/FrameRate.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DelegatingNode.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/node/DelegatingNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorComposable.kt       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorComposable.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.kt         core/src/vendor/common/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.skiko.kt    core/src/vendor/native/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.native.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryInputModifierNode.kt   core/src/vendor/common/kotlin/androidx/compose/ui/input/rotary/RotaryInputModifierNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LookaheadPassDelegate.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LookaheadPassDelegate.kt
