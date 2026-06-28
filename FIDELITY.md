@@ -177,7 +177,17 @@ density)`, `Outline.Rectangle(rect)`, `Outline.Rounded(roundRect)`,
 `Outline.Generic(path)`; `SolidColor.color` → `.value`; Animation specs
 (`TweenSpec` / `SnapSpec` / `SpringSpec` / `RepeatableSpec` /
 `InfiniteRepeatableSpec`) `data class` → plain class with manual
-equals/hashCode; `SpanStyle` / `ParagraphStyle` / `TextStyle` same.
+equals/hashCode; `SpanStyle` / `ParagraphStyle` / `TextStyle` same;
+`AnnotatedString.Range<T>` nested + `tag: String` field; `AnimationResult`,
+`Stroke`, `FontVariation`, `TextFieldValue`, `KeyEvent`, `PointerEvent`
+all `data class` → plain class (drops `component*`/`copy` from the surface).
+
+**Project-only helpers moved to `com.compose.desktop.native.*`** (the
+"divergence into extensions" pass): the Color extras
+(`r8`/`g8`/`b8`/`a8`/`lighten`/`darken`/`blend`) are now in
+`com.compose.desktop.native.graphics.ColorExtensions.kt`; renderers and
+material import them from there. Previously they lived in
+`androidx.compose.ui.graphics` and inflated that namespace.
 
 **Runtime-critical (do last, screenshot-test)**: `KeyEvent` / `PointerEvent` /
 `PointerEventType` / `PointerButton` enum/data-class → official value classes —
