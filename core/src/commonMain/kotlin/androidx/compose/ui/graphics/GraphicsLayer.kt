@@ -3,19 +3,7 @@ package androidx.compose.ui.graphics
 import androidx.compose.ui.Modifier
 import com.compose.desktop.native.element.GraphicsLayerModifier
 
-// ==================
-// MARK: TransformOrigin
-// ==================
-
-/* Pivot point for scale / rotation, expressed as fractions of the node's
-   bounds (0,0 = top-left, 1,1 = bottom-right). Default (0.5, 0.5) is the
-   centre of the node. */
-data class TransformOrigin(val pivotFractionX: Float, val pivotFractionY: Float) {
-	companion object {
-		val Center = TransformOrigin(0.5f, 0.5f)
-	}
-}
-
+// TransformOrigin lives in its own vendored file (TransformOrigin.kt).
 // GraphicsLayerModifier (the element this builds) lives in
 // com.compose.desktop.native.element.
 
