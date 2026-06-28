@@ -87,6 +87,18 @@ final enum class androidx.compose.foundation.gestures/Orientation : kotlin/Enum<
     final fun values(): kotlin/Array<androidx.compose.foundation.gestures/Orientation> // androidx.compose.foundation.gestures/Orientation.values|values#static(){}[0]
 }
 
+final enum class androidx.compose.foundation/MutatePriority : kotlin/Enum<androidx.compose.foundation/MutatePriority> { // androidx.compose.foundation/MutatePriority|null[0]
+    enum entry Default // androidx.compose.foundation/MutatePriority.Default|null[0]
+    enum entry PreventUserInput // androidx.compose.foundation/MutatePriority.PreventUserInput|null[0]
+    enum entry UserInput // androidx.compose.foundation/MutatePriority.UserInput|null[0]
+
+    final val entries // androidx.compose.foundation/MutatePriority.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<androidx.compose.foundation/MutatePriority> // androidx.compose.foundation/MutatePriority.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): androidx.compose.foundation/MutatePriority // androidx.compose.foundation/MutatePriority.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<androidx.compose.foundation/MutatePriority> // androidx.compose.foundation/MutatePriority.values|values#static(){}[0]
+}
+
 final enum class androidx.compose.ui.input.key/KeyEventType : kotlin/Enum<androidx.compose.ui.input.key/KeyEventType> { // androidx.compose.ui.input.key/KeyEventType|null[0]
     enum entry Down // androidx.compose.ui.input.key/KeyEventType.Down|null[0]
     enum entry Up // androidx.compose.ui.input.key/KeyEventType.Up|null[0]
@@ -226,6 +238,22 @@ abstract fun interface androidx.compose.ui/Alignment { // androidx.compose.ui/Al
         final val TopStart // androidx.compose.ui/Alignment.Companion.TopStart|{}TopStart[0]
             final fun <get-TopStart>(): androidx.compose.ui/Alignment // androidx.compose.ui/Alignment.Companion.TopStart.<get-TopStart>|<get-TopStart>(){}[0]
     }
+}
+
+abstract interface androidx.compose.foundation.gestures/ScrollScope { // androidx.compose.foundation.gestures/ScrollScope|null[0]
+    abstract fun scrollBy(kotlin/Float): kotlin/Float // androidx.compose.foundation.gestures/ScrollScope.scrollBy|scrollBy(kotlin.Float){}[0]
+}
+
+abstract interface androidx.compose.foundation.gestures/ScrollableState { // androidx.compose.foundation.gestures/ScrollableState|null[0]
+    abstract val isScrollInProgress // androidx.compose.foundation.gestures/ScrollableState.isScrollInProgress|{}isScrollInProgress[0]
+        abstract fun <get-isScrollInProgress>(): kotlin/Boolean // androidx.compose.foundation.gestures/ScrollableState.isScrollInProgress.<get-isScrollInProgress>|<get-isScrollInProgress>(){}[0]
+    open val canScrollBackward // androidx.compose.foundation.gestures/ScrollableState.canScrollBackward|{}canScrollBackward[0]
+        open fun <get-canScrollBackward>(): kotlin/Boolean // androidx.compose.foundation.gestures/ScrollableState.canScrollBackward.<get-canScrollBackward>|<get-canScrollBackward>(){}[0]
+    open val canScrollForward // androidx.compose.foundation.gestures/ScrollableState.canScrollForward|{}canScrollForward[0]
+        open fun <get-canScrollForward>(): kotlin/Boolean // androidx.compose.foundation.gestures/ScrollableState.canScrollForward.<get-canScrollForward>|<get-canScrollForward>(){}[0]
+
+    abstract fun dispatchRawDelta(kotlin/Float): kotlin/Float // androidx.compose.foundation.gestures/ScrollableState.dispatchRawDelta|dispatchRawDelta(kotlin.Float){}[0]
+    abstract suspend fun scroll(androidx.compose.foundation/MutatePriority = ..., kotlin.coroutines/SuspendFunction1<androidx.compose.foundation.gestures/ScrollScope, kotlin/Unit>) // androidx.compose.foundation.gestures/ScrollableState.scroll|scroll(androidx.compose.foundation.MutatePriority;kotlin.coroutines.SuspendFunction1<androidx.compose.foundation.gestures.ScrollScope,kotlin.Unit>){}[0]
 }
 
 abstract interface androidx.compose.foundation.interaction/DragInteraction : androidx.compose.foundation.interaction/Interaction { // androidx.compose.foundation.interaction/DragInteraction|null[0]
@@ -801,8 +829,7 @@ final class androidx.compose.foundation.lazy/LazyListState { // androidx.compose
     final val scrollOffsetPx // androidx.compose.foundation.lazy/LazyListState.scrollOffsetPx|{}scrollOffsetPx[0]
         final fun <get-scrollOffsetPx>(): kotlin/Int // androidx.compose.foundation.lazy/LazyListState.scrollOffsetPx.<get-scrollOffsetPx>|<get-scrollOffsetPx>(){}[0]
 
-    final fun scrollByPx(kotlin/Int) // androidx.compose.foundation.lazy/LazyListState.scrollByPx|scrollByPx(kotlin.Int){}[0]
-    final fun scrollToPx(kotlin/Int) // androidx.compose.foundation.lazy/LazyListState.scrollToPx|scrollToPx(kotlin.Int){}[0]
+    final fun dispatchRawDelta(kotlin/Float): kotlin/Float // androidx.compose.foundation.lazy/LazyListState.dispatchRawDelta|dispatchRawDelta(kotlin.Float){}[0]
 }
 
 final class androidx.compose.foundation.shape/AbsoluteCutCornerShape : androidx.compose.foundation.shape/CornerBasedShape { // androidx.compose.foundation.shape/AbsoluteCutCornerShape|null[0]
@@ -871,9 +898,25 @@ final class androidx.compose.foundation/BorderStroke { // androidx.compose.found
     final fun toString(): kotlin/String // androidx.compose.foundation/BorderStroke.toString|toString(){}[0]
 }
 
-final class androidx.compose.foundation/ScrollState { // androidx.compose.foundation/ScrollState|null[0]
+final class androidx.compose.foundation/MutatorMutex { // androidx.compose.foundation/MutatorMutex|null[0]
+    constructor <init>() // androidx.compose.foundation/MutatorMutex.<init>|<init>(){}[0]
+
+    final fun tryLock(): kotlin/Boolean // androidx.compose.foundation/MutatorMutex.tryLock|tryLock(){}[0]
+    final fun unlock() // androidx.compose.foundation/MutatorMutex.unlock|unlock(){}[0]
+    final inline fun tryMutate(kotlin/Function0<kotlin/Unit>): kotlin/Boolean // androidx.compose.foundation/MutatorMutex.tryMutate|tryMutate(kotlin.Function0<kotlin.Unit>){}[0]
+    final suspend fun <#A1: kotlin/Any?, #B1: kotlin/Any?> mutateWith(#A1, androidx.compose.foundation/MutatePriority = ..., kotlin.coroutines/SuspendFunction1<#A1, #B1>): #B1 // androidx.compose.foundation/MutatorMutex.mutateWith|mutateWith(0:0;androidx.compose.foundation.MutatePriority;kotlin.coroutines.SuspendFunction1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
+    final suspend fun <#A1: kotlin/Any?> mutate(androidx.compose.foundation/MutatePriority = ..., kotlin.coroutines/SuspendFunction0<#A1>): #A1 // androidx.compose.foundation/MutatorMutex.mutate|mutate(androidx.compose.foundation.MutatePriority;kotlin.coroutines.SuspendFunction0<0:0>){0§<kotlin.Any?>}[0]
+}
+
+final class androidx.compose.foundation/ScrollState : androidx.compose.foundation.gestures/ScrollableState { // androidx.compose.foundation/ScrollState|null[0]
     constructor <init>(kotlin/Int = ...) // androidx.compose.foundation/ScrollState.<init>|<init>(kotlin.Int){}[0]
 
+    final val canScrollBackward // androidx.compose.foundation/ScrollState.canScrollBackward|{}canScrollBackward[0]
+        final fun <get-canScrollBackward>(): kotlin/Boolean // androidx.compose.foundation/ScrollState.canScrollBackward.<get-canScrollBackward>|<get-canScrollBackward>(){}[0]
+    final val canScrollForward // androidx.compose.foundation/ScrollState.canScrollForward|{}canScrollForward[0]
+        final fun <get-canScrollForward>(): kotlin/Boolean // androidx.compose.foundation/ScrollState.canScrollForward.<get-canScrollForward>|<get-canScrollForward>(){}[0]
+    final val isScrollInProgress // androidx.compose.foundation/ScrollState.isScrollInProgress|{}isScrollInProgress[0]
+        final fun <get-isScrollInProgress>(): kotlin/Boolean // androidx.compose.foundation/ScrollState.isScrollInProgress.<get-isScrollInProgress>|<get-isScrollInProgress>(){}[0]
     final val maxValue // androidx.compose.foundation/ScrollState.maxValue|{}maxValue[0]
         final fun <get-maxValue>(): kotlin/Int // androidx.compose.foundation/ScrollState.maxValue.<get-maxValue>|<get-maxValue>(){}[0]
     final val value // androidx.compose.foundation/ScrollState.value|{}value[0]
@@ -881,9 +924,9 @@ final class androidx.compose.foundation/ScrollState { // androidx.compose.founda
     final val viewportSize // androidx.compose.foundation/ScrollState.viewportSize|{}viewportSize[0]
         final fun <get-viewportSize>(): kotlin/Int // androidx.compose.foundation/ScrollState.viewportSize.<get-viewportSize>|<get-viewportSize>(){}[0]
 
-    final fun scrollByPx(kotlin/Int) // androidx.compose.foundation/ScrollState.scrollByPx|scrollByPx(kotlin.Int){}[0]
-    final fun scrollToPx(kotlin/Int) // androidx.compose.foundation/ScrollState.scrollToPx|scrollToPx(kotlin.Int){}[0]
+    final fun dispatchRawDelta(kotlin/Float): kotlin/Float // androidx.compose.foundation/ScrollState.dispatchRawDelta|dispatchRawDelta(kotlin.Float){}[0]
     final fun smoothScrollByPx(kotlin/Int) // androidx.compose.foundation/ScrollState.smoothScrollByPx|smoothScrollByPx(kotlin.Int){}[0]
+    final suspend fun scroll(androidx.compose.foundation/MutatePriority, kotlin.coroutines/SuspendFunction1<androidx.compose.foundation.gestures/ScrollScope, kotlin/Unit>) // androidx.compose.foundation/ScrollState.scroll|scroll(androidx.compose.foundation.MutatePriority;kotlin.coroutines.SuspendFunction1<androidx.compose.foundation.gestures.ScrollScope,kotlin.Unit>){}[0]
 
     final object Companion // androidx.compose.foundation/ScrollState.Companion|null[0]
 }
@@ -4159,6 +4202,7 @@ final val androidx.compose.foundation.shape/androidx_compose_foundation_shape_Ro
 final val androidx.compose.foundation/LocalScrollbarStyle // androidx.compose.foundation/LocalScrollbarStyle|{}LocalScrollbarStyle[0]
     final fun <get-LocalScrollbarStyle>(): androidx.compose.runtime/ProvidableCompositionLocal<androidx.compose.foundation/ScrollbarStyle> // androidx.compose.foundation/LocalScrollbarStyle.<get-LocalScrollbarStyle>|<get-LocalScrollbarStyle>(){}[0]
 final val androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop // androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop|#static{}androidx_compose_foundation_BorderStroke$stableprop[0]
+final val androidx.compose.foundation/androidx_compose_foundation_MutatorMutex$stableprop // androidx.compose.foundation/androidx_compose_foundation_MutatorMutex$stableprop|#static{}androidx_compose_foundation_MutatorMutex$stableprop[0]
 final val androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop // androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop|#static{}androidx_compose_foundation_ScrollState$stableprop[0]
 final val androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop // androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop|#static{}androidx_compose_foundation_ScrollbarStyle$stableprop[0]
 final val androidx.compose.ui.focus/LocalFocusManager // androidx.compose.ui.focus/LocalFocusManager|{}LocalFocusManager[0]
@@ -4673,6 +4717,7 @@ final fun androidx.compose.foundation/HorizontalScrollbar(androidx.compose.found
 final fun androidx.compose.foundation/Image(androidx.compose.ui.graphics.painter/Painter, kotlin/String?, androidx.compose.ui/Modifier?, androidx.compose.ui.layout/ContentScale?, kotlin/Float, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation/Image|Image(androidx.compose.ui.graphics.painter.Painter;kotlin.String?;androidx.compose.ui.Modifier?;androidx.compose.ui.layout.ContentScale?;kotlin.Float;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation/VerticalScrollbar(androidx.compose.foundation/ScrollbarAdapter, androidx.compose.ui/Modifier?, kotlin/Boolean, androidx.compose.foundation/ScrollbarStyle?, androidx.compose.foundation.interaction/MutableInteractionSource?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // androidx.compose.foundation/VerticalScrollbar|VerticalScrollbar(androidx.compose.foundation.ScrollbarAdapter;androidx.compose.ui.Modifier?;kotlin.Boolean;androidx.compose.foundation.ScrollbarStyle?;androidx.compose.foundation.interaction.MutableInteractionSource?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_BorderStroke$stableprop_getter|androidx_compose_foundation_BorderStroke$stableprop_getter(){}[0]
+final fun androidx.compose.foundation/androidx_compose_foundation_MutatorMutex$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_MutatorMutex$stableprop_getter|androidx_compose_foundation_MutatorMutex$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_ScrollState$stableprop_getter|androidx_compose_foundation_ScrollState$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop_getter(): kotlin/Int // androidx.compose.foundation/androidx_compose_foundation_ScrollbarStyle$stableprop_getter|androidx_compose_foundation_ScrollbarStyle$stableprop_getter(){}[0]
 final fun androidx.compose.foundation/defaultScrollbarStyle(): androidx.compose.foundation/ScrollbarStyle // androidx.compose.foundation/defaultScrollbarStyle|defaultScrollbarStyle(){}[0]

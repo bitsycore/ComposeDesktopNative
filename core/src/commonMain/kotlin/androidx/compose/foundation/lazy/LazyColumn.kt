@@ -28,8 +28,11 @@ class LazyListState(initialFirstVisibleItemIndex: Int = 0) {
     val scrollOffsetPx: Int get() = scrollState.value
     val maxScrollOffsetPx: Int get() = scrollState.maxValue
 
-    fun scrollByPx(inDelta: Int) = scrollState.scrollByPx(inDelta)
-    fun scrollToPx(inPosition: Int) = scrollState.scrollToPx(inPosition)
+    /* Project-only conveniences for the pixel-based design (upstream's
+       LazyListState is item-based with suspend scrollToItem). Both dispatch
+       through ScrollState.dispatchRawDelta so the same clamping/bookkeeping
+       runs whether the caller goes through ScrollState or LazyListState. */
+    fun dispatchRawDelta(delta: Float): Float = scrollState.dispatchRawDelta(delta)
 }
 
 @Composable

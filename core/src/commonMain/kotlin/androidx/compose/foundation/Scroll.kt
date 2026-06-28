@@ -1,5 +1,7 @@
 package androidx.compose.foundation
 
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,15 +26,60 @@ import kotlin.math.roundToInt
    smoothScrollBy eases toward a target over several frames (used by the mouse
    wheel) — the window loop drives the easing once per frame via
    ScrollAnimator.tick(). */
-class ScrollState(initial: Int = 0) {
+class ScrollState(initial: Int = 0) : ScrollableState {
     private var _value by mutableStateOf(initial.coerceAtLeast(0))
     private var _maxValue by mutableStateOf(Int.MAX_VALUE)
     private var _viewportSize by mutableStateOf(0)
     // Smooth-scroll target the easing chases; kept == _value when not animating.
     private var _animTarget = initial.coerceAtLeast(0)
+    private val scrollMutex = MutatorMutex()
+    private var _isScrollInProgress by mutableStateOf(false)
 
     val value: Int get() = _value
     val maxValue: Int get() = _maxValue
+
+    // ==================
+    // MARK: ScrollableState
+    // ==================
+
+    override val isScrollInProgress: Boolean get() = _isScrollInProgress
+
+    override val canScrollForward: Boolean get() = _value < _maxValue
+    override val canScrollBackward: Boolean get() = _value > 0
+
+    /* Take exclusive control of scrolling at the given priority and run the
+       block. The ScrollScope.scrollBy(Float) calls inside dispatch through
+       dispatchRawDelta — same semantics as upstream. */
+    override suspend fun scroll(
+        scrollPriority: MutatePriority,
+        block: suspend ScrollScope.() -> Unit,
+    ) {
+        scrollMutex.mutateWith(scrollScope, scrollPriority) {
+            _isScrollInProgress = true
+            try {
+                block()
+            } finally {
+                _isScrollInProgress = false
+            }
+        }
+    }
+
+    /* Bypass-the-mutex push of a pixel delta. Returns the delta actually
+       consumed after clamping at edges. */
+    override fun dispatchRawDelta(delta: Float): Float {
+        val vOldValue = _value
+        val vNewValue = (vOldValue + delta).toInt().coerceIn(0, _maxValue)
+        _value = vNewValue
+        _animTarget = vNewValue
+        return (vNewValue - vOldValue).toFloat()
+    }
+
+    /* ScrollScope view of this ScrollableState — dispatches through
+       dispatchRawDelta so all the clamping / state-mutation logic stays
+       in one place. */
+    private val scrollScope: ScrollScope = object : ScrollScope {
+        override fun scrollBy(pixels: Float): Float = dispatchRawDelta(pixels)
+    }
 
     /* Viewport length along the scroll axis, in px — set by layout each frame.
        Used by a Scrollbar to size its thumb (viewport / content). */
@@ -53,24 +100,14 @@ class ScrollState(initial: Int = 0) {
         if (_animTarget > vClamped) _animTarget = vClamped
     }
 
-    /* Non-suspend, pixel-based scroll APIs — named with the `Px` suffix
-       because upstream's ScrollState.scrollBy / scrollTo are suspend
-       coroutine entries taking Float and returning the consumed delta
-       (via ScrollableState). Keeping the upstream names would collide on
-       the ABI; the `Px` suffix marks these as project-only. */
-    fun scrollByPx(inDelta: Int) {
-        _value = (_value + inDelta).coerceIn(0, _maxValue)
-        _animTarget = _value
-    }
-
-    fun scrollToPx(inPosition: Int) {
-        _value = inPosition.coerceIn(0, _maxValue)
-        _animTarget = _value
-    }
-
-    /* Eased scroll: accumulate into a target the frame loop glides toward, so a
-       mouse-wheel notch animates instead of jumping. Repeated notches add up
-       (momentum). Registers with ScrollAnimator so the loop ticks it. */
+    /* Eased scroll: accumulate into a target the frame loop glides toward,
+       so a mouse-wheel notch animates instead of jumping. Repeated notches
+       add up (momentum). Registers with ScrollAnimator so the loop ticks it.
+       Project-only — upstream uses `animateScrollBy(state, Float, AnimationSpec)`
+       which suspends; this is a non-suspend variant for the mouse-wheel
+       handler in :window which doesn't run inside a coroutine scope on its
+       own. Plain `scrollBy(Int)` (instant) and `scrollTo(Int)` (absolute)
+       go through `dispatchRawDelta` instead. */
     fun smoothScrollByPx(inDelta: Int) {
         _animTarget = (_animTarget + inDelta).coerceIn(0, _maxValue)
         if (_animTarget != _value) ScrollAnimator.register(this)

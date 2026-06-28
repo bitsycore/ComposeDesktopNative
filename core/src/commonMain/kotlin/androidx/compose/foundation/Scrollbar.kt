@@ -96,7 +96,11 @@ private class ScrollStateScrollbarAdapter(private val state: ScrollState) : Scro
     override val contentSize: Double get() = state.contentSize.toDouble()
     override val viewportSize: Double get() = state.viewportSize.toDouble()
     override suspend fun scrollTo(scrollOffset: Double) {
-        state.scrollToPx(scrollOffset.roundToInt())
+        // Scrollbar thumb drag → instant scroll-to. dispatchRawDelta takes a
+        // delta in pixels; convert the target offset into a delta from where
+        // we are now (clamping at the scroll edges is the dispatchRawDelta
+        // contract, so we don't have to coerce here).
+        state.dispatchRawDelta((scrollOffset - state.value.toDouble()).toFloat())
     }
 }
 

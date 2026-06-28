@@ -150,6 +150,14 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyListItemInfo.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyListItemInfo.kt
 # Foundation internal precondition helpers (requirePrecondition etc.)
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/internal/InlineClassHelper.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/internal/InlineClassHelper.kt
+# Suspend-pipeline support (ScrollableState port): expect/actual cancellation
+# exception + the mutex that arbitrates competing scroll calls.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/internal/PlatformOptimizedCancellationException.kt        core/src/vendor/common/kotlin/androidx/compose/foundation/internal/PlatformOptimizedCancellationException.kt
+compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/internal/PlatformOptimizedCancellationException.nonJvm.kt core/src/vendor/native/kotlin/androidx/compose/foundation/internal/PlatformOptimizedCancellationException.native.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/MutatorMutex.kt                                            core/src/vendor/common/kotlin/androidx/compose/foundation/MutatorMutex.kt
+# AtomicReference/AtomicLong expect + nonJvm actual (used by MutatorMutex).
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Expect.kt                                                  core/src/vendor/common/kotlin/androidx/compose/foundation/Expect.kt
+compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/Actual.nonJvm.kt                                           core/src/vendor/native/kotlin/androidx/compose/foundation/Actual.native.kt
 # foundation.shape — the full upstream package now that Shape/Outline/Density
 # match upstream. Replaces our hand-written Shapes.kt (uniform-radius
 # RoundedCornerShape + CircleShape) with the proper per-corner CornerSize
