@@ -185,8 +185,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/interaction/DragInteraction.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/interaction/DragInteraction.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/interaction/HoverInteraction.kt                       core/src/vendor/common/kotlin/androidx/compose/foundation/interaction/HoverInteraction.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/interaction/FocusInteraction.kt                       core/src/vendor/common/kotlin/androidx/compose/foundation/interaction/FocusInteraction.kt
-# PressInteraction stays hand-written: upstream's KDoc references
-# androidx.compose.ui.platform.ViewConfiguration which we don't host.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/interaction/PressInteraction.kt                       core/src/vendor/common/kotlin/androidx/compose/foundation/interaction/PressInteraction.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Orientation.kt                               core/src/vendor/common/kotlin/androidx/compose/foundation/gestures/Orientation.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt                         core/src/vendor/common/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/InternalFoundationApi.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/InternalFoundationApi.kt
@@ -322,6 +321,16 @@ compose/animation/animation-core/src/nonJvmMain/kotlin/androidx/compose/animatio
 compose/animation/animation-core/src/commonMain/kotlin/androidx/compose/animation/core/InfiniteAnimationPolicy.kt core/src/vendor/common/kotlin/androidx/compose/animation/core/InfiniteAnimationPolicy.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/MotionDurationScale.kt                                    core/src/vendor/common/kotlin/androidx/compose/ui/MotionDurationScale.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InfiniteAnimationPolicy.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/platform/InfiniteAnimationPolicy.kt
+# Small platform leaves with no existing references — pure-additive vendor.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/SoundEffect.kt                                   core/src/vendor/common/kotlin/androidx/compose/ui/platform/SoundEffect.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InspectionMode.kt                                core/src/vendor/common/kotlin/androidx/compose/ui/platform/InspectionMode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/AccessibilityManager.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/platform/AccessibilityManager.kt
+# Selection — internal data class + AnchorInfo. Pure-additive (no existing
+# refs); deps are TextRange + ResolvedTextDirection which are both vendored.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/Selection.kt        core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/Selection.kt
+# Small pure text leaves — annotation + value class.
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/ExperimentalTextApi.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/text/ExperimentalTextApi.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextGranularity.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/text/TextGranularity.kt
 # PointerEvent — the big one. Brings PointerEventType / PointerButton /
 # PointerButtons / PointerKeyboardModifiers / PointerId / PointerType (all
 # value classes) + the multi-touch PointerEvent (expect class with skiko
