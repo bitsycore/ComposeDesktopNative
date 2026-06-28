@@ -20,12 +20,23 @@
 # expected project surface, not bugs. Treat the output as candidates to review
 # against CLAUDE.md's fidelity rules, not a hard gate.
 
+import os
 import sys
 import re
 from pathlib import Path
 
 kRoot = Path(__file__).resolve().parent.parent
-kRefDir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("C:/Dev/cmp-ref")
+# cmp-ref clone: explicit arg, then $CMP_REF, then <repo>/../cmp-ref (where
+# tools/compose-fork/sync.sh puts it), then the old Windows default. Portable
+# across Windows / macOS / Linux.
+if len(sys.argv) > 1:
+    kRefDir = Path(sys.argv[1])
+elif os.environ.get("CMP_REF"):
+    kRefDir = Path(os.environ["CMP_REF"])
+elif (kRoot.parent / "cmp-ref").exists():
+    kRefDir = kRoot.parent / "cmp-ref"
+else:
+    kRefDir = Path("C:/Dev/cmp-ref")
 
 # decl-id is the text between "// " and the first "|". Strip accessor / ctor
 # noise so a property and its getter collapse to one name.

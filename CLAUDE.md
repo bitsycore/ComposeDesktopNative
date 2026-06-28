@@ -377,6 +377,12 @@ Follow the Kotlin standard conventions, force KDOC when needed.
 
 ## Compose API Fidelity (mirroring official Compose Multiplatform)
 
+> **Current state + how to continue: see [`FIDELITY.md`](FIDELITY.md).** Much of
+> this section's "known-diverging / TODO" is now done — pure leaf types are
+> vendored verbatim from upstream via `tools/compose-fork/` into
+> `core/src/vendor/`, and non-official render-bridge/engine types were relocated
+> to `com.compose.desktop.native.*`. The rules below stay authoritative.
+
 The `androidx.compose.*` packages here are a **re-implementation** whose
 **public surface must track official Compose Multiplatform as closely as
 possible** (same package, same names, same parameter order/defaults/return
