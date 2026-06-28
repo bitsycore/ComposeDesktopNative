@@ -2,6 +2,7 @@ package com.compose.desktop.native
 
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.*
+import com.compose.desktop.native.input.KeyModifiers
 import kotlinx.cinterop.*
 import sdl3.*
 

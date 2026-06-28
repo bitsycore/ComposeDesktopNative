@@ -1,9 +1,7 @@
 package androidx.compose.ui.input.pointer
 
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CancellationException
+import com.compose.desktop.native.input.PointerInputEvent
 
 // ==================
 // MARK: PointerInputChange
@@ -14,7 +12,11 @@ import kotlinx.coroutines.CancellationException
    move-while-down). `id` is the pointer index (mouse = 0; touch
    contacts later may carry distinct ids). `consume()` marks the change
    handled so ancestor pointerInput blocks ignore it on subsequent
-   passes. */
+   passes.
+
+   This is the upstream-named public type; the reduced shape (Long id,
+   plain Offset) is a project simplification — FIDELITY flags the full
+   value-class redesign as runtime-critical, deferred to its own pass. */
 class PointerInputChange(
 	val id: Long,
 	val position: Offset,
@@ -25,16 +27,6 @@ class PointerInputChange(
 	var consumed: Boolean = false; private set
 	fun consume() { consumed = true }
 }
-
-// ==================
-// MARK: PointerEvent (rich)
-// ==================
-
-/* Suspending DSL view of a pointer event: a list of changes (we ship one
-   change per event today; multi-touch can extend later). Distinct from
-   the simpler `androidx.compose.ui.input.pointer.PointerEvent` that
-   ComposeWindow uses internally for legacy dispatch. */
-class PointerInputEvent(val changes: List<PointerInputChange>)
 
 // ==================
 // MARK: Scopes
@@ -51,71 +43,16 @@ interface PointerInputScope {
 }
 
 /* The scope inside awaitPointerEventScope where you can suspend on
-   pointer events. */
+   pointer events.
+
+   Note: returns `com.compose.desktop.native.input.PointerInputEvent` —
+   the project-only render-bridge event type (upstream's same-named
+   class is `internal expect`, different shape). */
 interface AwaitPointerEventScope {
 
 	suspend fun awaitPointerEvent(): PointerInputEvent
 }
 
-// ==================
-// MARK: PointerInputElement (modifier)
-// ==================
-
-/* Modifier.Element that the host (ComposeWindow) hands every relevant
-   pointer event to. Owns a PointerInputScope whose suspending block is
-   driven by a LaunchedEffect tied to the user-supplied key(s). */
-/* The .scope field is public to give the host module (:window) the
-   ability to dispatch pointer events into it. App code should not poke
-   at the scope directly — interact with it via the suspending block
-   you pass to Modifier.pointerInput. */
-class PointerInputElement(val scope: PointerInputScopeImpl) : Modifier.Element
-
-/* Concrete PointerInputScope held by every PointerInputElement.
-   Exposes deliverChange() for the renderer host to push events in.
-   Public for cross-module visibility (Kotlin's `internal` is
-   per-module, and :window needs to call deliverChange). */
-class PointerInputScopeImpl : PointerInputScope {
-
-	// One in-flight awaiter at a time — pointerInput { } blocks are
-	// strictly sequential (matches upstream semantics for a single
-	// awaitPointerEventScope coroutine).
-	private var fAwaiter: CompletableDeferred<PointerInputEvent>? = null
-	private var fLastChange: PointerInputChange? = null
-
-	override suspend fun <R> awaitPointerEventScope(
-		block: suspend AwaitPointerEventScope.() -> R,
-	): R {
-		val vScope = object : AwaitPointerEventScope {
-			override suspend fun awaitPointerEvent(): PointerInputEvent {
-				val vDeferred = CompletableDeferred<PointerInputEvent>()
-				fAwaiter = vDeferred
-				try {
-					return vDeferred.await()
-				} catch (t: CancellationException) {
-					if (fAwaiter === vDeferred) fAwaiter = null
-					throw t
-				}
-			}
-		}
-		return vScope.block()
-	}
-
-	/* Deliver a change from the host. Computes pressed-transition fields
-	   off the LAST change we delivered. If nothing is awaiting, the
-	   event is dropped — same as upstream when no suspension is active.
-	   Called by the renderer host (:window) — not API for app code. */
-	fun deliverChange(position: Offset, pressed: Boolean, id: Long) {
-		val vPrev = fLastChange
-		val vChange = PointerInputChange(
-			id = id,
-			position = position,
-			pressed = pressed,
-			previousPosition = vPrev?.position ?: position,
-			previousPressed = vPrev?.pressed ?: false,
-		)
-		fLastChange = vChange
-		val vA = fAwaiter
-		fAwaiter = null
-		vA?.complete(PointerInputEvent(listOf(vChange)))
-	}
-}
+// PointerInputElement / PointerInputScopeImpl / PointerInputEvent (the
+// render-bridge implementations) live in com.compose.desktop.native.input
+// per FIDELITY relocate rule — no official upstream equivalent.

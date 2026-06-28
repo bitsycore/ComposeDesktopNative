@@ -143,7 +143,12 @@ All of the above already verified working on Windows/SDL3.
   `.graphics`; `TextMeasurer` / `WrappedText` / `TextRendererCapabilities` +
   `currentTextMeasurer` / `currentViewportHeight/Width` → `.text` (upstream
   has its own `androidx.compose.ui.text.TextMeasurer` with a different
-  shape — class returning `TextLayoutResult`); `ScrollAnimator` → `.scroll`;
+  shape — class returning `TextLayoutResult`); `PointerInputElement` /
+  `PointerInputScopeImpl` / `PointerInputEvent` + `KeyModifiers` → `.input`
+  (upstream's `PointerInputEvent` is `internal expect` with different
+  shape; modifier system uses Node not Element; `KeyModifiers` has no
+  upstream equivalent — modifiers are encoded into `KeyEvent` itself);
+  `ScrollAnimator` → `.scroll`;
   Popup host infra → `.window`; `ColorRun` + `SelectableText`/
   `LocalInSelectionContainer` (folded into selection-aware
   BasicText) → `.text`; `InfiniteTransition.animateDp` → `.animation`.
@@ -157,13 +162,14 @@ All of the above already verified working on Windows/SDL3.
 ## Remaining (per the relocate-or-match directive)
 
 **Safe relocations → native.\*** (pure package moves, the proven pattern):
-- `ui.text` render glue: `TextMeasurer` / `WrappedText` / `TextRendererCapabilities`
-  + `currentTextMeasurer` / `currentViewportHeight/Width` → `native.text`
-- `ui.input` render-bridge: `PointerInputElement` / `PointerInputEvent` /
-  `PointerInputScopeImpl` / `KeyModifiers` → `native.input`
-- `foundation` `ScrollbarAdapter` → native
-  (`PathCommand` already relocated.)
+- `foundation.ScrollbarAdapter` stays in `androidx.compose.foundation` —
+  upstream's `Scrollbar.skiko.kt` exposes it there too; our hand-written
+  impl uses the same package + same names, just with reduced behavior
+  (only `ScrollState` adapter, no `LazyListState` / `LazyGridState` /
+  `TextFieldScrollState` overloads).
 - (bigger, app-facing) the `ui.res` system (`Res`/`ImageLoader`/`ResourceKind`/…)
+- (`PathCommand`, `TextMeasurer` package, `PointerInputElement` package
+  already relocated.)
 
 **Match-upstream reshapes**: `SpanStyle`/`TextStyle`/`ParagraphStyle`
 `data class` → plain class with manual equals/hashCode (drop `component*`/
