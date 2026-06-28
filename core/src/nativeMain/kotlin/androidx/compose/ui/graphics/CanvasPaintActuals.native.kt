@@ -73,22 +73,13 @@ internal actual fun ActualImageShader(
 internal actual fun ActualCompositeShader(dst: Shader, src: Shader, blendMode: BlendMode): Shader =
 	Shader()
 
-// ============
-//  ColorFilter
-
-internal actual class NativeColorFilter
-
-internal actual fun actualTintColorFilter(color: Color, blendMode: BlendMode): NativeColorFilter =
-	NativeColorFilter()
-
-internal actual fun actualColorMatrixColorFilter(colorMatrix: ColorMatrix): NativeColorFilter =
-	NativeColorFilter()
-
-internal actual fun actualLightingColorFilter(multiply: Color, add: Color): NativeColorFilter =
-	NativeColorFilter()
-
-internal actual fun actualColorMatrixFromFilter(filter: NativeColorFilter): ColorMatrix =
-	ColorMatrix()
+// NativeColorFilter + actualTintColorFilter / actualColorMatrixColorFilter /
+// actualLightingColorFilter / actualColorMatrixFromFilter actuals are now
+// split per renderer:
+//   - Skia path: vendored from upstream SkiaColorFilter.skiko.kt into
+//     core/src/vendor/skikoRenderer/.../graphics/ — uses real
+//     org.jetbrains.skia.ColorFilter.
+//   - SDL3 path: stubs in core/src/sdlRendererMain/.../graphics/ColorFilter.sdl.kt.
 
 // ============
 //  PathEffect

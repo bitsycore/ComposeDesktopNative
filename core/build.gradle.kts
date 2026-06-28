@@ -157,6 +157,11 @@ kotlin {
 
         val sdlRendererMain by creating {
             dependsOn(nativeMain.get())
+            // src/vendor/sdlRenderer/kotlin holds files vendored verbatim
+            // from upstream's skikoMain that are SDL3-friendly (no Skia refs)
+            // or whose SDL3 actual we provide; same "never hand-edit" rule
+            // as the other vendor srcDirs.
+            kotlin.srcDir("src/vendor/sdlRenderer/kotlin")
             // SDL3_ttf / SDL3_image / freetype cinterop bindings come from
             // the per-target cinterop block above; no separate Gradle deps.
         }
@@ -179,6 +184,10 @@ kotlin {
             // Default: macOS / Linux use Skia. Create the skiko tree.
             val skikoRendererMain by creating {
                 dependsOn(nativeMain.get())
+                // src/vendor/skikoRenderer/kotlin holds upstream's `skikoMain`
+                // files (Skia-tied actuals / helpers like BlendMode.skiko.kt)
+                // vendored verbatim. Same "never hand-edit" rule.
+                kotlin.srcDir("src/vendor/skikoRenderer/kotlin")
                 dependencies {
                     implementation(libs.skiko)
                 }

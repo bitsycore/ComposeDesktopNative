@@ -621,6 +621,25 @@ compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundR
 compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/MutableRect.kt         core/src/vendor/common/kotlin/androidx/compose/ui/geometry/MutableRect.kt
 compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt       core/src/vendor/common/kotlin/androidx/compose/ui/geometry/GeometryUtils.kt
 
+# ── skikoRendererMain (upstream skikoMain files Skia-tied to org.jetbrains.skia) ──
+# These files import `org.jetbrains.skia.*` and so only compile under the
+# skikoRendererMain source set (which carries the Skiko classpath). They are
+# unused on mingwX64 / -Prenderer=sdl3 (those builds don't create
+# skikoRendererMain at all). Vendor verbatim into core/src/vendor/skikoRenderer/kotlin.
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt       core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt           core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt  core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt
+# SkiaTileMode.skiko.kt provides the `actual fun TileMode.isSupported()` for
+# the Skia path. The matching SDL3-path actual (a stub `= true`) lives in
+# core/src/sdlRendererMain/.../graphics/TileMode.sdl.kt — only one is on the
+# compile chain for any given target.
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt    core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt
+# SkiaColorFilter.skiko.kt provides the real `NativeColorFilter = SkColorFilter`
+# typealias + ColorFilter factory actuals (tint / colorMatrix / lighting /
+# colorMatrixFromFilter) for the Skia path. The SDL3-path stubs live in
+# core/src/sdlRendererMain/.../graphics/ColorFilter.sdl.kt.
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt
+
 # ==============================================================================
 # ==============================================================================
 # UNVENDORED COVERAGE MAP
@@ -786,12 +805,7 @@ compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Geomet
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/drawscope/ContentDrawScope.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/drawscope/ContentDrawScope.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/BlendMode.native.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/ImageBitmap.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/Rects.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaTileMode.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.native.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/shadow/Blur.native.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/CharHelpers.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/CharHelpers.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/LinkInteractionListener.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/LinkInteractionListener.kt
