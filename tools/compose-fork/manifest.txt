@@ -1177,11 +1177,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnRemeasuredModif
 # coordinator (one per LayoutNode, not per-modifier) does not own. Pulling this in would
 # require the LayoutModifierNodeCoordinator + OwnedLayer chain. Deferred.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/FrameRate.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/FrameRate.kt
-# DelegatingNode.kt — requires NodeChain.syncCoordinators() + autoInvalidateInsertedNode +
-# autoInvalidateRemovedNode + the Int.contains(NodeKind<*>) operator, all of which transitively
-# pull LayoutModifierNodeCoordinator + AutoInvalidate machinery. Stay with DelegatingNode.shim.kt
-# until the per-modifier coordinator chain is wired up.
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DelegatingNode.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/node/DelegatingNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DelegatingNode.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/node/DelegatingNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LookaheadPassDelegate.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/LookaheadPassDelegate.kt

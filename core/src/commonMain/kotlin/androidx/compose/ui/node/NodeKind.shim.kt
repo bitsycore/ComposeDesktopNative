@@ -49,6 +49,13 @@ internal infix fun NodeKind<*>.or(inMask: Int): Int = mask or inMask
 internal infix fun Int.or(inKind: NodeKind<*>): Int = this or inKind.mask
 
 /**
+ * Upstream NodeKind.kt:64 — `Int.contains(NodeKind<*>)` operator used by
+ * `Nodes.Layout in delegateKindSet` syntax inside vendored DelegatingNode.
+ */
+@Suppress("NOTHING_TO_INLINE")
+internal inline operator fun Int.contains(value: NodeKind<*>): Boolean = this and value.mask != 0
+
+/**
  * `NodeKind<*>.includeSelfInTraversal` matches upstream's
  * NodeKind.kt:65 — checks for OnRemeasured / OnPlaced kind bits. Our
  * Nodes shim has no OnRemeasured / OnPlaced entries (they aren't
@@ -80,11 +87,37 @@ internal fun calculateNodeKindSetFrom(node: Modifier.Node): Int {
 
 /**
  * Upstream NodeKind.kt:430 — kind aggregation for a delegating node walks
- * its delegate subtree. With DelegatingNode still a shim that exposes
- * neither `selfKindSet` nor a real delegate chain, this collapses to
- * [calculateNodeKindSetFrom] of the node itself; when the real
- * DelegatingNode lands, restore the upstream walk.
+ * its delegate subtree. Mirrors upstream.
  */
-internal fun calculateNodeKindSetFromIncludingDelegates(node: Modifier.Node): Int =
-	calculateNodeKindSetFrom(node)
+internal fun calculateNodeKindSetFromIncludingDelegates(node: Modifier.Node): Int {
+	return if (node is DelegatingNode) {
+		var vMask = node.selfKindSet
+		node.forEachImmediateDelegate { vMask = vMask or calculateNodeKindSetFromIncludingDelegates(it) }
+		vMask
+	} else {
+		calculateNodeKindSetFrom(node)
+	}
+}
+
+// ==================
+// MARK: autoInvalidate stubs
+// ==================
+
+/**
+ * Upstream NodeKind.kt:302 callbacks fired when DelegatingNode adds/removes
+ * a delegate to its chain. The real bodies trigger draw / measure / semantic
+ * invalidation by recomputing kindSet on the owner and routing through
+ * NodeCoordinator.invalidate*. Our coordinator is dormant (it doesn't drive
+ * draw/measure), so these collapse to no-ops — DelegatingNode still
+ * compiles + its delegate accounting works; the visible-side-effect path
+ * (invalidations) lights up when the renderer rewrite uses the chain.
+ */
+@Suppress("UNUSED_PARAMETER")
+internal fun autoInvalidateInsertedNode(node: Modifier.Node) { /* no-op */ }
+
+@Suppress("UNUSED_PARAMETER")
+internal fun autoInvalidateRemovedNode(node: Modifier.Node) { /* no-op */ }
+
+@Suppress("UNUSED_PARAMETER")
+internal fun autoInvalidateUpdatedNode(node: Modifier.Node) { /* no-op */ }
 

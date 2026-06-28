@@ -143,6 +143,20 @@ internal class NodeChain(private val fOwner: LayoutNode) {
 	}
 
 	/**
+	 * Upstream NodeChain.kt:248 — per-modifier `LayoutModifierNodeCoordinator`
+	 * threading. Our project keeps a single NodeCoordinator per LayoutNode
+	 * (no per-modifier chain), so this is a no-op. Vendored DelegatingNode
+	 * calls it after `delegate(...)` adds a layout-modifier delegate; the
+	 * draw / measure path is then re-driven by the renderer, which currently
+	 * still reads via foldIn — not via the coordinator chain.
+	 *
+	 * Becomes real when the renderer rewrite uses the upstream
+	 * `LayoutModifierNodeCoordinator` chain instead of [LayoutNode.measure]
+	 * with the flat foldIn pass.
+	 */
+	fun syncCoordinators() { /* no-op */ }
+
+	/**
 	 * Concrete Modifier.Node subclass used as the chain's permanent
 	 * head. Never visible as a "real" modifier — DelegatableNode walks
 	 * `head.child` to skip it.
