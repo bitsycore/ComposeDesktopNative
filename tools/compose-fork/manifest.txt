@@ -472,6 +472,8 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/InputModeManager.k
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/snapping/SnapLayoutInfoProvider.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/gestures/snapping/SnapLayoutInfoProvider.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/InvertMatrix.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/platform/InvertMatrix.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/LinkStateInteractionSourceObserver.kt        core/src/vendor/common/kotlin/androidx/compose/foundation/text/LinkStateInteractionSourceObserver.kt
+# CompositingStrategy: pure value class used by graphicsLayer.
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/CompositingStrategy.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/layer/CompositingStrategy.kt
 
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
