@@ -160,6 +160,17 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ContentScale.kt  
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/AlignmentLine.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/AlignmentLine.kt
 
 # ── androidx.compose.ui (top-level types) ─────────────────────────────────
+# Modifier.kt vendored verbatim, replacing our hand-written 39-line version.
+# Brings in Modifier.Node + CombinedModifier + visitX helpers used by the
+# node-engine machinery. Project shims under
+# core/src/commonMain/kotlin/androidx/compose/ui/.../*.shim.kt provide
+# stubs for the engine deps (NodeKind / Nodes / NodeChain sentinel /
+# NodeCoordinator / Owner / DelegatingNode / DrawModifierNode /
+# LayoutModifierNode / ModifierLocalModifierNode / BeyondBoundsLayout
+# cluster / GraphicsContext / SemanticsInfo + LayoutNode typealias).
+# See NODE_ENGINE_PORT.md Phase 1.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Modifier.kt              core/src/vendor/common/kotlin/androidx/compose/ui/Modifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DelegatableNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/DelegatableNode.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt             core/src/vendor/common/kotlin/androidx/compose/ui/Alignment.kt
 # Supporting types for the foundation.shape vendor: InspectableValue is the
 # marker interface CornerSize/CornerBasedShape implement (debug/tooling
