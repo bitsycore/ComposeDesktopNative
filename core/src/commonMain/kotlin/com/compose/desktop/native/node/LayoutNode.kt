@@ -253,12 +253,17 @@ class LayoutNode {
             val vLayoutMod = findLayoutModifier()
             if (vLayoutMod != null) {
                 val vMeasurable = object : androidx.compose.ui.layout.Measurable {
+                    override val parentData: Any? = null
                     override fun measure(constraints: androidx.compose.ui.unit.Constraints): androidx.compose.ui.layout.Placeable {
                         fSkipLayoutModifier = true
                         try { this@LayoutNode.measure(constraints) }
                         finally { fSkipLayoutModifier = false }
                         return androidx.compose.ui.layout.LayoutNodePlaceable(this@LayoutNode)
                     }
+                    override fun minIntrinsicWidth(height: Int): Int = 0
+                    override fun maxIntrinsicWidth(height: Int): Int = 0
+                    override fun minIntrinsicHeight(width: Int): Int = 0
+                    override fun maxIntrinsicHeight(width: Int): Int = 0
                 }
                 val vScope = androidx.compose.ui.layout.MeasureScopeImpl()
                 val vResult = vLayoutMod.onMeasure.invoke(vScope, vMeasurable, constraints)

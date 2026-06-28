@@ -547,6 +547,28 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 # OwnerScope + InternalCoreApi (ui.node) — pure types.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/OwnerScope.kt                                                        core/src/vendor/common/kotlin/androidx/compose/ui/node/OwnerScope.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/InternalCoreApi.kt                                                   core/src/vendor/common/kotlin/androidx/compose/ui/node/InternalCoreApi.kt
+# ui.node leaf interfaces — bottom-up groundwork toward eventually
+# vendoring upstream Modifier.kt + the node-engine machinery.
+# OutOfFrameExecutor is a single `internal interface`; SortedSet is a
+# common expect + a pure-Kotlin min-heap actual in nonJvm.
+# MutableVectorWithMutationTracking is a small wrapper around
+# runtime.collection.MutableVector with no node-engine deps.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/OutOfFrameExecutor.kt                                                core/src/vendor/common/kotlin/androidx/compose/ui/node/OutOfFrameExecutor.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/SortedSet.kt                                                         core/src/vendor/common/kotlin/androidx/compose/ui/node/SortedSet.kt
+compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/node/SortedSet.nonJvm.kt                                                  core/src/vendor/native/kotlin/androidx/compose/ui/node/SortedSet.native.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MutableVectorWithMutationTracking.kt                                 core/src/vendor/common/kotlin/androidx/compose/ui/node/MutableVectorWithMutationTracking.kt
+# IntrinsicMeasurable + Measurable — pure interfaces. Replaces our
+# hand-written Measurable.kt; LayoutNodeMeasurable in layout/Measurable.kt
+# now implements IntrinsicMeasurable too (with stub min/maxIntrinsic*
+# methods — our LayoutNode doesn't compute intrinsics yet, so they
+# fall back to a full measure).
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/IntrinsicMeasurable.kt                                             core/src/vendor/common/kotlin/androidx/compose/ui/layout/IntrinsicMeasurable.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Measurable.kt                                                      core/src/vendor/common/kotlin/androidx/compose/ui/layout/Measurable.kt
+# InteropView / InteroperableComposeUiNode skipped — the macos actual
+# carries an `internal actual typealias InteropViewGroup` whose expect
+# lives in InteropView.skiko.kt (which has deep deps we'd need to port),
+# so vendoring InteropView.macos.kt verbatim produces an orphan actual.
+# Not needed — these support a layout-inspector hook (Studio) we don't have.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusDirection.kt                                                   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusDirection.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/modifier/ModifierLocal.kt                                                 core/src/vendor/common/kotlin/androidx/compose/ui/modifier/ModifierLocal.kt
 # ui.text.platform.Dispatcher — single internal val.
@@ -857,10 +879,7 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/D
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/GlobalPositionAwareModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/GlobalPositionAwareModifierNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/InteroperableComposeUiNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/InteroperableComposeUiNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MeasuredSizeAwareModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/MeasuredSizeAwareModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MutableVectorWithMutationTracking.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/MutableVectorWithMutationTracking.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/OutOfFrameExecutor.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/OutOfFrameExecutor.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/ParentDataModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/ParentDataModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/SortedSet.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/SortedSet.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/UnplacedAwareModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/UnplacedAwareModifierNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/ClassHelpers.kt  core/src/vendor/common/kotlin/androidx/compose/ui/platform/ClassHelpers.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/Clipboard.kt  core/src/vendor/common/kotlin/androidx/compose/ui/platform/Clipboard.kt
@@ -1353,7 +1372,6 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/D
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/NodeChain.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/NodeChain.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/TouchBoundsExpansion.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/TouchBoundsExpansion.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt  core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt
-# compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/node/SortedSet.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/ui/node/SortedSet.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/SyntheticEventSender.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/SyntheticEventSender.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/util/PointerVelocityTracker1D.kt  core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/util/PointerVelocityTracker1D.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/FrameRecomposer.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/platform/FrameRecomposer.native.kt
