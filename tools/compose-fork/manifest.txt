@@ -449,6 +449,19 @@ compose/ui/ui/src/nativeMain/kotlin/androidx/compose/ui/internal/Threading.nativ
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/internal/PlatformOptimizedCancellationException.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/internal/PlatformOptimizedCancellationException.kt
 compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/internal/PlatformOptimizedCancellationException.nonJvm.kt                  core/src/vendor/native/kotlin/androidx/compose/ui/internal/PlatformOptimizedCancellationException.native.kt
 
+# More pure types — value classes / interfaces / data classes with light deps.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/TextSelectionColors.kt              core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/TextSelectionColors.kt
+# DefaultTextSelectionColors has macos / ios / desktop / web variants but no skikoMain — use macos (our primary dev target).
+compose/foundation/foundation/src/macosMain/kotlin/androidx/compose/foundation/text/selection/DefaultTextSelectionColors.macos.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/selection/DefaultTextSelectionColors.native.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PageSize.kt                                 core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PageSize.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextInclusionStrategy.kt                                        core/src/vendor/common/kotlin/androidx/compose/ui/text/TextInclusionStrategy.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/TextObfuscationMode.kt                 core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/TextObfuscationMode.kt
+# LazyStaggeredGridSpan needs IntervalList (lazy.layout engine) — skip.
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridSpan.kt                         core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridSpan.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/AutofillHighlight.kt                         core/src/vendor/common/kotlin/androidx/compose/foundation/text/AutofillHighlight.kt
+compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/AutofillHighlight.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/foundation/text/AutofillHighlight.native.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/TextLinkStyles.kt                                               core/src/vendor/common/kotlin/androidx/compose/ui/text/TextLinkStyles.kt
+
 # Small layout leaves with no engine deps — pure interfaces / DSL marker.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
