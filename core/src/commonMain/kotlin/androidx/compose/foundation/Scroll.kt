@@ -100,15 +100,12 @@ class ScrollState(initial: Int = 0) : ScrollableState {
         if (_animTarget > vClamped) _animTarget = vClamped
     }
 
-    /* Eased scroll: accumulate into a target the frame loop glides toward,
-       so a mouse-wheel notch animates instead of jumping. Repeated notches
-       add up (momentum). Registers with ScrollAnimator so the loop ticks it.
-       Project-only — upstream uses `animateScrollBy(state, Float, AnimationSpec)`
-       which suspends; this is a non-suspend variant for the mouse-wheel
-       handler in :window which doesn't run inside a coroutine scope on its
-       own. Plain `scrollBy(Int)` (instant) and `scrollTo(Int)` (absolute)
-       go through `dispatchRawDelta` instead. */
-    fun smoothScrollByPx(inDelta: Int) {
+    /* Eased scroll entry — internal so it stays out of the upstream-named
+       androidx.compose.foundation public surface. The project-only extension
+       `fun ScrollState.smoothScrollByPx(Int)` in
+       com.compose.desktop.native.foundation wraps this and is what :window's
+       mouse-wheel handler calls. */
+    internal fun smoothScrollByPxInternal(inDelta: Int) {
         _animTarget = (_animTarget + inDelta).coerceIn(0, _maxValue)
         if (_animTarget != _value) ScrollAnimator.register(this)
     }

@@ -15,23 +15,23 @@ import androidx.compose.ui.Modifier
 // ==================
 
 /* Thin wrapper around ScrollState that exposes the scroll offset under a
-   "lazy"-flavoured API. Upstream Compose tracks
-   firstVisibleItemIndex/firstVisibleItemScrollOffset + suspend
-   scrollToItem(index)/animateScrollToItem(index) — item-based; ours is
-   pixel-based since our LazyColumn doesn't actually virtualise yet.
-   Members are named with the `Px` suffix to flag the project-only
-   pixel-based design — keeping upstream's names (`value`/`scrollBy`/
-   `scrollTo`) would collide with their item-based / suspend signatures. */
+   "lazy"-flavoured API. Upstream Compose's LazyListState is item-based
+   (firstVisibleItemIndex/firstVisibleItemScrollOffset + suspend
+   scrollToItem) — ours is pixel-based since our LazyColumn doesn't yet
+   virtualise. The project-only pixel-based accessors
+   (`scrollOffsetPx`/`maxScrollOffsetPx`) live as extensions in
+   com.compose.desktop.native.foundation.lazy so the upstream-named class
+   here stays close to a pure upstream-matching surface. */
 class LazyListState(initialFirstVisibleItemIndex: Int = 0) {
-    internal val scrollState: ScrollState = ScrollState()
+    // Public so the extensions can read it across modules. Renaming to
+    // anything project-y would just push the divergence elsewhere.
+    val scrollState: ScrollState = ScrollState()
 
-    val scrollOffsetPx: Int get() = scrollState.value
-    val maxScrollOffsetPx: Int get() = scrollState.maxValue
-
-    /* Project-only conveniences for the pixel-based design (upstream's
-       LazyListState is item-based with suspend scrollToItem). Both dispatch
-       through ScrollState.dispatchRawDelta so the same clamping/bookkeeping
-       runs whether the caller goes through ScrollState or LazyListState. */
+    /* Bypass-the-mutex push of a pixel delta. Returns the delta actually
+       consumed after clamping at edges. Matches ScrollableState's same-named
+       method (LazyListState's upstream design doesn't expose this directly,
+       but we need a non-suspend mutation entry for the renderer's scroll
+       modifier to drive). */
     fun dispatchRawDelta(delta: Float): Float = scrollState.dispatchRawDelta(delta)
 }
 

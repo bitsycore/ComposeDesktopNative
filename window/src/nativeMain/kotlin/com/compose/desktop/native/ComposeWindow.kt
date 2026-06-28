@@ -9,6 +9,7 @@ import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.Snapshot
 import com.compose.desktop.native.element.KeyEventDispatch
 import androidx.compose.ui.Modifier
+import com.compose.desktop.native.foundation.smoothScrollByPx
 import com.compose.desktop.native.scroll.ScrollAnimator
 import com.compose.desktop.native.element.OnDragModifier
 import com.compose.desktop.native.element.OnPressedModifier
