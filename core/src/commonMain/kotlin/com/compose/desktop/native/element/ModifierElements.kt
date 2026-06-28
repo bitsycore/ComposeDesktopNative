@@ -5,28 +5,77 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
 
 // ==================
-// MARK: Modifier Elements (render-bridge — non-official)
+// MARK: Modifier Elements
 // ==================
-// The data/holder classes a Modifier chain folds into; LayoutNode and the
-// renderers read them via foldIn. None of these exist in official Compose
-// (which uses Modifier.Node), so they live in the com.compose.desktop.native
-// layer rather than androidx.compose.ui. The official Modifier extensions
-// (Modifier.background / .padding / .clip / ...) stay in their androidx
-// packages and construct these.
+// Each modifier is a `ModifierNodeElement<XxxNode>` paired with a
+// `XxxNode : Modifier.Node, DrawModifierNode` (or other *ModifierNode
+// interface). LayoutNode and the renderers read these via Modifier.foldIn
+// (ModifierNodeElement IS-A Modifier.Element), so the migration to the
+// upstream factory pattern is transparent to the renderer today — the
+// Node lifecycle stays dormant until the renderer rewrite drives it via
+// NodeCoordinator. Equality is hand-written to match data-class semantics.
 
-data class PaddingModifier(
+class PaddingModifier(
     val start: Int = 0,
     val top: Int = 0,
     val end: Int = 0,
-    val bottom: Int = 0
-) : Modifier.Element
+    val bottom: Int = 0,
+) : ModifierNodeElement<PaddingNode>() {
+    override fun create() = PaddingNode(start, top, end, bottom)
+    override fun update(node: PaddingNode) {
+        node.start = start; node.top = top; node.end = end; node.bottom = bottom
+    }
+    override fun hashCode(): Int =
+        start * 31 * 31 * 31 + top * 31 * 31 + end * 31 + bottom
+    override fun equals(other: Any?): Boolean =
+        other is PaddingModifier && other.start == start && other.top == top &&
+            other.end == end && other.bottom == bottom
+}
 
-data class BackgroundModifier(val color: Color, val shape: Shape = RectangleShape) : Modifier.Element
-data class BorderModifier(val width: Int, val color: Color, val shape: Shape = RectangleShape) : Modifier.Element
+class PaddingNode(
+    var start: Int,
+    var top: Int,
+    var end: Int,
+    var bottom: Int,
+) : Modifier.Node()
 
-data class SizeModifier(
+class BackgroundModifier(
+    val color: Color,
+    val shape: Shape = RectangleShape,
+) : ModifierNodeElement<BackgroundNode>() {
+    override fun create() = BackgroundNode(color, shape)
+    override fun update(node: BackgroundNode) { node.color = color; node.shape = shape }
+    override fun hashCode(): Int = 31 * color.hashCode() + shape.hashCode()
+    override fun equals(other: Any?): Boolean =
+        other is BackgroundModifier && other.color == color && other.shape == shape
+}
+
+class BackgroundNode(var color: Color, var shape: Shape) : Modifier.Node(), DrawModifierNode {
+    override fun ContentDrawScope.draw() { drawContent() /* dormant — renderer reads BackgroundModifier via foldIn */ }
+}
+
+class BorderModifier(
+    val width: Int,
+    val color: Color,
+    val shape: Shape = RectangleShape,
+) : ModifierNodeElement<BorderNode>() {
+    override fun create() = BorderNode(width, color, shape)
+    override fun update(node: BorderNode) { node.width = width; node.color = color; node.shape = shape }
+    override fun hashCode(): Int = (31 * width + color.hashCode()) * 31 + shape.hashCode()
+    override fun equals(other: Any?): Boolean =
+        other is BorderModifier && other.width == width && other.color == color && other.shape == shape
+}
+
+class BorderNode(var width: Int, var color: Color, var shape: Shape) : Modifier.Node(), DrawModifierNode {
+    override fun ContentDrawScope.draw() { drawContent() /* dormant */ }
+}
+
+class SizeModifier(
     val width: Int = -1,
     val height: Int = -1,
     val minWidth: Int = -1,
@@ -38,12 +87,61 @@ data class SizeModifier(
     /* defaultMinSize semantics: only raise the constraint's min if the
        incoming min is still 0 (i.e. nothing upstream pinned a size). When
        false, min* fields apply as a hard lower bound (widthIn/heightIn). */
-    val isDefaultMin: Boolean = false
-) : Modifier.Element
+    val isDefaultMin: Boolean = false,
+) : ModifierNodeElement<SizeNode>() {
+    override fun create() = SizeNode(width, height, minWidth, minHeight, maxWidth, maxHeight, fillMaxWidth, fillMaxHeight, isDefaultMin)
+    override fun update(node: SizeNode) {
+        node.width = width; node.height = height
+        node.minWidth = minWidth; node.minHeight = minHeight
+        node.maxWidth = maxWidth; node.maxHeight = maxHeight
+        node.fillMaxWidth = fillMaxWidth; node.fillMaxHeight = fillMaxHeight
+        node.isDefaultMin = isDefaultMin
+    }
+    override fun hashCode(): Int {
+        var h = width; h = h * 31 + height; h = h * 31 + minWidth; h = h * 31 + minHeight
+        h = h * 31 + maxWidth; h = h * 31 + maxHeight
+        h = h * 31 + fillMaxWidth.hashCode(); h = h * 31 + fillMaxHeight.hashCode()
+        h = h * 31 + isDefaultMin.hashCode(); return h
+    }
+    override fun equals(other: Any?): Boolean =
+        other is SizeModifier && other.width == width && other.height == height &&
+            other.minWidth == minWidth && other.minHeight == minHeight &&
+            other.maxWidth == maxWidth && other.maxHeight == maxHeight &&
+            other.fillMaxWidth == fillMaxWidth && other.fillMaxHeight == fillMaxHeight &&
+            other.isDefaultMin == isDefaultMin
+}
 
-data class ClickableModifier(val onClick: () -> Unit) : Modifier.Element
-data class SecondaryClickModifier(val onClick: (x: Int, y: Int) -> Unit) : Modifier.Element
-data class MiddleClickModifier(val onClick: () -> Unit) : Modifier.Element
+class SizeNode(
+    var width: Int, var height: Int,
+    var minWidth: Int, var minHeight: Int,
+    var maxWidth: Int, var maxHeight: Int,
+    var fillMaxWidth: Boolean, var fillMaxHeight: Boolean,
+    var isDefaultMin: Boolean,
+) : Modifier.Node()
+
+class ClickableModifier(val onClick: () -> Unit) : ModifierNodeElement<ClickableNode>() {
+    override fun create() = ClickableNode(onClick)
+    override fun update(node: ClickableNode) { node.onClick = onClick }
+    override fun hashCode(): Int = onClick.hashCode()
+    override fun equals(other: Any?): Boolean = other is ClickableModifier && other.onClick === onClick
+}
+class ClickableNode(var onClick: () -> Unit) : Modifier.Node()
+
+class SecondaryClickModifier(val onClick: (x: Int, y: Int) -> Unit) : ModifierNodeElement<SecondaryClickNode>() {
+    override fun create() = SecondaryClickNode(onClick)
+    override fun update(node: SecondaryClickNode) { node.onClick = onClick }
+    override fun hashCode(): Int = onClick.hashCode()
+    override fun equals(other: Any?): Boolean = other is SecondaryClickModifier && other.onClick === onClick
+}
+class SecondaryClickNode(var onClick: (x: Int, y: Int) -> Unit) : Modifier.Node()
+
+class MiddleClickModifier(val onClick: () -> Unit) : ModifierNodeElement<MiddleClickNode>() {
+    override fun create() = MiddleClickNode(onClick)
+    override fun update(node: MiddleClickNode) { node.onClick = onClick }
+    override fun hashCode(): Int = onClick.hashCode()
+    override fun equals(other: Any?): Boolean = other is MiddleClickModifier && other.onClick === onClick
+}
+class MiddleClickNode(var onClick: () -> Unit) : Modifier.Node()
 
 /* Fires after the place() pass with the node's absolute window-coordinate
    position. Different from OnSizeChangedModifier in that the callback runs
@@ -51,7 +149,13 @@ data class MiddleClickModifier(val onClick: () -> Unit) : Modifier.Element
    need to anchor to a moving target. Identity by callback reference. */
 class GloballyPositionedModifier(
     val onChange: (androidx.compose.ui.unit.IntOffset) -> Unit,
-) : Modifier.Element
+) : ModifierNodeElement<GloballyPositionedNode>() {
+    override fun create() = GloballyPositionedNode(onChange)
+    override fun update(node: GloballyPositionedNode) { node.onChange = onChange }
+    override fun hashCode(): Int = onChange.hashCode()
+    override fun equals(other: Any?): Boolean = other is GloballyPositionedModifier && other.onChange === onChange
+}
+class GloballyPositionedNode(var onChange: (androidx.compose.ui.unit.IntOffset) -> Unit) : Modifier.Node()
 
 /* Paints user-supplied content under the node's children via a DrawScope
    lambda. The renderer invokes onDraw after background / border and before
@@ -60,87 +164,161 @@ class GloballyPositionedModifier(
    later one paints on top. */
 class DrawBehindModifier(
     val onDraw: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit,
-) : Modifier.Element
+) : ModifierNodeElement<DrawBehindNode>() {
+    override fun create() = DrawBehindNode(onDraw)
+    override fun update(node: DrawBehindNode) { node.onDraw = onDraw }
+    override fun hashCode(): Int = onDraw.hashCode()
+    override fun equals(other: Any?): Boolean = other is DrawBehindModifier && other.onDraw === onDraw
+}
+class DrawBehindNode(
+    var onDraw: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit,
+) : Modifier.Node(), DrawModifierNode {
+    override fun ContentDrawScope.draw() { drawContent() /* dormant */ }
+}
 
 /* Identity is by callback reference — not great across recomposition. The
    dispatch code in ComposeWindow keys hover/press state by LayoutNode
    identity (which is stable) rather than by the modifier itself. */
-class HoverableModifier(val onChange: (Boolean) -> Unit) : Modifier.Element
-class PressableModifier(val onChange: (Boolean) -> Unit) : Modifier.Element
+class HoverableModifier(val onChange: (Boolean) -> Unit) : ModifierNodeElement<HoverableNode>() {
+    override fun create() = HoverableNode(onChange)
+    override fun update(node: HoverableNode) { node.onChange = onChange }
+    override fun hashCode(): Int = onChange.hashCode()
+    override fun equals(other: Any?): Boolean = other is HoverableModifier && other.onChange === onChange
+}
+class HoverableNode(var onChange: (Boolean) -> Unit) : Modifier.Node()
+
+class PressableModifier(val onChange: (Boolean) -> Unit) : ModifierNodeElement<PressableNode>() {
+    override fun create() = PressableNode(onChange)
+    override fun update(node: PressableNode) { node.onChange = onChange }
+    override fun hashCode(): Int = onChange.hashCode()
+    override fun equals(other: Any?): Boolean = other is PressableModifier && other.onChange === onChange
+}
+class PressableNode(var onChange: (Boolean) -> Unit) : Modifier.Node()
 
 /* Visual offset applied after layout. The node's measured size and the
    parent's placement are unchanged; only the absolute draw position shifts.
    Multiple OffsetModifiers stack additively. */
-data class OffsetModifier(val x: Int, val y: Int) : Modifier.Element
+class OffsetModifier(val x: Int, val y: Int) : ModifierNodeElement<OffsetNode>() {
+    override fun create() = OffsetNode(x, y)
+    override fun update(node: OffsetNode) { node.x = x; node.y = y }
+    override fun hashCode(): Int = x * 31 + y
+    override fun equals(other: Any?): Boolean = other is OffsetModifier && other.x == x && other.y == y
+}
+class OffsetNode(var x: Int, var y: Int) : Modifier.Node()
 
 // ==================
 // MARK: Focus + keyboard input
 // ==================
 
-/* Marks the node as a focus target. Click on the node (or any descendant
-   not separately focusable) routes focus here. onFocusChanged fires on
-   enter / leave. */
-class FocusableModifier(val onFocusChanged: (Boolean) -> Unit) : Modifier.Element
+/* Marks the node as a focus target. */
+class FocusableModifier(val onFocusChanged: (Boolean) -> Unit) : ModifierNodeElement<FocusableNode>() {
+    override fun create() = FocusableNode(onFocusChanged)
+    override fun update(node: FocusableNode) { node.onFocusChanged = onFocusChanged }
+    override fun hashCode(): Int = onFocusChanged.hashCode()
+    override fun equals(other: Any?): Boolean = other is FocusableModifier && other.onFocusChanged === onFocusChanged
+}
+class FocusableNode(var onFocusChanged: (Boolean) -> Unit) : Modifier.Node()
 
-/* Receives raw key events while the node (or a descendant) is focused.
-   Return true to consume; false lets the event bubble up the focus chain. */
-class OnKeyEventModifier(val handler: (androidx.compose.ui.input.key.KeyEvent) -> Boolean) : Modifier.Element
+class OnKeyEventModifier(
+    val handler: (androidx.compose.ui.input.key.KeyEvent) -> Boolean,
+) : ModifierNodeElement<OnKeyEventNode>() {
+    override fun create() = OnKeyEventNode(handler)
+    override fun update(node: OnKeyEventNode) { node.handler = handler }
+    override fun hashCode(): Int = handler.hashCode()
+    override fun equals(other: Any?): Boolean = other is OnKeyEventModifier && other.handler === handler
+}
+class OnKeyEventNode(var handler: (androidx.compose.ui.input.key.KeyEvent) -> Boolean) : Modifier.Node()
 
-/* Receives IME-committed text while the node is focused. Use it to insert
-   into a TextFieldValue. */
-class OnTextInputModifier(val handler: (String) -> Unit) : Modifier.Element
+class OnTextInputModifier(val handler: (String) -> Unit) : ModifierNodeElement<OnTextInputNode>() {
+    override fun create() = OnTextInputNode(handler)
+    override fun update(node: OnTextInputNode) { node.handler = handler }
+    override fun hashCode(): Int = handler.hashCode()
+    override fun equals(other: Any?): Boolean = other is OnTextInputModifier && other.handler === handler
+}
+class OnTextInputNode(var handler: (String) -> Unit) : Modifier.Node()
 
-/* Receives positional press events with coordinates relative to this
-   node's absolute top-left. Use it when a node needs to react to *where*
-   a click happened — e.g. positioning a text cursor under the pointer.
-   The handler fires on PointerEventType.Press, BEFORE focus / click. */
-class OnPressedModifier(val handler: (relX: Int, relY: Int) -> Unit) : Modifier.Element
+class OnPressedModifier(val handler: (relX: Int, relY: Int) -> Unit) : ModifierNodeElement<OnPressedNode>() {
+    override fun create() = OnPressedNode(handler)
+    override fun update(node: OnPressedNode) { node.handler = handler }
+    override fun hashCode(): Int = handler.hashCode()
+    override fun equals(other: Any?): Boolean = other is OnPressedModifier && other.handler === handler
+}
+class OnPressedNode(var handler: (relX: Int, relY: Int) -> Unit) : Modifier.Node()
 
-/* Drag gesture. ComposeWindow captures this node on Press (so subsequent
-   Move events route here regardless of where the cursor wanders) until
-   Release, when it fires onEnd. A click without movement still fires
-   onStart immediately and onEnd on release — onDrag may not fire at all. */
 class OnDragModifier(
     val onStart: (relX: Int, relY: Int) -> Unit,
     val onDrag: (relX: Int, relY: Int) -> Unit,
     val onEnd: () -> Unit,
-) : Modifier.Element
+) : ModifierNodeElement<OnDragNode>() {
+    override fun create() = OnDragNode(onStart, onDrag, onEnd)
+    override fun update(node: OnDragNode) { node.onStart = onStart; node.onDrag = onDrag; node.onEnd = onEnd }
+    override fun hashCode(): Int = (onStart.hashCode() * 31 + onDrag.hashCode()) * 31 + onEnd.hashCode()
+    override fun equals(other: Any?): Boolean =
+        other is OnDragModifier && other.onStart === onStart && other.onDrag === onDrag && other.onEnd === onEnd
+}
+class OnDragNode(
+    var onStart: (relX: Int, relY: Int) -> Unit,
+    var onDrag: (relX: Int, relY: Int) -> Unit,
+    var onEnd: () -> Unit,
+) : Modifier.Node()
 
-/* Fires after the node's measured size changes. Used by TextField to react
-   to its own measured width for soft-wrap. The callback runs during layout
-   right after measurement — writes to mutableStateOf inside it will trigger
-   the standard recompose-on-next-frame path. */
-class OnSizeChangedModifier(val onChange: (androidx.compose.ui.unit.IntSize) -> Unit) : Modifier.Element
+class OnSizeChangedModifier(
+    val onChange: (androidx.compose.ui.unit.IntSize) -> Unit,
+) : ModifierNodeElement<OnSizeChangedNode>() {
+    override fun create() = OnSizeChangedNode(onChange)
+    override fun update(node: OnSizeChangedNode) { node.onChange = onChange }
+    override fun hashCode(): Int = onChange.hashCode()
+    override fun equals(other: Any?): Boolean = other is OnSizeChangedModifier && other.onChange === onChange
+}
+class OnSizeChangedNode(var onChange: (androidx.compose.ui.unit.IntSize) -> Unit) : Modifier.Node()
 
 // ==================
 // MARK: Scroll
 // ==================
 
-/* Children measured with unbounded length on the scroll axis; the node
-   itself clamps to incoming constraints and applies a -state.value
-   translation to its children. ScrollState's maxValue is updated each
-   layout pass to (content - viewport).clamp(0..). */
-class VerticalScrollModifier(val state: androidx.compose.foundation.ScrollState) : Modifier.Element
+class VerticalScrollModifier(
+    val state: androidx.compose.foundation.ScrollState,
+) : ModifierNodeElement<VerticalScrollNode>() {
+    override fun create() = VerticalScrollNode(state)
+    override fun update(node: VerticalScrollNode) { node.state = state }
+    override fun hashCode(): Int = state.hashCode()
+    override fun equals(other: Any?): Boolean = other is VerticalScrollModifier && other.state === state
+}
+class VerticalScrollNode(var state: androidx.compose.foundation.ScrollState) : Modifier.Node()
 
-class HorizontalScrollModifier(val state: androidx.compose.foundation.ScrollState) : Modifier.Element
+class HorizontalScrollModifier(
+    val state: androidx.compose.foundation.ScrollState,
+) : ModifierNodeElement<HorizontalScrollNode>() {
+    override fun create() = HorizontalScrollNode(state)
+    override fun update(node: HorizontalScrollNode) { node.state = state }
+    override fun hashCode(): Int = state.hashCode()
+    override fun equals(other: Any?): Boolean = other is HorizontalScrollModifier && other.state === state
+}
+class HorizontalScrollNode(var state: androidx.compose.foundation.ScrollState) : Modifier.Node()
 
-/* Clips this node's children to the given shape. The node's own bg/border
-   drawing is not clipped (they already follow the shape via their own
-   shape parameter). Children drawn inside are restricted to the shape. */
-data class ClipModifier(val shape: Shape) : Modifier.Element
+class ClipModifier(val shape: Shape) : ModifierNodeElement<ClipNode>() {
+    override fun create() = ClipNode(shape)
+    override fun update(node: ClipNode) { node.shape = shape }
+    override fun hashCode(): Int = shape.hashCode()
+    override fun equals(other: Any?): Boolean = other is ClipModifier && other.shape == shape
+}
+class ClipNode(var shape: Shape) : Modifier.Node()
 
-/* Tells the parent Row / Column to give this child a fraction of the
-   leftover main-axis space (after unweighted children take their
-   intrinsic size). fill = true (the default upstream) forces the child
-   to fill its allotted slice; fill = false caps the child at its
-   preferred size while still claiming that share. weight must be > 0. */
-data class LayoutWeightModifier(val weight: Float, val fill: Boolean) : Modifier.Element
+class LayoutWeightModifier(val weight: Float, val fill: Boolean) : ModifierNodeElement<LayoutWeightNode>() {
+    override fun create() = LayoutWeightNode(weight, fill)
+    override fun update(node: LayoutWeightNode) { node.weight = weight; node.fill = fill }
+    override fun hashCode(): Int = weight.hashCode() * 31 + fill.hashCode()
+    override fun equals(other: Any?): Boolean = other is LayoutWeightModifier && other.weight == weight && other.fill == fill
+}
+class LayoutWeightNode(var weight: Float, var fill: Boolean) : Modifier.Node()
 
-/* Node-wide opacity: the node and its whole subtree are rendered to an
-   offscreen layer and composited back at this alpha, so overlapping content
-   inside doesn't double-blend. Multiple AlphaModifiers multiply. Applied by
-   the renderer (Skia saveLayer / SDL3 render-to-texture). */
-data class AlphaModifier(val alpha: Float) : Modifier.Element
+class AlphaModifier(val alpha: Float) : ModifierNodeElement<AlphaNode>() {
+    override fun create() = AlphaNode(alpha)
+    override fun update(node: AlphaNode) { node.alpha = alpha }
+    override fun hashCode(): Int = alpha.hashCode()
+    override fun equals(other: Any?): Boolean = other is AlphaModifier && other.alpha == alpha
+}
+class AlphaNode(var alpha: Float) : Modifier.Node()
 
 // ==================
 // MARK: GraphicsLayerModifier
