@@ -23,9 +23,9 @@ import androidx.compose.ui.Modifier
    com.compose.desktop.native.foundation.lazy so the upstream-named class
    here stays close to a pure upstream-matching surface. */
 class LazyListState(initialFirstVisibleItemIndex: Int = 0) {
-    // Public so the extensions can read it across modules. Renaming to
-    // anything project-y would just push the divergence elsewhere.
-    val scrollState: ScrollState = ScrollState()
+    // Internal — the project bridge to ScrollState; module-local. Upstream
+    // LazyListState doesn't expose this field, so keep it off the public ABI.
+    internal val scrollState: ScrollState = ScrollState()
 
     /* Bypass-the-mutex push of a pixel delta. Returns the delta actually
        consumed after clamping at edges. Matches ScrollableState's same-named
