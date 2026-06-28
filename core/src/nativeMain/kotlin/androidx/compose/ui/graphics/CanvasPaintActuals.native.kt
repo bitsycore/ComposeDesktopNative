@@ -158,3 +158,4 @@ actual class OffsetEffect actual constructor(
 	renderEffect: RenderEffect?,
 	offset: Offset,
 ) : RenderEffect()
+

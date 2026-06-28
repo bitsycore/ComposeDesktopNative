@@ -356,6 +356,9 @@ compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/Exp
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PinnableContainer.kt                               core/src/vendor/common/kotlin/androidx/compose/ui/layout/PinnableContainer.kt
+# SemanticsRegion: internal interface + expect factory; stub actual in
+# CanvasPaintActuals (no semantics pipeline today, returns no-op region).
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt                              core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt
 # PointerEvent — the big one. Brings PointerEventType / PointerButton /
 # PointerButtons / PointerKeyboardModifiers / PointerId / PointerType (all
 # value classes) + the multi-touch PointerEvent (expect class with skiko
