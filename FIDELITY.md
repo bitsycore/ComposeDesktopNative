@@ -96,7 +96,7 @@ Skia actually compiles + runs. Launch `:demo` and `:apidemo` and check:
 
 All of the above already verified working on Windows/SDL3.
 
-## Done (divergence 913 → 427; 246 vendor files)
+## Done (divergence 913 → 418; 248 vendor files)
 
 - **Vendored verbatim** (0 divergence): `ui.util` (now incl. `ListUtils`
   giving us `fastFold` / `fastJoinToString` / `fastMap` / `fastAny` /
@@ -189,9 +189,14 @@ all `data class` → plain class (drops `component*`/`copy` from the surface).
 material import them from there. Previously they lived in
 `androidx.compose.ui.graphics` and inflated that namespace.
 
-**Runtime-critical (do last, screenshot-test)**: `KeyEvent` / `PointerEvent` /
-`PointerEventType` / `PointerButton` enum/data-class → official value classes —
-touches the live input path (SDL3EventMapper + ComposeWindow + BasicTextField).
+**Runtime-critical (done — needs screenshot-test)**: `KeyEvent` /
+`PointerEvent` / `PointerEventType` / `PointerButton` enum/data-class →
+official value classes. PointerEvent landed in an earlier pass; KeyEvent now
+also fully reshaped (Key vendored as value class with 272-key Companion, SDL3
+scancode → Key mapping in SDL3EventMapper, KeyEventDispatch wrapper removed —
+`Modifier.onKeyEvent` takes `(KeyEvent) -> Boolean` directly).
+`BasicText`/`BasicTextField` also reshaped to `style: TextStyle` and
+`cursorBrush: Brush` matching upstream signatures.
 
 **Out of scope**: `material` (no cmp-ref material clone), the intentional-custom
 `AnimationSpec` lerp-lambda design, `ScrollState`/`Lazy` suspend reshapes.
