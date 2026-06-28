@@ -4,6 +4,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Constraints
 
 // ==================
+// MARK: LayoutModifier shim
+// ==================
+
+/**
+ * Phase 2 shim for upstream `androidx.compose.ui.layout.LayoutModifier`.
+ *
+ * Real upstream LayoutModifier.kt (283 lines) declares the legacy
+ * Modifier.Element-based layout-modifier interface plus a 5-overload
+ * intrinsic-measurement family — all referencing
+ * `androidx.compose.ui.node.LayoutModifierNode` + `ModifierNodeElement`
+ * (Phase 3 territory). Vendored LayoutAwareModifierNode imports
+ * `LayoutModifier` only for KDoc cross-references, so an empty marker
+ * interface satisfies the import. Delete when the real LayoutModifier.kt
+ * is vendored in Phase 3.
+ */
+interface LayoutModifier : Modifier.Element
+
+// ==================
 // MARK: LayoutModifierElement
 // ==================
 

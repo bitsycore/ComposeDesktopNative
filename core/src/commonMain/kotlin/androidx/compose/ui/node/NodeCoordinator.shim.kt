@@ -29,4 +29,11 @@ internal class NodeCoordinator {
 
 	val coordinates: LayoutCoordinates
 		get() = error("NodeCoordinator.coordinates accessed without an active layout pipeline (Phase 1 shim).")
+
+	/**
+	 * Phase 2 surface: vendored DrawModifierNode.invalidateDraw() calls
+	 * `requireCoordinator(Nodes.Any).invalidateLayer()`. No-op since no
+	 * Modifier.Node instances exist to invalidate.
+	 */
+	fun invalidateLayer() { /* phase 1+2 no-op */ }
 }

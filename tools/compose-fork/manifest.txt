@@ -171,6 +171,19 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/AlignmentLine.kt 
 # See NODE_ENGINE_PORT.md Phase 1.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Modifier.kt              core/src/vendor/common/kotlin/androidx/compose/ui/Modifier.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DelegatableNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/DelegatableNode.kt
+# Phase 2 (NODE_ENGINE_PORT.md): small *ModifierNode interfaces extending
+# DelegatableNode. Drop-in replacements for the shim files added in Phase 1.
+# DrawModifierNode + ContentDrawScope: replaces DrawModifierNode.shim.kt.
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/drawscope/ContentDrawScope.kt    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/drawscope/ContentDrawScope.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/DrawModifierNode.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/node/DrawModifierNode.kt
+# Phase 2 small *ModifierNode interfaces (drop-in vendors — each extends
+# DelegatableNode and adds one or two callback methods):
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/MeasuredSizeAwareModifierNode.kt              core/src/vendor/common/kotlin/androidx/compose/ui/node/MeasuredSizeAwareModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutAwareModifierNode.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutAwareModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/GlobalPositionAwareModifierNode.kt           core/src/vendor/common/kotlin/androidx/compose/ui/node/GlobalPositionAwareModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/UnplacedAwareModifierNode.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/node/UnplacedAwareModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/ParentDataModifierNode.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/node/ParentDataModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/CompositionLocalConsumerModifierNode.kt      core/src/vendor/common/kotlin/androidx/compose/ui/node/CompositionLocalConsumerModifierNode.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/Alignment.kt             core/src/vendor/common/kotlin/androidx/compose/ui/Alignment.kt
 # Supporting types for the foundation.shape vendor: InspectableValue is the
 # marker interface CornerSize/CornerBasedShape implement (debug/tooling

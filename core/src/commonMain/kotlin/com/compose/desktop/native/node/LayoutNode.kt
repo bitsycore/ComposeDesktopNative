@@ -66,7 +66,12 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
     internal fun invalidateSubtree() { /* phase 1 no-op */ }
     internal fun invalidateMeasurementForSubtree() { /* phase 1 no-op */ }
     internal fun invalidateDrawForSubtree() { /* phase 1 no-op */ }
+    internal fun invalidateParentData() { /* phase 2 no-op */ }
     internal fun requestAutofill() { /* phase 1 no-op */ }
+
+    /** Phase 2 surface: read by CompositionLocalConsumerModifierNode.currentValueOf. */
+    internal val compositionLocalMap: androidx.compose.runtime.CompositionLocalMap =
+        androidx.compose.runtime.CompositionLocalMap.Empty
 
     // ============
     //  Geometry (pixels, post-layout)
