@@ -397,13 +397,24 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
     /* Walks the tree after place() and fires every GloballyPositionedModifier
        whose node's absolute position has changed since last frame. Position
        is computed via absoluteX/Y, so this MUST run after all places resolve
-       — call it from ComposeWindow's loop, not from inside place itself. */
+       — call it from ComposeWindow's loop, not from inside place itself.
+
+       Also dispatches `LayoutAwareModifierNode.onPlaced(coordinates)` on
+       every node in the Modifier.Node chain — that's the upstream-shape
+       entry point `Modifier.onPlaced { … }` wires its callback through. */
     fun dispatchGloballyPositioned() {
         val vAx = absoluteX
         val vAy = absoluteY
         if (vAx != lastAbsX || vAy != lastAbsY) {
             lastAbsX = vAx
             lastAbsY = vAy
+            var vN: androidx.compose.ui.Modifier.Node? = nodes.head.child
+            while (vN != null) {
+                if (vN is androidx.compose.ui.node.LayoutAwareModifierNode) {
+                    vN.onPlaced(coordinator.coordinates)
+                }
+                vN = vN.child
+            }
             modifier.foldIn(Unit) { _, e ->
                 if (e is GloballyPositionedModifier) {
                     e.onChange(IntOffset(vAx, vAy))
