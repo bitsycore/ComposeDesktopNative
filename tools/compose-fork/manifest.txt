@@ -817,7 +817,7 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/D
 # ──────────────────────────────────────────────────────────────────────────
 # compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.kt  core/src/vendor/common/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.kt
 # compose/animation/animation/src/nonJvmMain/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.native.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Spacer.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Spacer.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Spacer.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Spacer.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.kt
 # compose/foundation/foundation-layout/src/nonJvmMain/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.native.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/RequestFocusOnClick.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/RequestFocusOnClick.kt

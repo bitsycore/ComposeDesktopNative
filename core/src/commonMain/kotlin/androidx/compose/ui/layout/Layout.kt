@@ -60,6 +60,25 @@ fun Layout(
 	)
 }
 
+/* No-content overload — `Layout(measurePolicy = X, modifier = M)`. Used by
+   leaf composables (e.g. vendored Spacer.kt) that just want a node with a
+   measure policy and no children. */
+@Composable
+fun Layout(
+	modifier: Modifier = Modifier,
+	measurePolicy: MeasurePolicy,
+) {
+	ComposeNode<LayoutNode, NodeApplier>(
+		factory = { LayoutNode() },
+		update = {
+			set(modifier) { this.modifier = it }
+			set(measurePolicy) {
+				this.measurePolicy = adaptToInternal(it)
+			}
+		},
+	)
+}
+
 /* Bridge the public MeasurePolicy onto the existing internal one. The
    internal interface gets the LayoutNode directly; we wrap each of its
    children as a LayoutNodeMeasurable, build a MeasureScope, run the
