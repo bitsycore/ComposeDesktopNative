@@ -1173,6 +1173,14 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/KeepScreenOn.kt         
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/SensitiveContent.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/SensitiveContent.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/key/KeyInputModifier.kt             core/src/vendor/common/kotlin/androidx/compose/ui/input/key/KeyInputModifier.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt              core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
+# Padding.kt — vendors a `Modifier.padding(...)` + `PaddingElement`/`PaddingNode` pair
+# that conflict with the project's hand-written `Modifier.padding` extensions in
+# `core/.../layout/LayoutModifiers.kt`. To take upstream, the project version must be
+# removed AND `LayoutNode.cachedPaddingLeft/...` must learn to walk the Modifier.Node
+# chain finding `PaddingNode` (currently `internal` to upstream Padding.kt, so the
+# renderer can't `is PaddingNode` from outside the file). Same blocker pattern as
+# Size.kt / Offset.kt — needs the per-modifier coordinator chain to land.
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Padding.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Padding.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.kt         core/src/vendor/common/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.skiko.kt    core/src/vendor/native/kotlin/androidx/compose/ui/input/rotary/RotaryScrollEvent.native.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryInputModifierNode.kt   core/src/vendor/common/kotlin/androidx/compose/ui/input/rotary/RotaryInputModifierNode.kt

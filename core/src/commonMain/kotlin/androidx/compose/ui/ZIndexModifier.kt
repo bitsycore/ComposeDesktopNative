@@ -1,8 +1,11 @@
 package androidx.compose.ui
 
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.node.LayoutModifierNode
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.unit.Constraints
 
 // ==================
 // MARK: zIndex
@@ -40,11 +43,20 @@ internal data class ZIndexElement(val zIndex: Float) : ModifierNodeElement<ZInde
 
 /**
  * Paired `Modifier.Node` for [ZIndexElement]. Marks itself as a
- * [LayoutModifierNode] to match upstream's shape — the official `measure()`
- * body that calls `placeable.place(0, 0, zIndex = zIndex)` is not implemented
- * here since the project's renderer reads zIndex directly from the element via
- * foldIn rather than via the Modifier.Node measure pipeline.
+ * [LayoutModifierNode] to match upstream's shape — upstream's `measure()`
+ * body forwards to the child via `placeable.place(0, 0, zIndex = zIndex)`.
+ * Our renderer reads zIndex directly from the cached element instead, so
+ * `measure()` here is a plain pass-through (the chain isn't yet driven by
+ * the per-modifier coordinator).
  */
-internal class ZIndexNode(var zIndex: Float) : Modifier.Node(), LayoutModifierNode {
+internal class ZIndexNode(var zIndex: Float) : Modifier.Node(), androidx.compose.ui.node.LayoutModifierNode {
+	override fun MeasureScope.measure(
+		measurable: Measurable,
+		constraints: Constraints,
+	): MeasureResult {
+		val placeable = measurable.measure(constraints)
+		return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }
+	}
+
 	override fun toString(): String = "ZIndexNode(zIndex=$zIndex)"
 }

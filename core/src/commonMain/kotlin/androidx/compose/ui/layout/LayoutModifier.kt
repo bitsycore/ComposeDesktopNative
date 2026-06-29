@@ -49,10 +49,15 @@ internal class LayoutModifierElement(
 		other is LayoutModifierElement && other.onMeasure === onMeasure
 }
 
-/** Paired `Modifier.Node` for [LayoutModifierElement]. */
+/** Paired `Modifier.Node` for [LayoutModifierElement] — implements upstream LayoutModifierNode. */
 internal class LayoutModifierNodeImpl(
 	var onMeasure: MeasureScope.(Measurable, Constraints) -> MeasureResult,
-) : Modifier.Node()
+) : Modifier.Node(), androidx.compose.ui.node.LayoutModifierNode {
+	override fun MeasureScope.measure(
+		measurable: Measurable,
+		constraints: Constraints,
+	): MeasureResult = onMeasure(measurable, constraints)
+}
 
 // ==================
 // MARK: Modifier.layout
