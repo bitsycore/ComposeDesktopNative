@@ -10,8 +10,10 @@ import com.compose.desktop.native.element.HoverableModifier
 import com.compose.desktop.native.element.OnDragModifier
 import com.compose.desktop.native.element.OnKeyEventModifier
 import com.compose.desktop.native.element.OnTextInputModifier
+import com.compose.desktop.native.element.OnPressedModifier
 import com.compose.desktop.native.element.PressableModifier
 import com.compose.desktop.native.element.VerticalScrollModifier
+import com.compose.desktop.native.input.PointerInputElement
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
@@ -82,12 +84,45 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
     private var cachedHoverables: List<HoverableModifier> = emptyList()
     private var cachedPressable: PressableModifier? = null
     private var cachedDraggable: OnDragModifier? = null
-    private var cachedFocusable: FocusableModifier? = null
+    /** First FocusableModifier on the chain — `:window`'s focusManager reads it to invoke onFocusChanged. */
+    var cachedFocusable: FocusableModifier? = null
+        private set
     /** Multiple OnKeyEvent handlers per node are valid — dispatch tries each in chain order. */
     private var cachedKeyEventHandlers: List<(androidx.compose.ui.input.key.KeyEvent) -> Boolean> = emptyList()
     private var cachedTextInputHandler: ((String) -> Unit)? = null
     /** Multiple onGloballyPositioned callbacks are valid — all fire in chain order. */
     private var cachedGloballyPositionedList: List<GloballyPositionedModifier> = emptyList()
+
+    // Render-side caches (read by SkiaRenderer + Sdl3Renderer's per-frame draw loops).
+    /** Every BackgroundModifier in chain order — renderer paints each on the node's bounds. */
+    var cachedBackgrounds: List<BackgroundModifier> = emptyList()
+        private set
+    /** Every BorderModifier in chain order. */
+    var cachedBorders: List<BorderModifier> = emptyList()
+        private set
+    /** Every DrawBehindModifier in chain order. */
+    var cachedDrawBehinds: List<com.compose.desktop.native.element.DrawBehindModifier> = emptyList()
+        private set
+    /** True if the node clips its children (ClipModifier OR a scroll modifier). */
+    var clipsChildren: Boolean = false
+        private set
+    /** Shape used to clip children: ClipModifier.shape if present, else `RectangleShape` for a scroll viewport, else null. */
+    var childClipShape: androidx.compose.ui.graphics.Shape? = null
+        private set
+    /** Last LayoutWeightModifier on the chain — Row/Column read `.weight` + `.fill` during measure. */
+    var cachedLayoutWeight: LayoutWeightModifier? = null
+        private set
+
+    // Window-side caches (read by :window's ComposeWindow event loop).
+    /** Every FocusRequesterModifier on the node — `bindFocusRequesters` pops each onto its host. */
+    var cachedFocusRequesters: List<androidx.compose.ui.focus.FocusRequesterModifier> = emptyList()
+        private set
+    /** Every PointerInputElement — the dispatch loop delivers events to each scope. */
+    var cachedPointerInputs: List<PointerInputElement> = emptyList()
+        private set
+    /** Every OnPressedModifier — positional press dispatch fires each. */
+    var cachedOnPressedHandlers: List<(relX: Int, relY: Int) -> Unit> = emptyList()
+        private set
 
     private fun recomputeChainCaches() {
         var padL = 0; var padT = 0; var padR = 0; var padB = 0
@@ -109,6 +144,15 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
         var keys: MutableList<(androidx.compose.ui.input.key.KeyEvent) -> Boolean>? = null
         var text: ((String) -> Unit)? = null
         var positions: MutableList<GloballyPositionedModifier>? = null
+        var backgrounds: MutableList<BackgroundModifier>? = null
+        var borders: MutableList<BorderModifier>? = null
+        var drawBehinds: MutableList<com.compose.desktop.native.element.DrawBehindModifier>? = null
+        var clipShape: androidx.compose.ui.graphics.Shape? = null
+        var hasScrollClip = false
+        var weight: LayoutWeightModifier? = null
+        var focusRequesters: MutableList<androidx.compose.ui.focus.FocusRequesterModifier>? = null
+        var pointerInputs: MutableList<PointerInputElement>? = null
+        var onPressedHandlers: MutableList<(Int, Int) -> Unit>? = null
         modifier.foldIn(Unit) { _, e ->
             when (e) {
                 is PaddingModifier                                                  -> { padL += e.start; padT += e.top; padR += e.end; padB += e.bottom }
@@ -118,8 +162,8 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
                 is com.compose.desktop.native.element.GraphicsLayerModifier         -> { alpha *= e.alpha; gl = e }
                 is SizeModifier                                                     -> { (sizes ?: mutableListOf<SizeModifier>().also { sizes = it }).add(e) }
                 is androidx.compose.ui.layout.LayoutModifierElement                 -> layoutMod = e
-                is HorizontalScrollModifier                                         -> { if (hScroll == null) hScroll = e.state }
-                is VerticalScrollModifier                                           -> { if (vScroll == null) vScroll = e.state }
+                is HorizontalScrollModifier                                         -> { if (hScroll == null) hScroll = e.state; hasScrollClip = true }
+                is VerticalScrollModifier                                           -> { if (vScroll == null) vScroll = e.state; hasScrollClip = true }
                 is ClickableModifier                                                -> click = e
                 is SecondaryClickModifier                                           -> click2 = e
                 is MiddleClickModifier                                              -> click3 = e
@@ -130,6 +174,14 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
                 is OnKeyEventModifier                                               -> { (keys ?: mutableListOf<(androidx.compose.ui.input.key.KeyEvent) -> Boolean>().also { keys = it }).add(e.handler) }
                 is OnTextInputModifier                                              -> { if (text == null) text = e.handler }
                 is GloballyPositionedModifier                                       -> { (positions ?: mutableListOf<GloballyPositionedModifier>().also { positions = it }).add(e) }
+                is BackgroundModifier                                               -> { (backgrounds ?: mutableListOf<BackgroundModifier>().also { backgrounds = it }).add(e) }
+                is BorderModifier                                                   -> { (borders ?: mutableListOf<BorderModifier>().also { borders = it }).add(e) }
+                is com.compose.desktop.native.element.DrawBehindModifier            -> { (drawBehinds ?: mutableListOf<com.compose.desktop.native.element.DrawBehindModifier>().also { drawBehinds = it }).add(e) }
+                is ClipModifier                                                     -> clipShape = e.shape
+                is LayoutWeightModifier                                             -> weight = e
+                is androidx.compose.ui.focus.FocusRequesterModifier                 -> { (focusRequesters ?: mutableListOf<androidx.compose.ui.focus.FocusRequesterModifier>().also { focusRequesters = it }).add(e) }
+                is PointerInputElement                                              -> { (pointerInputs ?: mutableListOf<PointerInputElement>().also { pointerInputs = it }).add(e) }
+                is OnPressedModifier                                                -> { (onPressedHandlers ?: mutableListOf<(Int, Int) -> Unit>().also { onPressedHandlers = it }).add(e.handler) }
             }
         }
         cachedPaddingLeft = padL; cachedPaddingTop = padT
@@ -152,6 +204,16 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
         cachedKeyEventHandlers = keys ?: emptyList()
         cachedTextInputHandler = text
         cachedGloballyPositionedList = positions ?: emptyList()
+        cachedBackgrounds = backgrounds ?: emptyList()
+        cachedBorders = borders ?: emptyList()
+        cachedDrawBehinds = drawBehinds ?: emptyList()
+        clipsChildren = clipShape != null || hasScrollClip
+        // Renderer rule: ClipModifier.shape wins; else if any scroll, use RectangleShape; else null.
+        childClipShape = clipShape ?: if (hasScrollClip) androidx.compose.ui.graphics.RectangleShape else null
+        cachedLayoutWeight = weight
+        cachedFocusRequesters = focusRequesters ?: emptyList()
+        cachedPointerInputs = pointerInputs ?: emptyList()
+        cachedOnPressedHandlers = onPressedHandlers ?: emptyList()
     }
 
     internal var measurePolicy: MeasurePolicy = DefaultMeasurePolicy

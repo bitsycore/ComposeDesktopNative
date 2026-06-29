@@ -115,15 +115,8 @@ class SkiaRenderer internal constructor(
         if (vWantsTransform) inCanvas.restore()
     }
 
-    /* True if the node clips its children to its own bounds (clip modifier or
-       scroll viewport), so culling the whole subtree when off-screen is safe. */
-    private fun clipsChildren(inNode: LayoutNode): Boolean {
-        var v = false
-        inNode.modifier.foldIn(Unit) { _, e ->
-            if (e is ClipModifier || e is VerticalScrollModifier || e is HorizontalScrollModifier) v = true
-        }
-        return v
-    }
+    /** True if the node clips its children — read from the cache on LayoutNode. */
+    private fun clipsChildren(inNode: LayoutNode): Boolean = inNode.clipsChildren
 
     /* Pivot-aware scale / rotation / translation. Pivot is the node's
        absolute position offset by the requested fraction of its bounds. */
@@ -198,8 +191,8 @@ class SkiaRenderer internal constructor(
 
         // ============
         //  Background
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is BackgroundModifier && element.color.alpha > 0f) {
+        for (element in inNode.cachedBackgrounds) {
+            if (element.color.alpha > 0f) {
                 val vPaint = Paint().apply {
                     color = toSkiaColor(element.color)
                     isAntiAlias = true
@@ -212,8 +205,8 @@ class SkiaRenderer internal constructor(
 
         // ============
         //  Border
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is BorderModifier && element.width > 0 && element.color.alpha > 0f) {
+        for (element in inNode.cachedBorders) {
+            if (element.width > 0 && element.color.alpha > 0f) {
                 val vPaint = Paint().apply {
                     color = toSkiaColor(element.color)
                     isAntiAlias = true
@@ -239,16 +232,14 @@ class SkiaRenderer internal constructor(
         //  drawBehind modifier(s) — invoke each in modifier order. Runs
         //  after background / border so it sits on top of the chrome but
         //  under the node's text / image / children.
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is DrawBehindModifier) {
-                val vScope = SkiaDrawScope(
-                    fCanvas = inCanvas,
-                    fOriginX = vAx,
-                    fOriginY = vAy,
-                    size = Size(vW, vH),
-                )
-                element.onDraw(vScope)
-            }
+        for (element in inNode.cachedDrawBehinds) {
+            val vScope = SkiaDrawScope(
+                fCanvas = inCanvas,
+                fOriginX = vAx,
+                fOriginY = vAy,
+                size = Size(vW, vH),
+            )
+            element.onDraw(vScope)
         }
 
         // ============
@@ -302,15 +293,7 @@ class SkiaRenderer internal constructor(
         //  Children (clipped to shape if Modifier.clip is present, or auto-
         //  clipped to the node bounds when a scroll modifier is present so
         //  scrolled-out content doesn't leak outside the viewport).
-        var vClipShape: Shape? = null
-        inNode.modifier.foldIn(Unit) { _, element ->
-            when {
-                element is ClipModifier -> vClipShape = element.shape
-                element is VerticalScrollModifier && vClipShape == null   -> vClipShape = RectangleShape
-                element is HorizontalScrollModifier && vClipShape == null -> vClipShape = RectangleShape
-            }
-        }
-        val vChildClip = vClipShape
+        val vChildClip = inNode.childClipShape
         // Sort children by zIndex (stable: when none set, draw in tree order).
         val vChildren = if (inNode.children.any { it.zIndex != 0f })
             inNode.children.sortedBy { it.zIndex } else inNode.children

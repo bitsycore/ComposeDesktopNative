@@ -134,14 +134,6 @@ private class RowMeasurePolicy(
         return IntSize(w, h)
     }
 
-    private fun weightOf(inNode: LayoutNode): Float {
-        var v = 0f
-        inNode.modifier.foldIn(Unit) { _, e -> if (e is LayoutWeightModifier) v = e.weight }
-        return v
-    }
-    private fun fillOf(inNode: LayoutNode): Boolean {
-        var v = true
-        inNode.modifier.foldIn(Unit) { _, e -> if (e is LayoutWeightModifier) v = e.fill }
-        return v
-    }
+    private fun weightOf(inNode: LayoutNode): Float = inNode.cachedLayoutWeight?.weight ?: 0f
+    private fun fillOf(inNode: LayoutNode): Boolean = inNode.cachedLayoutWeight?.fill ?: true
 }

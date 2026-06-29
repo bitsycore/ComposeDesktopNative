@@ -178,11 +178,7 @@ fun nativeComposeWindow(
            the node has no focusable. */
         focusManagerImpl = object : androidx.compose.ui.focus.FocusManager {
             override fun focusOnNode(node: LayoutNode) {
-                var vCallback: ((Boolean) -> Unit)? = null
-                node.modifier.foldIn(Unit) { _, vEl ->
-                    if (vEl is com.compose.desktop.native.element.FocusableModifier) vCallback = vEl.onFocusChanged
-                }
-                setFocus(node, vCallback)
+                setFocus(node, node.cachedFocusable?.onFocusChanged)
             }
             override fun clearFocus() = setFocus(null, null)
         }
@@ -193,11 +189,9 @@ fun nativeComposeWindow(
            a registry instead if it ever shows up on a profile. */
         fun bindFocusRequesters(inRoot: LayoutNode) {
             fun walk(inN: LayoutNode) {
-                inN.modifier.foldIn(Unit) { _, vEl ->
-                    if (vEl is androidx.compose.ui.focus.FocusRequesterModifier) {
-                        vEl.focusRequester.attachedNode = inN
-                        vEl.focusRequester.focusManager = focusManagerImpl
-                    }
+                for (vEl in inN.cachedFocusRequesters) {
+                    vEl.focusRequester.attachedNode = inN
+                    vEl.focusRequester.focusManager = focusManagerImpl
                 }
                 for (vC in inN.children) walk(vC)
             }
@@ -235,12 +229,10 @@ fun nativeComposeWindow(
             var vNode: LayoutNode? = vHit
             while (vNode != null) {
                 val vN = vNode
-                vN.modifier.foldIn(Unit) { _, vEl ->
-                    if (vEl is PointerInputElement) {
-                        val vLocalX = (inX - vN.absoluteX).toFloat()
-                        val vLocalY = (inY - vN.absoluteY).toFloat()
-                        vEl.scope.deliverChange(Offset(vLocalX, vLocalY), inPressed, 0L)
-                    }
+                val vLocalX = (inX - vN.absoluteX).toFloat()
+                val vLocalY = (inY - vN.absoluteY).toFloat()
+                for (vEl in vN.cachedPointerInputs) {
+                    vEl.scope.deliverChange(Offset(vLocalX, vLocalY), inPressed, 0L)
                 }
                 vNode = vN.parent
             }
@@ -328,16 +320,14 @@ fun nativeComposeWindow(
                                     val vFocusable = vHit?.findFocusableNode()
                                     setFocus(vFocusable?.first, vFocusable?.second?.onFocusChanged)
                                     // Positional press dispatch (TextField cursor placement).
-                                    // Walk from the hit-test target up, firing each
-                                    // OnPressedModifier with node-relative coordinates.
+                                    // Walk from the hit-test target up, firing each cached
+                                    // OnPressedModifier handler with node-relative coordinates.
                                     var pn: LayoutNode? = vHit
                                     while (pn != null) {
                                         val node = pn
                                         val relX = vPx - node.absoluteX
                                         val relY = vPy - node.absoluteY
-                                        node.modifier.foldIn(Unit) { _, el ->
-                                            if (el is OnPressedModifier) el.handler(relX, relY)
-                                        }
+                                        for (h in node.cachedOnPressedHandlers) h(relX, relY)
                                         pn = node.parent
                                     }
                                     // Begin drag capture if the press lands on a draggable.

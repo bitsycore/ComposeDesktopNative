@@ -134,16 +134,8 @@ internal class Sdl3Renderer(
         }
     }
 
-    /* True if the node clips its children to its own bounds (a clip modifier or
-       a scroll viewport) — i.e. children can't escape it, so it's safe to cull
-       the whole subtree when the node is off-screen. */
-    private fun clipsChildren(inNode: LayoutNode): Boolean {
-        var v = false
-        inNode.modifier.foldIn(Unit) { _, e ->
-            if (e is ClipModifier || e is VerticalScrollModifier || e is HorizontalScrollModifier) v = true
-        }
-        return v
-    }
+    /** True if the node clips its children — read from the cache on LayoutNode. */
+    private fun clipsChildren(inNode: LayoutNode): Boolean = inNode.clipsChildren
 
     /* Renders the node's subtree into an offscreen texture, then composites it
        back at inAlpha so overlapping content fades as a single layer (no
@@ -367,8 +359,8 @@ internal class Sdl3Renderer(
 
         // ============
         //  Background
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is BackgroundModifier && element.color.alpha > 0f) {
+        for (element in inNode.cachedBackgrounds) {
+            if (element.color.alpha > 0f) {
                 setColor(vRenderer, element.color)
                 fillOutline(vRenderer, vAx, vAy, vW, vH, element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity))
             }
@@ -376,8 +368,8 @@ internal class Sdl3Renderer(
 
         // ============
         //  Border (drawn as four thin filled rects centred on the edge)
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is BorderModifier && element.width > 0 && element.color.alpha > 0f) {
+        for (element in inNode.cachedBorders) {
+            if (element.width > 0 && element.color.alpha > 0f) {
                 setColor(vRenderer, element.color)
                 strokeOutline(
                     vRenderer,
@@ -394,17 +386,15 @@ internal class Sdl3Renderer(
         //  text / image / children. flush()+release() between each scope
         //  so per-modifier draw order is preserved (later modifiers paint
         //  on top of earlier ones).
-        inNode.modifier.foldIn(Unit) { _, element ->
-            if (element is com.compose.desktop.native.element.DrawBehindModifier) {
-                val vScope = Sdl3DrawScope(
-                    fRenderer = vRenderer,
-                    fOriginX = vAx,
-                    fOriginY = vAy,
-                    size = androidx.compose.ui.geometry.Size(vW, vH),
-                )
-                element.onDraw(vScope)
-                vScope.release()
-            }
+        for (element in inNode.cachedDrawBehinds) {
+            val vScope = Sdl3DrawScope(
+                fRenderer = vRenderer,
+                fOriginX = vAx,
+                fOriginY = vAy,
+                size = androidx.compose.ui.geometry.Size(vW, vH),
+            )
+            element.onDraw(vScope)
+            vScope.release()
         }
 
         // ============
@@ -490,14 +480,7 @@ internal class Sdl3Renderer(
         //  Children (clipped to shape if a clip modifier is present, or
         //  auto-clipped to bounds when scrolling — same rule as the Skia
         //  renderer)
-        var vClipShape: Shape? = null
-        inNode.modifier.foldIn(Unit) { _, element ->
-            when {
-                element is ClipModifier -> vClipShape = element.shape
-                element is VerticalScrollModifier && vClipShape == null   -> vClipShape = RectangleShape
-                element is HorizontalScrollModifier && vClipShape == null -> vClipShape = RectangleShape
-            }
-        }
+        val vClipShape: Shape? = inNode.childClipShape
         if (vClipShape != null && inNode.children.isNotEmpty()) {
             // SDL clip only supports rects — round corners are ignored here.
             // Nest correctly: intersect with the clip already in effect and
