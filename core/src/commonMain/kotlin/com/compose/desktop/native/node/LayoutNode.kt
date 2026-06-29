@@ -112,6 +112,17 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
     var cachedLayoutWeight: LayoutWeightModifier? = null
         private set
 
+    /**
+     * Every [androidx.compose.ui.node.LayoutModifierNode] in the chain,
+     * head→tail order. The layout pass invokes each one's `measure(...)`
+     * outermost-first, wrapping the next inner modifier (and finally the
+     * project's natural measure on children) inside a [Measurable]. This is
+     * how upstream's per-modifier coordinator chain dispatches —
+     * `Modifier.padding(8.dp).size(100.dp)` produces a 2-element list and
+     * each contributes its measure() effect.
+     */
+    private var cachedLayoutModifierNodes: List<androidx.compose.ui.node.LayoutModifierNode> = emptyList()
+
     // Window-side caches (read by :window's ComposeWindow event loop).
     /** Every FocusRequesterModifier on the node — `bindFocusRequesters` pops each onto its host. */
     var cachedFocusRequesters: List<androidx.compose.ui.focus.FocusRequesterModifier> = emptyList()
@@ -210,6 +221,18 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
         cachedFocusRequesters = focusRequesters ?: emptyList()
         cachedPointerInputs = pointerInputs ?: emptyList()
         cachedOnPressedHandlers = onPressedHandlers ?: emptyList()
+
+        // Collect LayoutModifierNodes from the chain in head→tail order so the
+        // measure pipeline can apply them outermost-first.
+        var lmnList: MutableList<androidx.compose.ui.node.LayoutModifierNode>? = null
+        var n: androidx.compose.ui.Modifier.Node? = nodes.head.child
+        while (n != null) {
+            if (n is androidx.compose.ui.node.LayoutModifierNode) {
+                (lmnList ?: mutableListOf<androidx.compose.ui.node.LayoutModifierNode>().also { lmnList = it }).add(n)
+            }
+            n = n.child
+        }
+        cachedLayoutModifierNodes = lmnList ?: emptyList()
     }
 
     internal var measurePolicy: MeasurePolicy = DefaultMeasurePolicy
@@ -435,7 +458,83 @@ class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
        must run the NATURAL measure without re-applying the modifier. */
     private var fSkipLayoutModifier: Boolean = false
 
+    /**
+     * Apply `cachedLayoutModifierNodes` outermost-first to [constraints].
+     *
+     * Builds a chain of [Measurable] wrappers: the innermost calls back
+     * into `measure()` with the layout-modifier-chain skipped (so the
+     * project's natural `applyModifierConstraints` + `measurePolicy`
+     * path runs); each outer wrapper invokes its node's `measure(...)`
+     * with the next inner wrapped as the [Measurable]. Returns a
+     * [Placeable] reporting the outermost result's size; the result's
+     * `placeChildren()` is also invoked so any place-with-offset effect
+     * (Padding's `placeable.place(left, top)`) lands.
+     */
+    private fun measureViaLayoutModifierChain(constraints: Constraints): androidx.compose.ui.layout.Placeable {
+        val scope = androidx.compose.ui.layout.MeasureScopeImpl()
+
+        // Innermost — re-enters `measure(c)` with the layout-modifier-chain
+        // guard set, so the natural path runs (applyModifierConstraints +
+        // measurePolicy on children).
+        val leaf = object : androidx.compose.ui.layout.Measurable {
+            override val parentData: Any? = null
+            override fun measure(constraints: androidx.compose.ui.unit.Constraints): androidx.compose.ui.layout.Placeable {
+                val saved = fSkipLayoutModifier
+                fSkipLayoutModifier = true
+                try { this@LayoutNode.measure(constraints) } finally { fSkipLayoutModifier = saved }
+                return androidx.compose.ui.layout.LayoutNodePlaceable(this@LayoutNode)
+            }
+            override fun minIntrinsicWidth(height: Int): Int = 0
+            override fun maxIntrinsicWidth(height: Int): Int = 0
+            override fun minIntrinsicHeight(width: Int): Int = 0
+            override fun maxIntrinsicHeight(width: Int): Int = 0
+        }
+
+        // Wrap each LayoutModifierNode around the next-inner Measurable.
+        // Iterate reverse so the outermost (chain head) ends up at the top.
+        var current: androidx.compose.ui.layout.Measurable = leaf
+        for (i in cachedLayoutModifierNodes.indices.reversed()) {
+            val node = cachedLayoutModifierNodes[i]
+            val inner = current
+            current = object : androidx.compose.ui.layout.Measurable {
+                override val parentData: Any? = null
+                override fun measure(c: androidx.compose.ui.unit.Constraints): androidx.compose.ui.layout.Placeable {
+                    val result = with(node) { scope.measure(inner, c) }
+                    return MeasureResultPlaceable(result)
+                }
+                override fun minIntrinsicWidth(height: Int): Int = 0
+                override fun maxIntrinsicWidth(height: Int): Int = 0
+                override fun minIntrinsicHeight(width: Int): Int = 0
+                override fun maxIntrinsicHeight(width: Int): Int = 0
+            }
+        }
+
+        val finalPlaceable = current.measure(constraints)
+        if (finalPlaceable is MeasureResultPlaceable) finalPlaceable.result.placeChildren()
+        return finalPlaceable
+    }
+
+    /** Thin Placeable that reports a MeasureResult's size; placement runs via [placeChildren]. */
+    private class MeasureResultPlaceable(
+        val result: androidx.compose.ui.layout.MeasureResult,
+    ) : androidx.compose.ui.layout.Placeable() {
+        override val width: Int = result.width
+        override val height: Int = result.height
+        override fun placeAt(inX: Int, inY: Int) { /* upstream applies offsets via the wrapped result's placeChildren */ }
+    }
+
     fun measure(constraints: Constraints): IntSize {
+        // LayoutModifierNode chain — head→tail, each one's `measure()` wraps
+        // the next inner modifier (and finally the natural measure on
+        // children) inside a Measurable. This is how upstream Padding /
+        // Size / Offset all do their work; pulling it through here is
+        // what makes vendoring those upstream files possible.
+        if (!fSkipLayoutModifier && cachedLayoutModifierNodes.isNotEmpty()) {
+            val placeable = measureViaLayoutModifierChain(constraints)
+            width = placeable.width
+            height = placeable.height
+            return IntSize(width, height)
+        }
         // Modifier.layout intercept — runs once, then the user's onMeasure
         // body calls measurable.measure(c) which re-enters measure() with
         // fSkipLayoutModifier=true to take the natural path.
