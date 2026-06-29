@@ -299,7 +299,7 @@ Surface bump: `Placeable.PlacementScope` gained `placeWithLayer` /
 `placeRelativeWithLayer` (forward to `placeAt`, layer block ignored) so
 vendored Offset.kt compiles.
 
-### Phase 6b — Other modifier alignments (open)
+### Phase 6b — Other modifier alignments (in progress)
 
 **Goal**: vendor more upstream modifier files that have project
 hand-written equivalents — each migration removes one hand-written
@@ -308,17 +308,16 @@ migration in Phase 6 above, but smaller scope per call.
 
 Candidates (each is one self-contained PR-sized commit):
 
-- `androidx.compose.ui.layout.OnGloballyPositionedModifier.kt` —
-  upstream takes `(LayoutCoordinates) -> Unit`, project's takes
-  `(IntOffset) -> Unit`. Migration: bulk-update every call site to
-  use `LayoutCoordinates` (or fish an IntOffset out of it). Touches
-  BasicText, BasicTextField, SelectionContainer, RequestTabStrip,
-  Tooltip, DropdownMenu, TlsChainDialog, Sidebar. After migration,
-  retire `com.compose.desktop.native.element.GloballyPositionedModifier`
-  + the project's `Modifier.onGloballyPositioned`. Third renderer
-  site moves to chain walk (`dispatchGloballyPositioned` walks
-  `LayoutAwareModifierNode.onPlaced` already; this would walk
-  `GlobalPositionAwareModifierNode.onGloballyPositioned` too).
+- ~~`androidx.compose.ui.layout.OnGloballyPositionedModifier.kt`~~ (DONE).
+  Vendored verbatim; project signature `(IntOffset) -> Unit` migrated
+  to upstream `(LayoutCoordinates) -> Unit`. Project sugar `x: Int /
+  y: Int / intOffset: IntOffset` extension properties on
+  LayoutCoordinates live in `com.compose.desktop.native.layout` so call
+  sites keep `{ it.x }`-style bodies with just an extra import. Dispatch
+  loop now walks the chain for `GlobalPositionAwareModifierNode`
+  alongside `LayoutAwareModifierNode`. `LayoutNode.coordinates` is no
+  longer the empty stub — it reports `Offset(absoluteX, absoluteY)`
+  from `positionInWindow()`.
 - `androidx.compose.ui.input.pointer.HoverableModifier` /
   `PointerHoverIconModifierNode` — depends on PointerInputModifier
   hierarchy, partial vendor. Maybe skip until Phase 8 (foundation
@@ -535,26 +534,28 @@ md5 /tmp/x.png   # expect c6bc8f7… (Skia) or 1844ac4… (SDL3)
 
 | Marker | Start of session N-3 | End of session N-2 | End of session N-1 | End of session N | End of session N+1 |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Vendor files | 365 | 396 | 404 | 411 | 425 |
+| Vendor files | 365 | 396 | 404 | 411 | 426 |
 | Shim files | 22 | 11 | 11 | 10 | 10 |
 | Modifier.Node lifecycle | none | dormant | driven + kindSet | + chain measure pipeline (Phase 5) | (no change) |
 | Renderer foldIn sites | 27+ | 27+ | 0 (all cached) | 0 + 3 chain-walk dispatch sites | (no change) |
 | LayoutModifierNode chain measure | — | — | — | with per-modifier inner-offset (commit `0eed731`) | + Padding / Size / Offset migrated |
 | Vendored Modifier files using chain | — | — | — | AspectRatio, Intrinsic (position-pass-through only) | + Padding, Size, Offset, AlignmentLine |
 
-Session N+1 vendor additions (14 files): Padding.kt, Size.kt, Offset.kt,
+Session N+1 vendor additions (15 files): Padding.kt, Size.kt, Offset.kt,
+OnGloballyPositionedModifier.kt,
 Spacer.kt, AlignmentLine.kt, DrawTransform.kt, EmptyCanvas.kt,
 LayoutId.kt, Brush.kt (replacement), InlineDensity.kt, ModifierUtils.kt,
 DeadKeyCombiner.kt + native, KeyEventHelpers.kt + native, SimpleLayout.kt,
 RequestFocusOnClick.kt + hand-written native.
 
 Project hand-written files retired by these vendors: `LayoutModifiers.kt`
-(now empty placeholder), `Brush.kt`, `Spacer.kt`, `PaddingValues.kt`,
-`SizeModifier` / `SizeNode` / `OffsetModifier` / `OffsetNode` /
-`PaddingModifier` / `PaddingNode` element pairs, plus
-`LayoutNode.cachedSizes` / `cachedPadding*` / `cachedOffsetX/Y` /
-`applyModifierConstraints` / `paddingLeft/Top/Right/Bottom` /
-`offsetX/Y` getters.
+(now empty placeholder), `LayoutCallbacks.kt`, `Brush.kt`, `Spacer.kt`,
+`PaddingValues.kt`, `SizeModifier` / `SizeNode` / `OffsetModifier` /
+`OffsetNode` / `PaddingModifier` / `PaddingNode` /
+`GloballyPositionedModifier` / `GloballyPositionedNode` element pairs,
+plus `LayoutNode.cachedSizes` / `cachedPadding*` / `cachedOffsetX/Y` /
+`cachedGloballyPositionedList` / `applyModifierConstraints` /
+`paddingLeft/Top/Right/Bottom` / `offsetX/Y` getters.
 
 Surface bumps in core (additive, non-breaking):
 - `Placeable.PlacementScope` gained `placeWithLayer` /
@@ -563,5 +564,11 @@ Surface bumps in core (additive, non-breaking):
   AlignmentLine.Unspecified` (for vendored AlignmentLine.kt).
 - `Layout(modifier, measurePolicy)` no-content overload (for vendored
   Spacer.kt).
-- `SkiaDrawScope` learned `is ShaderBrush` fallback (for vendored
-  full Brush.kt with the new `ShaderBrush` abstract base).
+- `SkiaDrawScope` + `Sdl3DrawScope` learned `is ShaderBrush` fallback
+  (for vendored full Brush.kt with the new `ShaderBrush` abstract base).
+- `LayoutCoordinates` gained `positionInWindow()` + `positionInRoot()`
+  defaults; `LayoutNode.coordinates` overrides the former to return
+  `Offset(absoluteX, absoluteY)` (for vendored OnGloballyPositioned).
+- `com.compose.desktop.native.layout` (project sugar) gained
+  `LayoutCoordinates.x / y / intOffset` extension props — minimal
+  imports keep the existing call sites' lambda bodies intact.
