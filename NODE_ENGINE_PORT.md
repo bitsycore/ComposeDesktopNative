@@ -211,52 +211,96 @@ dispatch; the rest still use foldIn.
 Each phase is sized to land on a feature branch with all 5 build paths
 green + screenshots byte-identical, then merge to main.
 
-### Phase 5 — Vendor LayoutModifierNode + retire the last simple shim
+### Phase 5 — LayoutModifierNode upgrade + chain measure pipeline (DONE)
 
-**Goal**: vendor upstream `LayoutModifierNode.kt` (417 lines) so the
-shim `LayoutModifierNode.shim.kt` retires.
+Retired `LayoutModifierNode.shim.kt` (commit `a60fcf8`) — real interface
+matching upstream's non-Approach surface (`measure` + 4 intrinsic
+defaults). Added project mirrors of upstream's internal types
+(`NodeMeasuringIntrinsics`, `IntrinsicMinMax`, `IntrinsicWidthHeight`,
+`LargeDimension`, `DefaultIntrinsicMeasurable`, `FixedSizeIntrinsicsPlaceable`,
+`IntrinsicsMeasureScope`). `ZIndexNode` + `LayoutModifierNodeImpl` now
+implement real `measure()` bodies.
 
-**Why it's hard**: imports `ApproachIntrinsicMeasureScope` /
-`ApproachIntrinsicsMeasureScope` / `ApproachMeasureScope` (all defined
-in `ApproachMeasureScope.kt` — 116 lines, pulls
-`LayoutModifierNodeCoordinator` + `NodeCoordinator.checkMeasuredSize` +
-`LookaheadLayoutCoordinates` + heavy `Placeable.PlacementScope`),
-`IntrinsicsMeasureScope` (internal class in 419-line `Layout.kt`),
-`LargeDimension` constant, `IntrinsicMinMax` + `IntrinsicWidthHeight`
-enums, `DefaultIntrinsicMeasurable` class, `NodeMeasuringIntrinsics`.
+**Per-modifier chain measure pipeline** added in `LayoutNode.measure()`:
 
-**Concrete steps**:
+- `cachedLayoutModifierNodes: List<LayoutModifierNode>` (commit `c19ec21`) —
+  populated by `recomputeChainCaches()` walking the live Modifier.Node
+  chain. When non-empty, `measure(constraints)` builds inside-out
+  wrapping `Measurable`s and dispatches each `LayoutModifierNode.measure()`
+  outermost-first; the leaf wrapper re-enters `measure()` with a
+  layout-modifier guard for the project's natural measurePolicy path.
+- `contentOffsetX/Y` + `pendingChainResult` (commit `0eed731`) —
+  `ChainStepPlaceable.placeAt(x, y)` accumulates (x, y) into
+  `LayoutNode.contentOffsetX/Y` rather than overwriting the node's own
+  position. `place(x, y)` resets contentOffset and replays
+  `pendingChainResult.placeChildren()`. `absoluteX/Y` adds
+  `parent.contentOffsetX/Y` so children render at the offset.
 
-1. Hand-write project `ApproachMeasureScope` stubs — empty interfaces
-   that satisfy `LayoutModifierNode`'s import resolution. They're
-   never instantiated (no project code drives the approach pass).
-2. Vendor `NodeMeasuringIntrinsics.kt` (if standalone enough — needs
-   `IntrinsicMeasureScope` + `Constraints` + measure block closures;
-   should lift cleanly since we have IntrinsicMeasureScope).
-3. Hand-write or vendor `IntrinsicMinMax` + `IntrinsicWidthHeight` enums
-   + `DefaultIntrinsicMeasurable` from `Layout.kt`. They're project-
-   internal — extract just the necessary types into a project file.
-4. Vendor `LayoutModifierNode.kt` verbatim.
-5. Update `ZIndexNode` (currently extends `LayoutModifierNode` via shim)
-   to either keep the empty marker or implement upstream's `measure()`
-   (would need MeasureScope.measure + place(0, 0, zIndex)).
-6. Retire `LayoutModifierNode.shim.kt`.
+This is the **per-modifier coordinator pattern in miniature** — without
+upstream's full per-modifier NodeCoordinator graph, but correct for
+"vendored LayoutModifierNode's measure() runs + its placement effect
+lands as inner offset". Validates that upstream Padding / Offset /
+WrapContent semantics work when the demo doesn't depend on the project's
+deviating behavior.
 
-**Risk**: ApproachMeasureScope stubs leak into more vendor files
-later — every `Modifier.Node` method that has an Approach variant has
-to be either no-op or routed. Manageable. Renderer impact: zero (the
-foldIn reader sees ZIndexElement just fine; the upstream Node
-hierarchy is still parallel/dormant for layout).
+Files vendored against this pipeline:
+- `AspectRatio.kt` (commit `66407ac`) — first upstream Modifier with
+  measure logic + intrinsic defaults; position-pass-through (places at
+  0,0), no project-side conflict.
+- `Intrinsic.kt` (commit `f327677`) — `IntrinsicSize.Min/Max` +
+  `Modifier.width(IntrinsicSize)` / `height(IntrinsicSize)` family;
+  position-pass-through; different param type from
+  `Modifier.width(Dp)` so no overload conflict.
 
-**Acceptance**: shim count 11 → 10. All 5 paths green. Skia + SDL3
-screenshots byte-identical.
+### Phase 6 — Padding / Size / Offset migration (BLOCKED on demo audit)
 
-### Phase 6 — Foundation modifier upstream alignment
+Attempted but reverted. **Why**: vendoring upstream `Padding.kt`
+required removing the project's hand-written `Modifier.padding(...)` +
+`PaddingValues` + `PaddingModifier` element + the `cachedPaddingLeft/...`
+reads in `Box/Row/Column` measure policies. The chain measure pipeline
+correctly applies PaddingNode + accumulates the inner offset, but **the
+demo's layouts depend on the project's non-canonical interpretation**:
 
-**Goal**: vendor more upstream modifier files in
-`androidx.compose.ui.{draw,graphics,layout,input}` that have project
+| Modifier chain | Project (current) | Upstream (canonical) |
+| --- | --- | --- |
+| `.width(180).padding(8)` | 180 wide, content inset to 164 | 196 wide, child placed at +8 |
+| `.padding(8).width(180)` | 196 wide, content at 180 | 196 wide, content at 180 |
+
+The demo's sidebar uses `.width(180).fillMaxHeight().background().verticalScroll().padding(...)`
+expecting the project's interpretation (180-wide sidebar with padding
+insets). Migrating to upstream Padding makes it 196-wide with children
+offset — visually shifts everything 16px. Worse, the
+`.fillMaxHeight()`'s "incoming.maxHeight" reads the padding-reduced
+constraints, which interacts with chain measure unexpectedly: in test
+runs the sidebar collapsed to invisible (NavItems received `c=704x0`
+instead of `c=180x676`). Diagnosing required logging that revealed
+chain measure works correctly for AspectRatio but the
+SizeModifier+PaddingNode+fillMaxHeight combo produces unintended
+constraint flow.
+
+**Realistic path forward** (one focused session):
+
+1. Audit every demo + apidemo + material call site for
+   `.width(X).padding(Y)` / `.height(X).padding(Y)` / `.fillMaxSize().padding(Y)`
+   pattern and decide canonical semantics each one wants.
+2. Reorder where needed: `.padding(Y).width(X)` for "outer-padded fixed
+   width" semantics; keep `.width(X).padding(Y)` only where you want
+   upstream's "X-wide content + padding wrapping" result.
+3. Vendor `Padding.kt` + delete project versions + delete
+   `cachedPaddingLeft/...` + update Box/Row/Column.
+4. Validate every demo screen + apidemo manually (screenshot diff is
+   expected; visual review is what catches regressions).
+5. Same playbook for Size.kt (`fillMaxWidth/Height/Size`,
+   `wrapContentSize`, `requiredSize`, etc.) and Offset.kt.
+
+Each modifier file is its own multi-hour session.
+
+### Phase 6b — Other modifier alignments (open)
+
+**Goal**: vendor more upstream modifier files that have project
 hand-written equivalents — each migration removes one hand-written
-modifier in favor of upstream-shape.
+modifier in favor of upstream-shape. Same pattern as the Padding/Size/Offset
+migration in Phase 6 above, but smaller scope per call.
 
 Candidates (each is one self-contained PR-sized commit):
 
@@ -450,9 +494,11 @@ md5 /tmp/x.png   # expect c6bc8f7… (Skia) or 1844ac4… (SDL3)
 
 ## Counts
 
-| Marker | Start of session N-2 | End of session N-2 | End of session N-1 | End of session N |
+| Marker | Start of session N-3 | End of session N-2 | End of session N-1 | End of session N |
 | --- | ---: | ---: | ---: | ---: |
-| Vendor files | 365 | 385 | 396 | 404 |
-| Shim files | 22 | 17 | 11 | 11 |
-| Modifier.Node lifecycle | none | dormant | driven (Phase 4j) | + kindSet wired + 2 renderer sites chain-walking |
-| Renderer foldIn sites | 27+ | 27+ | 27+ | ~25 |
+| Vendor files | 365 | 396 | 404 | 411 |
+| Shim files | 22 | 11 | 11 | 10 |
+| Modifier.Node lifecycle | none | dormant | driven + kindSet | + chain measure pipeline (Phase 5) |
+| Renderer foldIn sites | 27+ | 27+ | 0 (all cached) | 0 + 3 chain-walk dispatch sites |
+| LayoutModifierNode chain measure | — | — | — | with per-modifier inner-offset (commit `0eed731`) |
+| Vendored Modifier files using chain | — | — | — | AspectRatio, Intrinsic (position-pass-through only) |
