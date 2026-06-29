@@ -391,15 +391,48 @@ longer needs to know about `BackgroundModifier` by name.
 drawing; renderer's `is XxxModifier` reads are gone. Visual hashes
 unchanged.
 
-### Phase 9 — Vendor upstream `LayoutNode` + replace project LayoutNode
+### Phase 9 — Vendor upstream `LayoutNode` + `Placeable` + replace project versions
 
-**The big one** — multi-session, feature branch.
+**The big one** — multi-session, feature branch. Vendoring `Placeable.kt`
+is **bundled with Phase 9, not a separate step**, because upstream Placeable
+is welded to the node coordinator engine:
 
-Vendor:
+```
+upstream Placeable.kt imports
+├── androidx.compose.ui.node.LookaheadCapablePlaceable   (NOT a leaf;
+│     internal abstraction that every PlacementScope.place(...) routes
+│     through to handle the lookahead measurement pass)
+├── androidx.compose.ui.node.MotionReferencePlacementDelegate
+├── androidx.compose.ui.node.Owner                       (~400-line real
+│     class wired to focus / semantics / autofill; we have a 30-line shim)
+└── androidx.compose.ui.graphics.layer.GraphicsLayer     (separate
+      ~600-line graphics-layer engine)
+```
+
+Upstream's `placeAt(position: IntOffset, zIndex: Float, layerBlock)` is
+**protected** — only `LookaheadCapablePlaceable` can invoke it. Our
+`placeAt(x, y)` is **public** because the project's flattened model has
+no coordinator owning the placement state; Placeable drives
+`LayoutNode.place(x, y)` directly. That `public-vs-protected` is the
+lever that lets the chain measure pipeline work without
+NodeCoordinator + LookaheadDelegate + MeasurePassDelegate.
+
+So we can't vendor Placeable.kt alone. What we can — and have — done:
+vendor every leaf that *consumes* Placeable as a type (Padding, Size,
+Offset, AlignmentLine — all LayoutModifierNodes), because they only read
+`Placeable.width / height / placeAt / get(AlignmentLine)`, all of which
+the project Placeable now exposes in upstream's shape (the
+`Placeable.get(AlignmentLine)` operator landed with the AlignmentLine
+vendor for exactly this reason).
+
+Vendor in Phase 9:
+- `layout/Placeable.kt` + `layout/PlacementScope.kt` (+ retire the
+  project hand-written `Placeable.kt`)
 - `node/LayoutNode.kt` (~2000+ lines)
 - `node/NodeChain.kt` (upstream version, replaces our project one;
   ours is a simplified subset)
 - `node/NodeCoordinator.kt` (1796 — upstream per-modifier chain)
+- `node/LookaheadCapablePlaceable.kt` (the Placeable-to-coordinator bridge)
 - `node/LayoutModifierNodeCoordinator.kt`
 - `node/InnerNodeCoordinator.kt`
 - `node/Owner.kt` + project native actual / impl
@@ -407,6 +440,8 @@ Vendor:
 - `node/MeasurePassDelegate.kt` + `LookaheadPassDelegate.kt`
 - `node/MeasureAndLayoutDelegate.kt`
 - `node/OwnerSnapshotObserver.kt` (real one — retires the shim)
+- `graphics/layer/GraphicsLayer.kt` (+ skiko actuals — separate engine
+  that PlacementScope's layer-block plumbing reaches into)
 
 Migrate:
 - `:window`'s composition setup — currently uses
