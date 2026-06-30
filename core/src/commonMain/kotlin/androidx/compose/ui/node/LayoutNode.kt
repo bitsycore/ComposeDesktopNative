@@ -24,9 +24,45 @@ import kotlin.math.min
 // MARK: LayoutNode
 // ==================
 
-class LayoutNode : androidx.compose.ui.semantics.SemanticsInfo {
+class LayoutNode(
+    /** Mirrors upstream's `isVirtual` flag. Virtual nodes don't render or
+     *  measure themselves — they exist so `Layout` composables can host
+     *  children whose parent in the tree differs from their parent in the
+     *  Composition. Our pipeline doesn't have virtual children yet, so
+     *  this is accept-and-ignore. */
+    @Suppress("UNUSED_PARAMETER") isVirtual: Boolean = false,
+) : androidx.compose.ui.semantics.SemanticsInfo {
+
+    /** Companion mirroring `LayoutNode.Constructor` upstream — used by
+     *  vendored `ComposeUiNode.Constructor` to allocate root LayoutNodes
+     *  without going through the data-class ctor path. */
+    companion object {
+        val Constructor: () -> LayoutNode = { LayoutNode() }
+        /** Sentinel `placeOrder` for a never-placed node (upstream value). */
+        const val NotPlacedPlaceOrder: Int = Int.MAX_VALUE
+    }
+
     var parent: LayoutNode? = null
     val children = mutableListOf<LayoutNode>()
+
+    /** Lifecycle flag — `true` between deactivate / reactivate. Vendored
+     *  `ComposeUiNode.ApplyOnDeactivatedNodeAssertion` reads it. */
+    override val isDeactivated: Boolean get() = false
+
+    /** Upstream state-machine flags. None of these drive a real pass machine
+     *  in the project (the renderer measures/draws synchronously every
+     *  frame), but vendored `LayoutTreeConsistencyChecker` etc. read them. */
+    internal val placeOrder: Int get() = 0
+    internal val measurePending: Boolean get() = false
+    internal val layoutPending: Boolean get() = false
+    internal val lookaheadMeasurePending: Boolean get() = false
+    internal val lookaheadLayoutPending: Boolean get() = false
+    internal val measuredByParent: UsageByParent get() = UsageByParent.NotUsed
+    internal val isPlacedInLookahead: Boolean? get() = null
+
+    /** Upstream's `UsageByParent` lives nested on LayoutNode. Tracks how
+     *  the parent measured this node; we always return `NotUsed`. */
+    enum class UsageByParent { InMeasureBlock, InLayoutBlock, NotUsed }
 
     // ============
     //  Phase 9 — upstream LayoutNode surface bumps
