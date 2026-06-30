@@ -1064,6 +1064,8 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/FocusedBounds.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/FocusedBounds.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/GestureNode.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/GestureNode.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Hoverable.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/Hoverable.kt
+# Indication.kt — needs `androidx.compose.ui.draw.DrawModifier` (project
+# Modifier base, distinct from DrawModifierNode) + `LocalInputModeManager`.
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Indication.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/Indication.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Overscroll.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/Overscroll.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Scroll.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/Scroll.kt
