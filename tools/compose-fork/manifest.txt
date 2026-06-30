@@ -1845,13 +1845,12 @@ compose/foundation/foundation-layout/src/nonJvmMain/kotlin/androidx/compose/foun
 # with `spacing: Dp` (was project Int). Row + Column hand-written get
 # migrated to the new signatures in the same commit.
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt                      core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Arrangement.kt
-# Row.kt / Column.kt / RowColumnMeasurePolicy.kt — need the full
-# upstream Arrangement.kt (732 lines, project has 109) for the
-# Density-receiver `arrange(IntArray, ...)` signature; need
-# `JvmDefaultWithCompatibility` annotation actual in foundation.layout.internal;
-# need RowColumnParentData + crossAxisAlignment + IntrinsicMeasureBlocks
-# from the parent measure policy. Plus ColumnScopeInstance/RowScopeInstance
-# must be `@PublishedApi internal` (currently `internal`). Phase 9 bundle.
+# Row / Column / RowColumnMeasurePolicy / RowColumnImpl — Arrangement vendor
+# unblocks part of this, BUT RowColumnImpl pulls `FlowLayoutData` (from
+# unvendored FlowLayout) + `Measured.parentData` extension + `fillCrossAxisFraction`
+# helper on Density. Phase 9+ when FlowLayout vendoring lands or those types
+# can be split out.
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt                    core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt
