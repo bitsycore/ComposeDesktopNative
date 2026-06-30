@@ -29,5 +29,5 @@ fun Surface(
 ) {
     var m: Modifier = modifier.background(color, shape).clip(shape)
     if (border != null) m = m.border(border, shape)
-    Box(modifier = m, content = content)
+    Box(modifier = m) { content() }
 }

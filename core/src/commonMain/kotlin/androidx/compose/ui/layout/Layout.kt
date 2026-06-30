@@ -30,7 +30,7 @@ import androidx.compose.ui.node.MeasurePolicy as InternalMeasurePolicy
            }
        } */
 @Composable
-fun Layout(
+inline fun Layout(
 	content: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 	measurePolicy: MeasurePolicy,

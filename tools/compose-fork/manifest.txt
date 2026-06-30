@@ -1829,9 +1829,19 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/IntrinsicsPolicy.kt
 # androidx.annotation deps. Not actively used by our desktop renderer but
 # adds API fidelity for downstream consumers.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt                                              core/src/vendor/common/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt
-# Box.kt — `inline fun Box` body calls `BoxScopeInstance.content()` inside
-# the `Layout(content = { … })` lambda. Without `crossinline` on `content`,
-# K2 rejects "Cannot inline … it might contain non-local returns." Upstream
-# compiles because their compose-compiler plugin treats @Composable lambdas
-# specially. Skip until that's understood or upstream gets crossinline.
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
+# Box.kt — uses `inline fun Box(... content: BoxScope.() -> Unit)` and
+# wraps content in a new lambda passed to `Layout(...)`. Inlining works
+# now that our project `Layout` is also `inline` — the inline chain Box
+# → Layout → ComposeNode lets the content lambda be passed through
+# without `crossinline`.
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
+# Row.kt / Column.kt / RowColumnMeasurePolicy.kt — need the full
+# upstream Arrangement.kt (732 lines, project has 109) for the
+# Density-receiver `arrange(IntArray, ...)` signature; need
+# `JvmDefaultWithCompatibility` annotation actual in foundation.layout.internal;
+# need RowColumnParentData + crossAxisAlignment + IntrinsicMeasureBlocks
+# from the parent measure policy. Plus ColumnScopeInstance/RowScopeInstance
+# must be `@PublishedApi internal` (currently `internal`). Phase 9 bundle.
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt

@@ -69,7 +69,7 @@ fun Button(
         )
         .clickable { if (enabled) onClick() }
 
-    Box(modifier = m, contentAlignment = Alignment.Center, content = content)
+    Box(modifier = m, contentAlignment = Alignment.Center) { content() }
 }
 
 // ==================
