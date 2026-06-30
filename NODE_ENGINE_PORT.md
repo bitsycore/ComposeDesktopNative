@@ -188,7 +188,53 @@ dispatch; the rest still use foldIn.
 
 ## Where we are now
 
-**Vendor count: 485. Shim count: 11.**
+**Vendor count: 488. Shim count: 11.**
+
+### MeasurePolicy ABI swap + ComposeUiNode (this round)
+
+The project's hand-written `fun interface MeasurePolicy` (in
+`Layout.kt`) is **gone** — replaced by upstream's vendored
+`MeasurePolicy.kt`. The signature was already byte-equivalent thanks
+to last round's intrinsic-default bumps, so the swap was clean.
+
+`LayoutNode` now `implements ComposeUiNode` (vendored, 61L):
+- `var measurePolicy: androidx.compose.ui.layout.MeasurePolicy` — public,
+  upstream type. Setter routes through `adaptToInternal()` into a private
+  `internalMeasurePolicy: androidx.compose.ui.node.MeasurePolicy` (project
+  type) that the renderer pipeline reads.
+- `override var density / layoutDirection / viewConfiguration` — bumped
+  from `val` to `var` (still satisfies `LayoutInfo`'s `val` requirement).
+- `override var compositionLocalMap` / `override var modifier` — were
+  internal/no-override.
+- `override var compositeKeyHash: Int = 0` — new (unused).
+
+`Box` / `Row` / `Column` migrated to upstream `MeasurePolicy` ABI —
+`MeasureScope.measure(List<Measurable>, Constraints): MeasureResult`
+instead of `(LayoutNode, Constraints) -> IntSize`. Each child is read
+as a `Measurable`, measured to a `Placeable`, then placed via
+`Placeable.placeAt(...)` inside the trailing `layout(w, h) { … }` block.
+Row + Column read `LayoutWeightModifier` from `Measurable.parentData`;
+bumped `LayoutNodeMeasurable.parentData` to forward
+`fNode.cachedLayoutWeight`.
+
+`Image` + `BasicText` keep the project `internalMeasurePolicy` — they
+read per-LayoutNode state (`painter`, `text`) that upstream's
+`List<Measurable>` signature can't reach. Those need upstream's
+`Modifier.paint(...)` / Modifier.Node-driven leaf content (not yet
+vendored).
+
+Nested classes added on LayoutNode this round:
+- `NoIntrinsicsMeasurePolicy(error)` — `internal abstract class`
+  implementing `MeasurePolicy` with intrinsic methods all `error(error)`.
+  Vendored `RootMeasurePolicy` extends this.
+
+Files vendored this round (5):
+- `node/ComposeUiNode.kt` (61L)
+- `layout/MeasurePolicy.kt` (167L)
+- `layout/RootMeasurePolicy.kt` (64L)
+- `layout/RectRulers.kt` (110L) — previous turn
+- `layout/MultiContentMeasurePolicy.kt` (239L) — previous turn
+- `foundation/layout/RulerAlignment.kt` (118L) — previous turn
 
 ### Phase 9 — package move + per-file vendoring
 
