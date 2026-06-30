@@ -1824,3 +1824,9 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RootMeasurePolicy
 # implements `IntrinsicMeasureScope` to be a valid receiver for the
 # `MeasurePolicy.minIntrinsicWidth/Height` etc. extension funs.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/IntrinsicsPolicy.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/node/IntrinsicsPolicy.kt
+# Box.kt — `inline fun Box` body calls `BoxScopeInstance.content()` inside
+# the `Layout(content = { … })` lambda. Without `crossinline` on `content`,
+# K2 rejects "Cannot inline … it might contain non-local returns." Upstream
+# compiles because their compose-compiler plugin treats @Composable lambdas
+# specially. Skip until that's understood or upstream gets crossinline.
+# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
