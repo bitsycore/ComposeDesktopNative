@@ -1819,3 +1819,8 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/MeasurePolicy.kt 
 # infrastructure as the root LayoutNode's measure policy; not actively
 # constructed by the project's window engine yet.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RootMeasurePolicy.kt                                                core/src/vendor/common/kotlin/androidx/compose/ui/layout/RootMeasurePolicy.kt
+# IntrinsicsPolicy — uses `LayoutNode.outerCoordinator` (now exposed) with
+# intrinsic methods on the upstream MeasurePolicy. Project NodeCoordinator
+# implements `IntrinsicMeasureScope` to be a valid receiver for the
+# `MeasurePolicy.minIntrinsicWidth/Height` etc. extension funs.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/IntrinsicsPolicy.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/node/IntrinsicsPolicy.kt

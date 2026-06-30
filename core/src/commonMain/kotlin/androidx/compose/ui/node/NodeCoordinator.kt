@@ -29,7 +29,48 @@ import androidx.compose.ui.unit.IntSize
  * vendored DelegatableNode contract with proper layoutNode +
  * coordinates references — no more `error("...")` stubs.
  */
-internal class NodeCoordinator(val owningLayoutNode: LayoutNode) {
+internal class NodeCoordinator(val owningLayoutNode: LayoutNode) : androidx.compose.ui.layout.IntrinsicMeasureScope {
+
+	override val density: Float get() = owningLayoutNode.density.density
+	override val fontScale: Float get() = owningLayoutNode.density.fontScale
+	override val layoutDirection: androidx.compose.ui.unit.LayoutDirection
+		get() = owningLayoutNode.layoutDirection
+
+	/** Upstream pipes min/max-intrinsic through this — receiver scope for
+	 *  `MeasurePolicy.intrinsicX(...)` extensions. The project's layout
+	 *  pass doesn't query intrinsics today, so these methods are reachable
+	 *  from vendored consumers (`IntrinsicsPolicy`) but unused at runtime. */
+	internal fun minIntrinsicWidth(
+		measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+		height: Int,
+	): Int {
+		val policy = owningLayoutNode.measurePolicy
+		return with(policy) { minIntrinsicWidth(measurables, height) }
+	}
+
+	internal fun minIntrinsicHeight(
+		measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+		width: Int,
+	): Int {
+		val policy = owningLayoutNode.measurePolicy
+		return with(policy) { minIntrinsicHeight(measurables, width) }
+	}
+
+	internal fun maxIntrinsicWidth(
+		measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+		height: Int,
+	): Int {
+		val policy = owningLayoutNode.measurePolicy
+		return with(policy) { maxIntrinsicWidth(measurables, height) }
+	}
+
+	internal fun maxIntrinsicHeight(
+		measurables: List<androidx.compose.ui.layout.IntrinsicMeasurable>,
+		width: Int,
+	): Int {
+		val policy = owningLayoutNode.measurePolicy
+		return with(policy) { maxIntrinsicHeight(measurables, width) }
+	}
 
 	/**
 	 * Last real `Modifier.Node` in [LayoutNode.nodes], or null when the
