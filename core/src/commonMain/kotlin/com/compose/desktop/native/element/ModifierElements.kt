@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
+import com.compose.desktop.native.graphics.drawBackgroundShape
+import com.compose.desktop.native.graphics.drawBorderShape
 
 // ==================
 // MARK: Modifier Elements
@@ -39,7 +41,10 @@ class BackgroundModifier(
 }
 
 class BackgroundNode(var color: Color, var shape: Shape) : Modifier.Node(), DrawModifierNode {
-    override fun ContentDrawScope.draw() { drawContent() /* dormant — renderer reads BackgroundModifier via foldIn */ }
+    override fun ContentDrawScope.draw() {
+        if (color.alpha > 0f) drawBackgroundShape(color, shape)
+        drawContent()
+    }
 }
 
 class BorderModifier(
@@ -55,7 +60,10 @@ class BorderModifier(
 }
 
 class BorderNode(var width: Int, var color: Color, var shape: Shape) : Modifier.Node(), DrawModifierNode {
-    override fun ContentDrawScope.draw() { drawContent() /* dormant */ }
+    override fun ContentDrawScope.draw() {
+        if (width > 0 && color.alpha > 0f) drawBorderShape(width, color, shape)
+        drawContent()
+    }
 }
 
 // SizeModifier / SizeNode retired — all size / fill / wrapContent / widthIn /
@@ -112,7 +120,10 @@ class DrawBehindModifier(
 class DrawBehindNode(
     var onDraw: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit,
 ) : Modifier.Node(), DrawModifierNode {
-    override fun ContentDrawScope.draw() { drawContent() /* dormant */ }
+    override fun ContentDrawScope.draw() {
+        onDraw(this)
+        drawContent()
+    }
 }
 
 /* Identity is by callback reference — not great across recomposition. The

@@ -358,45 +358,48 @@ internal class Sdl3Renderer(
         val vH = inNode.height.toFloat()
 
         // ============
-        //  Background
-        for (element in inNode.cachedBackgrounds) {
-            if (element.color.alpha > 0f) {
-                setColor(vRenderer, element.color)
-                fillOutline(vRenderer, vAx, vAy, vW, vH, element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity))
-            }
-        }
-
-        // ============
-        //  Border (drawn as four thin filled rects centred on the edge)
-        for (element in inNode.cachedBorders) {
-            if (element.width > 0 && element.color.alpha > 0f) {
-                setColor(vRenderer, element.color)
-                strokeOutline(
-                    vRenderer,
-                    vAx, vAy, vW, vH,
-                    element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity),
-                    element.width.toFloat(),
-                )
-            }
-        }
-
-        // ============
-        //  drawBehind modifier(s) — invoke each in modifier order, after
-        //  background / border so they sit on top of the chrome but under
-        //  text / image / children. flush()+release() between each scope
-        //  so per-modifier draw order is preserved (later modifiers paint
-        //  on top of earlier ones).
-        for (element in inNode.cachedDrawBehinds) {
-            val vScope = Sdl3DrawScope(
+        //  Chain-driven draw — walk every `DrawModifierNode` on the node,
+        //  outermost first, building a wrap whose `drawContent()` chains
+        //  to the next inner modifier and finally to [drawNodeLeafAndChildren].
+        val vDrawNodes = inNode.cachedDrawModifierNodes
+        if (vDrawNodes.isEmpty()) {
+            drawNodeLeafAndChildren(inNode, vRenderer, vAx, vAy, vW, vH)
+        } else {
+            val vBaseScope = Sdl3DrawScope(
                 fRenderer = vRenderer,
                 fOriginX = vAx,
                 fOriginY = vAy,
                 size = androidx.compose.ui.geometry.Size(vW, vH),
             )
-            element.onDraw(vScope)
-            vScope.release()
+            var vInnerCb: () -> Unit = {
+                vBaseScope.release()
+                drawNodeLeafAndChildren(inNode, vRenderer, vAx, vAy, vW, vH)
+            }
+            for (i in vDrawNodes.indices.reversed()) {
+                val vNode = vDrawNodes[i]
+                val vPrev = vInnerCb
+                vInnerCb = {
+                    val vWrap = com.compose.desktop.native.graphics.WrappedContentDrawScope(vBaseScope, vPrev)
+                    with(vNode) { vWrap.draw() }
+                }
+            }
+            vInnerCb()
         }
+    }
 
+    /**
+     * Innermost "draw the node itself" — invoked after every
+     * `DrawModifierNode` in the chain wraps via `drawContent()`. Painters
+     * here: Canvas {} `drawer`, text, image, children.
+     */
+    private fun drawNodeLeafAndChildren(
+        inNode: LayoutNode,
+        vRenderer: kotlinx.cinterop.CPointer<cnames.structs.SDL_Renderer>,
+        vAx: Float,
+        vAy: Float,
+        vW: Float,
+        vH: Float,
+    ) {
         // ============
         //  Canvas{} leaf — drawer set by the Canvas composable. Batched
         //  triangles for the whole drawer block submit in one

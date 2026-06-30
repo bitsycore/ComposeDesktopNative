@@ -190,58 +190,50 @@ class SkiaRenderer internal constructor(
         val vH = inNode.height.toFloat()
 
         // ============
-        //  Background
-        for (element in inNode.cachedBackgrounds) {
-            if (element.color.alpha > 0f) {
-                val vPaint = Paint().apply {
-                    color = toSkiaColor(element.color)
-                    isAntiAlias = true
-                    mode = PaintMode.FILL
-                }
-                drawOutline(inCanvas, vAx, vAy, vW, vH, element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity), vPaint)
-                vPaint.close()
+        //  Chain-driven draw — walk every `DrawModifierNode` on the node,
+        //  outermost first, building a wrap whose `drawContent()` chains
+        //  to the next inner modifier and finally to [drawNodeLeafAndChildren].
+        val vBaseScope = SkiaDrawScope(
+            fCanvas = inCanvas,
+            fOriginX = vAx,
+            fOriginY = vAy,
+            size = Size(vW, vH),
+        )
+        val vDrawNodes = inNode.cachedDrawModifierNodes
+        if (vDrawNodes.isEmpty()) {
+            drawNodeLeafAndChildren(inNode, inCanvas, vAx, vAy, vW, vH)
+        } else {
+            var vInnerCb: () -> Unit = {
+                drawNodeLeafAndChildren(inNode, inCanvas, vAx, vAy, vW, vH)
             }
-        }
-
-        // ============
-        //  Border
-        for (element in inNode.cachedBorders) {
-            if (element.width > 0 && element.color.alpha > 0f) {
-                val vPaint = Paint().apply {
-                    color = toSkiaColor(element.color)
-                    isAntiAlias = true
-                    mode = PaintMode.STROKE
-                    strokeWidth = element.width.toFloat()
+            // Wrap innermost-first: walk indices in reverse so the head node
+            // ends up outermost (its draw() runs first; its drawContent()
+            // resolves the next inner wrap, eventually reaching the leaf).
+            for (i in vDrawNodes.indices.reversed()) {
+                val vNode = vDrawNodes[i]
+                val vPrev = vInnerCb
+                vInnerCb = {
+                    val vWrap = com.compose.desktop.native.graphics.WrappedContentDrawScope(vBaseScope, vPrev)
+                    with(vNode) { vWrap.draw() }
                 }
-                // Stroke is centred on the edge, so inset by half the stroke width to
-                // keep the visual border fully inside the laid-out bounds.
-                val vInset = element.width / 2f
-                drawOutline(
-                    inCanvas,
-                    vAx + vInset, vAy + vInset,
-                    vW - element.width.toFloat(), vH - element.width.toFloat(),
-                    element.shape.createOutline(Size(vW, vH), LayoutDirection.Ltr, kShapeDensity),
-                    vPaint,
-                    cornerRadiusAdjust = -vInset
-                )
-                vPaint.close()
             }
+            vInnerCb()
         }
+    }
 
-        // ============
-        //  drawBehind modifier(s) — invoke each in modifier order. Runs
-        //  after background / border so it sits on top of the chrome but
-        //  under the node's text / image / children.
-        for (element in inNode.cachedDrawBehinds) {
-            val vScope = SkiaDrawScope(
-                fCanvas = inCanvas,
-                fOriginX = vAx,
-                fOriginY = vAy,
-                size = Size(vW, vH),
-            )
-            element.onDraw(vScope)
-        }
-
+    /**
+     * Innermost "draw the node itself" — runs after every `DrawModifierNode`
+     * in the chain has wrapped this call via `ContentDrawScope.drawContent()`.
+     * Painters here: the Canvas {} `drawer` field, text, image, then children.
+     */
+    private fun drawNodeLeafAndChildren(
+        inNode: LayoutNode,
+        inCanvas: Canvas,
+        vAx: Float,
+        vAy: Float,
+        vW: Float,
+        vH: Float,
+    ) {
         // ============
         //  Canvas {} leaf — drawer set by the Canvas composable. Invoked
         //  with the node's bounds as size.
