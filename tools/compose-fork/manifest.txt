@@ -857,8 +857,8 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # ContextMenuIcons + ContextMenuStrings — the `.skiko` actuals pull
 # `androidx.compose.foundation.l10n` and `ui.text.intl.Locale` (locale
 # machinery not vendored). Vendor when l10n / intl land.
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ContextMenuIcons.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/ContextMenuIcons.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ContextMenuStrings.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/ContextMenuStrings.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ContextMenuIcons.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/ContextMenuIcons.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ContextMenuStrings.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/ContextMenuStrings.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/KeyEventHelpers.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/KeyEventHelpers.kt
 compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.native.kt
