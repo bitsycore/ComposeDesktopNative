@@ -371,6 +371,27 @@ Realistic estimate: several more sessions of focused work to green the
 branch, then screenshot regression pass across 30+ demo screens before
 merging to main.
 
+### Branch progress log (phase9-real-swap) — 390 → 82 errors
+
+10 WIP commits on the branch — error count over time:
+
+| Commit | State | Errors |
+| --- | --- | ---: |
+| `bdb2dab` | Rename project LayoutNode → ProjectLayoutNode + vendor upstream LayoutNode | 155 |
+| `d7ca6b0` | Vendor node engine cluster (NodeCoordinator, LookaheadDelegate, all delegates, NodeChain upstream) | 390 |
+| `5957025` | Focus/semantics/draw legacy stubs + BackwardsCompatNode/SemanticsModifierNode/PointerInputModifierNode/RootForTest vendored | 180 |
+| `601ddcc` | StubOwner Owner overrides + OwnerSnapshotObserver vendored + EngineStubs.shim.kt + LocalViewConfiguration.shim | 133 |
+| `5d711be` | NodeMeasuringIntrinsics.ApproachMeasureBlock + 4 no-op helpers | 117 |
+| `e2b2a62` | LayoutCoordinates surface expansion (providedAlignmentLines, parent{Layout,}Coordinates, screenToLocal/windowToLocal/localToWindow/localToRoot, transformFrom) | 92 |
+| `5f2c9f0` | @InternalComposeUiApi opt-in on EngineStubs | 91 |
+| (nmi delete) | Removed project NodeMeasuringIntrinsics.kt (vendored LayoutModifierNode.kt provides it now) | 86 |
+| (frmn move) | FocusRequesterModifierNode moved to focus shim | 85 |
+| (last two) | OwnerSnapshotObserver ctor fixed + RootForTest full impl + OwnedLayer full 15-member impl | 82 |
+
+**79% error reduction across the branch.** Remaining 82 errors are
+harder — require project code migration off ProjectLayoutNode fields
+onto upstream LayoutNode's chain-based APIs (Step E territory).
+
 ### Phase 9 is a big-bang — confirmed no incremental green path
 
 Established empirically from five independent angles that no more layout/node
