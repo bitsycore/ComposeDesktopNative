@@ -13,10 +13,19 @@ import androidx.compose.ui.node.LayoutNode
  * Placeable, then the MeasurePolicy's `layout { }` block calls placeAt(x, y)
  * inside its placement closure.
  */
-abstract class Placeable {
+abstract class Placeable : Measured {
 
 	abstract val width: Int
 	abstract val height: Int
+
+	/** Upstream Measured.measuredWidth — before constraint coercion. Our
+	 *  project doesn't distinguish measured vs coerced size; both are width. */
+	override val measuredWidth: Int get() = width
+	override val measuredHeight: Int get() = height
+
+	/** Upstream Measured.parentData — data set by ParentDataModifier.
+	 *  Subclasses that carry weight / alignment / etc. override this. */
+	override val parentData: Any? get() = null
 
 	/**
 	 * Place the underlying node at ([inX], [inY]) in its parent's coordinate
@@ -32,7 +41,7 @@ abstract class Placeable {
 	 * default is always Unspecified — callers fall back to a 0 line
 	 * position and paddingFrom degenerates to padding-with-coerce.
 	 */
-	open operator fun get(inAlignmentLine: androidx.compose.ui.layout.AlignmentLine): Int =
+	override operator fun get(inAlignmentLine: androidx.compose.ui.layout.AlignmentLine): Int =
 		androidx.compose.ui.layout.AlignmentLine.Unspecified
 
 	/**
@@ -168,5 +177,6 @@ internal class LayoutNodePlaceable(private val fNode: LayoutNode) : Placeable() 
 
 	override val width: Int get() = fNode.width
 	override val height: Int get() = fNode.height
+	override val parentData: Any? get() = fNode.cachedLayoutWeight
 	override fun placeAt(inX: Int, inY: Int) { fNode.place(inX, inY) }
 }

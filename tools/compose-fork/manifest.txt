@@ -1859,12 +1859,13 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/TestModifierUpdat
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/ClassHelpers.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/platform/ClassHelpers.kt
 # FocusListener — needs FocusTargetModifierNode (focus engine, unvendored).
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusListener.kt                                                    core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusListener.kt
-# Row / Column / RowColumnMeasurePolicy / RowColumnImpl — Arrangement vendor
-# unblocks part of this, BUT RowColumnImpl pulls `FlowLayoutData` (from
-# unvendored FlowLayout) + `Measured.parentData` extension + `fillCrossAxisFraction`
-# helper on Density. Phase 9+ when FlowLayout vendoring lands or those types
-# can be split out.
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt                    core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt
+# Row / Column / RowColumnMeasurePolicy / RowColumnImpl. FlowLayoutData
+# shimmed in `FlowLayoutData.shim.kt` (single-property data class extracted
+# from unvendored FlowLayout.kt); Placeable IS-A Measured so parentData
+# resolves; project RowColumnScope.kt deleted (vendor Row/Column declare
+# their own RowScope/ColumnScope interfaces + RowScopeInstance/ColumnScopeInstance
+# @PublishedApi internal singletons).
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt                              core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt                    core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt
