@@ -845,7 +845,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/internal/ClipboardUtils.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/internal/ClipboardUtils.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyListSemantics.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyListSemantics.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridBeyondBoundsModifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridBeyondBoundsModifier.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScope.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScope.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScopeImpl.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemScopeImpl.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutMeasurePolicy.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutMeasurePolicy.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridBeyondBoundsModifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridBeyondBoundsModifier.kt
@@ -1096,7 +1096,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Scrollable.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/gestures/Scrollable.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Scrollable2D.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/gestures/Scrollable2D.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/gestures/Transformable.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/gestures/Transformable.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyItemScopeImpl.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyItemScopeImpl.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyItemScopeImpl.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyItemScopeImpl.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/AwaitFirstLayoutModifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/AwaitFirstLayoutModifier.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutAnimateItemModifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutAnimateItemModifier.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsModifierLocal.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsModifierLocal.kt
@@ -1300,7 +1300,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridCacheWindowStrategy.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridCacheWindowStrategy.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridIntervalContent.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridIntervalContent.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemProvider.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridItemProvider.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasureResult.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasureResult.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasuredItemProvider.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasuredItemProvider.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasuredLine.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridMeasuredLine.kt
@@ -1309,7 +1309,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazyGridScrollScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazyGridScrollScope.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/grid/LazySemantics.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/grid/LazySemantics.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayout.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayout.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsInfo.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsInfo.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsInfo.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsInfo.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsState.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBeyondBoundsState.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBringIntoViewSpec.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutBringIntoViewSpec.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutCacheWindow.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutCacheWindow.kt
@@ -1322,7 +1322,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutPinnableItem.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutPinnableItem.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutScrollDeltaBetweenPasses.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/LazyLayoutScrollDeltaBetweenPasses.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/layout/PrefetchScheduler.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/layout/PrefetchScheduler.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridCells.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridCells.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridCells.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridCells.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridIntervalContent.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridIntervalContent.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridItemProvider.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridItemProvider.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridItemScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridItemScope.kt
@@ -1339,13 +1339,13 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerScrollScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerScrollScope.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerSnapDistance.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerSnapDistance.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/style/Style.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/style/Style.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/AnnotatedStringResolveInlineContent.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/AnnotatedStringResolveInlineContent.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/AnnotatedStringResolveInlineContent.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/AnnotatedStringResolveInlineContent.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/InlineTextContent.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/InlineTextContent.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/KeyMapping.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/KeyMapping.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/KeyModifiers.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/KeyModifiers.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/KeyModifiers.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/KeyModifiers.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/KeyboardActions.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/KeyboardActions.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/LongPressTextDragObserver.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/LongPressTextDragObserver.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/PointerMoveDetector.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/PointerMoveDetector.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/PointerMoveDetector.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/PointerMoveDetector.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/StringHelpers.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/StringHelpers.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextFieldPressGestureFilter.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextFieldPressGestureFilter.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/UndoManager.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/UndoManager.kt
@@ -1621,7 +1621,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/PressDownGesture.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/PressDownGesture.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldHandleState.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldHandleState.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/undo/TextUndoOperation.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/undo/TextUndoOperation.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/undo/UndoManager.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/undo/UndoManager.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/undo/UndoManager.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/undo/UndoManager.kt
 # compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/text/input/internal/CodepointHelpers.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/input/internal/CodepointHelpers.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/BasicTextField.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/BasicTextField.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/CoreTextField.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/CoreTextField.native.kt
@@ -1650,7 +1650,7 @@ compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/layer/SkiaGraphicsLayer.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/layer/SkiaGraphicsLayer.native.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/MultiParagraph.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/MultiParagraph.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/Paragraph.kt  core/src/vendor/common/kotlin/androidx/compose/ui/text/Paragraph.kt
