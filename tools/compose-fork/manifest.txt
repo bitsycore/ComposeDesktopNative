@@ -1859,6 +1859,9 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/PlatformTextInp
 # SemanticsListener — internal interface. Only needs SemanticsInfo (shim) +
 # SemanticsConfiguration (vendored).
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt                                            core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt
+# TestTag — Modifier.testTag(tag) semantics helper. Uses SemanticsPropertyReceiver.testTag
+# (in our SemanticsShim) + ModifierNodeElement/InspectorInfo (vendored).
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/TestTag.kt                                                       core/src/vendor/common/kotlin/androidx/compose/ui/platform/TestTag.kt
 # MeshGradientRenderer — needs `MeshGradientConfig` (unvendored, part of
 # the mesh-gradient graphics subsystem).
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt                                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt
