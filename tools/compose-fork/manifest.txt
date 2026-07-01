@@ -1177,6 +1177,12 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryInput
 # Vendor in Phase 9 alongside the lookahead engine.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ApproachLayoutModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/ApproachLayoutModifierNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ApproachMeasureScope.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/ApproachMeasureScope.kt
+# Layout.kt — upstream declares FixedSizeIntrinsicsPlaceable + IntrinsicMinMax
+# / IntrinsicWidthHeight / LargeDimension / DefaultIntrinsicMeasurable /
+# IntrinsicsMeasureScope which all live in our LayoutIntrinsicsHelpers.kt
+# (conflicts). Plus upstream Placeable uses protected `placeAt(IntOffset,
+# Float, layerBlock)` + `measuredSize` — different from our public
+# `placeAt(x, y)`. Plus `LayoutNode.canMultiMeasure` — unused. Phase 9+.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Layout.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/Layout.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/LayoutBoundsHolder.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/LayoutBoundsHolder.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/LayoutId.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/LayoutId.kt
@@ -1847,6 +1853,9 @@ compose/foundation/foundation-layout/src/nonJvmMain/kotlin/androidx/compose/foun
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt                      core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Arrangement.kt
 # Small leaf helpers — no imports beyond Kotlin stdlib.
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/CharHelpers.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/text/CharHelpers.kt
+# TestModifierUpdater — used by tests to inject modifier updates on a
+# specific LayoutNode. Small; uses ComposeUiNode setters we already have.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt                                             core/src/vendor/common/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/ClassHelpers.kt                                                  core/src/vendor/common/kotlin/androidx/compose/ui/platform/ClassHelpers.kt
 # FocusListener — needs FocusTargetModifierNode (focus engine, unvendored).
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusListener.kt                                                    core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusListener.kt
