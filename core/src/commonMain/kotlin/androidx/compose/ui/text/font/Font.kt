@@ -22,4 +22,9 @@ package androidx.compose.ui.text.font
 interface Font {
 	val weight: FontWeight get() = FontWeight.Normal
 	val style: FontStyle get() = FontStyle.Normal
+
+	/** Upstream deprecated `Font.ResourceLoader` — vendored Owner has a
+	 *  `val fontLoader: Font.ResourceLoader`. Marker; no real loading. */
+	@Deprecated("Use FontFamily.Resolver instead")
+	interface ResourceLoader
 }

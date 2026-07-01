@@ -205,6 +205,20 @@ abstract class Placeable : Measured {
 	}
 }
 
+// ==================
+// MARK: PlacementScope factory
+// ==================
+
+/**
+ * Upstream `internal fun PlacementScope(owner: Owner): Placeable.PlacementScope`.
+ * Vendored `Owner.placementScope` calls this. Returns the default
+ * PlacementScope companion for now — parentWidth = 0 disables RTL
+ * mirroring which matches our project pipeline.
+ */
+internal fun PlacementScope(
+	@Suppress("UNUSED_PARAMETER") owner: androidx.compose.ui.node.Owner,
+): Placeable.PlacementScope = Placeable.PlacementScope.Default
+
 internal class LayoutNodePlaceable(private val fNode: LayoutNode) : Placeable() {
 
 	override val width: Int get() = fNode.width

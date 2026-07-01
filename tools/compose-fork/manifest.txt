@@ -1739,7 +1739,7 @@ compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/Savers.skiko.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTraversal.kt  core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTraversal.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/BackwardsCompatNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/BackwardsCompatNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/NodeKind.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/NodeKind.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/Owner.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/Owner.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/Owner.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/Owner.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/node/RootNodeOwner.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/node/RootNodeOwner.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/scene/ComposeSceneFocusManager.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/scene/ComposeSceneFocusManager.native.kt
 

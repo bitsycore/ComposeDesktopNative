@@ -24,4 +24,9 @@ sealed class FontFamily {
 		override fun equals(other: Any?): Boolean = other is Named && other.name == name
 		override fun hashCode(): Int = name.hashCode()
 	}
+
+	/** Upstream `FontFamily.Resolver` — marker for vendored Owner.
+	 *  Real Resolver has `resolve(family, weight, style, synthesis): State<Any>`;
+	 *  desktop path doesn't invoke it. */
+	interface Resolver
 }
