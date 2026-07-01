@@ -188,7 +188,23 @@ dispatch; the rest still use foldIn.
 
 ## Where we are now
 
-**Vendor count: 502. Shim count: 13.**
+**Vendor count: 507. Shim count: 13.**
+
+### Scrollbar relocation + small-vendor round
+
+- `Scrollbar.kt` moved out of `androidx.compose.foundation` (project-
+  specific — no upstream equivalent in the androidx core we mirror).
+  Now lives at `com.compose.desktop.native.scrollbar.Scrollbar` per
+  fidelity rules ("don't invent public APIs in `androidx.*` packages").
+- 5 small vendor files landed on top of the foundation-layout swap:
+  - `ui-text/input/ImeOptions.kt` (199L) — IME options value class.
+  - `ui/platform/PlatformTextInputMethodRequest.kt` (23L, `expect
+    interface`) + native actual (empty marker).
+  - `ui/semantics/SemanticsListener.kt` (34L) — internal observer.
+  - `ui/platform/TestTag.kt` (65L) — `Modifier.testTag(tag)`.
+  - `ui/autofill/AutofillModifier.kt` (40L) — `Modifier.contentType(x)`.
+- SemanticsShim gained `contentType: ContentType` accept-and-discard
+  var — required by vendored AutofillModifier.
 
 ### Big foundation-layout swap (this round)
 
