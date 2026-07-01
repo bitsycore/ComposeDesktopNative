@@ -1367,7 +1367,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/l10n/Translations.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/l10n/Translations.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/drawscope/DrawTransform.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/drawscope/DrawTransform.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/drawscope/EmptyCanvas.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/drawscope/EmptyCanvas.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/ChildLayerDependenciesTracker.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/layer/ChildLayerDependenciesTracker.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/ChildLayerDependenciesTracker.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/layer/ChildLayerDependenciesTracker.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Matrices.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/Matrices.native.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.native.kt
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.native.kt
@@ -1642,7 +1642,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # itself is already mirrored byte-for-byte in the project hand-written
 # version. Vendor when DrawScope grows its full upstream param set.
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Outline.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Outline.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/GraphicsLayer.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/layer/GraphicsLayer.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/layer/GraphicsLayer.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/layer/GraphicsLayer.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/painter/BitmapPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/painter/BitmapPainter.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/painter/BrushPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/painter/BrushPainter.kt
 # compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/painter/ColorPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/painter/ColorPainter.kt

@@ -26,6 +26,12 @@ import androidx.compose.ui.graphics.StrokeCap
    gradient). */
 interface DrawScope : androidx.compose.ui.unit.Density {
 
+	/** Upstream member `DrawContext` — carries the canvas + graphicsLayer
+	 *  in flight. Project doesn't own a real DrawContext; vendored
+	 *  `GraphicsLayer.kt` etc. only reach it for `drawContext.canvas` /
+	 *  `drawContext.graphicsLayer`, both null / throwing here. */
+	val drawContext: DrawContext get() = DrawContext()
+
 	/* Logical-point bounds of the node this scope is drawing into. */
 	val size: Size
 

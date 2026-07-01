@@ -29,6 +29,10 @@ sealed class Outline {
 	/* Rectangular area with rounded corners (may differ per corner). */
 	class Rounded(val roundRect: RoundRect) : Outline() {
 		override val bounds: Rect get() = roundRect.boundingRect
+		/** Upstream property — non-null when corner radii aren't uniform.
+		 *  Project doesn't build a Path for round-rects; always null so
+		 *  vendored consumers take the setRoundRectOutline branch. */
+		internal val roundRectPath: Path? = null
 		override fun equals(other: Any?): Boolean =
 			this === other || (other is Rounded && other.roundRect == roundRect)
 		override fun hashCode(): Int = roundRect.hashCode()
