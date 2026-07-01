@@ -195,8 +195,39 @@ dispatch; the rest still use foldIn.
 
 ## Where we are now
 
-**Vendor count: 517. Shim count: 13.** Branch `phase9-node-engine` opened for
-the big-bang (below); `main` stays green + runnable.
+**Vendor count: 521. Shim count: 27.** Step A of the Phase 9 plan below is
+**done and merged on `main`**.
+
+### Step A landed (Owner + subsystem stubs)
+
+- Retired `Owner.shim.kt`; upstream `Owner.kt` (412L) vendored verbatim.
+- `StubOwner` singleton now implements all 60+ upstream Owner members as
+  no-ops (attached to every `LayoutNode` by default so vendored
+  DelegatableNode helpers — `requireOwner()`, `observeReads`,
+  `requireGraphicsContext()` — don't crash).
+- 13 new subsystem shim files for Owner's cross-cut types (each a marker
+  interface / bare class — real bodies land as their engines vendor):
+  `FocusOwner`, `SemanticsOwner`, `RectManager`, `ModifierLocalManager`,
+  `DragAndDropManager`, `RetainedValuesStore`, `PositionCalculator` /
+  `MatrixPositionCalculator`, `PointerIconService`, `SoftwareKeyboardController`
+  (later retired — upstream vendored on top) / `PlatformTextInputSessionScope`,
+  `TextInputService`, `Autofill` / `AutofillTree`, `GraphicsLayer` (marker
+  only — real 437L expect class + skiko / SDL3 actuals is Step A2), `OwnedLayer`,
+  `LayoutNodeDrawScope`, `RootForTest`.
+- `Font.ResourceLoader` + `FontFamily.Resolver` nested markers added.
+- `PlacementScope(owner: Owner)` factory added to project Placeable.
+- Upstream `SoftwareKeyboardController.kt` (72L) vendored on top of the
+  shim — first Owner-unblocked file. `TextInputService.shim` gained
+  `showSoftwareKeyboard()` / `hideSoftwareKeyboard()` deprecated no-ops
+  so DelegatingSoftwareKeyboardController compiles.
+
+All 5 build paths green; demo Buttons hash unchanged
+(`d7bde72e6aa4d2cd1555e846036ed28c`).
+
+**What's next (Step A2):** real GraphicsLayer engine — upstream common
+`expect class` (437L, 40+ members) + skiko actual (513L, uses Skia
+directly) + hand-written SDL3-path native no-op actual. Blocks all
+downstream NodeCoordinator vendoring.
 
 ### Phase 9 is a big-bang — confirmed no incremental green path
 
