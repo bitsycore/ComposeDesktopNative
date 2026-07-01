@@ -1357,6 +1357,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/LayoutUtils.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/LayoutUtils.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/PlatformSelectionBehaviors.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/PlatformSelectionBehaviors.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/SelectionMagnifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/SelectionMagnifier.kt
+# SelectionMode.kt: self-contained, but its private Rect.containsInclusive extension is called from the Vertical/Horizontal enum-entry subclass bodies; our Kotlin toolchain rejects private-member access from a subclass (upstream toolchain allows it). Verbatim-uneditable -> skip.
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/SelectionMode.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/SelectionMode.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/SelectionRegistrar.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/SelectionRegistrar.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/PointerMatcher.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/PointerMatcher.kt
@@ -1415,7 +1416,7 @@ compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/style/TextFore
 # compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/platform/SkiaTextPaint.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/text/platform/SkiaTextPaint.native.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/autofill/Autofill.kt  core/src/vendor/common/kotlin/androidx/compose/ui/autofill/Autofill.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Blur.kt  core/src/vendor/common/kotlin/androidx/compose/ui/draw/Blur.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusState.kt  core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusState.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusState.kt  core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusState.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/util/PlatformVelocityTracker.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/pointer/util/PlatformVelocityTracker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/util/PointerIdArray.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/pointer/util/PointerIdArray.kt
@@ -1607,6 +1608,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/TouchBoundsExpansio
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/DragAndDropHoverInteraction.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/DragAndDropHoverInteraction.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/GapBuffer.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/GapBuffer.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/IntIntervalTree.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/IntIntervalTree.kt
+# Interval.kt: value class is standalone, but Interval.overlaps() calls the 4-arg intersect(Int,Int,Int,Int) helper defined in the 1594L IntIntervalTree.kt (unvendored) -> misresolves to stdlib Iterable.intersect. Skip until IntIntervalTree lands.
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/Interval.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/Interval.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/LegacyPlatformTextInputServiceAdapter.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/LegacyPlatformTextInputServiceAdapter.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/MathUtils.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/MathUtils.kt
@@ -1769,7 +1771,7 @@ compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/Savers.skiko.kt
 # ▼ needs-semantics-engine (7 files)
 # ──────────────────────────────────────────────────────────────────────────
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextLinkScope.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextLinkScope.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/autofill/AutofillType.kt  core/src/vendor/common/kotlin/androidx/compose/ui/autofill/AutofillType.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/autofill/AutofillType.kt  core/src/vendor/common/kotlin/androidx/compose/ui/autofill/AutofillType.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/NodeCoordinator.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/NodeCoordinator.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/RootForTest.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/RootForTest.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/SemanticsModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/node/SemanticsModifierNode.kt
