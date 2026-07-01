@@ -15,8 +15,18 @@ import androidx.compose.ui.node.LayoutNode
  */
 abstract class Placeable : Measured {
 
-	abstract val width: Int
-	abstract val height: Int
+	/** Default `width`/`height` derive from [measuredSize]. Subclasses can
+	 *  either override these directly (project style) or write to
+	 *  [measuredSize] from an init block (upstream Placeable style). */
+	open val width: Int get() = measuredSize.width
+	open val height: Int get() = measuredSize.height
+
+	/** Upstream Placeable's protected `measuredSize` — a mutable
+	 *  `IntSize` field the subclass sets in `init { measuredSize = ... }`.
+	 *  Our project's own subclasses override width/height directly and
+	 *  ignore this; vendored `FixedSizeIntrinsicsPlaceable` sets it. */
+	protected var measuredSize: androidx.compose.ui.unit.IntSize =
+		androidx.compose.ui.unit.IntSize.Zero
 
 	/** Upstream Measured.measuredWidth — before constraint coercion. Our
 	 *  project doesn't distinguish measured vs coerced size; both are width. */
@@ -31,8 +41,30 @@ abstract class Placeable : Measured {
 	 * Place the underlying node at ([inX], [inY]) in its parent's coordinate
 	 * space. Coordinates are in logical points (the layout pass runs at
 	 * logical resolution; HiDPI scaling happens in the renderer).
+	 *
+	 * `open` (was abstract) — a subclass may instead override the upstream-
+	 * shape [placeAt(IntOffset, Float, layerBlock)] below; the default
+	 * implementation here routes through that overload.
 	 */
-	abstract fun placeAt(inX: Int, inY: Int)
+	open fun placeAt(inX: Int, inY: Int) {
+		placeAt(androidx.compose.ui.unit.IntOffset(inX, inY), 0f, null)
+	}
+
+	/**
+	 * Upstream `Placeable.placeAt(IntOffset, Float, layerBlock?)` protected
+	 * abstract entry point (public here since our project layout code calls
+	 * `placeAt(x, y)` directly, not via PlacementScope extensions). Default
+	 * routes to [placeAt(inX, inY)]; vendored `FixedSizeIntrinsicsPlaceable`
+	 * / `EmptyPlaceable` override this instead of the 2-arg form.
+	 */
+	open fun placeAt(
+		position: androidx.compose.ui.unit.IntOffset,
+		@Suppress("UNUSED_PARAMETER") zIndex: Float,
+		@Suppress("UNUSED_PARAMETER")
+		layerBlock: (androidx.compose.ui.graphics.GraphicsLayerScope.() -> Unit)?,
+	) {
+		placeAt(position.x, position.y)
+	}
 
 	/**
 	 * Returns the position of the given [AlignmentLine] in this Placeable,

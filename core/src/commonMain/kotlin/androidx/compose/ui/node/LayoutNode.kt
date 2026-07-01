@@ -131,6 +131,11 @@ class LayoutNode(
     /** Always `Idle` until a real layout state machine lands. */
     internal val layoutState: LayoutState get() = LayoutState.Idle
 
+    /** Upstream flag — allows a LayoutNode to be measured more than once
+     *  per pass (used by SubcomposeLayout). No subcomposition here; keep
+     *  disabled. Read by vendored `Layout.kt`'s multi-content variants. */
+    internal var canMultiMeasure: Boolean = false
+
     /** Children before virtual-node folding. Our model has no virtual nodes
      *  (no SubcomposeLayout) so this is the same list as [children]. */
     internal val foldedChildren: List<LayoutNode> get() = children

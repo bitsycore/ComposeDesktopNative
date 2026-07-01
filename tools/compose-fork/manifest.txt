@@ -1177,13 +1177,12 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/rotary/RotaryInput
 # Vendor in Phase 9 alongside the lookahead engine.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ApproachLayoutModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/ApproachLayoutModifierNode.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ApproachMeasureScope.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/ApproachMeasureScope.kt
-# Layout.kt — upstream declares FixedSizeIntrinsicsPlaceable + IntrinsicMinMax
+# Layout.kt — retires project LayoutIntrinsicsHelpers.kt (IntrinsicMinMax
 # / IntrinsicWidthHeight / LargeDimension / DefaultIntrinsicMeasurable /
-# IntrinsicsMeasureScope which all live in our LayoutIntrinsicsHelpers.kt
-# (conflicts). Plus upstream Placeable uses protected `placeAt(IntOffset,
-# Float, layerBlock)` + `measuredSize` — different from our public
-# `placeAt(x, y)`. Plus `LayoutNode.canMultiMeasure` — unused. Phase 9+.
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Layout.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/Layout.kt
+# IntrinsicsMeasureScope / FixedSizeIntrinsicsPlaceable now live in
+# upstream Layout.kt). Requires Placeable.measuredSize + placeAt(IntOffset,
+# Float, layerBlock) added; LayoutNode.canMultiMeasure added.
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Layout.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/Layout.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/LayoutBoundsHolder.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/LayoutBoundsHolder.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/LayoutId.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/LayoutId.kt
 # LayoutModifier.kt — vendored version doesn't include the project's
