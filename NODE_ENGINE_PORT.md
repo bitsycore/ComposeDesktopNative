@@ -1284,3 +1284,63 @@ Surface bumps in core (additive, non-breaking):
 - `com.compose.desktop.native.layout` (project sugar) gained
   `LayoutCoordinates.x / y / intOffset` extension props — minimal
   imports keep the existing call sites' lambda bodies intact.
+
+### Session N+2 — bulk-enable commonMain leaves (2026-07-01)
+
+Automated harness discovered 32 more upstream commonMain files that
+vendor cleanly against the current tree (all deps resolvable, screenshot
+byte-identical). Two commits:
+
+- `e2b7e8b` — 22 leaves (batch 1)
+- `8ade8ba` — 10 leaves (batch 2, unblocked by batch 1)
+
+Vendored this session:
+```
+animation/DeferredEnterExitTransition.kt
+foundation/gestures/DragAndDropHoverInteraction.kt
+foundation/lazy/LazyItemScopeImpl.kt
+foundation/lazy/grid/LazyGridItemScope.kt
+foundation/lazy/grid/LazyGridLayoutInfo.kt
+foundation/lazy/layout/IntervalList.kt
+foundation/lazy/layout/LazyLayoutBeyondBoundsInfo.kt
+foundation/lazy/layout/LazyLayoutBringIntoViewSpec.kt
+foundation/lazy/layout/LazyLayoutCacheWindow.kt
+foundation/lazy/layout/LazyLayoutItemAnimation.kt
+foundation/lazy/layout/LazyLayoutNearestRangeState.kt
+foundation/lazy/layout/LazyLayoutPinnableItem.kt
+foundation/lazy/staggeredgrid/LazyStaggeredGridCells.kt
+foundation/lazy/staggeredgrid/LazyStaggeredGridLaneInfo.kt
+foundation/pager/PagerLayoutInfo.kt
+foundation/text/AnnotatedStringResolveInlineContent.kt
+foundation/text/InlineTextContent.kt
+foundation/text/KeyModifiers.kt
+foundation/text/KeyboardActions.kt
+foundation/text/PointerMoveDetector.kt
+foundation/text/TextFieldPressGestureFilter.kt
+foundation/text/contextmenu/gestures/RightClickGestures.kt
+foundation/text/input/internal/CursorAnimationState.kt
+foundation/text/input/internal/GapBuffer.kt
+foundation/text/input/internal/KeyboardOptions.kt
+foundation/text/input/internal/OffsetMappingCalculator.kt
+foundation/text/input/internal/selection/PressDownGesture.kt
+foundation/text/input/internal/selection/TextFieldHandleState.kt
+foundation/text/input/internal/undo/UndoManager.kt
+foundation/text/selection/SelectionMagnifier.kt
+ui/graphics/shadow/ShadowRenderer.kt
+ui/input/pointer/PointerInputTestUtil.kt
+```
+
+Method: iterative enable-sync-compile-revert loop. Rebuilt the vendor
+symbol index after each pass to unblock candidates whose transitive
+deps had just been satisfied.
+
+Rejected candidates (single-line, isolated regressions):
+- `LazyGridItemScopeImpl.kt` — vendors compile-clean but changes Buttons
+  screenshot hash. Deferred pending investigation.
+- All `Focus*` upstream files — conflict with the hand-written
+  `FocusManager` / `FocusRequester` / `FocusTargetNode` surface.
+- All expect-only files (need paired actuals not yet written).
+
+Baseline hash unchanged after both commits (`d7bde72e6aa4d2cd1555e846036ed28c`).
+
+Vendor count: 535 → 567.
