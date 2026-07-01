@@ -32,6 +32,12 @@ interface DrawScope : androidx.compose.ui.unit.Density {
 	 *  `drawContext.graphicsLayer`, both null / throwing here. */
 	val drawContext: DrawContext get() = DrawContext()
 
+	companion object {
+		/** Upstream `DrawScope.Companion.DefaultBlendMode = BlendMode.SrcOver`. */
+		val DefaultBlendMode: androidx.compose.ui.graphics.BlendMode =
+			androidx.compose.ui.graphics.BlendMode.SrcOver
+	}
+
 	/* Logical-point bounds of the node this scope is drawing into. */
 	val size: Size
 
