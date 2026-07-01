@@ -303,6 +303,74 @@ Remaining Step B blockers:
 Steps B–E remain the atomic multi-session red-branch swap; single-turn
 attempts break at (1)'s cascade.
 
+### Step B in-flight on `phase9-real-swap` branch
+
+Aggressive swap attempt started on the branch (main stays green +
+runnable). Current state: **390 compile errors, work in progress**.
+
+Landed on branch (commit `bdb2dab` + follow-up):
+- Project `LayoutNode` class renamed to `ProjectLayoutNode`, moved
+  from `androidx.compose.ui.node.LayoutNode` to
+  `com.compose.desktop.native.node.ProjectLayoutNode`.
+- 29 project files bulk-updated to new name / package.
+- Project `MeasurePolicy` + `DefaultMeasurePolicy` moved to
+  `com.compose.desktop.native.node` package (all imports rewritten).
+- Upstream `LayoutNode.kt` (1608L) vendored in place at
+  `androidx.compose.ui.node.LayoutNode`.
+- Node engine cluster vendored: `NodeCoordinator.kt` (1796L, retires
+  project 118L), `NodeChain.kt` (809L upstream, retires 165L project),
+  `LayoutNodeLayoutDelegate.kt` (497L), `MeasurePassDelegate.kt` (941L),
+  `LookaheadPassDelegate.kt` (890L), `LookaheadDelegate.kt` (872L),
+  `LayoutNodeAlignmentLines.kt` (227L), `MeasureAndLayoutDelegate.kt`
+  (892L), `InnerNodeCoordinator.kt` (259L),
+  `LayoutModifierNodeCoordinator.kt` (321L), `LayoutNodeDrawScope.kt`
+  (152L), `OwnedLayer.kt` (108L), `NodeKind.kt` (440L).
+- Retired shims: NodeCoordinator (project), NodeChain (project),
+  NodeKind.shim, OwnedLayer.shim, LookaheadCapablePlaceable.shim,
+  OwnerSnapshotObserver.shim, CheckMeasuredSize.shim,
+  LayoutNodeDrawScope.shim, MeasureAndLayoutDelegate.shim,
+  Invalidation.shim, LayoutModifierNode.shim.
+
+Remaining (~390 errors) — three categories:
+
+1. **StubOwner shape mismatch** — Owner overrides need `LayoutNode`
+   (upstream) params, StubOwner uses `ProjectLayoutNode`. Fix: replace
+   StubOwner's root with an `LayoutNode.Constructor()` instance +
+   change every param type.
+2. **Vendored files with unresolved deps** — `FocusEventModifierNode`,
+   `FocusPropertiesModifierNode`, `FocusTargetNode`, `SemanticsModifierNode`
+   (upstream — retires our shim), `ApproachMeasure` cluster (from
+   unvendored lookahead files), `BackwardsCompatNode` (433L),
+   `LayoutNodeSubcompositionsState` (SubcomposeLayout, unvendored),
+   `LocalViewConfiguration`, `generateSemanticsId` (semantics engine),
+   `NotFound` (spatial), `RectManager` real (has `.rects`), `getModifierInfo`,
+   `hitTest`, and many more.
+3. **Project readers** — `ProjectLayoutNode.kt` (the renamed old class)
+   still references `NodeChain` / `NodeCoordinator` / `Modifier.Node.update`
+   / `LayoutModifierNode` (project shim, removed) as the OLD project shape.
+   All those symbols now resolve to upstream shape — behavior different.
+
+The path from here (per plan Step D–E):
+- Vendor **BackwardsCompatNode** (433L) — provides the legacy modifier
+  bridge; the vendored NodeKind + NodeChain reference it.
+- Vendor **SemanticsModifierNode** upstream (146L) — retires shim; needs
+  SemanticsConfiguration (already vendored) + real SemanticsInfo.
+- Vendor **RootForTest** upstream (128L) + **PointerInputModifierNode**
+  (135L) — remaining `androidx.compose.ui.node/*.kt` files.
+- Write ~15 more shims: `LayoutNodeSubcompositionsState`,
+  `generateSemanticsId`, `NotFound` (spatial), `getInteropView`,
+  `getModifierInfo`, `LocalViewConfiguration`, `ApproachMeasure*`,
+  `PointerInputSource`, `SemanticsSource`, focus event/properties/target
+  nodes.
+- **Migrate every project reader** (Skia + SDL3 renderers, ComposeWindow,
+  NodeApplier, every Modifier.Element implementer, foundation Image /
+  BasicText / Row / Column / Box wiring that reads
+  `ProjectLayoutNode.width / height / children / drawer / painter / text`).
+
+Realistic estimate: several more sessions of focused work to green the
+branch, then screenshot regression pass across 30+ demo screens before
+merging to main.
+
 ### Phase 9 is a big-bang — confirmed no incremental green path
 
 Established empirically from five independent angles that no more layout/node
