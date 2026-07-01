@@ -1059,7 +1059,7 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AspectRatio.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/AspectRatio.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlexBox.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlexBox.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayout.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayout.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayout.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayout.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Grid.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Grid.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Intrinsic.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Intrinsic.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Offset.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Offset.kt
@@ -1275,7 +1275,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/platform/Subcomposition.
 # ──────────────────────────────────────────────────────────────────────────
 # compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/BoundsAnimation.kt  core/src/vendor/common/kotlin/androidx/compose/animation/BoundsAnimation.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RulerAlignment.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RulerAlignment.kt
 # compose/foundation/foundation-layout/src/skikoMain/kotlin/androidx/compose/foundation/layout/WindowInsets.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/layout/WindowInsets.native.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ProgressSemantics.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/ProgressSemantics.kt
@@ -1459,7 +1459,7 @@ compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/Def
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Arrangement.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/WindowInsets.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/WindowInsets.kt
@@ -1890,6 +1890,3 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt                    core/src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt
-# FlowLayoutBuildingBlocks — needs `FlowLayoutOverflowState` from unvendored
-# FlowLayoutOverflow.kt. Phase 11+.
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt         core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt
