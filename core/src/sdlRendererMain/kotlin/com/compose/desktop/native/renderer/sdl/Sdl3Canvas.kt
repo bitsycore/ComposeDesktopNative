@@ -51,7 +51,10 @@ internal class Sdl3Canvas(
 	private val fRenderer: COpaquePointer,
 	private val fSize: Size,
 	private val fTextRenderer: Sdl3TextRenderer? = null,
-) : Canvas, com.compose.desktop.native.text.NativeTextCanvas {
+	private val fImageCache: Sdl3ImageCache? = null,
+) : Canvas,
+	com.compose.desktop.native.text.NativeTextCanvas,
+	com.compose.desktop.native.graphics.NativePainterCanvas {
 
 	// The tessellating scope whose origin we retarget per draw call. Origin 0,0
 	// initially; each draw sets it to the current translate (fTx, fTy).
@@ -234,6 +237,28 @@ internal class Sdl3Canvas(
 			inFontVariations = inFontVariations,
 			inSpans = inSpans,
 			inTextStart = 0,
+		)
+	}
+
+	// ============
+	//  Native image (B5) — bridge from a painter DrawModifierNode. Flush pending
+	//  geometry first (z-order), then blit via the decode cache at absolute origin.
+
+	override fun drawNativePainter(
+		inResourcePath: String,
+		inKind: androidx.compose.ui.res.ResourceKind,
+		inX: Float,
+		inY: Float,
+		inWidth: Float,
+		inHeight: Float,
+		inContentScale: androidx.compose.ui.layout.ContentScale,
+		inAlpha: Float,
+	) {
+		fScope.flush()
+		fImageCache?.draw(
+			inResourcePath, inKind,
+			fTx + inX, fTy + inY, inWidth, inHeight,
+			inContentScale, inAlpha,
 		)
 	}
 

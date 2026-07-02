@@ -29,10 +29,14 @@ fun Image(
 	contentScale: ContentScale = ContentScale.Fit,
 	alpha: Float = 1f,
 ) {
-	// Phase 9 B4: build an upstream LayoutNode via the vendored Layout, sized to the
-	// painter's intrinsic size. Drawing is deferred to B5 (image becomes a
-	// DrawModifierNode wired into the renderer), so the image is invisible for now.
-	androidx.compose.ui.layout.Layout(modifier = modifier) { _, constraints ->
+	// Phase 9 B5: build an upstream LayoutNode via the vendored Layout, sized to the
+	// painter's intrinsic size, drawn by a PainterDrawNode (DrawModifierNode) that
+	// bridges to the renderer's image cache.
+	androidx.compose.ui.layout.Layout(
+		modifier = modifier.then(
+			com.compose.desktop.native.graphics.PainterDrawElement(painter, contentScale, alpha)
+		),
+	) { _, constraints ->
 		val vIntrinsic = painter.intrinsicSize
 		val vW = vIntrinsic.width.coerceAtLeast(0)
 		val vH = vIntrinsic.height.coerceAtLeast(0)
