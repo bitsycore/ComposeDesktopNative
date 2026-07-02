@@ -431,17 +431,30 @@ Structural shape now on the branch:
 > byte-identical screenshot pass across 30+ screens) remains** before this can
 > merge to `main`.
 >
-> **First runtime blocker (confirmed by linking + running the demo):**
-> `demo.exe --screen=Layout` links fine but crashes at composition with
-> `kotlin.ClassCastException: androidx.compose.ui.node.LayoutNode cannot be cast
-> to com.compose.desktop.native.node.ProjectLayoutNode`. I.e. the **composition
-> node type is split** — the composables' `ComposeNode`/`Layout` factory now
-> resolves to the *upstream* vendored `LayoutNode`, but `NodeApplier` + the
-> renderers + every reader expect `ProjectLayoutNode`. Step E must reconcile the
-> composition node type: either point the `ComposeNode` factory + `Layout()` at
-> `ProjectLayoutNode`, or migrate the applier/renderers onto upstream `LayoutNode`.
-> That is the first thing to fix when resuming — the branch is a compile-green
-> checkpoint, not yet runnable.
+> **Runtime coupling chain (mapped by linking + running the demo).** Each fix
+> exposes the next layer of the vendored Modifier.Node/coordinator/Owner system,
+> which expects a *real* upstream node tree:
+>
+> 1. ✅ **ClassCast `LayoutNode` → `ProjectLayoutNode`** — FIXED. `ComposeUiNode`
+>    was un-vendored and given a project impl whose `Constructor`/`VirtualConstructor`
+>    build `ProjectLayoutNode`, so the composition now builds the node the renderers
+>    read. (Clean, kept.)
+> 2. ✅ **`attach invoked on a node without a coordinator`** — bridged.
+>    `markAsAttached()` only *checks* `coordinator != null` (never uses it) and
+>    `kindSet` is set separately, so `ProjectNodeChain` assigns a single shared
+>    throwaway `InnerNodeCoordinator(LayoutNode())` (`phase9DummyCoordinator`).
+> 3. ⛔ **`This node does not have an owner`** — CURRENT blocker (uncaught, in the
+>    per-frame measure/place path). `requireOwner()` on the chain resolves through
+>    the coordinator's `LayoutNode`, which was never attached to an `Owner`.
+>
+> The whack-a-mole confirms the honest conclusion: a `ProjectLayoutNode` runtime
+> tree + upstream-compile-only engine can't be bridged with dummies indefinitely —
+> the Modifier.Node lifecycle is welded to upstream `NodeCoordinator` + `Owner` +
+> `LayoutNode`. **Real Step E** = either (a) attach a real `Owner` (StubOwner) to
+> the coordinator's node and wire the per-frame `MeasureAndLayoutDelegate`, or
+> (b) make the runtime tree upstream `LayoutNode` and migrate the two renderers +
+> `NodeApplier` onto it (`NodeCoordinator`/`LayoutNodeDrawScope`). (b) is the
+> "true" swap and avoids further dummies. Resume from blocker #3.
 
 ### Branch progress log (`phase9`, superseded intermediate) — 1266 → 177 errors
 
