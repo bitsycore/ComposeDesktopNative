@@ -258,7 +258,16 @@ internal class ComposeOwner(
 	override val coroutineContext: CoroutineContext = EmptyCoroutineContext
 	override fun registerOnEndApplyChangesListener(listener: () -> Unit) = Unit
 	override fun onEndApplyChanges() = Unit
-	override val dragAndDropManager: DragAndDropManager = object : DragAndDropManager {}
+	override val dragAndDropManager: DragAndDropManager = object : DragAndDropManager {
+		override val modifier = androidx.compose.ui.Modifier
+		override val isRequestDragAndDropTransferRequired: Boolean = false
+		override fun requestDragAndDropTransfer(
+			node: androidx.compose.ui.draganddrop.DragAndDropNode,
+			offset: androidx.compose.ui.geometry.Offset,
+		) {}
+		override fun registerTargetInterest(target: androidx.compose.ui.draganddrop.DragAndDropTarget) {}
+		override fun isInterestedTarget(target: androidx.compose.ui.draganddrop.DragAndDropTarget): Boolean = false
+	}
 	override suspend fun textInputSession(
 		session: suspend PlatformTextInputSessionScope.() -> Nothing,
 	): Nothing = throw UnsupportedOperationException("No platform text input on desktop")
