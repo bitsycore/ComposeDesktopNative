@@ -429,8 +429,19 @@ Structural shape now on the branch:
 > to `NodeCoordinator`/`LayoutNodeDrawScope`). **Step E (wire the real Owner +
 > coordinator draw + drive `MeasureAndLayoutDelegate` per frame, then the
 > byte-identical screenshot pass across 30+ screens) remains** before this can
-> merge to `main`. Runtime may crash/misrender until then — treat the branch as a
-> compile-green checkpoint.
+> merge to `main`.
+>
+> **First runtime blocker (confirmed by linking + running the demo):**
+> `demo.exe --screen=Layout` links fine but crashes at composition with
+> `kotlin.ClassCastException: androidx.compose.ui.node.LayoutNode cannot be cast
+> to com.compose.desktop.native.node.ProjectLayoutNode`. I.e. the **composition
+> node type is split** — the composables' `ComposeNode`/`Layout` factory now
+> resolves to the *upstream* vendored `LayoutNode`, but `NodeApplier` + the
+> renderers + every reader expect `ProjectLayoutNode`. Step E must reconcile the
+> composition node type: either point the `ComposeNode` factory + `Layout()` at
+> `ProjectLayoutNode`, or migrate the applier/renderers onto upstream `LayoutNode`.
+> That is the first thing to fix when resuming — the branch is a compile-green
+> checkpoint, not yet runnable.
 
 ### Branch progress log (`phase9`, superseded intermediate) — 1266 → 177 errors
 
