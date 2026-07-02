@@ -205,6 +205,24 @@ abstract class Placeable : Measured {
 			placeAt(x, y)
 		}
 
+		/** Phase 9: IntOffset overloads MeasurePassDelegate calls. */
+		fun Placeable.placeWithLayer(
+			position: androidx.compose.ui.unit.IntOffset,
+			@Suppress("UNUSED_PARAMETER") layer: androidx.compose.ui.graphics.layer.GraphicsLayer,
+			@Suppress("UNUSED_PARAMETER") zIndex: Float = 0f,
+		) {
+			placeAt(position.x, position.y)
+		}
+
+		fun Placeable.placeWithLayer(
+			position: androidx.compose.ui.unit.IntOffset,
+			@Suppress("UNUSED_PARAMETER") zIndex: Float = 0f,
+			@Suppress("UNUSED_PARAMETER")
+			layerBlock: (androidx.compose.ui.graphics.GraphicsLayerScope.() -> Unit)? = null,
+		) {
+			placeAt(position.x, position.y)
+		}
+
 		/** RTL-aware variant of [placeWithLayer]. */
 		fun Placeable.placeRelativeWithLayer(
 			x: Int,

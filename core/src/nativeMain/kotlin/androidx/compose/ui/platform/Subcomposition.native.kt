@@ -9,5 +9,5 @@ import com.compose.desktop.native.node.NodeApplier
 // the project's `NodeApplier` which is the same shape — an
 // `AbstractApplier<ProjectLayoutNode>` driving a ProjectLayoutNode tree. Retires when
 // upstream ProjectLayoutNode + DefaultUiApplier are vendored (Phase 9).
-internal actual fun createApplier(container: ProjectLayoutNode): AbstractApplier<ProjectLayoutNode> =
+internal fun createApplier(container: ProjectLayoutNode): AbstractApplier<ProjectLayoutNode> =
     NodeApplier(container)
