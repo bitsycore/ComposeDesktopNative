@@ -1554,3 +1554,35 @@ Net: `Sdl3DrawScope` / `SkiaDrawScope` (which implement the *project's* simplifi
 Only mingwX64 (SDL) runs here, so **B2 (SDL Canvas) is the critical path to any screenshot**. Skia backend is
 compile-checked by grep only (mingw never compiles `skikoRendererMain`). Link+run to verify:
 `./gradlew :demo:linkDebugExecutableMingwX64` then `demo.exe --screen=X --screenshot=Y.bmp`.
+
+## B1 dry-run findings (2026-07-02, reverted to keep the branch compile-green)
+
+Vendored the 4 draw-engine files (uncomment manifest 904-906 + 1085, delete project
+`drawscope/DrawScope.kt` + `DrawContext.shim.kt` + `node/LayoutNodeDrawScope.shim.kt`,
+`CMP_REF=../cmp-ref tools/compose-fork/sync.sh`) and compiled `:core` mingw → **42 errors**,
+in 3 clean buckets. **CONFIRMED: B1 cannot reach compile-green without B2** — upstream
+`DrawScope`'s only abstract member is `drawContext`; every `drawRect`/`drawImage`/… is a
+default routing to `drawContext.canvas`, so `Sdl3DrawScope`/`SkiaDrawScope` (which implement
+the *project* DrawScope's abstract draw*) stop conforming and must be replaced by a real
+`Canvas` backend + `CanvasDrawScope`. Do **B1+B2 in one shot**. Exact fixes measured:
+
+1. **Delete project `core/src/commonMain/.../drawscope/DrawStyle.kt`** (~30 errors). Upstream
+   `DrawScope.kt` itself declares `DrawStyle`/`Fill`/`Stroke` (lines 939/945/960) → redeclaration
+   with the project file, and the project `Stroke(width, cap)` lacks `miter`/`join`/`pathEffect`
+   + companion `DefaultMiter`/`DefaultCap`/`DefaultJoin` that vendored `CanvasDrawScope` reads.
+   Upstream `Stroke(width, miter, cap, join, pathEffect)` is a superset — but param **order differs**
+   (project cap is 2nd positional; upstream miter is 2nd). Grep for positional `Stroke(w, someCap)`
+   calls and switch them to `cap = someCap`. Upstream keeps `Stroke.HairlineWidth`.
+2. **4 `CornerRadius` call sites** — `drawRoundRect(cornerRadius = <Float>)` → upstream wants
+   `CornerRadius`. In `DrawOutlineExt.kt` (2) + `DrawShape.kt` (2): `r.topLeftCornerRadius` is
+   already a `CornerRadius`, so pass it directly (drop `.x`); for the inset case wrap in
+   `CornerRadius((… ).coerceAtLeast(0f))`.
+3. **B2 renderer swap** — replace `Sdl3DrawScope`/`SkiaDrawScope` (constructed at
+   `Sdl3Renderer.kt:368,409` / `SkiaRenderer.kt:196,242` as the `DrawModifierNode` ContentDrawScope
+   and `Canvas{}` drawer receiver) with `CanvasDrawScope()` fed a real backend `Canvas`
+   (`Sdl3Canvas`/`SkiaCanvas`) — port tessellation out of `Sdl3DrawScope.kt`; Skia wraps
+   `org.jetbrains.skia.Canvas`. NOTE: mingw compiles only `sdlRendererMain`, so `SkiaDrawScope`
+   fallout is invisible here — must be done blind (grep) + checked on a Skia host.
+
+Reverted (manifest re-commented, project files restored, vendored files removed) — full mingw
+graph BUILD SUCCESSFUL. Vendor count returns to 567.
