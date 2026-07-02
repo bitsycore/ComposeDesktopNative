@@ -1082,7 +1082,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutModifierNode.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutModifierNodeCoordinator.kt         core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutModifierNodeCoordinator.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNode.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNode.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeAlignmentLines.kt              core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeAlignmentLines.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeDrawScope.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeDrawScope.kt
+# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeDrawScope.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeDrawScope.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt              core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutNodeLayoutDelegate.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LayoutTreeConsistencyChecker.kt          core/src/vendor/common/kotlin/androidx/compose/ui/node/LayoutTreeConsistencyChecker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/node/LookaheadDelegate.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/node/LookaheadDelegate.kt
