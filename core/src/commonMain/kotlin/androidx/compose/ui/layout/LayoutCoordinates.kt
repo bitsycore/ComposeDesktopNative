@@ -49,4 +49,32 @@ interface LayoutCoordinates {
 
 	/** Same as [positionInWindow] for our flat single-window model. */
 	fun positionInRoot(): androidx.compose.ui.geometry.Offset = positionInWindow()
+
+	// ── Phase 9 surface expansion — upstream NodeCoordinator overrides these.
+	//    Defaults keep existing project impls compiling.
+	val providedAlignmentLines: Set<AlignmentLine>
+		get() = emptySet()
+	val parentLayoutCoordinates: LayoutCoordinates?
+		get() = null
+	val parentCoordinates: LayoutCoordinates?
+		get() = null
+	val introducesMotionFrameOfReference: Boolean
+		get() = false
+
+	fun localToRoot(relativeToLocal: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset = relativeToLocal
+	fun localToWindow(relativeToLocal: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset = relativeToLocal
+	fun localToScreen(relativeToLocal: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset = relativeToLocal
+	fun screenToLocal(relativeToScreen: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset = relativeToScreen
+	fun windowToLocal(relativeToWindow: androidx.compose.ui.geometry.Offset): androidx.compose.ui.geometry.Offset = relativeToWindow
 }
+
+// Phase 9 extension stand-ins — upstream declares these top-level in LayoutCoordinates.kt.
+fun LayoutCoordinates.findRootCoordinates(): LayoutCoordinates {
+	var vCurrent: LayoutCoordinates = this
+	var vParent = parentLayoutCoordinates
+	while (vParent != null) { vCurrent = vParent; vParent = vParent.parentLayoutCoordinates }
+	return vCurrent
+}
+
+fun LayoutCoordinates.positionOnScreen(): androidx.compose.ui.geometry.Offset =
+	localToScreen(androidx.compose.ui.geometry.Offset.Zero)
