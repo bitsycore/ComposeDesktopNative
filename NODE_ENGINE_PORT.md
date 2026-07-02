@@ -389,6 +389,53 @@ Realistic estimate: several more sessions of focused work to green the
 branch, then screenshot regression pass across 30+ demo screens before
 merging to main.
 
+### Branch progress log (`phase9`, fresh redo off main@569) — 1266 → 220 errors
+
+The `phase9-real-swap` branch (below) was unrecoverable, so this is a clean redo
+off current `main` (569 vendored). `main` stays green — all work is on `phase9`.
+Error count over the WIP commits:
+
+| Commit | State | Errors |
+| --- | --- | ---: |
+| `ec6f0dd` | Rename project `LayoutNode` → `com.compose.desktop.native.node.ProjectLayoutNode` (30 readers) + vendor engine cluster (LayoutNode, NodeCoordinator, NodeChain, all delegates, Inner/LayoutModifier coordinators, LayoutNodeDrawScope, OwnedLayer, NodeKind, BackwardsCompatNode, SemanticsModifierNode, RootForTest, PointerInputModifierNode, OwnerSnapshotObserver, LayoutModifierNode); removed 9 replaced shims | 1266 |
+| `d16f2fd` | Remove project dupes: NodeCoordinator, NodeChain, LayoutModifierNode, SemanticsModifierNode, NodeMeasuringIntrinsics | 337 |
+| `f8eaf7f` | Focus/approach/draw/semantics node stubs (`FocusEngineStubs`, `ApproachModifierStubs`, `BringIntoViewStubs`, `DrawModifierStub`, `SemanticsModifierStub`) + `StubOwner` → upstream `LayoutNode` | 253 |
+| `cbbe465` | `Placeable.measurementConstraints` + `LookaheadLayoutCoordinates` stub | 241 |
+| `(this)` | `LayoutCoordinates` surface (providedAlignmentLines / parent{Layout,}Coordinates / introducesMotionFrameOfReference / localTo{Root,Window,Screen} / screenToLocal / windowToLocal + `findRootCoordinates`/`positionOnScreen` extensions) | 220 |
+
+**Remaining 220, by cluster (with the fix each needs):**
+
+1. **Approach/lookahead pipeline (~68, all in `LayoutModifierNodeCoordinator`)** —
+   `ApproachMeasureScopeImpl` (unvendored class), `approachNode` /
+   `approachMeasureRequired` (coordinator members), and the full
+   `ApproachLayoutModifierNode` interface (`isMeasurementApproachInProgress`,
+   `approachMeasure`, `isPlacementApproachInProgress`, `min/maxApproachIntrinsic*`).
+   This is the lookahead/approach pass — its own sub-project (doc lists it
+   out-of-scope). Hardest; do last or stub `ApproachMeasureScopeImpl` + expand the
+   `ApproachLayoutModifierNode.shim`.
+2. **Semantics (~25 across `LayoutNode`/`SemanticsModifierNode`/`BackwardsCompatNode`)** —
+   expand `SemanticsInfo.shim` with `semanticsConfiguration` / `isMergingSemanticsOfDescendants`
+   / `isClearingSemantics` / `childrenInfo` / `updateFlagsFor` / `invalidateCallbacksFor`;
+   add `generateSemanticsId` / `notifySemanticsChange` / `SemanticsNode` / `SemanticsActions`
+   / `isImportantForAccessibility` stubs.
+3. **Reader migration (~33: `BasicText` 17, `Image` 9, `LayoutPolicyAdapter` 7)** —
+   project code using `ProjectLayoutNode`'s `softWrap`/`maxWidth`/`layoutText`/
+   `painter`/`textContentWidth` + a project `MeasurePolicy` type that moved. Needs
+   the renderers/foundation widgets migrated onto the upstream chain APIs (Step E).
+4. **Spatial/RectManager (~10)** — expand `RectManager.shim` with
+   `recalculateRectIfDirty` / `getOffsetFromRectListFor`; add `NotFound` (ui.spatial).
+5. **Draw-cache (~11 in `LayoutNodeDrawScope`)** — `DrawCacheModifier` /
+   `BuildDrawCacheParams` / `CanvasDrawScope` / `DefaultCameraDistance` / `onBuildCache`
+   / `updateOutline` stubs.
+6. **Subcompose/interop (~8 in `LayoutNode`)** — `LayoutNodeSubcompositionsState` /
+   `InteropViewFactoryHolder` / `getInteropView` / `LocalViewConfiguration` stubs.
+7. **Modifier.Node lifecycle + misc (~10)** — `onReuse`/`onRelease`/`onDeactivate`,
+   `FocusRequesterModifierNode`/`FocusOrder`, `SuspendingPointerInputModifierNode`.
+
+New stub files added this session (`core/src/commonMain/.../*.shim.kt`):
+`focus/FocusEngineStubs`, `layout/ApproachModifierStubs`, `layout/LookaheadCoordinatesStub`,
+`relocation/BringIntoViewStubs`, `draw/DrawModifierStub`, `semantics/SemanticsModifierStub`.
+
 ### Branch progress log (phase9-real-swap) — 390 → 82 errors
 
 10 WIP commits on the branch — error count over time:
