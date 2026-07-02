@@ -96,7 +96,7 @@ fun nativeComposeWindow(
         // B6: focus runs on the upstream FocusOwner later. For now a no-op manager
         // so LocalFocusManager consumers compose without crashing.
         val focusManagerProxy = object : androidx.compose.ui.focus.FocusManager {
-            override fun focusOnNode(node: com.compose.desktop.native.node.ProjectLayoutNode) {}
+            override fun focusOnNode(node: Any) {}
             override fun clearFocus() {}
         }
 

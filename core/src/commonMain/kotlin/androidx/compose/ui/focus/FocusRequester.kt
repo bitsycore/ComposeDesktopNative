@@ -3,7 +3,6 @@ package androidx.compose.ui.focus
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.ModifierNodeElement
-import com.compose.desktop.native.node.ProjectLayoutNode
 
 // ==================
 // MARK: FocusRequester
@@ -16,17 +15,18 @@ import com.compose.desktop.native.node.ProjectLayoutNode
  * The `Modifier.focusRequester(this)` call binds this requester to its host
  * node; calling [requestFocus] walks back to that node and routes through the
  * active [FocusManager].
+ *
+ * B6b: this whole surface is dormant until focus is rebuilt on the upstream
+ * FocusOwner + FocusTargetNode engine. [requestFocus] / [freeFocus] are no-ops
+ * when the installed [FocusManager] is the current window's no-op stub.
  */
 class FocusRequester {
-	// Phase 9: BackwardsCompatNode registers itself here (+=/-=).
+	// The upstream BackwardsCompatNode registers itself here as modifier nodes
+	// mount / unmount.
 	val focusRequesterNodes = mutableListOf<FocusRequesterModifierNode>()
 
-	/**
-	 * Bound to the host node by the renderer (window module). Public for
-	 * cross-module visibility (Kotlin's `internal` is per-module). App code
-	 * should not poke at these directly — use [requestFocus].
-	 */
-	var attachedNode: ProjectLayoutNode? = null
+	/** Opaque node handle installed by the focus modifier / focus manager. */
+	var attachedNode: Any? = null
 	var focusManager: FocusManager? = null
 
 	/** Move focus to the bound node. No-op if no node is bound or no FocusManager is installed. */
@@ -52,7 +52,8 @@ class FocusRequester {
  */
 interface FocusManager {
 
-	fun focusOnNode(node: ProjectLayoutNode)
+	/** [node] is an opaque handle previously stored on [FocusRequester.attachedNode]. */
+	fun focusOnNode(node: Any)
 	fun clearFocus()
 }
 
