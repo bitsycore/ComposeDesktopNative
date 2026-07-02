@@ -24,7 +24,12 @@ import androidx.compose.ui.unit.LayoutDirection
 */
 class ComposeRootHost(inDensity: Float = 1f) {
 
-	internal val rootNode: LayoutNode = LayoutNode()
+	internal val rootNode: LayoutNode = LayoutNode().apply {
+		// The root measures its children against the incoming constraints and
+		// places them at the origin — upstream's RootMeasurePolicy. Without this
+		// the root keeps LayoutNode's ErrorMeasurePolicy ("Undefined measure").
+		measurePolicy = androidx.compose.ui.layout.RootMeasurePolicy
+	}
 	private val fOwner = ComposeOwner(rootNode, Density(inDensity), LayoutDirection.Ltr)
 	private val fApplier = NodeApplier(rootNode)
 
