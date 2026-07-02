@@ -1793,6 +1793,55 @@ adapter that fed it. Nothing outside its own adapter cluster referenced these ty
   still TODO). The demo has a probe-function coupling in `Main.kt` that makes the macOS-skia
   demo path red pre-existing this work.
 
+## ✅ PAINTER + LAYOUTCOORDINATES SPRINT (2026-07-02) — Painter engine + Image vendored
+
+Second push on foundation vendoring. Buttons hash preserved end-to-end
+(`ce15decb83c3bb7ba44660cd9002408c`); Images hash changed once
+(`452574ae → d48a43a4`, expected — vendored Image respects
+ContentScale/alignment via `Modifier.paint` math instead of the project's
+PainterDrawElement path).
+
+Vendored:
+- `androidx.compose.ui.graphics.painter.Painter.kt` (197L abstract) —
+  retires our concrete Painter. Added `ResourcePainter(path, kind) : Painter()`
+  in the same package whose `onDraw` casts the Canvas to `NativePainterCanvas`
+  and delegates to the renderer's image cache (equivalent to the old
+  PainterDrawElement path).
+- `androidx.compose.ui.draw.PainterModifier.kt` (363L) — brings upstream
+  `Modifier.paint(painter, alignment, contentScale, alpha, colorFilter)`.
+- `androidx.compose.foundation.Image.kt` (275L) — retires the 44L project
+  Image + PainterDrawElement + PainterDrawNode.
+- `androidx.compose.ui.graphics.painter.ColorPainter.kt` (63L) — was a stub;
+  now the real self-contained Painter subclass paints solid Color.
+- `androidx.compose.ui.graphics.painter.BrushPainter.kt` (66L) — new; paints
+  with any Brush (LinearGradient, SolidColor, etc).
+- `androidx.compose.ui.layout.LayoutCoordinates.kt` (281L) — retires our
+  96L defaulted-stub interface. Every abstract member (localToRoot /
+  localToWindow / localToScreen / windowToLocal / screenToLocal / …) is now
+  the real abstract signature; `positionInWindow` etc. are top-level
+  extensions.
+- `androidx.compose.ui.layout.LookaheadLayoutCoordinates.kt` (200L) —
+  retires our 46L stub, implements every LayoutCoordinates abstract member.
+- Added `PainterStubs.shim.kt` with the BitmapPainter marker (Image() bitmap
+  overload requires ImageBitmap engine which isn't vendored).
+- Added `VectorPainterStubs.shim.kt` with `ImageVector` marker +
+  `rememberVectorPainter` no-op (704L vector engine deferred).
+
+ImageLoader.intrinsicSize signature IntSize → Size across
+Sdl3ImageCache/SkiaImageCache/Sdl3RenderBackend/SkiaRenderBackend.
+
+**Current state (post Painter+LC sprint):**
+- `commonMain`: 88 → **85 files**.
+- `vendor/`: 594 → **603 files**.
+- `nativeMain`: 48 files (unchanged).
+- Deleted this sprint: DrawBehind.kt, DrawModifierStub.shim.kt,
+  DrawOutlineExt.kt, project Painter.kt, project Image.kt,
+  LookaheadCoordinatesStub.shim.kt, project LayoutCoordinates.kt,
+  PainterDrawElement/Node inside PainterDrawModifier.kt.
+
+Total on `phase9` since branch: **20 commits**, ~4500 lines removed from
+commonMain, 10 upstream files vendored.
+
 ## ✅ FOUNDATION VENDOR SPRINT (2026-07-02) — Border + DrawModifier + Outline
 
 Continued the vendor push toward upstream foundation. Screenshot hash unchanged
