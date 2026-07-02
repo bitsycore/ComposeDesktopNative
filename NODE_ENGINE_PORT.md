@@ -389,7 +389,7 @@ Realistic estimate: several more sessions of focused work to green the
 branch, then screenshot regression pass across 30+ demo screens before
 merging to main.
 
-### Branch progress log (`phase9`, fresh redo off main@569) — 1266 → 220 errors
+### Branch progress log (`phase9`, fresh redo off main@569) — 1266 → 177 errors
 
 The `phase9-real-swap` branch (below) was unrecoverable, so this is a clean redo
 off current `main` (569 vendored). `main` stays green — all work is on `phase9`.
@@ -401,40 +401,47 @@ Error count over the WIP commits:
 | `d16f2fd` | Remove project dupes: NodeCoordinator, NodeChain, LayoutModifierNode, SemanticsModifierNode, NodeMeasuringIntrinsics | 337 |
 | `f8eaf7f` | Focus/approach/draw/semantics node stubs (`FocusEngineStubs`, `ApproachModifierStubs`, `BringIntoViewStubs`, `DrawModifierStub`, `SemanticsModifierStub`) + `StubOwner` → upstream `LayoutNode` | 253 |
 | `cbbe465` | `Placeable.measurementConstraints` + `LookaheadLayoutCoordinates` stub | 241 |
-| `(this)` | `LayoutCoordinates` surface (providedAlignmentLines / parent{Layout,}Coordinates / introducesMotionFrameOfReference / localTo{Root,Window,Screen} / screenToLocal / windowToLocal + `findRootCoordinates`/`positionOnScreen` extensions) | 220 |
+| `6f38bc1` | `LayoutCoordinates` surface (providedAlignmentLines / parent{Layout,}Coordinates / introducesMotionFrameOfReference / localTo{Root,Window,Screen} / screenToLocal / windowToLocal + `findRootCoordinates`/`positionOnScreen` extensions) | 220 |
+| `e523a9c` | **`MeasurePolicy` typealias bridge** — the project internal `fun interface MeasurePolicy` moved to `com.compose.desktop.native.node` with `ProjectLayoutNode`; a `typealias androidx.compose.ui.node.MeasurePolicy = com.compose.desktop.native.node.MeasurePolicy` restores the readers' import path (SAM works through it). Cleared the whole reader-migration cluster (BasicText/Image/LayoutPolicyAdapter) | 187 |
+| `4cf6dbd` | `RectManager.recalculateRectIfDirty`/`getOffsetFromRectListFor` + `NotFound` + `LayoutNodeSubcompositionsState` + `InteropViewFactoryHolder` stubs | **177** |
 
-**Remaining 220, by cluster (with the fix each needs):**
+**Remaining 177, by cluster (with the fix each needs). All are deep engine
+internals needing real impls — the multi-session tail.**
 
-1. **Approach/lookahead pipeline (~68, all in `LayoutModifierNodeCoordinator`)** —
-   `ApproachMeasureScopeImpl` (unvendored class), `approachNode` /
-   `approachMeasureRequired` (coordinator members), and the full
-   `ApproachLayoutModifierNode` interface (`isMeasurementApproachInProgress`,
-   `approachMeasure`, `isPlacementApproachInProgress`, `min/maxApproachIntrinsic*`).
+1. **Approach/lookahead pipeline (~72: `LayoutModifierNodeCoordinator` 68 + part of
+   `NodeCoordinator`)** — needs a real `ApproachMeasureScopeImpl` class
+   (`androidx.compose.ui.layout`, ctor `(LayoutModifierNodeCoordinator, ApproachLayoutModifierNode)`,
+   implements the full `ApproachMeasureScope`) + the full `ApproachLayoutModifierNode`
+   interface (`isMeasurementApproachInProgress`/`approachMeasure`/`isPlacementApproachInProgress`
+   /`min|maxApproachIntrinsic*`) + coordinator `approachNode`/`approachMeasureRequired`.
    This is the lookahead/approach pass — its own sub-project (doc lists it
-   out-of-scope). Hardest; do last or stub `ApproachMeasureScopeImpl` + expand the
-   `ApproachLayoutModifierNode.shim`.
-2. **Semantics (~25 across `LayoutNode`/`SemanticsModifierNode`/`BackwardsCompatNode`)** —
-   expand `SemanticsInfo.shim` with `semanticsConfiguration` / `isMergingSemanticsOfDescendants`
-   / `isClearingSemantics` / `childrenInfo` / `updateFlagsFor` / `invalidateCallbacksFor`;
-   add `generateSemanticsId` / `notifySemanticsChange` / `SemanticsNode` / `SemanticsActions`
-   / `isImportantForAccessibility` stubs.
-3. **Reader migration (~33: `BasicText` 17, `Image` 9, `LayoutPolicyAdapter` 7)** —
-   project code using `ProjectLayoutNode`'s `softWrap`/`maxWidth`/`layoutText`/
-   `painter`/`textContentWidth` + a project `MeasurePolicy` type that moved. Needs
-   the renderers/foundation widgets migrated onto the upstream chain APIs (Step E).
-4. **Spatial/RectManager (~10)** — expand `RectManager.shim` with
-   `recalculateRectIfDirty` / `getOffsetFromRectListFor`; add `NotFound` (ui.spatial).
-5. **Draw-cache (~11 in `LayoutNodeDrawScope`)** — `DrawCacheModifier` /
-   `BuildDrawCacheParams` / `CanvasDrawScope` / `DefaultCameraDistance` / `onBuildCache`
-   / `updateOutline` stubs.
-6. **Subcompose/interop (~8 in `LayoutNode`)** — `LayoutNodeSubcompositionsState` /
-   `InteropViewFactoryHolder` / `getInteropView` / `LocalViewConfiguration` stubs.
-7. **Modifier.Node lifecycle + misc (~10)** — `onReuse`/`onRelease`/`onDeactivate`,
-   `FocusRequesterModifierNode`/`FocusOrder`, `SuspendingPointerInputModifierNode`.
+   out-of-scope). **Hardest; do last.** Alternatively DON'T vendor
+   `LayoutModifierNodeCoordinator` and shim the per-modifier coordinator.
+2. **Graphics-layer (~part of `NodeCoordinator` 29 + `OwnedLayer`)** — `GraphicsLayer`
+   engine, `updateOutline`, `graphicsDensity`, `DefaultCameraDistance`. Needs the
+   `androidx.compose.ui.graphics.layer.GraphicsLayer` engine (separate ~600L subtree).
+3. **Semantics (~24: `LayoutNode`/`SemanticsModifierNode`/`BackwardsCompatNode`)** —
+   expand `SemanticsInfo.shim` (`semanticsConfiguration`/`isMergingSemanticsOfDescendants`
+   /`isClearingSemantics`/`childrenInfo`/`updateFlagsFor`/`invalidateCallbacksFor`) +
+   `generateSemanticsId`/`notifySemanticsChange`/`SemanticsNode`/`SemanticsActions` stubs.
+4. **Draw-cache (~11 in `LayoutNodeDrawScope`)** — `DrawCacheModifier` /
+   `BuildDrawCacheParams` / `CanvasDrawScope` / `onBuildCache` stubs.
+5. **`StubOwner` (~3) / focus / misc** — `ViewConfiguration` needs its real members
+   (`touchSlop` etc. — an empty marker CHURNS, since `StubOwner`'s override body sets
+   them); `FocusRequesterModifierNode`/`FocusOrder`; `onReuse`/`onRelease`/`onDeactivate`;
+   `OwnerSnapshotObserver` ctor needs `onChangedExecutor`.
 
-New stub files added this session (`core/src/commonMain/.../*.shim.kt`):
-`focus/FocusEngineStubs`, `layout/ApproachModifierStubs`, `layout/LookaheadCoordinatesStub`,
-`relocation/BringIntoViewStubs`, `draw/DrawModifierStub`, `semantics/SemanticsModifierStub`.
+DONE this session (cleared): reader migration (MeasurePolicy typealias), the
+`LayoutCoordinates`/`Placeable` surface, focus/approach/draw/semantics node **type**
+markers, spatial/subcompose/interop stubs. Stub files added (`core/src/commonMain/.../*.shim.kt`):
+`node/InternalMeasurePolicy`, `focus/FocusEngineStubs`, `layout/ApproachModifierStubs`,
+`layout/LookaheadCoordinatesStub`, `layout/SubcompositionStubs`, `relocation/BringIntoViewStubs`,
+`draw/DrawModifierStub`, `semantics/SemanticsModifierStub`, `viewinterop/InteropViewFactoryHolder`;
+`spatial/RectManager.shim` expanded.
+
+**Gotcha for next session:** don't stub `ViewConfiguration` as an empty interface —
+`StubOwner` sets its members, so give it the real member set (touchSlop, timeouts,
+minimumTouchTargetSize, …) or those overrides error.
 
 ### Branch progress log (phase9-real-swap) — 390 → 82 errors
 
