@@ -6,7 +6,6 @@ import androidx.compose.foundation.text.selection.LocalSelectionRegistrar
 import androidx.compose.foundation.text.selection.Selectable
 import androidx.compose.foundation.text.selection.SelectionRect
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeNode
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,9 +17,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import com.compose.desktop.native.layout.x
 import com.compose.desktop.native.layout.y
-import com.compose.desktop.native.node.ProjectLayoutNode
-import androidx.compose.ui.node.MeasurePolicy
-import com.compose.desktop.native.node.NodeApplier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.SpanStyle
@@ -30,7 +26,6 @@ import com.compose.desktop.native.text.currentTextMeasurer
 import com.compose.desktop.native.text.currentViewportHeight
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
@@ -227,24 +222,6 @@ private fun TextLeaf(
         val h = vSize.height.coerceIn(constraints.minHeight, constraints.maxHeight)
         layout(w, h) {}
     }
-}
-
-/* Defers to whatever TextMeasurer is currently installed so the laid-out
-   bounds match the glyphs the renderer will draw. When softWrap is true,
-   the measurer wraps lines to constraints.maxWidth; when false the text
-   reports its natural width (potentially overflowing its container). */
-internal val TextMeasurePolicy = MeasurePolicy { node, constraints ->
-    val wrapWidth = if (node.softWrap && constraints.maxWidth != androidx.compose.ui.unit.Constraints.Infinity)
-        constraints.maxWidth else Int.MAX_VALUE
-    // Cache the wrap on the node so a huge static body isn't re-wrapped every
-    // frame; the renderer reuses the same WrappedText for drawing.
-    node.layoutText(wrapWidth)
-    // Skip the per-line content-width scan when the width is already pinned
-    // (fillMaxWidth / fixed) — coerceIn would discard it anyway.
-    val w = if (constraints.minWidth >= constraints.maxWidth) constraints.maxWidth
-            else node.textContentWidth().coerceIn(constraints.minWidth, constraints.maxWidth)
-    val h = node.textMeasuredHeight.coerceIn(constraints.minHeight, constraints.maxHeight)
-    IntSize(w, h)
 }
 
 // ==================
