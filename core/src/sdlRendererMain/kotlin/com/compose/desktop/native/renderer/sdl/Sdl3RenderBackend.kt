@@ -49,6 +49,13 @@ internal class Sdl3RenderBackend(private val backend: SDL3Backend) : RenderBacke
 
     override fun beginFrame(inDpr: Float) {
         val r = backend.renderer?.reinterpret<cnames.structs.SDL_Renderer>() ?: return
+        // Clear the frame to Material's dark background (0x121212). Without this
+        // the SDL back buffer holds whatever was previously in GPU memory —
+        // uncovered regions of the composition (e.g. apidemo's transparent
+        // panels) show garbage / pink. Was previously done by the legacy
+        // Sdl3Renderer.draw entry which we retired.
+        SDL_SetRenderDrawColor(r, 0x12u, 0x12u, 0x12u, 0xFFu)
+        SDL_RenderClear(r)
         // SDL_SetRenderScale stretches every render coord by (dpr, dpr) so
         // logical-point geometry lands at the right physical pixel. Text
         // textures are rasterised at the DPR-scaled font size and drawn
