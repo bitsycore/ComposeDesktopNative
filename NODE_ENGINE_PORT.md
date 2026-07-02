@@ -1842,6 +1842,41 @@ Sdl3ImageCache/SkiaImageCache/Sdl3RenderBackend/SkiaRenderBackend.
 Total on `phase9` since branch: **20 commits**, ~4500 lines removed from
 commonMain, 10 upstream files vendored.
 
+## ✅ INDICATION + OVERSCROLL VENDOR (2026-07-02)
+
+Third push adding interaction / scroll pipeline plumbing without wiring it up
+to the project's Modifier system.
+
+Vendored:
+- `foundation.Indication.kt` (372L common + native actual) + LocalIndication
+  CompositionLocal + `NoIndication` singleton. Upstream Clickable/Hoverable/
+  Focusable dispatch focus/press/hover state through this.
+- `ui.platform.LocalInputModeManager` (new small file) — required by
+  vendored Indication.native. Desktop stub returns `InputMode.Keyboard`.
+- `foundation.Overscroll.kt` (395L) + native actual — `OverscrollEffect` /
+  `OverscrollFactory` / `LocalOverscrollFactory` + Modifier.overscroll(). Native
+  actual mirrors upstream's desktopMain: both platform-specific functions
+  return null (no built-in overscroll animation on desktop).
+
+**Current state (post Indication+Overscroll):**
+- `commonMain`: 85 → **86 files** (+1 InputModeManagerLocal, -0).
+- `vendor/`: 603 → **606 files**.
+- Buttons hash preserved (ce15decb…).
+
+Total on `phase9` since branch: **23 commits**, ~4500L removed, **13 upstream
+files vendored** (LayoutModifier, ComposeUiNode, DrawModifier, Border,
+Outline, Painter, PainterModifier, Image, ColorPainter, BrushPainter,
+LayoutCoordinates, LookaheadLayoutCoordinates, Indication, Overscroll).
+
+**Still on the "commonMain empty af" runway:**
+1. Clickable / Focusable / Hoverable — need InteractionSource migration
+   across material/apidemo/demo call sites (each uses the project's
+   `(Boolean) -> Unit` callback shape).
+2. Scroll — needs `foundation.gestures.Scrollable` (unvendored, needs whole
+   gesture engine).
+3. BasicText / BasicTextField — needs `Paragraph` engine.
+4. SkiaCanvas actual for the Skia render path.
+
 ## ✅ FOUNDATION VENDOR SPRINT (2026-07-02) — Border + DrawModifier + Outline
 
 Continued the vendor push toward upstream foundation. Screenshot hash unchanged
