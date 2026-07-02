@@ -1643,3 +1643,41 @@ CANNOT be a small green commit — it cascades through the renderer + leaves + i
 
 Plan B4 as: pivot + Sdl3Canvas + stub the broken input readers → drive red→green → link →
 `demo.exe --screen=Layout --screenshot` to confirm boxes paint through the upstream pipeline.
+
+## 🎉 B4 PROBE SUCCESS (2026-07-02) — upstream engine renders through SDL, end-to-end
+
+`demo.exe --pipetest` rendered a hand-built upstream `LayoutNode` tree (dark root bg + red
+240x140 box at 60,60) to an 800x600 screenshot with **NO crash**. Verified pixels: bg=(32,32,40),
+box=(229,57,53). The full vendored pipeline ran: `ComposeOwner` → `MeasureAndLayoutDelegate`
+(measure+place) → `LayoutNode.draw` → `NodeCoordinator.draw` walk → `BackgroundNode.draw(ContentDrawScope)`
+→ `CanvasDrawScope` → `Sdl3Canvas` → `SDL_RenderGeometry`. Pillars B1 (draw engine) + B3 (Owner) +
+B4-infra (Sdl3Canvas) proven together. The ProjectLayoutNode-dummy runtime crashes (ClassCast /
+requireOwner) are GONE — real Owner + real coordinators. `runUpstreamPipelineProbe` (sdlRendererMain).
+
+## ⭐ END-STATE VISION (user, 2026-07-02) — "commonMain empty af"
+
+Target structure = **Compose Multiplatform's**: everything in `core/commonMain` becomes VENDORED
+upstream Compose (in `core/src/vendor/common`, byte-for-byte) + `expect` declarations; the ONLY
+project code is the **platform `actual` layer**:
+- **SDL3 windowing/event** (SDL3Backend, pollEvents, the window/main-loop) — `actual` under nativeMain.
+- **Renderer** (SDL3 `Sdl3Canvas` / Skiko `SkiaCanvas` as the `Canvas` actual + Owner/loop glue) —
+  `actual` under sdlRendererMain / skikoRendererMain.
+
+So the project's own `androidx.compose.*` re-implementations in commonMain — `ProjectLayoutNode`,
+project `Placeable` / measure pipeline (`LayoutNodeMeasurable`/`LayoutPolicyAdapter`), project
+modifier `element.*`, `BasicText`/`Image` project builds, `NodeApplier<ProjectLayoutNode>`,
+`ProjectNodeChain`, the shims — all get **deleted** and replaced by vendored upstream + a thin actual
+layer. `core/commonMain` ends up ~empty (maybe only truly-project glue that has no upstream analogue).
+User: "break stuff if you must."
+
+### Path to empty commonMain (revised, supersedes B5/B6 framing)
+1. **Pivot composition (B4 proper):** `ComposeUiNode.Constructor→LayoutNode`, `NodeApplier<LayoutNode>`,
+   ComposeWindow → upstream root + `ComposeOwner` + `owner.root.draw(Sdl3Canvas)`. (Box/Row/Column/Layout
+   already build via vendored `Layout`→`ComposeUiNode.Constructor`, so they pivot for free.)
+2. **Leaves on upstream:** re-vendor upstream `BasicText`/`Image`/text stack; delete project builds.
+   Text/image become upstream draw nodes; wire the SDL text/image draw into `Sdl3Canvas`/a draw node.
+3. **Input on upstream:** hit-test via `NodeCoordinator.hitTest` + `PointerInputModifierNode`; delete the
+   ProjectLayoutNode event layer in ComposeWindow.
+4. **Delete the parallel world:** ProjectLayoutNode, project Placeable/measure/modifier-element, shims,
+   ProjectNodeChain — vendor their upstream equivalents; keep only platform actuals.
+5. **Skia actual:** `SkiaCanvas : Canvas` wrapping org.jetbrains.skia (mirror Sdl3Canvas) for macOS/Linux.
