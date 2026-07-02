@@ -1911,6 +1911,36 @@ registerTargetInterest / isInterestedTarget) and PointerIconService members
 Total on `phase9` since branch: **34 commits**, **~4500L project code removed**,
 **24 upstream files vendored** verbatim.
 
+## ✅ CONTINUATION SPRINT (2026-07-02)
+
+Fifth push. Bug fix + more small vendors.
+
+Fixed:
+- **apidemo pink screen**: `Sdl3RenderBackend.beginFrame` was missing
+  `SDL_RenderClear` (the legacy Sdl3Renderer.draw used to do it; deleted
+  alongside the parallel-world removal). Buttons demo hid it because Surface
+  overpaints everything each frame. Restored.
+
+Vendored:
+- `ui.viewinterop.InteropViewFactoryHolder.kt` (32L expect) + native actual
+  — retires InteropViewFactoryHolder.shim.
+- `foundation.text.StringHelpers.kt` (65L) + native actual (project-side —
+  upstream's nonJvm calls JVM-only StringBuilder.appendCodePoint). Adds
+  UTF-16 surrogate-pair encoding + code-point break walkers.
+- `foundation.text.KeyMapping.kt` (187L common + 241L skiko) + native actual
+  routing to DefaultSkikoKeyMapping (Ctrl-based, upstream's Windows/Linux
+  default). TODO: SDL_GetPlatform() detection.
+- `foundation.lazy.grid.LazyGridItemScopeImpl.kt` (35L).
+
+**Current state (2026-07-02, post continuation):**
+- `commonMain`: 83 → **82 files** (-1 shim retired).
+- `commonMain shims`: 26 → **25**.
+- `vendor/`: 621 → **626 files** (+5 more upstream).
+- Buttons hash preserved (`ce15decb…`) through every commit.
+
+Total on `phase9` since branch: **41 commits**, ~4500L project code removed,
+**29 upstream files vendored** + native actuals.
+
 **Still on the "commonMain empty af" runway:**
 1. Clickable / Focusable / Hoverable — need InteractionSource migration
    across material/apidemo/demo call sites (each uses the project's
