@@ -108,6 +108,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt              core/src/vendor/common/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/FocusedBounds.kt                          core/src/vendor/common/kotlin/androidx/compose/foundation/FocusedBounds.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/GestureNode.kt                            core/src/vendor/common/kotlin/androidx/compose/foundation/GestureNode.kt
+# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Image.kt                                  core/src/vendor/common/kotlin/androidx/compose/foundation/Image.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/InternalFoundationApi.kt                  core/src/vendor/common/kotlin/androidx/compose/foundation/InternalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/MutatorMutex.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/MutatorMutex.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ProgressSemantics.kt                      core/src/vendor/common/kotlin/androidx/compose/foundation/ProgressSemantics.kt
@@ -121,7 +122,6 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/D
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Clickable.kt                            core/src/vendor/common/kotlin/androidx/compose/foundation/Clickable.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Focusable.kt                            core/src/vendor/common/kotlin/androidx/compose/foundation/Focusable.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Hoverable.kt                            core/src/vendor/common/kotlin/androidx/compose/foundation/Hoverable.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Image.kt                                core/src/vendor/common/kotlin/androidx/compose/foundation/Image.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Indication.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/Indication.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Overscroll.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/Overscroll.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Scroll.kt                               core/src/vendor/common/kotlin/androidx/compose/foundation/Scroll.kt
@@ -759,14 +759,14 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/autofill/FillableData.ski
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draganddrop/DragAndDropNode.kt     core/src/vendor/common/kotlin/androidx/compose/ui/draganddrop/DragAndDropNode.kt
 
 # ── androidx.compose.ui.draw ────────────────────────────────────────────────
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Alpha.kt              core/src/vendor/common/kotlin/androidx/compose/ui/draw/Alpha.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Clip.kt               core/src/vendor/common/kotlin/androidx/compose/ui/draw/Clip.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/DrawModifier.kt       core/src/vendor/common/kotlin/androidx/compose/ui/draw/DrawModifier.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Rotate.kt             core/src/vendor/common/kotlin/androidx/compose/ui/draw/Rotate.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Scale.kt              core/src/vendor/common/kotlin/androidx/compose/ui/draw/Scale.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Blur.kt             core/src/vendor/common/kotlin/androidx/compose/ui/draw/Blur.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/PainterModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/draw/PainterModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Shadow.kt           core/src/vendor/common/kotlin/androidx/compose/ui/draw/Shadow.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Alpha.kt            core/src/vendor/common/kotlin/androidx/compose/ui/draw/Alpha.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Clip.kt             core/src/vendor/common/kotlin/androidx/compose/ui/draw/Clip.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/DrawModifier.kt     core/src/vendor/common/kotlin/androidx/compose/ui/draw/DrawModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/PainterModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/draw/PainterModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Rotate.kt           core/src/vendor/common/kotlin/androidx/compose/ui/draw/Rotate.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Scale.kt            core/src/vendor/common/kotlin/androidx/compose/ui/draw/Scale.kt
+# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Blur.kt           core/src/vendor/common/kotlin/androidx/compose/ui/draw/Blur.kt
+# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Shadow.kt         core/src/vendor/common/kotlin/androidx/compose/ui/draw/Shadow.kt
 
 # ── androidx.compose.ui.focus ───────────────────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusDirection.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusDirection.kt
