@@ -84,7 +84,7 @@ compose/animation/animation-core/src/nonJvmMain/kotlin/androidx/compose/animatio
 compose/animation/animation-core/src/nonJvmMain/kotlin/androidx/compose/animation/core/internal/PlatformOptimizedCancellationException.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/animation/core/internal/PlatformOptimizedCancellationException.native.kt
 
 # ── androidx.compose.animation.graphics ─────────────────────────────────────
-# compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt  core/src/vendor/common/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt
+compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt  core/src/vendor/common/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt
 
 # ── androidx.compose.animation.graphics.vector ──────────────────────────────
 # compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt     core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt
