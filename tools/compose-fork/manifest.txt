@@ -370,13 +370,13 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState.kt                 core/src/vendor/common/kotlin/androidx/compose/foundation/lazy/staggeredgrid/LazyStaggeredGridState.kt
 
 # ── androidx.compose.foundation.pager ───────────────────────────────────────
+# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/MeasuredPage.kt                 core/src/vendor/common/kotlin/androidx/compose/foundation/pager/MeasuredPage.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PageInfo.kt                     core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PageInfo.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PageSize.kt                     core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PageSize.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerLayoutInfo.kt              core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerLayoutInfo.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerScope.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerScope.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/LazyLayoutPager.kt            core/src/vendor/common/kotlin/androidx/compose/foundation/pager/LazyLayoutPager.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/LazyLayoutSemanticState.kt    core/src/vendor/common/kotlin/androidx/compose/foundation/pager/LazyLayoutSemanticState.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/MeasuredPage.kt               core/src/vendor/common/kotlin/androidx/compose/foundation/pager/MeasuredPage.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/Pager.kt                      core/src/vendor/common/kotlin/androidx/compose/foundation/pager/Pager.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerBeyondBoundsModifier.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerBeyondBoundsModifier.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/pager/PagerCacheWindowLogic.kt      core/src/vendor/common/kotlin/androidx/compose/foundation/pager/PagerCacheWindowLogic.kt

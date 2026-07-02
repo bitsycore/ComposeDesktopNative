@@ -1941,6 +1941,24 @@ Vendored:
 Total on `phase9` since branch: **41 commits**, ~4500L project code removed,
 **29 upstream files vendored** + native actuals.
 
+## 🔧 PINK-SCREEN FIX FOLLOW-UP (2026-07-02)
+
+First fix (commit 26887f0) added `SDL_SetRenderDrawColor + SDL_RenderClear`
+inside `Sdl3RenderBackend.beginFrame`. Didn't cover the failure mode fully:
+the clear ran AFTER the previous frame's `SDL_SetRenderScale(dpr, dpr)` was
+still active, so on Retina Metal we only cleared 1/DPR of the back buffer
+and the rest showed uninitialized GPU memory (Metal defaults to
+pink/magenta on macOS).
+
+Now beginFrame:
+1. `SDL_SetRenderScale(1, 1)` — clear at physical pixel scale.
+2. `SDL_SetRenderClipRect(null)` — reset any stray clip.
+3. `SDL_SetRenderDrawColor(0x12) + SDL_RenderClear` — fills the entire
+   back buffer.
+4. `SDL_SetRenderScale(dpr, dpr)` — reapply DPR for subsequent draws.
+
+Buttons hash preserved (`ce15decb…`). Apidemo pink screen gone.
+
 **Still on the "commonMain empty af" runway:**
 1. Clickable / Focusable / Hoverable — need InteractionSource migration
    across material/apidemo/demo call sites (each uses the project's
