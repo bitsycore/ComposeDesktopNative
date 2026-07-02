@@ -1,4 +1,6 @@
 package androidx.compose.ui.layout
 
-// Phase 9 stub — lookahead pipeline unvendored; NodeCoordinator references the type.
-interface LookaheadLayoutCoordinates : LayoutCoordinates
+// Phase 9 stub — lookahead pipeline unvendored; NodeCoordinator reads `.coordinator`.
+interface LookaheadLayoutCoordinates : LayoutCoordinates {
+	val coordinator: androidx.compose.ui.node.NodeCoordinator
+}
