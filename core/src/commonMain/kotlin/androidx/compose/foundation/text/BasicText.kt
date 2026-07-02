@@ -198,23 +198,18 @@ private fun TextLeaf(
     fontFamily: String?,
     fontVariationSettings: List<FontVariation>?,
 ) {
-    ComposeNode<ProjectLayoutNode, NodeApplier>(
-        factory = { ProjectLayoutNode() },
-        update = {
-            set(text) { this.text = it }
-            set(spans) { this.textSpans = it }
-            set(color) { this.textColor = it }
-            set(fontSize) { this.fontSize = it.value.toInt() }
-            set(textAlign) { this.textAlign = it }
-            set(softWrap) { this.softWrap = it }
-            set(fontFamily) { this.fontFamily = it }
-            set(fontVariationSettings) { this.fontVariationSettings = it }
-            set(modifier) { this.modifier = it }
-            set(Unit) {
-                this.internalMeasurePolicy = TextMeasurePolicy
-            }
-        }
-    )
+    // Phase 9 B4: build an upstream LayoutNode via the vendored Layout. Sized to a
+    // rough text extent so surrounding layouts don't collapse; drawing is deferred
+    // to B5 (text becomes a DrawModifierNode wired into the renderer), so the text
+    // is invisible for now.
+    androidx.compose.ui.layout.Layout(modifier = modifier) { _, constraints ->
+        val vH = fontSize.value.toInt().coerceAtLeast(12)
+        val vW = (text.length.toFloat() * fontSize.value * 0.55f).toInt().coerceAtLeast(0)
+        layout(
+            vW.coerceIn(constraints.minWidth, constraints.maxWidth),
+            vH.coerceIn(constraints.minHeight, constraints.maxHeight),
+        ) {}
+    }
 }
 
 /* Defers to whatever TextMeasurer is currently installed so the laid-out

@@ -32,8 +32,14 @@ interface RenderBackend {
        so it maps 1:1 onto the pixel back buffer. */
     fun beginFrame(inDpr: Float)
 
-    /* Walk the ProjectLayoutNode tree and draw each node. */
+    /* Walk the ProjectLayoutNode tree and draw each node. (Legacy path — being
+       retired by the upstream-LayoutNode pivot; kept until the old renderers go.) */
     fun draw(inRoot: ProjectLayoutNode)
+
+    /* Phase 9 B4: draw the upstream LayoutNode tree owned by [inHost] through the
+       vendored coordinator / DrawModifierNode pipeline (LayoutNode.draw → CanvasDrawScope
+       → the platform Canvas backend). Default no-op; the SDL backend overrides it. */
+    fun drawRoot(inHost: com.compose.desktop.native.node.ComposeRootHost) {}
 
     /* Flush + present whatever was just drawn. */
     fun endFrame()

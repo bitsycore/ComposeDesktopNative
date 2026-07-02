@@ -29,16 +29,18 @@ fun Image(
 	contentScale: ContentScale = ContentScale.Fit,
 	alpha: Float = 1f,
 ) {
-	ComposeNode<ProjectLayoutNode, NodeApplier>(
-		factory = { ProjectLayoutNode() },
-		update = {
-			set(painter) { this.painter = it }
-			set(contentScale) { this.contentScale = it }
-			set(alpha) { this.imageAlpha = it }
-			set(modifier) { this.modifier = it }
-			set(Unit) { this.internalMeasurePolicy = ImageMeasurePolicy }
-		}
-	)
+	// Phase 9 B4: build an upstream LayoutNode via the vendored Layout, sized to the
+	// painter's intrinsic size. Drawing is deferred to B5 (image becomes a
+	// DrawModifierNode wired into the renderer), so the image is invisible for now.
+	androidx.compose.ui.layout.Layout(modifier = modifier) { _, constraints ->
+		val vIntrinsic = painter.intrinsicSize
+		val vW = vIntrinsic.width.coerceAtLeast(0)
+		val vH = vIntrinsic.height.coerceAtLeast(0)
+		layout(
+			vW.coerceIn(constraints.minWidth, constraints.maxWidth),
+			vH.coerceIn(constraints.minHeight, constraints.maxHeight),
+		) {}
+	}
 }
 
 /* Image layout: a Size modifier (Modifier.size(...) etc.) pins the bounds via

@@ -65,6 +65,19 @@ internal class Sdl3RenderBackend(private val backend: SDL3Backend) : RenderBacke
         fRenderer.draw(inRoot)
     }
 
+    // Phase 9 B4: paint the upstream LayoutNode tree through the vendored pipeline.
+    // inHost.rootNode.draw → NodeCoordinator.draw → DrawModifierNode → CanvasDrawScope
+    // → Sdl3Canvas → SDL_RenderGeometry.
+    override fun drawRoot(inHost: com.compose.desktop.native.node.ComposeRootHost) {
+        val vRenderer = backend.renderer ?: return
+        val vCanvas = Sdl3Canvas(
+            vRenderer,
+            androidx.compose.ui.geometry.Size(backend.windowWidth.toFloat(), backend.windowHeight.toFloat()),
+        )
+        inHost.rootNode.draw(vCanvas, null)
+        vCanvas.finish()
+    }
+
     override fun endFrame() {
         val r = backend.renderer?.reinterpret<cnames.structs.SDL_Renderer>() ?: return
         SDL_RenderPresent(r)

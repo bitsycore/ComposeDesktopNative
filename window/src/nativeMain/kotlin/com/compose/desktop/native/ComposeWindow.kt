@@ -8,19 +8,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
-import com.compose.desktop.native.foundation.smoothScrollByPx
 import com.compose.desktop.native.scroll.ScrollAnimator
-import com.compose.desktop.native.element.OnDragModifier
-import com.compose.desktop.native.element.OnPressedModifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerButton
-import androidx.compose.ui.input.pointer.PointerEventType
-import com.compose.desktop.native.input.PointerInputElement
-import com.compose.desktop.native.node.ProjectLayoutNode
-import com.compose.desktop.native.node.NodeApplier
+import com.compose.desktop.native.node.ComposeRootHost
 import androidx.compose.ui.res.currentImageLoader
 import com.compose.desktop.native.text.currentTextMeasurer
-import androidx.compose.ui.unit.Constraints
 import com.compose.desktop.native.window.LocalPopupHost
 import com.compose.desktop.native.window.PopupLayer
 import com.compose.desktop.native.window.createPopupHostState
@@ -36,6 +27,17 @@ import sdl3.SDL_SetWindowTitle
 // MARK: ComposeWindow
 // ==================
 
+/*
+ Phase 9 B4 — the main loop now drives the vendored upstream layout engine through
+ [ComposeRootHost]: composition builds an upstream `LayoutNode` tree (via
+ `ComposeUiNode.Constructor` → LayoutNode), `ComposeOwner` measures/places it via
+ `MeasureAndLayoutDelegate`, and the backend paints it with `drawRoot` (→ Sdl3Canvas).
+
+ Input / hit-test / focus are TEMPORARILY DISABLED — the old event layer was built
+ on `ProjectLayoutNode` and is being rebuilt on upstream `NodeCoordinator.hitTest` +
+ `PointerInputModifierNode` (B6). Text/image leaves are invisible until B5. So this
+ renders backgrounds / borders / surfaces / layout, but is not yet interactive.
+*/
 fun nativeComposeWindow(
     title: String = "ComposeNativeSDL3",
     width: Int = 800,
@@ -44,18 +46,12 @@ fun nativeComposeWindow(
     onFrame: ((backend: RenderBackend, frameIndex: Int) -> Boolean)? = null,
     content: @Composable ComposeWindowScope.() -> Unit
 ) {
-    // Resolve Auto at the call site so SDL3Backend / RenderBackend never see
-    // it. rendererPreferredGpuMode() comes from whichever renderer source
-    // set in :core is active for this target (skia or sdl3).
     val gpuMode = if (gpu is GpuMode.Auto) rendererPreferredGpuMode() else gpu
     val backend = SDL3Backend(title, width, height, gpuMode = gpuMode)
     if (!backend.init()) {
         println("Failed to init SDL3 backend")
         return
     }
-    // Pull the real (HiDPI-aware) pixel dimensions before we hand them to
-    // a bridge — without this they default to the logical window size and
-    // Retina back buffers come out half-resolution.
     backend.updateWindowSize()
 
     val renderBackend = createRenderBackend(backend, gpuMode)
@@ -65,35 +61,19 @@ fun nativeComposeWindow(
         return
     }
 
-    // Hook the renderer's measurer into the common layout pass so text
-    // bounds match what's actually drawn (fixes off-centre text in
-    // Buttons / Boxes).
     currentTextMeasurer = renderBackend.textMeasurer
-
-    // Same wiring for images: the layout pass sizes Image nodes via the
-    // backend's decode cache, and Res.readBytes reads bundled files.
     currentImageLoader = renderBackend.imageLoader
 
-    // SDL3 clipboard is wired automatically via the vendored
-    // `androidx.compose.ui.platform.Clipboard` / `ClipboardManager` —
-    // the native actual installs `SDL3ClipboardManager` as the default.
-    // No setup needed here.
+    // Upstream layout root + owner, hidden behind the public facade.
+    val host = ComposeRootHost(inDensity = backend.pixelDensity)
+    host.attach()
 
-    val rootNode = ProjectLayoutNode()
     val frameClock = SDL3FrameClock()
 
-    // Install our SDL3-driven Dispatchers.Main. Kotlin/Native ships no Main
-    // dispatcher on Linux/Windows, and the Darwin one posts to GCD's main
-    // queue (which our SDL_Delay loop doesn't reliably pump). The dispatcher
-    // is drained once per frame from inside the main loop, so app code can
-    // withContext(Dispatchers.Main) { ... } portably.
     val mainDispatcher = Sdl3MainDispatcher()
     @OptIn(ExperimentalCoroutinesApi::class)
     Dispatchers.setMain(mainDispatcher)
 
-    // Reactive handle to the window — provided to content via both a
-    // receiver scope and a CompositionLocal. Event handlers feed the
-    // window state below (resize → onResized, etc.).
     val composeWindow = ComposeNativeWindow(backend, gpuMode, title)
     val windowScope = object : ComposeWindowScope {
         override val window: ComposeNativeWindow = composeWindow
@@ -101,34 +81,29 @@ fun nativeComposeWindow(
 
     runBlocking(frameClock) {
         val recomposer = Recomposer(coroutineContext)
-        val composition = Composition(NodeApplier(rootNode), recomposer)
+        val composition = Composition(host.applier, recomposer)
 
         val recomposeJob = launch { recomposer.runRecomposeAndApplyChanges() }
 
-        // Without this, mutableStateOf writes from click handlers never reach the
-        // recomposer and the UI silently stops updating after the first frame.
         val snapshotHandle = Snapshot.registerGlobalWriteObserver {
             Snapshot.sendApplyNotifications()
         }
 
         val popupHost = createPopupHostState()
-        // Lazy FocusManager — body filled in once setFocus is in scope below.
-        var focusManagerImpl: androidx.compose.ui.focus.FocusManager? = null
+
+        // B6: focus runs on the upstream FocusOwner later. For now a no-op manager
+        // so LocalFocusManager consumers compose without crashing.
         val focusManagerProxy = object : androidx.compose.ui.focus.FocusManager {
-            override fun focusOnNode(node: ProjectLayoutNode) { focusManagerImpl?.focusOnNode(node) }
-            override fun clearFocus() { focusManagerImpl?.clearFocus() }
+            override fun focusOnNode(node: com.compose.desktop.native.node.ProjectLayoutNode) {}
+            override fun clearFocus() {}
         }
+
         composition.setContent {
             CompositionLocalProvider(
                 LocalComposeNativeWindow provides composeWindow,
                 LocalPopupHost provides popupHost,
                 androidx.compose.ui.focus.LocalFocusManager provides focusManagerProxy,
             ) {
-                // Root Box: main content + overlay layer as sibling. The
-                // overlay is the *last* child so popups draw above and the
-                // hit-tester (which iterates children in reverse) hits them
-                // first. Each popup positions itself via Modifier.offset /
-                // Box(contentAlignment) inside its own composable.
                 Box(modifier = Modifier.fillMaxSize()) {
                     with(windowScope) { content() }
                     PopupLayer(popupHost)
@@ -140,265 +115,30 @@ fun nativeComposeWindow(
         //  Main loop
         var running = true
         var frameIndex = 0
-        // FPS sampling — count frames over ~1s windows; publish to the window
-        // handle and append to the OS title bar.
         var vFpsFrames = 0
         var vFpsLastMs = SDL_GetTicks()
 
-        // ============
-        //  Interaction state (hover / press / click target) — keyed by
-        //  ProjectLayoutNode so it survives recomposition (modifier identity does
-        //  not).
-        val activeHoverNodes = mutableMapOf<ProjectLayoutNode, (Boolean) -> Unit>()
-        var activePressNode: ProjectLayoutNode? = null
-        var activePressCallback: ((Boolean) -> Unit)? = null
-        var armedClickNode: ProjectLayoutNode? = null
-
-        // One focused node per window. onFocusChanged fires false on the old,
-        // true on the new. Click outside any focusable clears focus.
-        var focusedNode: ProjectLayoutNode? = null
-        var focusedCallback: ((Boolean) -> Unit)? = null
-
-        // Drag capture: on Press inside a draggable, hold the (node, modifier)
-        // until Release so Move events route here regardless of where the
-        // cursor wanders (matches gesture-detector semantics).
-        var dragNode: ProjectLayoutNode? = null
-        var dragModifier: OnDragModifier? = null
-
-        fun setFocus(inNode: ProjectLayoutNode?, inCallback: ((Boolean) -> Unit)?) {
-            if (inNode === focusedNode) return
-            focusedCallback?.invoke(false)
-            focusedNode = inNode
-            focusedCallback = inCallback
-            inCallback?.invoke(true)
-        }
-
-        /* Concrete FocusManager wired into setFocus. Walks the node's
-           modifier chain to find its FocusableModifier so the focus
-           callback fires; falls back to focusing-without-callback if
-           the node has no focusable. */
-        focusManagerImpl = object : androidx.compose.ui.focus.FocusManager {
-            override fun focusOnNode(node: ProjectLayoutNode) {
-                setFocus(node, node.cachedFocusable?.onFocusChanged)
-            }
-            override fun clearFocus() = setFocus(null, null)
-        }
-
-        /* Walk the tree and pop each FocusRequester onto its hosting
-           node so requestFocus() can resolve the node back. Fast and
-           good enough for a tree of a few hundred nodes; we could keep
-           a registry instead if it ever shows up on a profile. */
-        fun bindFocusRequesters(inRoot: ProjectLayoutNode) {
-            fun walk(inN: ProjectLayoutNode) {
-                for (vEl in inN.cachedFocusRequesters) {
-                    vEl.focusRequester.attachedNode = inN
-                    vEl.focusRequester.focusManager = focusManagerImpl
-                }
-                for (vC in inN.children) walk(vC)
-            }
-            walk(inRoot)
-        }
-
-        fun dispatchHover(inX: Int, inY: Int) {
-            val vHit = rootNode.hitTest(inX, inY)
-            val vNewChain = vHit?.collectHoverableChain() ?: emptyList()
-            val vNewMap = vNewChain.associate { it.first to it.second.onChange }
-            // Exit nodes no longer under the cursor
-            for ((vNode, vCb) in activeHoverNodes) {
-                if (vNode !in vNewMap) vCb(false)
-            }
-            // Enter nodes newly under the cursor
-            for ((vNode, vCb) in vNewMap) {
-                if (vNode !in activeHoverNodes) vCb(true)
-            }
-            activeHoverNodes.clear()
-            activeHoverNodes.putAll(vNewMap)
-        }
-
-        fun cancelPress() {
-            activePressCallback?.invoke(false)
-            activePressNode = null
-            activePressCallback = null
-        }
-
-        /* Walk the hit target → root chain. On every node that has a
-           PointerInputElement modifier, deliver the change in local
-           coords. Each scope's awaitPointerEvent resumes synchronously
-           because the coroutine is on the same Dispatchers.Main as us. */
-        fun dispatchPointerInput(inRoot: ProjectLayoutNode, inX: Int, inY: Int, inPressed: Boolean) {
-            val vHit = inRoot.hitTest(inX, inY) ?: return
-            var vNode: ProjectLayoutNode? = vHit
-            while (vNode != null) {
-                val vN = vNode
-                val vLocalX = (inX - vN.absoluteX).toFloat()
-                val vLocalY = (inY - vN.absoluteY).toFloat()
-                for (vEl in vN.cachedPointerInputs) {
-                    vEl.scope.deliverChange(Offset(vLocalX, vLocalY), inPressed, 0L)
-                }
-                vNode = vN.parent
-            }
-        }
-
-        fun cursorInsideNode(inHit: ProjectLayoutNode?, inNode: ProjectLayoutNode): Boolean =
-            generateSequence(inHit) { it.parent }.any { it === inNode }
-
         while (running) {
-            // ============
-            //  Drain any pending snapshot writes from the previous frame's handlers
             Snapshot.sendApplyNotifications()
 
-            // A composable that called window.close() earlier — break the
-            // loop the same way SDL_EVENT_QUIT would.
             if (composeWindow.isCloseRequested) running = false
 
             // ============
-            //  Events
+            //  Events — only window lifecycle for now (input rebuilt in B6).
             val events = pollEvents()
             for (event in events) {
                 when (event) {
                     is AppEvent.Quit -> if (composeWindow.requestCloseFromUser()) running = false
-
                     is AppEvent.WindowResized -> {
                         backend.updateWindowSize()
                         composeWindow.onResized()
                     }
-
-                    is AppEvent.Pointer -> {
-                        val vPx = event.event.x
-                        val vPy = event.event.y
-                        // Pointer-input modifier delivery: walk the hit-target →
-                        // root chain and deliver this change to every
-                        // PointerInputElement we cross. Position is converted to
-                        // each owning node's local space so detectTapGestures /
-                        // detectDragGestures see node-relative coords.
-                        val vCurrentlyPressed = event.event.type != PointerEventType.Release
-                        dispatchPointerInput(rootNode, vPx, vPy, vCurrentlyPressed)
-                        when (event.event.type) {
-                            PointerEventType.Move -> {
-                                dispatchHover(vPx, vPy)
-                                val vHit = rootNode.hitTest(vPx, vPy)
-                                // Drag off the pressed node cancels press + click.
-                                activePressNode?.let { vN ->
-                                    if (!cursorInsideNode(vHit, vN)) cancelPress()
-                                }
-                                armedClickNode?.let { vN ->
-                                    if (!cursorInsideNode(vHit, vN)) armedClickNode = null
-                                }
-                                // Captured drag: route Move events to the original
-                                // drag node even if the cursor leaves its bounds.
-                                val dn = dragNode
-                                val dm = dragModifier
-                                if (dn != null && dm != null) {
-                                    dm.onDrag(vPx - dn.absoluteX, vPy - dn.absoluteY)
-                                }
-                            }
-                            PointerEventType.Press -> {
-                                // Close any open popup the press landed outside of
-                                // (menu / tooltip). Non-consuming: the same press
-                                // still hits whatever is under it below.
-                                popupHost.notifyOutsidePress(vPx, vPy)
-                                val vHit = rootNode.hitTest(vPx, vPy)
-                                if (event.event.button == PointerButton.Secondary) {
-                                    // Right-click: fire only the context-menu handler (with
-                                    // the window-coord click position); don't arm the
-                                    // primary press / click / drag / focus.
-                                    vHit?.findSecondaryClickHandler()?.invoke(vPx, vPy)
-                                } else if (event.event.button == PointerButton.Tertiary) {
-                                    // Middle-click: fire only the middle handler (e.g. close a
-                                    // tab); don't arm the primary press / click / drag / focus.
-                                    vHit?.findMiddleClickHandler()?.invoke()
-                                } else {
-                                    cancelPress()
-                                    val vPressable = vHit?.findPressable()
-                                    if (vPressable != null) {
-                                        activePressNode = vPressable.first
-                                        activePressCallback = vPressable.second.onChange
-                                        vPressable.second.onChange(true)
-                                    }
-                                    armedClickNode = vHit?.findClickableNode()
-                                    // Update focus: click on a focusable focuses it;
-                                    // click on nothing focusable clears focus.
-                                    val vFocusable = vHit?.findFocusableNode()
-                                    setFocus(vFocusable?.first, vFocusable?.second?.onFocusChanged)
-                                    // Positional press dispatch (TextField cursor placement).
-                                    // Walk from the hit-test target up, firing each cached
-                                    // OnPressedModifier handler with node-relative coordinates.
-                                    var pn: ProjectLayoutNode? = vHit
-                                    while (pn != null) {
-                                        val node = pn
-                                        val relX = vPx - node.absoluteX
-                                        val relY = vPy - node.absoluteY
-                                        for (h in node.cachedOnPressedHandlers) h(relX, relY)
-                                        pn = node.parent
-                                    }
-                                    // Begin drag capture if the press lands on a draggable.
-                                    val vDraggable = vHit?.findDraggable()
-                                    if (vDraggable != null) {
-                                        dragNode = vDraggable.first
-                                        dragModifier = vDraggable.second
-                                        val dn = vDraggable.first
-                                        vDraggable.second.onStart(vPx - dn.absoluteX, vPy - dn.absoluteY)
-                                    }
-                                }
-                            }
-                            PointerEventType.Release -> {
-                                cancelPress()
-                                // End any in-progress drag, regardless of where the release lands.
-                                dragModifier?.onEnd?.invoke()
-                                dragNode = null
-                                dragModifier = null
-                                val vHit = rootNode.hitTest(vPx, vPy)
-                                val vArmed = armedClickNode
-                                armedClickNode = null
-                                if (vArmed != null && cursorInsideNode(vHit, vArmed)) {
-                                    vArmed.findClickHandler()?.invoke()
-                                }
-                            }
-                        }
-                    }
-
-                    is AppEvent.Key -> {
-                        val vConsumed = focusedNode?.dispatchKeyEvent(event.event) ?: false
-                        if (!vConsumed) composeWindow.dispatchKeyShortcut(event.event)
-                    }
-
-                    is AppEvent.TextInput -> {
-                        focusedNode?.dispatchTextInput(event.text)
-                    }
-
-                    is AppEvent.MouseWheel -> {
-                        val vHit = rootNode.hitTest(event.x, event.y)
-                        // SDL wheel: positive y = scrolled up (away from user) →
-                        // content should scroll up → state.value decreases.
-                        // Convert wheel "lines" to pixels (~50px/line).
-                        val vScrollY = vHit?.findVerticalScrollAncestor()
-                        val vScrollX = vHit?.findHorizontalScrollAncestor()
-                        if (vScrollY != null && event.deltaY != 0f) {
-                            vScrollY.smoothScrollByPx(-(event.deltaY * 50f).toInt())
-                        } else if (vScrollX != null && event.deltaY != 0f) {
-                            // No vertical scroller under the cursor but a horizontal one is
-                            // (e.g. the tab strip) — let the wheel scroll it sideways.
-                            vScrollX.smoothScrollByPx(-(event.deltaY * 50f).toInt())
-                        }
-                        if (vScrollX != null && event.deltaX != 0f) {
-                            vScrollX.smoothScrollByPx(-(event.deltaX * 50f).toInt())
-                        }
-                    }
+                    else -> { /* B6: pointer / key / text / wheel dispatch on upstream */ }
                 }
             }
 
-            // ============
-            //  Drain Dispatchers.Main posts from the previous frame's
-            //  withContext / launch callbacks BEFORE notifying the
-            //  recomposer, so any state writes they perform land in this
-            //  frame's composition rather than the next one.
             mainDispatcher.drainPending()
-
-            // Advance any in-flight smooth (eased) scrolls before composing.
             ScrollAnimator.tick()
-            // Publish the viewport size so commonMain composables can cull
-            // off-screen work (selection highlights) and self-position
-            // (DropdownMenu) during composition.
             com.compose.desktop.native.text.currentViewportHeight = backend.windowHeight
             com.compose.desktop.native.text.currentViewportWidth = backend.windowWidth
 
@@ -409,31 +149,17 @@ fun nativeComposeWindow(
             yield()
 
             // ============
-            //  Layout — also resize the back buffer if the window changed.
+            //  Layout — via the upstream MeasureAndLayoutDelegate.
             backend.updateWindowSize()
             renderBackend.ensureSize(backend.pixelWidth, backend.pixelHeight)
-            val constraints = Constraints.fixed(backend.windowWidth, backend.windowHeight)
-            rootNode.measure(constraints)
-            rootNode.place(0, 0)
-            // Rebind FocusRequesters every frame so a state-driven
-            // recomposition that swaps which node carries the modifier
-            // picks up the new binding by the time the next requestFocus
-            // call lands.
-            bindFocusRequesters(rootNode)
-            // Fire onGloballyPositioned callbacks now that absolute coords
-            // are valid. Popups (DropdownMenu/Tooltip) read these to anchor
-            // to their target's current window-coordinate position.
-            rootNode.dispatchGloballyPositioned()
+            host.setConstraints(backend.windowWidth, backend.windowHeight)
+            host.measureAndLayout()
 
             // ============
-            //  Draw — the backend scales by DPR so the logical-point layout
-            //  maps to physical pixels on HiDPI displays.
+            //  Draw — upstream coordinator/DrawModifierNode pipeline → Canvas backend.
             renderBackend.beginFrame(backend.pixelDensity)
-            renderBackend.draw(rootNode)
+            renderBackend.drawRoot(host)
 
-            // Hook for tools/tests: take a screenshot, return false to quit.
-            // Runs after draw but before present so the back buffer still
-            // holds the final pixels.
             if (onFrame != null && !onFrame(renderBackend, frameIndex)) {
                 running = false
             }
@@ -441,7 +167,7 @@ fun nativeComposeWindow(
             frameIndex++
 
             // ============
-            //  FPS — sample once a second, publish + show in the title bar.
+            //  FPS
             vFpsFrames++
             val vNowMs = SDL_GetTicks()
             val vElapsed = (vNowMs - vFpsLastMs).toInt()
@@ -453,9 +179,6 @@ fun nativeComposeWindow(
                 vFpsLastMs = vNowMs
             }
 
-            // When the renderer paces itself to the display (vsync), endFrame
-            // already blocked ~one refresh — just yield the CPU briefly. Without
-            // vsync, cap to ~60fps the old way.
             SDL_Delay(if (backend.vsyncEnabled) 1u else 16u)
         }
 
@@ -465,8 +188,6 @@ fun nativeComposeWindow(
         recomposeJob.cancelAndJoin()
     }
 
-    // Restore the process-global Dispatchers.Main and drop any pending
-    // tasks (the channel is unlimited so this is safe).
     mainDispatcher.close()
     @OptIn(ExperimentalCoroutinesApi::class)
     Dispatchers.resetMain()

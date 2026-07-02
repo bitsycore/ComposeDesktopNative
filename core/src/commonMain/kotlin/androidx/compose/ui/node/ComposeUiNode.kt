@@ -37,8 +37,8 @@ internal interface ComposeUiNode {
 
     /** Object of pre-allocated lambdas used to make use with ComposeNode allocation-less. */
     companion object {
-        val Constructor: () -> ComposeUiNode = com.compose.desktop.native.node.ProjectLayoutNode.Constructor
-        val VirtualConstructor: () -> ComposeUiNode = { com.compose.desktop.native.node.ProjectLayoutNode(isVirtual = true) }
+        val Constructor: () -> ComposeUiNode = LayoutNode.Constructor
+        val VirtualConstructor: () -> ComposeUiNode = { LayoutNode(isVirtual = true) }
         val SetModifier: ComposeUiNode.(Modifier) -> Unit = { this.modifier = it }
         val SetDensity: ComposeUiNode.(Density) -> Unit = { this.density = it }
         val SetResolvedCompositionLocals: ComposeUiNode.(CompositionLocalMap) -> Unit = {
@@ -53,7 +53,7 @@ internal interface ComposeUiNode {
         }
         val SetCompositeKeyHash: ComposeUiNode.(Int) -> Unit = { this.compositeKeyHash = it }
         val ApplyOnDeactivatedNodeAssertion: ComposeUiNode.() -> Unit = {
-            checkPrecondition((this as? com.compose.desktop.native.node.ProjectLayoutNode)?.isDeactivated != true) {
+            checkPrecondition((this as? LayoutNode)?.isDeactivated != true) {
                 "Apply is called on deactivated node $this"
             }
         }
