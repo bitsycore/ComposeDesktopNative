@@ -1483,3 +1483,74 @@ Rejected candidates (single-line, isolated regressions):
 Baseline hash unchanged after both commits (`d7bde72e6aa4d2cd1555e846036ed28c`).
 
 Vendor count: 535 → 567.
+
+# ==============================================================
+# OPTION B — the "true" swap: upstream LayoutNode runtime + upstream draw pipeline
+# ==============================================================
+
+Decision (user, 2026-07-02): do **Option B** — retire `ProjectLayoutNode` as the
+runtime tree, run the *vendored upstream* `androidx.compose.ui.node.LayoutNode`
+engine, and rebuild rendering the upstream way (`coordinator.draw → DrawModifierNode
+→ ContentDrawScope`), with a **per-platform Canvas backend** (SDL / Skia) exactly
+like upstream splits Android (`AndroidCanvas`) vs Skia (`SkiaBackedCanvas`).
+
+## Why this is now tractable (validated against the vendored code, 2026-07-02)
+
+- **Project modifiers are ALREADY upstream-shaped.** `com.compose.desktop.native.element.ModifierElements.kt`
+  defines every modifier as `XxxModifier : ModifierNodeElement<XxxNode>` + `XxxNode : Modifier.Node,
+  DrawModifierNode / LayoutModifierNode`. So `BackgroundNode.draw(ContentDrawScope)`,
+  `BorderNode.draw(...)`, `LayoutModifierNode.measure(...)` already exist — the upstream
+  coordinator pipeline can drive them **directly**, no rewrite.
+- **The engine is fully vendored & usable:** `LayoutNode.draw(canvas)` (LayoutNode.kt:1040) →
+  `NodeCoordinator.draw(canvas,layer)` (NodeCoordinator.kt:478) → `drawContainedDrawModifiers` →
+  **`layoutNode.mDrawScope.draw(canvas, size, coordinator, headDrawNode, layer)`**
+  where `mDrawScope = requireOwner().sharedDrawScope` (LayoutNode.kt:818). `InnerNodeCoordinator.performDraw`
+  draws `layoutNode.zSortedChildren`. `MeasureAndLayoutDelegate.kt`, `NodeChain.kt`, `BackwardsCompatNode.kt`
+  all vendored. `NodeChain` wraps any non-`ModifierNodeElement` element in `BackwardsCompatNode` (NodeChain.kt:600) — nothing is dropped.
+- **The seam I own** is `androidx.compose.ui.node.LayoutNodeDrawScope` — currently a no-op
+  project shim (`LayoutNodeDrawScope.shim.kt`). Upstream's real one is `DrawScope by CanvasDrawScope, ContentDrawScope`;
+  its `draw(...)` sets up `CanvasDrawScope` on the canvas and calls `DrawModifierNode.draw(this)`,
+  and `drawContent()` advances to the next Draw node / inner coordinator (see `DrawModifierNode.dispatchDraw`, DrawModifierNode.kt:54).
+
+## The android-vs-skia split (target architecture)
+
+```
+SHARED (vendor, common):  LayoutNode · NodeCoordinator · NodeChain · MeasureAndLayoutDelegate
+                          LayoutNodeDrawScope · CanvasDrawScope · DrawScope · DrawContext
+PER-PLATFORM BACKEND:     androidx.compose.ui.graphics.Canvas  + Paint + Path + ImageBitmap
+   ├── SDL  (sdlRendererMain, the ONLY runtime-verifiable target here): implement Canvas over
+   │        SDL_RenderGeometry/SDL_RenderTexture — port the tessellation out of Sdl3DrawScope.kt.
+   └── Skia (skikoRendererMain): implement Canvas wrapping org.jetbrains.skia.Canvas — adapt from
+            upstream's skiko backend (DesktopCanvas / SkiaBackedPaint / SkiaBackedPath). Compile-only here.
+```
+Net: `Sdl3DrawScope` / `SkiaDrawScope` (which implement the *project's* simplified DrawScope) are
+**replaced** by real `Canvas` backends + the shared `CanvasDrawScope`.
+
+## Ordered phases (each ends compile-green on `./gradlew :demo:compileKotlinMingwX64 :apidemo:compileKotlinMingwX64`)
+
+- **B1 — Shared draw engine (vendor).** Uncomment in `tools/compose-fork/manifest.txt` + `sync.sh`:
+  `drawscope/DrawScope.kt`, `DrawContext.kt`, `CanvasDrawScope.kt`, `node/LayoutNodeDrawScope.kt`.
+  DELETE the project `core/src/commonMain/.../drawscope/DrawScope.kt` + the no-op `LayoutNodeDrawScope.shim.kt`
+  (duplicate FQNs). Expect fallout in every `: DrawScope` impl (Sdl3DrawScope/SkiaDrawScope) and DrawModifierNode.
+- **B2 — SDL Canvas/Paint backend.** Real `androidx.compose.ui.graphics.Canvas` + `Paint` + `Path` actuals over SDL
+  (replace the `ProjectPaint`/`NativePaint=Any` stubs in `CanvasPaintActuals.native.kt`). Port tessellation from
+  `Sdl3DrawScope.kt`. Feeds `CanvasDrawScope`. (Skia backend is a parallel, compile-only-here task.)
+- **B3 — Real Owner.** Upgrade `StubOwner` → `ComposeOwner` (or new): hold root `LayoutNode`, drive
+  `MeasureAndLayoutDelegate` (`measureAndLayout()`), `sharedDrawScope = LayoutNodeDrawScope()`, real `createLayer`
+  (OwnedLayer applying transform/alpha/clip to the Canvas), snapshot observer. This removes the
+  `ProjectNodeChain` dummy-coordinator hack + the requireOwner crash (#3).
+- **B4 — Composition pivot.** `NodeApplier : AbstractApplier<LayoutNode>` (upstream child API); re-vendor
+  `ComposeUiNode.kt` so `Constructor = LayoutNode.Constructor`; `ComposeWindow`: `rootNode = LayoutNode()`,
+  attach owner, per frame `owner.measureAndLayout()` then `owner.root.draw(bridgeCanvas)`. `RenderBackend.draw`
+  takes the root `LayoutNode`.
+- **B5 — Leaf content.** Text / Image / `Canvas{}` currently set FIELDS on ProjectLayoutNode; make each a
+  measure-policy + `DrawModifierNode` on the upstream `LayoutNode` (upstream: text draw node, `ContentPainterModifier`).
+- **B6 — Input / hit-test.** Pointer/key dispatch via `NodeCoordinator.hitTest` + `PointerInputModifierNode`,
+  replacing `ProjectLayoutNode.hitTest`. Focus via vendored focus nodes.
+- **B7 — Retire** `ProjectLayoutNode` + `ProjectNodeChain`; runtime link + `demo.exe --screenshot` regression
+  across all 30+ screens vs the `main` baseline hash.
+
+## Runtime-verify note
+Only mingwX64 (SDL) runs here, so **B2 (SDL Canvas) is the critical path to any screenshot**. Skia backend is
+compile-checked by grep only (mingw never compiles `skikoRendererMain`). Link+run to verify:
+`./gradlew :demo:linkDebugExecutableMingwX64` then `demo.exe --screen=X --screenshot=Y.bmp`.
