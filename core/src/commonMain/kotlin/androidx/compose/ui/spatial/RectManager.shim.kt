@@ -11,4 +11,5 @@ class RectManager {
 	internal fun getOffsetFromRectListFor(node: LayoutNode): IntOffset = IntOffset.Max
 	internal fun updateFlagsFor(node: LayoutNode, hasFocusTarget: Boolean, hasPointerInput: Boolean) {}
 	internal fun invalidateCallbacksFor(node: LayoutNode) {}
+	internal fun remove(node: LayoutNode) {}
 }

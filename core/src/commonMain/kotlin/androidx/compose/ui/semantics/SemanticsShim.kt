@@ -141,4 +141,5 @@ class SemanticsConfiguration : SemanticsPropertyReceiver {
 	// Phase 9: vendored LayoutNode sets these while folding semantics.
 	var isClearingSemantics: Boolean = false
 	var isMergingSemanticsOfDescendants: Boolean = false
+	fun collapsePeer(peer: SemanticsConfiguration) {}
 }
