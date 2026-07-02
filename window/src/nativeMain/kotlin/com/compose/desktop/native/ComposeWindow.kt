@@ -8,6 +8,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerEventType
 import com.compose.desktop.native.scroll.ScrollAnimator
 import com.compose.desktop.native.node.ComposeRootHost
 import androidx.compose.ui.res.currentImageLoader
@@ -133,7 +135,26 @@ fun nativeComposeWindow(
                         backend.updateWindowSize()
                         composeWindow.onResized()
                     }
-                    else -> { /* B6: pointer / key / text / wheel dispatch on upstream */ }
+                    is AppEvent.Pointer -> {
+                        val vType = when (event.event.type) {
+                            PointerEventType.Press -> 1
+                            PointerEventType.Release -> 2
+                            else -> 0
+                        }
+                        val vBtn = when (event.event.button) {
+                            PointerButton.Secondary -> 1
+                            PointerButton.Tertiary -> 2
+                            else -> 0
+                        }
+                        if (event.event.type == PointerEventType.Press) {
+                            popupHost.notifyOutsidePress(event.event.x, event.event.y)
+                        }
+                        host.onPointer(event.event.x.toFloat(), event.event.y.toFloat(), vType, vBtn)
+                    }
+                    is AppEvent.MouseWheel -> {
+                        host.onWheel(event.x.toFloat(), event.y.toFloat(), event.deltaX, event.deltaY)
+                    }
+                    else -> { /* B6b: key / text input (focus) dispatch on upstream */ }
                 }
             }
 
