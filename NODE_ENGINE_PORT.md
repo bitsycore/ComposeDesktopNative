@@ -1723,3 +1723,17 @@ the same text path (fontFamily → FreeType), so icon glyphs render too.
 Still missing: **images** (`painterResource` / `Image` — `Sdl3Canvas.drawImage` is a no-op; needs a
 `NativePainterCanvas` bridge like text) and **input** (B6). Next: images, then B6 input, then delete
 the parallel world.
+
+## Can BasicText/BasicTextField be vendored? — NO (deferred to a text-engine phase)
+
+Checked (2026-07-02): ui.text DATA types (TextStyle/SpanStyle/AnnotatedString/ParagraphStyle) are
+vendored, but upstream `BasicText`/`BasicTextField` depend on the whole text-LAYOUT engine —
+`TextMeasurer`, `MultiParagraph`, `Paragraph`, `ParagraphIntrinsics`, `TextLayoutResult`,
+`TextLayoutInput` (NONE vendored) + `foundation.text.modifiers.TextStringSimpleElement` /
+`TextAnnotatedStringNode` (only 3 util files of that package vendored). `Paragraph`/`ParagraphIntrinsics`
+are `expect`/`actual` and upstream ships ONLY a **skiko** actual (`ActualParagraph.skiko.kt`) — no
+native actual. So: Skia targets could eventually reuse skiko's Paragraph, but the SDL/Windows target
+needs a **from-scratch `Paragraph` actual over SDL3_ttf/FreeType** (a full shaping/line-break/layout
+engine). Until that lands, keep the reduced project `BasicText`/`BasicTextField` (now on upstream
+LayoutNode via `TextDrawNode` + `currentTextMeasurer`). This is the largest remaining holdout for
+"commonMain empty af", alongside input/focus.
