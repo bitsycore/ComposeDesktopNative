@@ -31,14 +31,21 @@ class ResourcePainter internal constructor(
 	val kind: ResourceKind,
 ) : Painter() {
 
+	private var fAlpha: Float = 1f
+
 	override val intrinsicSize: Size
 		get() = currentImageLoader.intrinsicSize(resourcePath, kind)
 
+	override fun applyAlpha(alpha: Float): Boolean { fAlpha = alpha; return true }
+
 	override fun DrawScope.onDraw() {
 		drawIntoCanvas { vCanvas ->
+			// PainterModifier has already applied ContentScale + alignment via a
+			// translate + scaledSize, so we paint the resource FillBounds into the
+			// full DrawScope size. Alpha is threaded via applyAlpha.
 			(vCanvas as? NativePainterCanvas)?.drawNativePainter(
 				resourcePath, kind, 0f, 0f, size.width, size.height,
-				androidx.compose.ui.layout.ContentScale.Fit, 1f,
+				androidx.compose.ui.layout.ContentScale.FillBounds, fAlpha,
 			)
 		}
 	}

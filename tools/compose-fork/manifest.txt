@@ -108,7 +108,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt              core/src/vendor/common/kotlin/androidx/compose/foundation/ExperimentalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/FocusedBounds.kt                          core/src/vendor/common/kotlin/androidx/compose/foundation/FocusedBounds.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/GestureNode.kt                            core/src/vendor/common/kotlin/androidx/compose/foundation/GestureNode.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Image.kt                                  core/src/vendor/common/kotlin/androidx/compose/foundation/Image.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Image.kt                                  core/src/vendor/common/kotlin/androidx/compose/foundation/Image.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/InternalFoundationApi.kt                  core/src/vendor/common/kotlin/androidx/compose/foundation/InternalFoundationApi.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/MutatorMutex.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/MutatorMutex.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/ProgressSemantics.kt                      core/src/vendor/common/kotlin/androidx/compose/foundation/ProgressSemantics.kt
