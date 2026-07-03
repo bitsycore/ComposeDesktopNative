@@ -73,6 +73,17 @@ internal class ComposeOwner(
 	// The vendored measure/layout state machine, rooted at [root].
 	private val fDelegate = MeasureAndLayoutDelegate(root)
 
+	// The vendored pointer-input dispatcher. Routes a PointerInputEvent through
+	// HitPathTracker to the tree's PointerInputModifierNodes (hover / gesture),
+	// synthesizing Enter/Exit. Fed from ComposeWindow via ComposeRootHost.
+	private val fPointerProcessor = androidx.compose.ui.input.pointer.PointerInputEventProcessor(root)
+
+	// Dispatch one pointer event to the upstream PointerInputModifierNode tree.
+	// [this] is the PositionCalculator (Owner : PositionCalculator).
+	internal fun processPointerInput(inEvent: androidx.compose.ui.input.pointer.PointerInputEvent) {
+		fPointerProcessor.process(inEvent, this)
+	}
+
 	// Attaches the root subtree to this owner. Call once after construction,
 	// before the first measure pass — mirrors a platform Owner attaching when
 	// its view enters the hierarchy.

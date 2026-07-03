@@ -185,6 +185,15 @@ class ComposeRootHost(inDensity: Float = 1f) {
 		}
 	}
 
+	// Feed a raw pointer event to the vendored PointerInputEventProcessor (upstream
+	// PointerInputModifierNode dispatch — hover / gestures). Runs alongside the B6a
+	// project-node dispatch during the interaction migration. inType: 0=Move 1=Press 2=Release.
+	// The internal `expect PointerInputEvent` has no commonMain constructor, so the actual
+	// build+dispatch lives in nativeMain (feedPointerToProcessor).
+	fun onPointerRaw(inX: Float, inY: Float, inType: Int, inUptime: Long) {
+		feedPointerToProcessor(fOwner, inType, inUptime, inX, inY)
+	}
+
 	fun onWheel(inX: Float, inY: Float, inDeltaX: Float, inDeltaY: Float) {
 		val vHit = hitTest(inX, inY)
 		val vVert = findUp<VerticalScrollNode>(vHit)?.second?.state
@@ -194,3 +203,18 @@ class ComposeRootHost(inDensity: Float = 1f) {
 		if (vHorz != null && inDeltaX != 0f) vHorz.smoothScrollByPxInternal(-(inDeltaX * 50f).toInt())
 	}
 }
+
+// ==================
+// MARK: pointer-event bridge (nativeMain builds the internal PointerInputEvent)
+// ==================
+
+/* The internal `expect PointerInputEvent` exposes no commonMain constructor, so the
+   build+dispatch is a nativeMain actual. Constructs a single-pointer event and feeds it
+   to the owner's PointerInputEventProcessor. inType: 0=Move 1=Press 2=Release. */
+internal expect fun feedPointerToProcessor(
+	inOwner: androidx.compose.ui.node.ComposeOwner,
+	inType: Int,
+	inUptime: Long,
+	inX: Float,
+	inY: Float,
+)

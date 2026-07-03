@@ -130,6 +130,14 @@ fun runInputProbe() {
 	vHost.onPointer(50f, 25f, 2, 0) // release at box centre
 	println("inputtest: clickable fired on release = $vClicked")
 	println(if (vClicked) "inputtest: PASS" else "inputtest: FAIL")
+
+	// Drive the vendored PointerInputEventProcessor (upstream dispatch) — verify it
+	// doesn't crash even with no PointerInputModifierNode consumers yet.
+	vHost.onPointerRaw(50f, 25f, 0, 100L) // move
+	vHost.onPointerRaw(50f, 25f, 1, 101L) // press
+	vHost.onPointerRaw(50f, 25f, 2, 102L) // release
+	vHost.onPointerRaw(400f, 400f, 0, 103L) // move away
+	println("inputtest: pointer processor OK (no crash)")
 }
 
 // Minimal 32-bit BGRA BMP writer (top-down via negative height).

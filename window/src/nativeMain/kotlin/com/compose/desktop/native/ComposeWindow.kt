@@ -152,6 +152,9 @@ fun nativeComposeWindow(
                             popupHost.notifyOutsidePress(event.event.x, event.event.y)
                         }
                         host.onPointer(event.event.x.toFloat(), event.event.y.toFloat(), vType, vBtn)
+                        // Also drive the upstream PointerInputEventProcessor (hover / gestures via
+                        // PointerInputModifierNode). Coexists with the B6a project-node dispatch above.
+                        host.onPointerRaw(event.event.x.toFloat(), event.event.y.toFloat(), vType, SDL_GetTicks().toLong())
                     }
                     is AppEvent.MouseWheel -> {
                         host.onWheel(event.x.toFloat(), event.y.toFloat(), event.deltaX, event.deltaY)
