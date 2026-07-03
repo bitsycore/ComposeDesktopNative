@@ -17,12 +17,32 @@ This file is the shorter “here’s what a fresh session should read + do first
 - **foundation/selection vendored**: `Toggleable` + `Selectable` + `SelectableGroup`.
   Material `Switch`/`Checkbox`/`TriStateCheckbox`/`RadioButton` migrated off ad-hoc
   `.clickable{}` onto `toggleable`/`triStateToggleable`/`selectable` (proper a11y roles).
-- **Runtime-verified end-to-end** (not just compile): the demo has three injection
-  probes that push synthetic SDL mouse events through the *real* pipeline via
-  `injectMouseEvent` (`SDL_PushEvent`) → `pollEvents` → `host.onPointerRaw` → processor:
+- **B6b keyboard + text input now works** (was a hard regression — `ComposeWindow` dropped
+  `AppEvent.Key`/`TextInput` in `else->{}`, so text fields received nothing). Wired the full
+  focus path: `host.dispatchKeyEvent` → `focusOwner.dispatchKeyEvent` (onKeyEvent chain);
+  `host.dispatchTextInput` → focused node's project `OnTextInputNode`; **focus-on-click** in
+  `ComposeRootHost.onPointer` (`requestFocus` the `FocusTargetNode` under the cursor).
+- **Runtime-verified end-to-end** (not just compile): demo injection probes push synthetic SDL
+  events through the *real* pipeline (`injectMouseEvent`/`injectTextInput`/`injectKey` via
+  `SDL_PushEvent` → `pollEvents` → host):
   - `demo.exe --clicktest` → upstream `clickable` fires (**PASS**)
   - `demo.exe --toggletest` → Material `Switch` toggles via `toggleable` (**PASS**)
+  - `demo.exe --keytest` → real `BasicTextField`: click-to-focus + type "AB" + Backspace = "A" (**PASS**)
   - `demo.exe --inputtest` → project `pressable` + processor no-crash
+
+### Focus engine wiring — four things that must ALL be true (each was missing)
+
+The vendored focus engine (`FocusOwnerImpl` etc.) needs the owner to wire it up. If focus/typing
+silently does nothing, check these in order:
+1. **`root.modifier = focusOwner.modifier`** (in `ComposeRootHost.attach`) — installs the focus
+   tree root. Upstream AndroidComposeView does `.then(focusOwner.modifier)`. Missing → no focus root,
+   `requestFocus` can't build a path, key dispatch throws "Cannot obtain node coordinator".
+2. **`registerOnEndApplyChangesListener` + `onEndApplyChanges` implemented** (in `ComposeOwner`,
+   were no-ops) and **pumped each frame** (from `ComposeRootHost.measureAndLayout`) — the
+   `FocusInvalidationManager` defers its flush here; without it focus changes never apply.
+3. **`PlatformFocusOwner.requestOwnerFocus()` returns `true`** (was `false`) — `performRequestFocus`
+   denies the very first grant (`previousActiveNode == null && !requestOwnerFocus()`) otherwise.
+4. **`Dispatchers.setMain` before `ComposeOwner` construction** — see gotcha #1 below (gesture scopes).
 
 ### Two runtime gotchas that cost real debugging (keep in mind)
 
