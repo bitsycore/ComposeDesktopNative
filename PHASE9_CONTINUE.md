@@ -33,13 +33,24 @@ This file is the shorter “here’s what a fresh session should read + do first
   are now vendored too. Impl-when-needed: no-op `LocalPlatformPrefetchScheduler` + `LocalScrollCaptureInProgress`,
   `defaultLazyListBeyondBoundsItemCount=0` native actual, `placeRelativeWithLayer(IntOffset,…)` overloads,
   lazy semantics in SemanticsShim, `-opt-in=ExperimentalFoundationApi`. Real virtualized lists render.
-- **compose.foundation.text — partial**: vendored the config leaves (`KeyboardOptions`,
-  `KeyboardActions`, `InlineTextContent`). **`BasicText`/`BasicTextField` CANNOT be vendored on the
-  SDL/mingw target** — they need `ui.text.MultiParagraph`/`Paragraph`, whose only `actual`s are
-  skiko (Skia) / android; there is no Skia on mingwX64. They stay the intentional-custom
-  `TextMeasurer` render-bridge impls. Unblocking them would require writing a native `Paragraph`
-  actual over SDL_ttf/FreeType (~15 expect fns — a dedicated effort). ui.text DATA types are already
-  vendored (AnnotatedString/SpanStyle/ParagraphStyle/font/input).
+- **Text-paragraph engine — Phase 1 DONE** (the "from-scratch" wall, cracked): vendored
+  `MultiParagraph`/`MultiParagraphIntrinsics`/`Paragraph` (expect sealed interface + `Paragraph.skiko`
+  actual, which has no Skia deps)/`ParagraphIntrinsics`/`TextLayoutResult`/`PlatformMultiParagraphDraw`,
+  and wrote `SdlParagraph` — a native `Paragraph` actual **bridging upstream's text engine to the
+  project's name-based SDL `TextMeasurer`**. Real MEASUREMENT (width/height/lineCount/line-metrics/
+  getLineForOffset/getHorizontalPosition/getOffsetForPosition/getCursorRect/getBoundingBox/
+  getWordBoundary/vertical↔line). `paint()` + `drawMultiParagraph` are Phase-1 **no-ops**. Glue:
+  `createFontFamilyResolver`/`FontFamily.Resolver.resolve`/`Font.toFontFamily`/`Font.ResourceLoader.load`
+  (name-based; SdlParagraph reads `style.fontFamily` directly), project `ui.text.platform.Synchronization`.
+  Verified: `demo.exe --paragraphtest` builds a real width-wrapped `Paragraph` → **PASS** (5 lines,
+  offset↔position round-trips).
+  - **NOT yet wired to BasicText** — `BasicText`/`BasicTextField` are still the custom `TextMeasurer`
+    impls; the engine is proven standalone. **Phase 2** = implement `SdlParagraph.paint` +
+    `drawMultiParagraph` (draw glyphs onto the Compose `Canvas`), then enable upstream
+    `foundation.text.BasicText` + delete the project one + verify rendering. `BasicTextField`
+    (cursor/selection editing) is a later phase.
+  - config leaves vendored too: `KeyboardOptions`/`KeyboardActions`/`InlineTextContent`. ui.text DATA
+    types were already vendored (AnnotatedString/SpanStyle/ParagraphStyle/TextStyle/font/input).
 - **SubcomposeLayout + BoxWithConstraints vendored** (keystone) — the real
   `SubcomposeLayout.kt` (incl. `LayoutNodeSubcompositionsState`) compiled 0-error against the
   vendored LayoutNode engine + `createSubcomposition`. Retired `SubcompositionStubs.shim`.
@@ -119,7 +130,7 @@ silently does nothing, check these in order:
 | --- | ---: | ---: |
 | `core/src/commonMain/**/*.kt` | 100 | **58** |
 | `core/src/commonMain/**/*.shim.kt` | 30 | **16** |
-| `core/src/vendor/**/*.kt` | 591 | **753** |
+| `core/src/vendor/**/*.kt` | 591 | **760** |
 | `core/src/nativeMain/**/*.kt` | 48 | **59** |
 
 Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
