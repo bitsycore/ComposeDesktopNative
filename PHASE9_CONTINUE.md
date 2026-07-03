@@ -17,6 +17,19 @@ This file is the shorter “here’s what a fresh session should read + do first
 - **foundation/selection vendored**: `Toggleable` + `Selectable` + `SelectableGroup`.
   Material `Switch`/`Checkbox`/`TriStateCheckbox`/`RadioButton` migrated off ad-hoc
   `.clickable{}` onto `toggleable`/`triStateToggleable`/`selectable` (proper a11y roles).
+- **Full scroll system vendored**: `Modifier.verticalScroll`/`horizontalScroll` + `ScrollState`
+  + `Modifier.scrollable`/`Draggable` + the scrolling-logic files + `foundation/relocation/*`
+  (nested-scroll + overscroll were already vendored). Retired the project scroll system
+  (`Scroll.kt`, `ScrollAnimator.kt`, `Vertical/HorizontalScrollNode`, B6a `onWheel`). Mouse
+  wheel now flows `AppEvent.MouseWheel → host.onWheel → feedScrollToProcessor` (a
+  `PointerEventType.Scroll` event) → `MouseWheelScrollingLogic`. Native actuals in
+  `Scrollable.native.kt` (`platformScrollConfig` = dp-per-notch; fling = `splineBasedDecay`).
+  Project `LazyColumn` was already built on `verticalScroll`, so it rides the vendored engine.
+- **Node-animation frame clock**: `ComposeOwner.coroutineContext` now carries a
+  `BroadcastFrameClock` (`animationFrameClock`), pumped each frame by ComposeWindow via
+  `ComposeRootHost.sendAnimationFrame`. Node-level animations (scroll fling,
+  `animateScrollToItem`, `Animatable` inside `Modifier.Node`s) await `withFrameNanos` on it —
+  without it they hang (this is why wheel smooth-scroll needs it; wheel is currently immediate).
 - **B6b keyboard + text input now works** (was a hard regression — `ComposeWindow` dropped
   `AppEvent.Key`/`TextInput` in `else->{}`, so text fields received nothing). Wired the full
   focus path: `host.dispatchKeyEvent` → `focusOwner.dispatchKeyEvent` (onKeyEvent chain);
@@ -28,6 +41,7 @@ This file is the shorter “here’s what a fresh session should read + do first
   - `demo.exe --clicktest` → upstream `clickable` fires (**PASS**)
   - `demo.exe --toggletest` → Material `Switch` toggles via `toggleable` (**PASS**)
   - `demo.exe --keytest` → real `BasicTextField`: click-to-focus + type "AB" + Backspace = "A" (**PASS**)
+  - `demo.exe --scrolltest` → wheel scrolls a `Modifier.verticalScroll` Column to max (**PASS**)
   - `demo.exe --inputtest` → project `pressable` + processor no-crash
 
 ### Focus engine wiring — four things that must ALL be true (each was missing)
@@ -79,9 +93,9 @@ silently does nothing, check these in order:
 
 | Metric | Start of Phase 9 | Now |
 | --- | ---: | ---: |
-| `core/src/commonMain/**/*.kt` | 100 | **70** |
+| `core/src/commonMain/**/*.kt` | 100 | **68** |
 | `core/src/commonMain/**/*.shim.kt` | 30 | **20** |
-| `core/src/vendor/**/*.kt` | 591 | **665** |
+| `core/src/vendor/**/*.kt` | 591 | **679** |
 | `core/src/nativeMain/**/*.kt` | 48 | **59** |
 
 Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
