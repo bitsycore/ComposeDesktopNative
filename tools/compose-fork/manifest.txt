@@ -444,10 +444,13 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextFieldPressGestureFilter.kt               core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextFieldPressGestureFilter.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextPointerIcon.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextPointerIcon.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TouchMode.kt                                 core/src/vendor/common/kotlin/androidx/compose/foundation/text/TouchMode.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/UndoManager.kt                               core/src/vendor/common/kotlin/androidx/compose/foundation/text/UndoManager.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ValidatingOffsetMapping.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/text/ValidatingOffsetMapping.kt
 compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/AutofillHighlight.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/foundation/text/AutofillHighlight.native.kt
 compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.skiko.kt                      core/src/vendor/native/kotlin/androidx/compose/foundation/text/DeadKeyCombiner.native.kt
 compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/text/KeyEventHelpers.native.kt                    core/src/vendor/native/kotlin/androidx/compose/foundation/text/KeyEventHelpers.native.kt
 compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/KeyMapping.skiko.kt                           core/src/vendor/native/kotlin/androidx/compose/foundation/text/KeyMapping.native.kt
+compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/text/UndoManager.native.kt                        core/src/vendor/native/kotlin/androidx/compose/foundation/text/UndoManager.native.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/BasicSecureTextField.kt                    core/src/vendor/common/kotlin/androidx/compose/foundation/text/BasicSecureTextField.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/BasicText.kt                               core/src/vendor/common/kotlin/androidx/compose/foundation/text/BasicText.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/BasicTextField.kt                          core/src/vendor/common/kotlin/androidx/compose/foundation/text/BasicTextField.kt
@@ -472,8 +475,6 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/t
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextLayoutHelper.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextLayoutHelper.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextLayoutResultProxy.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextLayoutResultProxy.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/TextLinkScope.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/text/TextLinkScope.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/UndoManager.kt                             core/src/vendor/common/kotlin/androidx/compose/foundation/text/UndoManager.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/ValidatingOffsetMapping.kt                 core/src/vendor/common/kotlin/androidx/compose/foundation/text/ValidatingOffsetMapping.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/BasicSecureTextField.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/foundation/text/BasicSecureTextField.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/BasicText.skiko.kt                          core/src/vendor/native/kotlin/androidx/compose/foundation/text/BasicText.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/BasicTextField.skiko.kt                     core/src/vendor/native/kotlin/androidx/compose/foundation/text/BasicTextField.native.kt
@@ -489,7 +490,6 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/t
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/TextFieldFocusModifier.skiko.kt             core/src/vendor/native/kotlin/androidx/compose/foundation/text/TextFieldFocusModifier.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/TextFieldScrollState.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/foundation/text/TextFieldScrollState.native.kt
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/TextPointerIcon.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/foundation/text/TextPointerIcon.native.kt
-# compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/text/UndoManager.native.kt                      core/src/vendor/native/kotlin/androidx/compose/foundation/text/UndoManager.native.kt
 
 # ── androidx.compose.foundation.text.contextmenu.builder ────────────────────
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt
