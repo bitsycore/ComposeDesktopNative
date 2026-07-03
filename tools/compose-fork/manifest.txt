@@ -1274,13 +1274,13 @@ compose/ui/ui-text/src/nativeMain/kotlin/androidx/compose/ui/text/WeakReference.
 # compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/UnresolvedSymbolsRegistry.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/text/UnresolvedSymbolsRegistry.native.kt
 
 # ── androidx.compose.ui.text.font ───────────────────────────────────────────
+# compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/DelegatingFontLoaderForDeprecatedUsage.kt         core/src/vendor/common/kotlin/androidx/compose/ui/text/font/DelegatingFontLoaderForDeprecatedUsage.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontLoadingStrategy.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontLoadingStrategy.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontStyle.kt                                      core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontStyle.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontSynthesis.kt                                  core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontSynthesis.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontVariation.kt                                  core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontVariation.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontWeight.kt                                     core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontWeight.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/Typeface.kt                                       core/src/vendor/common/kotlin/androidx/compose/ui/text/font/Typeface.kt
-# compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/DelegatingFontLoaderForDeprecatedUsage.kt       core/src/vendor/common/kotlin/androidx/compose/ui/text/font/DelegatingFontLoaderForDeprecatedUsage.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/Font.kt                                         core/src/vendor/common/kotlin/androidx/compose/ui/text/font/Font.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontFamily.kt                                   core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontFamily.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/font/FontFamilyResolver.kt                           core/src/vendor/common/kotlin/androidx/compose/ui/text/font/FontFamilyResolver.kt
@@ -1299,6 +1299,7 @@ compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/EditingB
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/GapBuffer.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/text/input/GapBuffer.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/ImeAction.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/text/input/ImeAction.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/ImeOptions.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/text/input/ImeOptions.kt
+compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/InputEventCallback.kt          core/src/vendor/common/kotlin/androidx/compose/ui/text/input/InputEventCallback.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/KeyboardCapitalization.kt      core/src/vendor/common/kotlin/androidx/compose/ui/text/input/KeyboardCapitalization.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/KeyboardType.kt                core/src/vendor/common/kotlin/androidx/compose/ui/text/input/KeyboardType.kt
 compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/MathUtils.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/text/input/MathUtils.kt
@@ -1310,7 +1311,6 @@ compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/VisualTr
 compose/ui/ui-text/src/nonJvmMain/kotlin/androidx/compose/ui/text/input/GapBuffer.nonJvmMain.kt        core/src/vendor/native/kotlin/androidx/compose/ui/text/input/GapBuffer.nonJvmMain.kt
 compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/input/PlatformImeOptions.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/text/input/PlatformImeOptions.native.kt
 # compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/EditProcessor.kt             core/src/vendor/common/kotlin/androidx/compose/ui/text/input/EditProcessor.kt
-# compose/ui/ui-text/src/commonMain/kotlin/androidx/compose/ui/text/input/InputEventCallback.kt        core/src/vendor/common/kotlin/androidx/compose/ui/text/input/InputEventCallback.kt
 # compose/ui/ui-text/src/skikoMain/kotlin/androidx/compose/ui/text/input/PlatformTextInputService2.kt  core/src/vendor/native/kotlin/androidx/compose/ui/text/input/PlatformTextInputService2.kt
 
 # ── androidx.compose.ui.text.internal ───────────────────────────────────────
