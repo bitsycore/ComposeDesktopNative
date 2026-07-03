@@ -398,9 +398,9 @@ compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/p
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/relocation/BringIntoViewResponder.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/relocation/BringIntoViewResponder.kt
 
 # ── androidx.compose.foundation.selection ───────────────────────────────────
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Selectable.kt         core/src/vendor/common/kotlin/androidx/compose/foundation/selection/Selectable.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/SelectableGroup.kt    core/src/vendor/common/kotlin/androidx/compose/foundation/selection/SelectableGroup.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Toggleable.kt         core/src/vendor/common/kotlin/androidx/compose/foundation/selection/Toggleable.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Selectable.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/selection/Selectable.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/SelectableGroup.kt      core/src/vendor/common/kotlin/androidx/compose/foundation/selection/SelectableGroup.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/selection/Toggleable.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/selection/Toggleable.kt
 # compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/selection/Selectable.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/selection/Selectable.native.kt
 # compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/selection/Toggleable.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/selection/Toggleable.native.kt
 

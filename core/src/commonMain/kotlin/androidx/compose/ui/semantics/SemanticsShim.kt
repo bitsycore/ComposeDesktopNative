@@ -151,3 +151,33 @@ fun SemanticsPropertyReceiver.disabled() = Unit
 
 /* requestFocus action semantics — used by vendored Focusable. Accept-and-discard. */
 fun SemanticsPropertyReceiver.requestFocus(label: String? = null, action: (() -> Boolean)?) = Unit
+
+// ============
+//  Selection / toggle semantics — used by vendored foundation Toggleable / Selectable /
+//  SelectableGroup. Accept-and-discard (no a11y backend). booleanValue / createFromBoolean
+//  are real vendored FillableData members.
+
+var SemanticsPropertyReceiver.selected: Boolean
+	get() = false
+	set(value) = Unit
+
+var SemanticsPropertyReceiver.toggleableState: androidx.compose.ui.state.ToggleableState
+	get() = androidx.compose.ui.state.ToggleableState.Off
+	set(value) = Unit
+
+var SemanticsPropertyReceiver.contentDataType: androidx.compose.ui.autofill.ContentDataType
+	get() = androidx.compose.ui.autofill.ContentDataType.Toggle
+	set(value) = Unit
+
+var SemanticsPropertyReceiver.fillableData: androidx.compose.ui.autofill.FillableData
+	get() = error("fillableData is write-only in this semantics shim")
+	set(value) = Unit
+
+/* Autofill fill action — vendored Toggleable/Selectable attach it; discarded here. */
+fun SemanticsPropertyReceiver.onFillData(
+	label: String? = null,
+	action: ((androidx.compose.ui.autofill.FillableData) -> Boolean)?,
+) = Unit
+
+/* Marks a container as a radio-group-style single-selection group. Accept-and-discard. */
+fun SemanticsPropertyReceiver.selectableGroup() = Unit
