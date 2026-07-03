@@ -249,7 +249,15 @@ internal class ComposeOwner(
 		override fun setStylusHoverIcon(value: androidx.compose.ui.input.pointer.PointerIcon?) {}
 	}
 	override val semanticsOwner: SemanticsOwner = SemanticsOwner()
-	override val focusOwner: FocusOwner = object : FocusOwner {}
+	override val focusOwner: FocusOwner = androidx.compose.ui.focus.FocusOwnerImpl(
+		platformFocusOwner = object : androidx.compose.ui.focus.PlatformFocusOwner {
+			override fun requestOwnerFocus(focusDirection: androidx.compose.ui.focus.FocusDirection?, previouslyFocusedRect: androidx.compose.ui.geometry.Rect?): Boolean = false
+			override fun clearOwnerFocus() {}
+			override fun moveFocusInChildren(focusDirection: androidx.compose.ui.focus.FocusDirection): Boolean = false
+			override fun getEmbeddedViewFocusRect(): androidx.compose.ui.geometry.Rect? = null
+		},
+		owner = this,
+	)
 	override val windowInfo: WindowInfo = object : WindowInfo {
 		override val isWindowFocused: Boolean get() = true
 		override val containerSize: androidx.compose.ui.unit.IntSize

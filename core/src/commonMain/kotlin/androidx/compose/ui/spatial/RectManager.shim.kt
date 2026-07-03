@@ -12,4 +12,10 @@ class RectManager {
 	internal fun updateFlagsFor(node: LayoutNode, hasFocusTarget: Boolean, hasPointerInput: Boolean) {}
 	internal fun invalidateCallbacksFor(node: LayoutNode) {}
 	internal fun remove(node: LayoutNode) {}
+
+	// Focus-by-rect search (upstream RectManager spatially indexes focus targets). No spatial
+	// index here -> no candidate; focus traversal falls back to the tree walk.
+	internal fun findFocusableNodeFromRect(
+		left: Int, top: Int, right: Int, bottom: Int, containerId: Int,
+	): androidx.compose.ui.focus.FocusTargetNode? = null
 }

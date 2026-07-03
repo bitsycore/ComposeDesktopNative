@@ -61,6 +61,9 @@ class ComposeRootHost(inDensity: Float = 1f) {
 		fOwner.measureAndLayout()
 	}
 
+	// The owner's FocusOwner IS a FocusManager — the window provides it as LocalFocusManager.
+	val focusManager: androidx.compose.ui.focus.FocusManager get() = fOwner.focusOwner
+
 	// ==================
 	// MARK: Input (B6a) — hit-test + dispatch on the upstream tree
 	// ==================

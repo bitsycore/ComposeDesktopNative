@@ -769,34 +769,34 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Scale.kt           
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draw/Shadow.kt         core/src/vendor/common/kotlin/androidx/compose/ui/draw/Shadow.kt
 
 # ── androidx.compose.ui.focus ───────────────────────────────────────────────
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusDirection.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusDirection.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusState.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusState.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/PlatformFocusOwner.kt             core/src/vendor/common/kotlin/androidx/compose/ui/focus/PlatformFocusOwner.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/BeyondBoundsLayout.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/BeyondBoundsLayout.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusChangedModifier.kt         core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusChangedModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusEventModifier.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusEventModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusEventModifierNode.kt       core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusEventModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusInvalidationManager.kt     core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusInvalidationManager.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusListener.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusListener.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusManager.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusManager.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusModifier.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOrderModifier.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOrderModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOwner.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOwner.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOwnerImpl.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOwnerImpl.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusProperties.kt              core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusProperties.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusPropertiesModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusPropertiesModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequester.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequester.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequesterModifier.kt       core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequesterModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequesterModifierNode.kt   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequesterModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRestorer.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRestorer.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTargetModifierNode.kt      core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTargetModifierNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTargetNode.kt              core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTargetNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTransactions.kt            core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTransactions.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTraversal.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTraversal.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/Focusability.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/Focusability.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/OneDimensionalFocusSearch.kt    core/src/vendor/common/kotlin/androidx/compose/ui/focus/OneDimensionalFocusSearch.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/RequestChildFocus.kt            core/src/vendor/common/kotlin/androidx/compose/ui/focus/RequestChildFocus.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/TwoDimensionalFocusSearch.kt    core/src/vendor/common/kotlin/androidx/compose/ui/focus/TwoDimensionalFocusSearch.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/BeyondBoundsLayout.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/BeyondBoundsLayout.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusChangedModifier.kt         core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusChangedModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusDirection.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusDirection.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusEventModifier.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusEventModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusEventModifierNode.kt       core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusEventModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusInvalidationManager.kt     core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusInvalidationManager.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusListener.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusListener.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusManager.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusManager.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusModifier.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOrderModifier.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOrderModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOwner.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOwner.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusOwnerImpl.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusOwnerImpl.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusProperties.kt              core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusProperties.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusPropertiesModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusPropertiesModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequester.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequester.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequesterModifier.kt       core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequesterModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRequesterModifierNode.kt   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRequesterModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusRestorer.kt                core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusRestorer.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusState.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusState.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTargetModifierNode.kt      core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTargetModifierNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTargetNode.kt              core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTargetNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTransactions.kt            core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTransactions.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/FocusTraversal.kt               core/src/vendor/common/kotlin/androidx/compose/ui/focus/FocusTraversal.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/Focusability.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/focus/Focusability.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/OneDimensionalFocusSearch.kt    core/src/vendor/common/kotlin/androidx/compose/ui/focus/OneDimensionalFocusSearch.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/PlatformFocusOwner.kt           core/src/vendor/common/kotlin/androidx/compose/ui/focus/PlatformFocusOwner.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/RequestChildFocus.kt            core/src/vendor/common/kotlin/androidx/compose/ui/focus/RequestChildFocus.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/focus/TwoDimensionalFocusSearch.kt    core/src/vendor/common/kotlin/androidx/compose/ui/focus/TwoDimensionalFocusSearch.kt
 
 # ── androidx.compose.ui.geometry ────────────────────────────────────────────
 compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/CornerRadius.kt       core/src/vendor/common/kotlin/androidx/compose/ui/geometry/CornerRadius.kt

@@ -19,7 +19,7 @@ import androidx.compose.ui.node.DelegatableNode
  */
 @Suppress("UNUSED_PARAMETER")
 internal fun DelegatableNode.registerOnLayoutRectChanged(
-	inThrottleMillis: Long = 0,
-	inDebounceMillis: Long = 0,
-	inCallback: (LayoutCoordinates) -> Unit,
-) { /* phase 2 no-op */ }
+	throttleMillis: Long = 0,
+	debounceMillis: Long = 0,
+	callback: (LayoutCoordinates) -> Unit,
+): DelegatableNode.RegistrationHandle = DelegatableNode.RegistrationHandle { /* no-op */ }

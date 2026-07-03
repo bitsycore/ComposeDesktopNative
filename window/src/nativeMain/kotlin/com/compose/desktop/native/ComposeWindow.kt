@@ -95,18 +95,12 @@ fun nativeComposeWindow(
 
         val popupHost = createPopupHostState()
 
-        // B6: focus runs on the upstream FocusOwner later. For now a no-op manager
-        // so LocalFocusManager consumers compose without crashing.
-        val focusManagerProxy = object : androidx.compose.ui.focus.FocusManager {
-            override fun focusOnNode(node: Any) {}
-            override fun clearFocus() {}
-        }
-
         composition.setContent {
             CompositionLocalProvider(
                 LocalComposeNativeWindow provides composeWindow,
                 LocalPopupHost provides popupHost,
-                androidx.compose.ui.focus.LocalFocusManager provides focusManagerProxy,
+                // Real focus: the ComposeOwner's FocusOwner (a FocusManager) via the host.
+                androidx.compose.ui.focus.LocalFocusManager provides host.focusManager,
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     with(windowScope) { content() }

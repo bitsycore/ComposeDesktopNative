@@ -117,7 +117,7 @@ internal fun FocusRequesterScreen() {
 		Section("onFocusChanged standalone", "Wraps a focusable child; the observed text updates without making the wrapper focusable.") {
 			Box(
 				modifier = Modifier
-					.onFocusChanged { vObserved = if (it) "focused" else "idle" },
+					.onFocusChanged { vObserved = if (it.isFocused) "focused" else "idle" },
 			) {
 				Box(modifier = Modifier.padding(4.dp)) {
 					Text("Observed: $vObserved", color = vOnSurface, fontSize = 14.sp)
