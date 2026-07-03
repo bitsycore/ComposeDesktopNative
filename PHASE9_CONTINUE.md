@@ -25,6 +25,21 @@ This file is the shorter “here’s what a fresh session should read + do first
   `PointerEventType.Scroll` event) → `MouseWheelScrollingLogic`. Native actuals in
   `Scrollable.native.kt` (`platformScrollConfig` = dp-per-notch; fling = `splineBasedDecay`).
   Project `LazyColumn` was already built on `verticalScroll`, so it rides the vendored engine.
+- **FULL lazy system vendored** (55 files) — `foundation/lazy/layout/*` (LazyLayout engine) +
+  `foundation/lazy/*` (LazyList/LazyListState/Measure/…) + `foundation/lazy/grid/*` + the snapping
+  providers. Retired the project `LazyColumn`/`LazyRow`/`LazyVerticalGrid` + `ScrollStateExtensions`
+  — **all demo/apidemo call sites resolved with zero migration** (project API was upstream-shaped).
+  The snapping providers also brought `FinalSnappingItem`, so `AnchoredDraggable` + `SnapFlingBehavior`
+  are now vendored too. Impl-when-needed: no-op `LocalPlatformPrefetchScheduler` + `LocalScrollCaptureInProgress`,
+  `defaultLazyListBeyondBoundsItemCount=0` native actual, `placeRelativeWithLayer(IntOffset,…)` overloads,
+  lazy semantics in SemanticsShim, `-opt-in=ExperimentalFoundationApi`. Real virtualized lists render.
+- **compose.foundation.text — partial**: vendored the config leaves (`KeyboardOptions`,
+  `KeyboardActions`, `InlineTextContent`). **`BasicText`/`BasicTextField` CANNOT be vendored on the
+  SDL/mingw target** — they need `ui.text.MultiParagraph`/`Paragraph`, whose only `actual`s are
+  skiko (Skia) / android; there is no Skia on mingwX64. They stay the intentional-custom
+  `TextMeasurer` render-bridge impls. Unblocking them would require writing a native `Paragraph`
+  actual over SDL_ttf/FreeType (~15 expect fns — a dedicated effort). ui.text DATA types are already
+  vendored (AnnotatedString/SpanStyle/ParagraphStyle/font/input).
 - **SubcomposeLayout + BoxWithConstraints vendored** (keystone) — the real
   `SubcomposeLayout.kt` (incl. `LayoutNodeSubcompositionsState`) compiled 0-error against the
   vendored LayoutNode engine + `createSubcomposition`. Retired `SubcompositionStubs.shim`.
@@ -102,9 +117,9 @@ silently does nothing, check these in order:
 
 | Metric | Start of Phase 9 | Now |
 | --- | ---: | ---: |
-| `core/src/commonMain/**/*.kt` | 100 | **65** |
+| `core/src/commonMain/**/*.kt` | 100 | **60** |
 | `core/src/commonMain/**/*.shim.kt` | 30 | **18** |
-| `core/src/vendor/**/*.kt` | 591 | **689** |
+| `core/src/vendor/**/*.kt` | 591 | **748** |
 | `core/src/nativeMain/**/*.kt` | 48 | **59** |
 
 Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
