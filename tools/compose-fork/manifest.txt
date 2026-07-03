@@ -234,6 +234,7 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Arrangement.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AspectRatio.kt                   core/src/vendor/common/kotlin/androidx/compose/foundation/layout/AspectRatio.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt                           core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
+compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt            core/src/vendor/common/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ComposeFoundationLayoutFlags.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/layout/ComposeFoundationLayoutFlags.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ExperimentalFlexBoxApi.kt        core/src/vendor/common/kotlin/androidx/compose/foundation/layout/ExperimentalFlexBoxApi.kt
@@ -253,7 +254,6 @@ compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foun
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Size.kt                          core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Size.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Spacer.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Spacer.kt
 compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Visible.kt                       core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Visible.kt
-# compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt          core/src/vendor/common/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt        core/src/vendor/common/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlexBox.kt                     core/src/vendor/common/kotlin/androidx/compose/foundation/layout/FlexBox.kt
 # compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Grid.kt                        core/src/vendor/common/kotlin/androidx/compose/foundation/layout/Grid.kt
@@ -1036,6 +1036,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RemeasurementModi
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RootMeasurePolicy.kt              core/src/vendor/common/kotlin/androidx/compose/ui/layout/RootMeasurePolicy.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Ruler.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/layout/Ruler.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ScaleFactor.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/layout/ScaleFactor.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/SubcomposeLayout.kt               core/src/vendor/common/kotlin/androidx/compose/ui/layout/SubcomposeLayout.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt            core/src/vendor/common/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt             core/src/vendor/common/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/EmptyLayout.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/ui/layout/EmptyLayout.native.kt
@@ -1048,7 +1049,6 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/EmptyLayout.skiko.
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnLayoutRectChangedModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/OnLayoutRectChangedModifier.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnVisibilityChangedModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/layout/OnVisibilityChangedModifier.kt
 # compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/layout/Placeable.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/SubcomposeLayout.kt             core/src/vendor/common/kotlin/androidx/compose/ui/layout/SubcomposeLayout.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/OffsetToFocusedRect.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/layout/OffsetToFocusedRect.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/OverlayLayout.skiko.kt           core/src/vendor/native/kotlin/androidx/compose/ui/layout/OverlayLayout.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.skiko.kt      core/src/vendor/native/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.native.kt
