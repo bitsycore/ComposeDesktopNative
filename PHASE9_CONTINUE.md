@@ -25,6 +25,16 @@ This file is the shorter “here’s what a fresh session should read + do first
   `PointerEventType.Scroll` event) → `MouseWheelScrollingLogic`. Native actuals in
   `Scrollable.native.kt` (`platformScrollConfig` = dp-per-notch; fling = `splineBasedDecay`).
   Project `LazyColumn` was already built on `verticalScroll`, so it rides the vendored engine.
+- **SubcomposeLayout + BoxWithConstraints vendored** (keystone) — the real
+  `SubcomposeLayout.kt` (incl. `LayoutNodeSubcompositionsState`) compiled 0-error against the
+  vendored LayoutNode engine + `createSubcomposition`. Retired `SubcompositionStubs.shim`.
+  Unblocks lazy-layout / pager next.
+- **Gesture family + ContextualFlowLayout vendored** — `Transformable` (pinch/zoom/rotate),
+  `Draggable2D`, `Scrollable2D`, `ContextualFlowLayout` (retired `ContextualFlowLayoutStubs.shim`).
+  `AnchoredDraggable` deferred (pulls `FinalSnappingItem` from the upstream-lazy SnapLayoutInfoProviders).
+- **Animation transitions vendored** — `EnterExitTransition` (fadeIn/Out, slideIn/Out, expand/shrink,
+  scaleIn/Out), `AnimatedVisibility`, `AnimatedContent`, `Modifier.animateContentSize`. Retired the
+  project `ExperimentalAnimationApi.kt` stub.
 - **Node-animation frame clock**: `ComposeOwner.coroutineContext` now carries a
   `BroadcastFrameClock` (`animationFrameClock`), pumped each frame by ComposeWindow via
   `ComposeRootHost.sendAnimationFrame`. Node-level animations (scroll fling,
@@ -92,9 +102,9 @@ silently does nothing, check these in order:
 
 | Metric | Start of Phase 9 | Now |
 | --- | ---: | ---: |
-| `core/src/commonMain/**/*.kt` | 100 | **68** |
-| `core/src/commonMain/**/*.shim.kt` | 30 | **20** |
-| `core/src/vendor/**/*.kt` | 591 | **679** |
+| `core/src/commonMain/**/*.kt` | 100 | **65** |
+| `core/src/commonMain/**/*.shim.kt` | 30 | **18** |
+| `core/src/vendor/**/*.kt` | 591 | **689** |
 | `core/src/nativeMain/**/*.kt` | 48 | **59** |
 
 Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
@@ -118,7 +128,7 @@ Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
 
 ## The remaining commonMain
 
-### 20 shims still in place
+### 18 shims still in place
 
 | Shim | Blocks / retires when… |
 | --- | --- |
