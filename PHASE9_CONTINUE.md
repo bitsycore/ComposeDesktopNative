@@ -250,3 +250,25 @@ apidemo/build/bin/macosArm64/debugExecutable/apidemo.kexe
   StringHelpers.nonJvm) call JVM-only APIs and need a project-side rewrite.
 - **`git stash -u`** to include untracked files (freshly created vendor
   files, new shims) when comparing before/after.
+
+## Progress 2026-07-03 (continuation session, Windows)
+
+Vendor tree was stale on this machine (gitignored) — re-synced to 630 files. Then, per the
+"vendor everything / commonMain empty" mandate + "follow the Compose way":
+
+- **Vendored `GraphicsLayerScope.kt`** (ROI #1) — retired `DefaultCameraDistance.shim.kt`; removed
+  the project GraphicsLayerScope/ReusableGraphicsLayerScope/GraphicsLayerScopeImpl, kept the
+  ui.graphics `CompositingStrategy` + `Modifier.graphicsLayer` factories (block form uses the
+  vendored ReusableGraphicsLayerScope). Unblocks upstream Shadow + animation graphicsLayer{}.
+- **Vendored `TextFieldValue.kt`** — clean (AnnotatedString + TextRange already vendored).
+- **Vendored `FontVariation.kt` + migrated the axis API the Compose way** — `List<FontVariation>` →
+  `List<FontVariation.Setting>` everywhere; FreeType renderers use `Setting.axisName` +
+  `toVariationValue(density)` (was project `axisTag`/`value`); material Icon/Text build axes via
+  `FontVariation.Setting("FILL"/"wght"/"GRAD"/"opsz", v)`. Icons screen verified (weight/fill/grade/opsz
+  all render correctly through FreeType).
+- **Vendored `Popup.kt` + wrote `Popup.native.kt` actual** — expect `PopupProperties` (2 ctors) +
+  `Popup` x2 overloads; actual ports the project PopupHost-backed overlay. (Did the impl, didn't revert.)
+
+Counts: `#2 Shape.createOutline` was already done (Shape vendored). commonMain **82 → 78 .kt**,
+shims **25 → 24**, vendor **626 → 630**. Full mingw graph green; Buttons/Icons render; `main` untouched.
+Rejected: enabling FontVariation/Popup as plain vendors without the migration/actual (needed real work).
