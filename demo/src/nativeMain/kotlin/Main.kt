@@ -45,6 +45,12 @@ fun main(args: Array<String>) {
         runClickTest()
         return
     }
+    // Verifies vendored foundation.selection: a real Switch (Modifier.toggleable) flips state
+    // when a synthetic click is injected through the live pipeline.
+    if (args.any { it == "--toggletest" }) {
+        runToggleTest()
+        return
+    }
 
     val vCli = parseArgs(args)
     val vTitle = buildString {
@@ -141,6 +147,43 @@ private fun runClickTest() {
                     .clickable { vClicks++; println("clicktest: onClick fired -> $vClicks") },
             ) {
                 Text("Click test", color = Color.White, fontSize = 16.sp)
+            }
+        }
+    }
+}
+
+/* Same injection harness as clicktest, but the target is a Material Switch (Modifier.toggleable
+   from the vendored foundation.selection). Asserts onCheckedChange flipped the state — proving
+   toggleable rides the same verified upstream interaction path as clickable. */
+private fun runToggleTest() {
+    var vChecked = false
+    var vChanges = 0
+    nativeComposeWindow(
+        title = "toggletest",
+        width = 400,
+        height = 300,
+        onFrame = { _, frameIndex ->
+            when (frameIndex) {
+                20 -> { com.compose.desktop.native.injectMouseEvent(0, 200f, 150f); true }
+                26 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 150f); true }
+                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 150f); true }
+                70 -> {
+                    println(
+                        if (vChanges > 0 && vChecked) "toggletest: PASS (switch toggled to $vChecked via toggleable)"
+                        else "toggletest: FAIL (changes=$vChanges checked=$vChecked)"
+                    )
+                    false
+                }
+                else -> true
+            }
+        },
+    ) {
+        MaterialTheme(colors = darkColors()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.material.Switch(
+                    checked = vChecked,
+                    onCheckedChange = { vChecked = it; vChanges++; println("toggletest: onCheckedChange -> $it") },
+                )
             }
         }
     }

@@ -1,7 +1,8 @@
 package androidx.compose.material
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -49,7 +50,7 @@ fun Switch(
         .height(SwitchDefaults.TrackHeight)
         .background(vTrackColor, RoundedCornerShape(50))
     if (onCheckedChange != null) {
-        m = m.clickable { if (enabled) onCheckedChange(!checked) }
+        m = m.toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
     }
 
     Box(modifier = m, contentAlignment = Alignment.CenterStart) {

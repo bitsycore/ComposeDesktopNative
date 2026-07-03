@@ -2,7 +2,8 @@ package androidx.compose.material
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -38,7 +39,7 @@ fun RadioButton(
         .size(RadioButtonDefaults.Size)
         .border(2.dp, vRing, CircleShape)
     if (onClick != null) {
-        m = m.clickable { if (enabled) onClick() }
+        m = m.selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
     }
 
     Box(modifier = m, contentAlignment = Alignment.Center) {

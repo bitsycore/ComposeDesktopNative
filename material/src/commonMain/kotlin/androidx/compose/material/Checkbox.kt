@@ -3,7 +3,9 @@ package androidx.compose.material
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.triStateToggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -49,7 +51,7 @@ fun Checkbox(
         .background(vBox, CheckboxDefaults.Shape)
         .border(2.dp, vBorderColor, CheckboxDefaults.Shape)
     if (onCheckedChange != null) {
-        m = m.clickable { if (enabled) onCheckedChange(!checked) }
+        m = m.toggleable(value = checked, enabled = enabled, role = Role.Checkbox, onValueChange = onCheckedChange)
     }
 
     Box(modifier = m, contentAlignment = Alignment.Center) {
@@ -129,7 +131,7 @@ fun TriStateCheckbox(
         .background(vBox, CheckboxDefaults.Shape)
         .border(2.dp, vBorderColor, CheckboxDefaults.Shape)
     if (onClick != null) {
-        m = m.clickable { if (enabled) onClick() }
+        m = m.triStateToggleable(state = state, enabled = enabled, role = Role.Checkbox, onClick = onClick)
     }
 
     Box(modifier = m, contentAlignment = Alignment.Center) {
