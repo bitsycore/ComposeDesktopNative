@@ -54,7 +54,7 @@ fun Icon(
     modifier: Modifier = Modifier,
     tint: Color = IconDefaults.LocalContentColor,
     size: Dp = IconDefaults.DefaultIconSize,
-    fontVariationSettings: List<FontVariation>? = null,
+    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     Box(modifier = modifier.size(size)) {
         Text(
@@ -101,7 +101,7 @@ fun MaterialIconAxes(
     weight: Int = MaterialIconAxisDefaults.Weight,
     grade: Int = MaterialIconAxisDefaults.Grade,
     opticalSize: Int = MaterialIconAxisDefaults.OpticalSize,
-): List<FontVariation> {
+): List<FontVariation.Setting> {
     // All four at default → empty list → renderer reuses the base typeface
     // (no makeClone). Only the axes the caller actually moved off-default
     // would need cloning, but variable fonts treat each axis as independent
@@ -115,10 +115,10 @@ fun MaterialIconAxes(
         return emptyList()
     }
     return listOf(
-        FontVariation.Fill(fill),
-        FontVariation.Weight(weight),
-        FontVariation.Grade(grade),
-        FontVariation.OpticalSize(opticalSize),
+        FontVariation.Setting("FILL", fill.toFloat()),
+        FontVariation.Setting("wght", weight.toFloat()),
+        FontVariation.Setting("GRAD", grade.toFloat()),
+        FontVariation.Setting("opsz", opticalSize.toFloat()),
     )
 }
 

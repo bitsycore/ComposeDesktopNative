@@ -31,7 +31,7 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation>? = null,
+    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     // BasicText is selection-aware: inside a SelectionContainer it joins the
     // drag-select + copy path automatically (keeping full styling); outside it's
@@ -72,7 +72,7 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation>? = null,
+    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     // Fast path: when every span is colour-only (the common case — syntax
     // highlighting), render the whole thing as ONE BasicText. BasicText paints
@@ -241,8 +241,8 @@ private fun familyName(inFamily: androidx.compose.ui.text.font.FontFamily?): Str
    weight is set on the span. */
 private fun extractFontVariations(
     inSpan: SpanStyle,
-    inFallback: List<FontVariation>?,
-): List<FontVariation>? {
+    inFallback: List<FontVariation.Setting>?,
+): List<FontVariation.Setting>? {
     val vWeight = inSpan.fontWeight?.weight ?: return inFallback
-    return listOf(FontVariation.Weight(vWeight))
+    return listOf(FontVariation.Setting("wght", vWeight.toFloat()))
 }

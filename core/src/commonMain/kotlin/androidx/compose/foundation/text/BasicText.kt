@@ -45,7 +45,7 @@ fun BasicText(
     style: TextStyle = TextStyle.Default,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation>? = null,
+    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     val (vColor, vSize, vAlign) = resolveTextStyle(style)
     BasicTextLayer(text, null, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
@@ -64,7 +64,7 @@ fun BasicText(
     style: TextStyle = TextStyle.Default,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation>? = null,
+    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     val (vColor, vSize, vAlign) = resolveTextStyle(style)
     BasicTextLayer(text.text, text.spanStyles, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
@@ -99,7 +99,7 @@ private fun BasicTextLayer(
     textAlign: TextAlign,
     softWrap: Boolean,
     fontFamily: String?,
-    fontVariationSettings: List<FontVariation>?,
+    fontVariationSettings: List<FontVariation.Setting>?,
     selectionColor: Color = Color(0x661E88E5L),
 ) {
     val vReg = LocalSelectionRegistrar.current
@@ -191,7 +191,7 @@ private fun TextLeaf(
     textAlign: TextAlign,
     softWrap: Boolean,
     fontFamily: String?,
-    fontVariationSettings: List<FontVariation>?,
+    fontVariationSettings: List<FontVariation.Setting>?,
 ) {
     // Phase 9 B5: build an upstream LayoutNode via the vendored Layout — sized by the
     // installed TextMeasurer, drawn by a TextDrawNode (DrawModifierNode) that bridges

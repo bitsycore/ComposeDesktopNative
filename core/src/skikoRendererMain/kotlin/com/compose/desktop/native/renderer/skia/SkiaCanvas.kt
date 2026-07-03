@@ -145,7 +145,7 @@ internal class SkiaCanvas(
 		inTextAlign: androidx.compose.ui.text.style.TextAlign,
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
-		inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?,
+		inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?,
 	) {
 		fTextRenderer?.drawText(
 			inCanvas = fCanvas,

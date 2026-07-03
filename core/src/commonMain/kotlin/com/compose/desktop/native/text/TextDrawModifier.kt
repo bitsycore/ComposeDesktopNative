@@ -38,7 +38,7 @@ interface NativeTextCanvas {
 		inTextAlign: TextAlign,
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
-		inFontVariations: List<FontVariation>?,
+		inFontVariations: List<FontVariation.Setting>?,
 	)
 }
 
@@ -51,7 +51,7 @@ internal data class TextDrawElement(
 	val textAlign: TextAlign,
 	val softWrap: Boolean,
 	val fontFamily: String?,
-	val fontVariations: List<FontVariation>?,
+	val fontVariations: List<FontVariation.Setting>?,
 ) : ModifierNodeElement<TextDrawNode>() {
 
 	override fun create(): TextDrawNode =
@@ -78,7 +78,7 @@ internal class TextDrawNode(
 	var textAlign: TextAlign,
 	var softWrap: Boolean,
 	var fontFamily: String?,
-	var fontVariations: List<FontVariation>?,
+	var fontVariations: List<FontVariation.Setting>?,
 ) : Modifier.Node(), DrawModifierNode {
 
 	override fun ContentDrawScope.draw() {

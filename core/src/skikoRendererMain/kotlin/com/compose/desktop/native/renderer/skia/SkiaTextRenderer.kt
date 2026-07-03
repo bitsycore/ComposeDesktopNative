@@ -58,11 +58,11 @@ class SkiaTextRenderer {
        default-font slot. */
     private data class TypefaceKey(val family: String?, val variations: String)
 
-    private fun variationsKey(inV: List<ComposeFontVariation>?): String {
+    private fun variationsKey(inV: List<ComposeFontVariation.Setting>?): String {
         if (inV.isNullOrEmpty()) return ""
         // Sort by tag so equivalent settings hash the same regardless of
         // caller-supplied order.
-        return inV.sortedBy { it.axisTag }.joinToString(",") { "${it.axisTag}=${it.value}" }
+        return inV.sortedBy { it.axisName }.joinToString(",") { "${it.axisName}=${it.toVariationValue(null)}" }
     }
 
     // Per-family + variations typeface cache. Default font (key family=null,
@@ -86,7 +86,7 @@ class SkiaTextRenderer {
        (or we get a FreeType-backed FontMgr) we estimate widths from the char
        class. font.metrics is safe to read — it doesn't trigger glyph lookup. */
     val textMeasurer: TextMeasurer = object : TextMeasurer {
-        override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation>?): IntSize {
+        override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation.Setting>?): IntSize {
             val vKey = TypefaceKey(inFontFamily, variationsKey(inFontVariations))
             val vFont = getFont(vKey, inFontFamily, inFontVariations, inFontSize)
             val vMetrics = vFont.metrics
@@ -97,10 +97,10 @@ class SkiaTextRenderer {
             return IntSize(vWidth, vLineHeight * vWrap.lines.size.coerceAtLeast(1))
         }
 
-        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation>?): WrappedText =
+        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation.Setting>?): WrappedText =
             wrapTextWithStarts(inText, inFontSize, inMaxWidth, inFontFamily, inFontVariations)
 
-        override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation>?): Float {
+        override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<ComposeFontVariation.Setting>?): Float {
             val vKey = TypefaceKey(inFontFamily, variationsKey(inFontVariations))
             val vMetrics = getFont(vKey, inFontFamily, inFontVariations, inFontSize).metrics
             return (vMetrics.descent - vMetrics.ascent).coerceAtLeast(1f)
@@ -119,7 +119,7 @@ class SkiaTextRenderer {
         inAlign: TextAlign = TextAlign.Start,
         inSoftWrap: Boolean = true,
         inFontFamily: String? = null,
-        inFontVariations: List<ComposeFontVariation>? = null,
+        inFontVariations: List<ComposeFontVariation.Setting>? = null,
         inSpans: List<Range<SpanStyle>>? = null,
         // Pre-computed wrap (cached on the ProjectLayoutNode by the measure pass) so a
         // huge body isn't re-wrapped here every frame. Null = wrap inline.
@@ -203,7 +203,7 @@ class SkiaTextRenderer {
        whitespace (the trailing whitespace stays attached to the preceding
        word so original-text length is preserved per hard line). Impossibly
        long words split mid-word. maxWidth >= half Int.MAX_VALUE = no wrap. */
-    private fun wrapTextWithStarts(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String? = null, inFontVariations: List<ComposeFontVariation>? = null): WrappedText {
+    private fun wrapTextWithStarts(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String? = null, inFontVariations: List<ComposeFontVariation.Setting>? = null): WrappedText {
         if (inText.isEmpty()) return WrappedText(listOf(""), intArrayOf(0))
         val vLines = mutableListOf<String>()
         val vStarts = mutableListOf<Int>()
@@ -236,7 +236,7 @@ class SkiaTextRenderer {
         outLines: MutableList<String>,
         outStarts: MutableList<Int>,
         inFontFamily: String? = null,
-        inFontVariations: List<ComposeFontVariation>? = null,
+        inFontVariations: List<ComposeFontVariation.Setting>? = null,
     ) {
         var vCurrent = StringBuilder()
         var vLineStartInHard = 0 // start of the current sub-line within inLine
@@ -289,7 +289,7 @@ class SkiaTextRenderer {
        resulting layout no longer clips text inside Button / centered
        containers. Cached per (text, fontSize) since the wrap algorithm
        queries the same prefixes many times. */
-    private fun estimateTextWidth(inText: String, inFontSize: Int, inFontFamily: String? = null, inFontVariations: List<ComposeFontVariation>? = null): Int {
+    private fun estimateTextWidth(inText: String, inFontSize: Int, inFontFamily: String? = null, inFontVariations: List<ComposeFontVariation.Setting>? = null): Int {
         if (inText.isEmpty()) return 0
         val vKey = TypefaceKey(inFontFamily, variationsKey(inFontVariations))
         // Key tab-containing text by the current tab width so changing "tab
@@ -317,7 +317,7 @@ class SkiaTextRenderer {
         fTypefaceCache.clear()
     }
 
-    private fun getFont(inKey: TypefaceKey, inFamily: String?, inVariations: List<ComposeFontVariation>?, inSize: Int): Font {
+    private fun getFont(inKey: TypefaceKey, inFamily: String?, inVariations: List<ComposeFontVariation.Setting>?, inSize: Int): Font {
         fFontCache[inKey to inSize]?.let { return it }
         val vTypeface = resolveTypeface(inKey, inFamily, inVariations) ?: fTypeface
         val vFont = Font(vTypeface, inSize.toFloat())
@@ -328,7 +328,7 @@ class SkiaTextRenderer {
     /* Looks up a registered IconFont typeface by family name and applies any
        variable-font axes via Typeface.makeClone. Caches the result (including
        failure → null) so we don't re-open or re-clone per frame. */
-    private fun resolveTypeface(inKey: TypefaceKey, inFamily: String?, inVariations: List<ComposeFontVariation>?): Typeface? {
+    private fun resolveTypeface(inKey: TypefaceKey, inFamily: String?, inVariations: List<ComposeFontVariation.Setting>?): Typeface? {
         fTypefaceCache[inKey]?.let { return it }
         if (fTypefaceCache.containsKey(inKey)) return null  // cached miss
 
@@ -359,7 +359,7 @@ class SkiaTextRenderer {
         // Clone with the requested axes. makeClone returns a new ref-counted
         // Typeface; we own it until destroy() closes the cache.
         val vSkiaVars: Array<SkiaFontVariation> = inVariations.map {
-            SkiaFontVariation(it.axisTag, it.value)
+            SkiaFontVariation(it.axisName, it.toVariationValue(null))
         }.toTypedArray()
         val vCloned = runCatching { vBase.makeClone(vSkiaVars) }.getOrNull()
             ?: vBase  // fallback to base if the font has no variable axes

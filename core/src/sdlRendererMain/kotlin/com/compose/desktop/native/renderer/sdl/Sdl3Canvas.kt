@@ -221,7 +221,7 @@ internal class Sdl3Canvas(
 		inTextAlign: androidx.compose.ui.text.style.TextAlign,
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
-		inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?,
+		inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?,
 	) {
 		fScope.flush()
 		fTextRenderer?.drawText(

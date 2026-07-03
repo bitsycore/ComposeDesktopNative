@@ -35,7 +35,7 @@ interface TextMeasurer {
 		inFontSize: Int,
 		inMaxWidth: Int = Int.MAX_VALUE,
 		inFontFamily: String? = null,
-		inFontVariations: List<FontVariation>? = null,
+		inFontVariations: List<FontVariation.Setting>? = null,
 	): IntSize
 
 	/* Wrapped lines + the original-text offset where each begins. */
@@ -44,7 +44,7 @@ interface TextMeasurer {
 		inFontSize: Int,
 		inMaxWidth: Int = Int.MAX_VALUE,
 		inFontFamily: String? = null,
-		inFontVariations: List<FontVariation>? = null,
+		inFontVariations: List<FontVariation.Setting>? = null,
 	): WrappedText
 
 	/* Exact line height the renderer uses for this fontSize, as a Float so
@@ -53,7 +53,7 @@ interface TextMeasurer {
 	fun lineHeight(
 		inFontSize: Int,
 		inFontFamily: String? = null,
-		inFontVariations: List<FontVariation>? = null,
+		inFontVariations: List<FontVariation.Setting>? = null,
 	): Float
 }
 
@@ -62,11 +62,11 @@ interface TextMeasurer {
 // ==================
 
 private val kFallbackTextMeasurer = object : TextMeasurer {
-	override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<FontVariation>?): IntSize {
+	override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<FontVariation.Setting>?): IntSize {
 		val vCharW = (inFontSize * 0.6f).toInt().coerceAtLeast(1)
 		return IntSize(vCharW * inText.length, (inFontSize * 1.3f).toInt())
 	}
-	override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<FontVariation>?): WrappedText {
+	override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<FontVariation.Setting>?): WrappedText {
 		val vLines = if (inText.isEmpty()) listOf("") else inText.split('\n')
 		val vStarts = IntArray(vLines.size)
 		var vAcc = 0
@@ -76,7 +76,7 @@ private val kFallbackTextMeasurer = object : TextMeasurer {
 		}
 		return WrappedText(vLines, vStarts)
 	}
-	override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<FontVariation>?): Float = inFontSize * 1.3f
+	override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<FontVariation.Setting>?): Float = inFontSize * 1.3f
 }
 
 var currentTextMeasurer: TextMeasurer = kFallbackTextMeasurer

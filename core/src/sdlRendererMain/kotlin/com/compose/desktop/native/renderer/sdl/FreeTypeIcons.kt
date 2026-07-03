@@ -151,7 +151,7 @@ internal class FreeTypeIcons {
 		inCodepoint: Int,
 		inPixelSize: Int,
 		inColor: ComposeColor,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 		inBoxX: Int,
 		inBoxY: Int,
 		inBoxW: Int,
@@ -260,7 +260,7 @@ internal class FreeTypeIcons {
 	private fun getOrCreateVariant(
 		inFamily: String,
 		inFamilyState: FamilyState,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 		inVariationsKey: String,
 	): Variant? {
 		val vKey = VariantKey(inFamily, inVariationsKey)
@@ -288,8 +288,8 @@ internal class FreeTypeIcons {
 				val vCoords = allocArray<FT_FixedVar>(vCount)
 				for (i in 0 until vCount) vCoords[i] = inFamilyState.defaultCoords[i].convert()
 				for (vVar in inVariations) {
-					val vIdx = inFamilyState.axisIndexByTag[vVar.axisTag] ?: continue
-					vCoords[vIdx] = (vVar.value.toDouble() * 65536.0).toLong().convert()
+					val vIdx = inFamilyState.axisIndexByTag[vVar.axisName] ?: continue
+					vCoords[vIdx] = (vVar.toVariationValue(null).toDouble() * 65536.0).toLong().convert()
 				}
 				FT_Set_Var_Design_Coordinates(vFace, vCount.convert(), vCoords)
 			}
@@ -306,7 +306,7 @@ internal class FreeTypeIcons {
 		inCodepoint: Int,
 		inPixelSize: Int,
 		inColor: ComposeColor,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 		inVariationsKey: String,
 	): CachedGlyph? {
 		val vFamily = resolveFamily(inFamily) ?: return null
@@ -317,7 +317,7 @@ internal class FreeTypeIcons {
 		// cleanly. For the common case (no fill) render at the EXACT target
 		// size with FreeType's own anti-aliasing — far crisper at UI sizes
 		// than a 2× render boxed back down. Filled icons keep the 2× path.
-		val vFilled = inVariations.any { it.axisTag == "FILL" && it.value > 0f }
+		val vFilled = inVariations.any { it.axisName == "FILL" && it.toVariationValue(null) > 0f }
 		val vSS = if (vFilled) kSupersampleFactor else 1
 		val vRenderPx = inPixelSize * vSS
 		if (vVariant.pixelSize != vRenderPx) {
@@ -479,9 +479,9 @@ internal class FreeTypeIcons {
 	// ============
 	//  Helpers
 
-	private fun variationsKey(inV: List<FontVariation>): String {
+	private fun variationsKey(inV: List<FontVariation.Setting>): String {
 		if (inV.isEmpty()) return ""
-		return inV.sortedBy { it.axisTag }.joinToString(",") { "${it.axisTag}=${it.value}" }
+		return inV.sortedBy { it.axisName }.joinToString(",") { "${it.axisName}=${it.toVariationValue(null)}" }
 	}
 
 	/* Unpacks a packed 32-bit OpenType tag into its 4-char ASCII string. */

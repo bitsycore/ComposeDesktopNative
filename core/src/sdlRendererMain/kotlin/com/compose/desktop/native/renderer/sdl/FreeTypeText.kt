@@ -143,7 +143,7 @@ internal class FreeTypeText {
 		inText: String,
 		inPixelSize: Int,
 		inColor: ComposeColor,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 		inX: Float,
 		inY: Float,
 		inDpr: Float,
@@ -186,7 +186,7 @@ internal class FreeTypeText {
 		inFamily: String?,
 		inText: String,
 		inPixelSize: Int,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 	): Int {
 		if (fLibrary == null && !init()) return 0
 		if (inText.isEmpty()) return 0
@@ -214,7 +214,7 @@ internal class FreeTypeText {
 	fun lineHeight(
 		inFamily: String?,
 		inPixelSize: Int,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 	): Float {
 		if (fLibrary == null && !init()) return inPixelSize * 1.3f
 		val vFamilyKey = inFamily ?: ""
@@ -278,7 +278,7 @@ internal class FreeTypeText {
 	private fun getOrCreateVariant(
 		inFamily: String,
 		inState: FamilyState,
-		inVariations: List<FontVariation>,
+		inVariations: List<FontVariation.Setting>,
 		inVariationsKey: String,
 	): Variant? {
 		val vKey = VariantKey(inFamily, inVariationsKey)
@@ -298,9 +298,9 @@ internal class FreeTypeText {
 				val vCoords = allocArray<FT_FixedVar>(inState.defaultCoords.size)
 				for (vI in inState.defaultCoords.indices) vCoords[vI] = inState.defaultCoords[vI].convert()
 				for (vVar in inVariations) {
-					val vIdx = inState.axisIndexByTag[vVar.axisTag] ?: continue
+					val vIdx = inState.axisIndexByTag[vVar.axisName] ?: continue
 					// Convert float → 16.16 fixed-point font units.
-					vCoords[vIdx] = (vVar.value * 65536f).toLong().convert()
+					vCoords[vIdx] = (vVar.toVariationValue(null) * 65536f).toLong().convert()
 				}
 				FT_Set_Var_Design_Coordinates(vFace, inState.defaultCoords.size.convert(), vCoords)
 			}
@@ -421,9 +421,9 @@ internal class FreeTypeText {
 	// ============
 	//  Helpers
 
-	private fun variationsKey(inV: List<FontVariation>): String {
+	private fun variationsKey(inV: List<FontVariation.Setting>): String {
 		if (inV.isEmpty()) return ""
-		return inV.sortedBy { it.axisTag }.joinToString(",") { "${it.axisTag}=${it.value}" }
+		return inV.sortedBy { it.axisName }.joinToString(",") { "${it.axisName}=${it.toVariationValue(null)}" }
 	}
 
 	private fun tagFromInt(inTag: Int): String {

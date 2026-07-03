@@ -135,7 +135,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // gets painted. Without this, layout uses unweighted glyph
         // widths and the paint then renders wider weighted glyphs,
         // producing visible right-edge clipping.
-        override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?): IntSize {
+        override fun measure(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?): IntSize {
             val vWrap = wrap(inText, inFontSize, inMaxWidth, inFontFamily, inFontVariations)
             val vWidth = if (vWrap.lines.isEmpty()) 0
                          else vWrap.lines.maxOf { measureWidth(it, inFontSize, inFontFamily, inFontVariations) }
@@ -143,10 +143,10 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             return IntSize(vWidth, vLine * vWrap.lines.size.coerceAtLeast(1))
         }
 
-        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?): WrappedText =
+        override fun wrap(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?): WrappedText =
             wrapTextWithStarts(inText, inFontSize, inMaxWidth, inFontFamily, inFontVariations)
 
-        override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?): Float {
+        override fun lineHeight(inFontSize: Int, inFontFamily: String?, inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?): Float {
             if (shouldUseFreeTypeText(inFontFamily, inFontVariations)) {
                 return fFreeTypeText.lineHeight(inFontFamily, inFontSize, inFontVariations!!)
             }
@@ -162,7 +162,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
        through to SDL3_ttf. */
     private fun shouldUseFreeTypeText(
         inFontFamily: String?,
-        inFontVariations: List<androidx.compose.ui.text.font.FontVariation>?,
+        inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?,
     ): Boolean {
         if (inFontVariations.isNullOrEmpty()) return false
         // IconFont families have their own variable-axis path.
@@ -173,7 +173,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
     /* Greedy soft-wrap that mirrors the Skia renderer's algorithm so the
        cross-platform behaviour stays identical. Hard lines on '\n'; long
        lines split at whitespace, ultra-long words split mid-word. */
-    private fun wrapTextWithStarts(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String? = null, inFontVariations: List<androidx.compose.ui.text.font.FontVariation>? = null): WrappedText {
+    private fun wrapTextWithStarts(inText: String, inFontSize: Int, inMaxWidth: Int, inFontFamily: String? = null, inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null): WrappedText {
         if (inText.isEmpty()) return WrappedText(listOf(""), intArrayOf(0))
         val vLines = mutableListOf<String>()
         val vStarts = mutableListOf<Int>()
@@ -203,7 +203,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         outLines: MutableList<String>,
         outStarts: MutableList<Int>,
         inFontFamily: String? = null,
-        inFontVariations: List<androidx.compose.ui.text.font.FontVariation>? = null,
+        inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null,
     ) {
         var vCurrent = StringBuilder()
         var vLineStartInHard = 0
@@ -263,7 +263,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inText: String,
         inFontSize: Int,
         inFontFamily: String? = null,
-        inFontVariations: List<androidx.compose.ui.text.font.FontVariation>? = null,
+        inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null,
     ): Int {
         if (inText.isEmpty()) return 0
         // Tabs → spaces for measurement (width-only; original '\t' kept).
@@ -311,7 +311,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inFontSize: Int,
         inAlign: TextAlign,
         inFontFamily: String? = null,
-        inFontVariations: List<androidx.compose.ui.text.font.FontVariation>? = null,
+        inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null,
         inSpans: List<Range<SpanStyle>>? = null,
         inTextStart: Int = 0,
     ) {
