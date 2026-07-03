@@ -1,6 +1,6 @@
 # Phase 9 — Continuation Guide
 
-State of the `phase9` branch after the current sprint (46 commits ahead of origin,
+State of the `phase9` branch after the current sprint (116 commits ahead of main,
 Buttons runtime hash `ce15decb83c3bb7ba44660cd9002408c` preserved throughout).
 
 Full history / rationale lives in [`NODE_ENGINE_PORT.md`](NODE_ENGINE_PORT.md).
@@ -82,10 +82,9 @@ silently does nothing, check these in order:
   macOS default (Skia Metal) renders through the upstream pipeline.
   Gradient shaders currently fall back to solid color; other draw ops match
   Sdl3Canvas scope.
-- **Scroll** works: `VerticalScrollNode` / `HorizontalScrollNode` are now
-  `LayoutModifierNode + DrawModifierNode` — they measure content with
-  infinite scroll-axis constraint, place with `-scrollOffset`, and clipRect
-  the viewport in draw.
+- **Scroll** works via the **vendored upstream** `Modifier.verticalScroll`/`scrollable`
+  (the project `Vertical/HorizontalScrollNode` were retired — see Latest sprint). Mouse
+  wheel routes through the pointer processor → `MouseWheelScrollingLogic`.
 - **Pink-screen bugs fixed twice**: per-frame clear at physical DPR scale
   before the DPR transform, on both SDL and Skia backends.
 
@@ -119,7 +118,7 @@ Full mingwX64 (SDL) + macOS-Skia + macOS-sdl3 graph is compile-green.
 
 ## The remaining commonMain
 
-### 25 shims still in place
+### 20 shims still in place
 
 | Shim | Blocks / retires when… |
 | --- | --- |
