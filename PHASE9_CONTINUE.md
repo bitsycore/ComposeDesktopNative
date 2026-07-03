@@ -292,3 +292,29 @@ Call sites are few (hoverable 1, clickable 8, focusable 4), so the widget migrat
 
 The clean leaf-vendors are exhausted — every remaining project commonMain `androidx.compose.*` file is either
 engine-blocked (pointer/focus/text-layout/measure) or intentional-custom project glue.
+
+## Pointer-input engine sprint DONE (2026-07-03) — hover on the upstream engine ✅
+
+Vendored the pointer DISPATCH engine + wired it + migrated hover to it:
+- **HitPathTracker + PointerInputEventProcessor** vendored (retires `PositionCalculator.shim` — the
+  processor defines PositionCalculator/MatrixPositionCalculator). The key was deleting that shim
+  (it duplicated the processor's declarations → 126-err cascade before).
+- **Wired live**: `ComposeOwner` holds `PointerInputEventProcessor(root)` + `processPointerInput()`;
+  `ComposeRootHost.onPointerRaw` builds the internal PointerInputEvent via a nativeMain expect/actual
+  (`feedPointerToProcessor`, since the expect PointerInputEvent has no commonMain ctor); `ComposeWindow`
+  drives it from AppEvent.Pointer alongside the B6a project dispatch. `ComposeOwner.coroutineContext =
+  Dispatchers.Main` so HoverableNode.emitEnter/Exit launches run.
+- **Vendored Hoverable** — retired project `Modifier.hoverable(onChange)` + HoverableModifier/Node +
+  the B6a hover dispatch. Migrated ALL 21 call sites (material ×9 + apidemo ×9 + demo ×3 incl.
+  Scrollbar/SplitPane) to `hoverable(interactionSource)` + `collectIsHoveredAsState`.
+- Verified: `--inputtest` PASS (click) + pointer processor no-crash; Buttons renders.
+
+Counts: commonMain **78 → 77**, shims **24 → 23**, vendor **630 → 633**.
+
+### Deferred within the sprint
+- **SuspendingPointerInputFilter** (the `pointerInput{}` coroutine layer) — 122-err cascade
+  (inner-class coroutine plumbing: needs its nonJvm actual's `PointerEventTimeoutCancellationException`
+  expect + the AwaitPointerEventScope inner-class supertypes to resolve). Blocks vendoring gesture
+  detectors + the project's `pointerInput`/PointerInputNode. Next.
+- **Focus engine** (FocusTargetNode/FocusOwnerImpl/…) → then **Clickable** (needs both gesture + focus)
+  + **Focusable**. Clickable call sites are few (8).
