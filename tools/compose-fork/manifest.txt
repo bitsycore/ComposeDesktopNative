@@ -492,12 +492,12 @@ compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/
 # compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/TextFieldDelegate.skiko.kt                  core/src/vendor/native/kotlin/androidx/compose/foundation/text/TextFieldDelegate.native.kt
 
 # ── androidx.compose.foundation.text.contextmenu.builder ────────────────────
-compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt         core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt
-# compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.native.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.kt
+compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/contextmenu/builder/TextContextMenuBuilderScope.native.kt
 
 # ── androidx.compose.foundation.text.contextmenu.data ───────────────────────
-compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.kt         core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.kt
-# compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.native.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.kt
+compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/foundation/text/contextmenu/data/TextContextMenuData.native.kt
 
 # ── androidx.compose.foundation.text.contextmenu.gestures ───────────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/contextmenu/gestures/RightClickGestures.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/contextmenu/gestures/RightClickGestures.kt
