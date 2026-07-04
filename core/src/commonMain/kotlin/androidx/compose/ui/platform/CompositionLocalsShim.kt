@@ -67,15 +67,7 @@ val LocalCursorBlinkEnabled = staticCompositionLocalOf<Boolean> { true }
  *  for our text pipeline.
  *  TODO: wire a real resolver once we grow a proper typeface-loading pipeline. */
 val LocalFontFamilyResolver = staticCompositionLocalOf<androidx.compose.ui.text.font.FontFamily.Resolver> {
-	object : androidx.compose.ui.text.font.FontFamily.Resolver {
-		override fun resolve(
-			fontFamily: androidx.compose.ui.text.font.FontFamily?,
-			fontWeight: androidx.compose.ui.text.font.FontWeight,
-			fontStyle: androidx.compose.ui.text.font.FontStyle,
-			fontSynthesis: androidx.compose.ui.text.font.FontSynthesis,
-		): androidx.compose.runtime.State<Any> =
-			androidx.compose.runtime.mutableStateOf(Unit as Any)
-	}
+	androidx.compose.ui.text.font.projectFontFamilyResolver
 }
 
 /** URI open handler — the vendored TextLinkScope reads it via `LocalUriHandler.current`

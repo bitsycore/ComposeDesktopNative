@@ -1,5 +1,6 @@
 package androidx.compose.ui.text
 
+import com.compose.desktop.native.text.projectFontName
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
@@ -44,7 +45,7 @@ internal class SdlParagraph(
 
 	private val fontPx: Int =
 		(if (style.fontSize.isUnspecified) 14f else style.fontSize.value).toInt().coerceAtLeast(1)
-	private val family: String? = (style.fontFamily as? FontFamily.Named)?.name
+	private val family: String? = style.fontFamily.projectFontName()
 
 	private val maxWidthPx: Int =
 		if (widthConstraint.isFinite() && widthConstraint > 0f) widthConstraint.toInt() else Int.MAX_VALUE

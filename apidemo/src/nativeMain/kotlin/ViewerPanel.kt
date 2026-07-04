@@ -485,7 +485,7 @@ internal fun BodyView(
                         textStyle = androidx.compose.ui.text.TextStyle(
                             color = c.text,
                             fontSize = 12.sp,
-                            fontFamily = monoFontFamily?.let { androidx.compose.ui.text.font.FontFamily.Named(it) },
+                            fontFamily = monoFontFamily?.let { com.compose.desktop.native.text.namedFontFamily(it) },
                         ),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
                         visualTransformation = vHlTransform ?: androidx.compose.ui.text.input.VisualTransformation.None,

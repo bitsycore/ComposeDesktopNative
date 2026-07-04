@@ -62,7 +62,7 @@ internal fun CustomLayoutScreen() {
 				}
 				layout(vTotalW, vTotalH) {
 					vPlaceables.forEachIndexed { vI, vP ->
-						vP.placeAt(vI * vStep, vI * vStep)
+						vP.place(vI * vStep, vI * vStep)
 					}
 				}
 			})
@@ -90,7 +90,7 @@ internal fun CustomLayoutScreen() {
 					)
 					val vPlaceables = vMeasurables.map { it.measure(vSlotC) }
 					layout(vConstraints.maxWidth, 40) {
-						vPlaceables.forEachIndexed { vI, vP -> vP.placeAt(vI * vSlot, 0) }
+						vPlaceables.forEachIndexed { vI, vP -> vP.place(vI * vSlot, 0) }
 					}
 				},
 			)
@@ -115,7 +115,7 @@ internal fun CustomLayoutScreen() {
 					.layout { vMeasurable, vConstraints ->
 						val vP = vMeasurable.measure(vConstraints)
 						// Parent thinks we're 80x40 but we draw at (12, 0).
-						layout(vP.width, vP.height) { vP.placeAt(12, 0) }
+						layout(vP.width, vP.height) { vP.place(12, 0) }
 					},
 				)
 			}

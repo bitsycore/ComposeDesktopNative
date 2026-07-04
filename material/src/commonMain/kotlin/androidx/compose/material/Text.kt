@@ -12,6 +12,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import com.compose.desktop.native.text.namedFontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
@@ -43,7 +44,7 @@ fun Text(
             color = color,
             fontSize = fontSize,
             textAlign = textAlign,
-            fontFamily = fontFamily?.let { FontFamily.Named(it) },
+            fontFamily = fontFamily?.let { namedFontFamily(it) },
         ),
         softWrap = softWrap,
     )
@@ -88,7 +89,7 @@ fun Text(
         color = color,
         fontSize = fontSize,
         textAlign = textAlign,
-        fontFamily = fontFamily?.let { FontFamily.Named(it) },
+        fontFamily = fontFamily?.let { namedFontFamily(it) },
     )
     if (vColorOnly) {
         BasicText(
@@ -114,7 +115,7 @@ fun Text(
                     val vStyle = vRun.style
                     val vColor = if (vStyle != null && vStyle.color != Color.Unspecified) vStyle.color else color
                     val vSize = if (vStyle != null && vStyle.fontSize.isSpecified) vStyle.fontSize else fontSize
-                    val vFamily = if (vStyle?.fontFamily != null) vStyle.fontFamily else fontFamily?.let { FontFamily.Named(it) }
+                    val vFamily = if (vStyle?.fontFamily != null) vStyle.fontFamily else fontFamily?.let { namedFontFamily(it) }
                     val vBgModifier = if (vStyle != null && vStyle.background != Color.Unspecified)
                         Modifier.background(vStyle.background) else Modifier
                     val vDec: TextDecoration? = vStyle?.textDecoration

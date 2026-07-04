@@ -152,8 +152,12 @@ internal object StubOwner : Owner {
 	override val retainedValuesStore: RetainedValuesStore = ForgetfulRetainedValuesStore
 	override val rectManager: RectManager = RectManager()
 	@Suppress("DEPRECATION")
-	override val fontLoader: Font.ResourceLoader = object : Font.ResourceLoader {}
-	override val fontFamilyResolver: FontFamily.Resolver = androidx.compose.ui.text.font.createFontFamilyResolver()
+	override val fontLoader: Font.ResourceLoader = object : Font.ResourceLoader {
+		@Deprecated("Replaced by FontFamily.Resolver, this method should not be called")
+		override fun load(font: Font): Any = Unit
+	}
+	override val fontFamilyResolver: FontFamily.Resolver =
+		androidx.compose.ui.text.font.projectFontFamilyResolver
 	override val layoutDirection: LayoutDirection = LayoutDirection.Ltr
 	override val localeList: LocaleList = LocaleList()
 	override var showLayoutBounds: Boolean = false
