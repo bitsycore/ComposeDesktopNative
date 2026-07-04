@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -329,18 +330,26 @@ private fun TextFieldImpl(
                             style = androidx.compose.ui.text.TextStyle(color = colors.placeholderColor, fontSize = fontSize),
                         )
                     }
-                    BasicTextField(
-                        value = value,
-                        onValueChange = onValueChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        textStyle = androidx.compose.ui.text.TextStyle(color = vTextColor, fontSize = fontSize),
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(vCursorColor),
-                        selectionColor = colors.selectionColor,
-                        enabled = enabled,
-                        readOnly = readOnly,
-                        singleLine = singleLine,
-                        onFocusChanged = { isFocused = it },
-                    )
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+                            androidx.compose.foundation.text.selection.TextSelectionColors(
+                                handleColor = colors.selectionColor,
+                                backgroundColor = colors.selectionColor,
+                            ),
+                    ) {
+                        BasicTextField(
+                            value = value,
+                            onValueChange = onValueChange,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged { isFocused = it.isFocused },
+                            textStyle = androidx.compose.ui.text.TextStyle(color = vTextColor, fontSize = fontSize),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(vCursorColor),
+                            enabled = enabled,
+                            readOnly = readOnly,
+                            singleLine = singleLine,
+                        )
+                    }
                 }
             }
         }

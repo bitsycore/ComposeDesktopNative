@@ -121,15 +121,22 @@ internal fun ThinField(inValue: String, inOnChange: (String) -> Unit, inModifier
         contentAlignment = if (inSingleLine) Alignment.CenterStart else Alignment.TopStart,
     ) {
         if (inValue.isEmpty() && inPlaceholder.isNotEmpty()) Text(inPlaceholder, color = c.dim, fontSize = 13.sp)
-        BasicTextField(
-            value = inValue,
-            onValueChange = inOnChange,
-            textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 13.sp),
-            cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
-            selectionColor = c.accent.copy(alpha = 0.35f),
-            singleLine = inSingleLine,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+                androidx.compose.foundation.text.selection.TextSelectionColors(
+                    handleColor = c.accent,
+                    backgroundColor = c.accent.copy(alpha = 0.35f),
+                ),
+        ) {
+            BasicTextField(
+                value = inValue,
+                onValueChange = inOnChange,
+                textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 13.sp),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
+                singleLine = inSingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

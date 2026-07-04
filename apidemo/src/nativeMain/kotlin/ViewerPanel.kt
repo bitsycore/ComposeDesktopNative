@@ -462,20 +462,36 @@ internal fun BodyView(
                 // the plain text. RAW = no highlight. Remembered per (format,
                 // theme) so typing and cursor-blink reuse it.
                 val vDark = isDarkBg(c.bg)
-                val vHl: ((String) -> AnnotatedString)? = remember(inFormat, vDark) {
-                    if (inFormat == BodyFormat.RAW) null
-                    else { t: String -> highlight(t, inFormat, SyntaxPalette.forDark(vDark)) }
+                val vHlTransform: androidx.compose.ui.text.input.VisualTransformation? =
+                    remember(inFormat, vDark) {
+                        if (inFormat == BodyFormat.RAW) null
+                        else androidx.compose.ui.text.input.VisualTransformation { plain ->
+                            androidx.compose.ui.text.input.TransformedText(
+                                highlight(plain.text, inFormat, SyntaxPalette.forDark(vDark)),
+                                androidx.compose.ui.text.input.OffsetMapping.Identity,
+                            )
+                        }
+                    }
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+                        androidx.compose.foundation.text.selection.TextSelectionColors(
+                            handleColor = c.accent,
+                            backgroundColor = c.accent.copy(alpha = 0.35f),
+                        ),
+                ) {
+                    BasicTextField(
+                        value = inText,
+                        onValueChange = inOnChange,
+                        textStyle = androidx.compose.ui.text.TextStyle(
+                            color = c.text,
+                            fontSize = 12.sp,
+                            fontFamily = monoFontFamily?.let { androidx.compose.ui.text.font.FontFamily.Named(it) },
+                        ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
+                        visualTransformation = vHlTransform ?: androidx.compose.ui.text.input.VisualTransformation.None,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
-                BasicTextField(
-                    value = inText,
-                    onValueChange = inOnChange,
-                    textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 12.sp),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
-                    selectionColor = c.accent.copy(alpha = 0.35f),
-                    fontFamily = monoFontFamily,
-                    visualTransform = vHl,
-                    modifier = Modifier.fillMaxSize(),
-                )
             } else {
                 // READ-ONLY body (the received response): drag-selectable across
                 // the block + Ctrl/Cmd+C, and syntax-coloured. The palette picks
@@ -872,13 +888,20 @@ internal fun CodeSection(inLabel: String, inText: String) {
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
                 .background(c.bg, RoundedCornerShape(8.dp)).border(1.dp, c.border, RoundedCornerShape(8.dp)).padding(12.dp),
         ) {
-            BasicTextField(
-                value = inText.ifEmpty { "(empty)" }, onValueChange = {}, readOnly = true,
-                textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 12.sp),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
-                selectionColor = c.accent.copy(alpha = 0.35f),
-                modifier = Modifier.fillMaxWidth(),
-            )
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+                    androidx.compose.foundation.text.selection.TextSelectionColors(
+                        handleColor = c.accent,
+                        backgroundColor = c.accent.copy(alpha = 0.35f),
+                    ),
+            ) {
+                BasicTextField(
+                    value = inText.ifEmpty { "(empty)" }, onValueChange = {}, readOnly = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 12.sp),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

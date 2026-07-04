@@ -140,15 +140,22 @@ internal fun UrlBar(
             },
         ) {
             if (inReq.url.isEmpty()) Text("https://example.com/path", color = c.dim, fontSize = 14.sp)
-            BasicTextField(
-                value = inReq.url,
-                onValueChange = inOnUrl,
-                textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 14.sp),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
-                selectionColor = c.accent.copy(alpha = 0.35f),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.foundation.text.selection.LocalTextSelectionColors provides
+                    androidx.compose.foundation.text.selection.TextSelectionColors(
+                        handleColor = c.accent,
+                        backgroundColor = c.accent.copy(alpha = 0.35f),
+                    ),
+            ) {
+                BasicTextField(
+                    value = inReq.url,
+                    onValueChange = inOnUrl,
+                    textStyle = androidx.compose.ui.text.TextStyle(color = c.text, fontSize = 14.sp),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         // Inspect the server's TLS certificate chain (handshake-only probe).
