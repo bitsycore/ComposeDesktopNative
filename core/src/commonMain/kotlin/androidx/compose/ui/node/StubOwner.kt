@@ -65,7 +65,7 @@ internal object StubOwner : Owner {
 	@Suppress("DEPRECATION")
 	override val rootForTest: RootForTest = object : RootForTest {
 		override val density: Density = Density(1f, 1f)
-		override val semanticsOwner = androidx.compose.ui.semantics.SemanticsOwner()
+		override val semanticsOwner = androidx.compose.ui.semantics.SemanticsOwner(LayoutNode(), androidx.compose.ui.semantics.EmptySemanticsModifier(), androidx.collection.mutableIntObjectMapOf())
 		override val textInputService = androidx.compose.ui.text.input.TextInputService(
 			androidx.compose.ui.text.input.NoOpPlatformTextInputService)
 		override fun sendKeyEvent(keyEvent: androidx.compose.ui.input.key.KeyEvent): Boolean = false
@@ -132,7 +132,7 @@ internal object StubOwner : Owner {
 		override fun getStylusHoverIcon(): androidx.compose.ui.input.pointer.PointerIcon? = null
 		override fun setStylusHoverIcon(value: androidx.compose.ui.input.pointer.PointerIcon?) {}
 	}
-	override val semanticsOwner: SemanticsOwner = SemanticsOwner()
+	override val semanticsOwner: SemanticsOwner = SemanticsOwner(LayoutNode(), androidx.compose.ui.semantics.EmptySemanticsModifier(), androidx.collection.mutableIntObjectMapOf())
 	override val focusOwner: FocusOwner = androidx.compose.ui.focus.FocusOwnerImpl(
 		platformFocusOwner = object : androidx.compose.ui.focus.PlatformFocusOwner {
 			override fun requestOwnerFocus(focusDirection: androidx.compose.ui.focus.FocusDirection?, previouslyFocusedRect: androidx.compose.ui.geometry.Rect?): Boolean = true

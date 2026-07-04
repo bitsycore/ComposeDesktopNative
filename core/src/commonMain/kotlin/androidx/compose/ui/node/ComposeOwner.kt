@@ -186,7 +186,7 @@ internal class ComposeOwner(
 	@Suppress("DEPRECATION")
 	override val rootForTest: RootForTest = object : RootForTest {
 		override val density: Density = this@ComposeOwner.density
-		override val semanticsOwner = SemanticsOwner()
+		override val semanticsOwner = SemanticsOwner(this@ComposeOwner.root, androidx.compose.ui.semantics.EmptySemanticsModifier(), this@ComposeOwner.layoutNodes)
 		override val textInputService = TextInputService(androidx.compose.ui.text.input.NoOpPlatformTextInputService)
 		override fun sendKeyEvent(keyEvent: androidx.compose.ui.input.key.KeyEvent): Boolean = false
 	}
@@ -250,7 +250,7 @@ internal class ComposeOwner(
 		override fun getStylusHoverIcon(): androidx.compose.ui.input.pointer.PointerIcon? = null
 		override fun setStylusHoverIcon(value: androidx.compose.ui.input.pointer.PointerIcon?) {}
 	}
-	override val semanticsOwner: SemanticsOwner = SemanticsOwner()
+	override val semanticsOwner: SemanticsOwner = SemanticsOwner(this@ComposeOwner.root, androidx.compose.ui.semantics.EmptySemanticsModifier(), this@ComposeOwner.layoutNodes)
 	override val focusOwner: FocusOwner = androidx.compose.ui.focus.FocusOwnerImpl(
 		platformFocusOwner = object : androidx.compose.ui.focus.PlatformFocusOwner {
 			// The SDL window always owns/accepts focus, so grant owner focus — returning false

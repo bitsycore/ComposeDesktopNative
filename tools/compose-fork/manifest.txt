@@ -1202,16 +1202,16 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/relocation/BringIntoView
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/scene/SingleComposeSceneRenderingScope.kt   core/src/vendor/native/kotlin/androidx/compose/ui/scene/SingleComposeSceneRenderingScope.kt
 
 # ── androidx.compose.ui.semantics ───────────────────────────────────────────
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt         core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt  core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsInfo.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsInfo.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsModifier.kt       core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsModifier.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsNode.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsNode.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsOwner.kt          core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsOwner.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsProperties.kt     core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsProperties.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsSort.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsSort.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/semantics/SemanticsRegion.skiko.kt    core/src/vendor/native/kotlin/androidx/compose/ui/semantics/SemanticsRegion.native.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt  core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsConfiguration.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsInfo.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsInfo.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt       core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsListener.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsModifier.kt       core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsModifier.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsNode.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsNode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsOwner.kt          core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsOwner.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsProperties.kt     core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsProperties.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt         core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsRegion.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/semantics/SemanticsSort.kt           core/src/vendor/common/kotlin/androidx/compose/ui/semantics/SemanticsSort.kt
+# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/semantics/SemanticsRegion.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/semantics/SemanticsRegion.native.kt
 
 # ── androidx.compose.ui.skiko ───────────────────────────────────────────────
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/skiko/OverlayRenderDecorator.skiko.kt         core/src/vendor/native/kotlin/androidx/compose/ui/skiko/OverlayRenderDecorator.native.kt
