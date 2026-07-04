@@ -92,13 +92,16 @@ actual fun Popup(
 	// Snapshot the CompositionLocals at the call site so the hosted content (rendered at
 	// the composition root by PopupLayer) still sees MaterialTheme + app locals.
 	val vLocals = currentCompositionLocalContext
+	// Official contract: `offset` is in PIXELS (IntOffset), applied after `alignment`.
+	// Use the pixel-based `Modifier.offset { … }` — `.offset(Dp, Dp)` would run
+	// the value through density.toPx() and double-scale on HiDPI.
 	val vPositioned: @Composable () -> Unit =
 		if (alignment == Alignment.TopStart && offset.x == 0 && offset.y == 0) {
 			content
 		} else {
 			{
 				Box(modifier = Modifier.fillMaxSize(), contentAlignment = alignment) {
-					Box(modifier = Modifier.offset(offset.x.dp, offset.y.dp)) { content() }
+					Box(modifier = Modifier.offset { offset }) { content() }
 				}
 			}
 		}

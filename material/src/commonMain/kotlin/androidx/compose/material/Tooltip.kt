@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import com.compose.desktop.native.layout.intOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,9 +65,13 @@ fun TooltipBox(
     ) {
         content()
         if (vVisible) {
+            // vPos + vHeight are already in layout pixels; PositionedPopup takes pixels
+            // directly (no `.dp` — that would double-scale on HiDPI). The gap is `Dp`
+            // so we roll it through the current density.
+            val vGapPx = with(LocalDensity.current) { TooltipDefaults.GapDp.toPx().toInt() }
             PositionedPopup(
-                x = vPos.x.dp,
-                y = (vPos.y + vHeight + TooltipDefaults.GapDp.value.toInt()).dp,
+                x = vPos.x,
+                y = vPos.y + vHeight + vGapPx,
                 onDismissRequest = { vVisible = false },
             ) {
                 Box(

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -73,11 +74,15 @@ fun DropdownMenu(
     content: @Composable () -> Unit,
 ) {
     if (!expanded) return
-    // Anchor edges (window coords, logical points). Without an anchor, offsetX/Y
-    // is the absolute open point.
-    val vAnchorTop = (anchor?.position?.y ?: 0) + offsetY.value.toInt()
+    // Anchor position/size are already in layout pixels (LayoutCoordinates.positionInRoot →
+    // pixels since Option B). offsetX/Y are Dp so route through the density; add the
+    // resulting px to the anchor's px directly.
+    val vDensity = LocalDensity.current
+    val vOffsetXPx = with(vDensity) { offsetX.toPx().toInt() }
+    val vOffsetYPx = with(vDensity) { offsetY.toPx().toInt() }
+    val vAnchorTop = (anchor?.position?.y ?: 0) + vOffsetYPx
     val vAnchorBottom = vAnchorTop + (anchor?.size?.height ?: 0)
-    val vBaseX = (anchor?.position?.x ?: 0) + offsetX.value.toInt()
+    val vBaseX = (anchor?.position?.x ?: 0) + vOffsetXPx
 
     Popup(onDismissRequest = onDismissRequest) {
         // Window size from the live viewport (no fullscreen scrim needed): flip
@@ -92,7 +97,7 @@ fun DropdownMenu(
         val vX = if (vMenu.width > 0 && vWinW > 0) vBaseX.coerceIn(0, (vWinW - vMenu.width).coerceAtLeast(0)) else vBaseX
         Box(
             modifier = Modifier
-                .offset(vX.dp, vY.dp)
+                .offset { IntOffset(vX, vY) }
                 .onSizeChanged { vMenu = it }
                 .width(minWidth)
                 .background(MaterialTheme.colors.surface, DropdownMenuDefaults.Shape)

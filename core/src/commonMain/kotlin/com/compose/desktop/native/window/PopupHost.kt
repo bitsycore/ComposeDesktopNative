@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Popup
 
@@ -138,17 +139,28 @@ fun PopupOutsideDismiss(inX: Int, inY: Int, inW: Int, inH: Int, onDismissRequest
 /* Convenience overlay anchored at an absolute window position. Used by
    Tooltip / ContextMenu. Closes on a press outside its bounds via the host's
    event-level dismissal — so that press also reaches the content under it (no
-   fullscreen catcher to swallow it). Not part of official Compose. */
+   fullscreen catcher to swallow it). Not part of official Compose.
+
+   `x`/`y` are LAYOUT PIXELS (matches `LayoutCoordinates.positionInRoot` /
+   `IntOffset`), not `Dp`. The layout pass runs in physical pixels (see
+   `ComposeWindow` § HiDPI: `LocalDensity` = DPR, constraints in `pixelWidth`),
+   so callers that get an anchor position from `onGloballyPositioned` are
+   already in the same space — no `.dp` round-trip is needed and doing one
+   double-scales the offset on Retina. */
 @Composable
 fun PositionedPopup(
-	x: Dp,
-	y: Dp,
+	x: Int,
+	y: Int,
 	onDismissRequest: () -> Unit,
 	content: @Composable () -> Unit,
 ) {
 	Popup(onDismissRequest = onDismissRequest) {
 		var vSize by remember { mutableStateOf(IntSize.Zero) }
-		Box(modifier = Modifier.offset(x, y).onSizeChanged { vSize = it }) { content() }
-		PopupOutsideDismiss(x.value.toInt(), y.value.toInt(), vSize.width, vSize.height, onDismissRequest)
+		Box(
+			modifier = Modifier
+				.offset { IntOffset(x, y) }
+				.onSizeChanged { vSize = it },
+		) { content() }
+		PopupOutsideDismiss(x, y, vSize.width, vSize.height, onDismissRequest)
 	}
 }
