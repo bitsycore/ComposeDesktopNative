@@ -570,9 +570,9 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 # ── androidx.compose.foundation.text.input.internal.selection ───────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/PressDownGesture.kt           core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/PressDownGesture.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldHandleState.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldHandleState.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextPreparedSelection.kt      core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextPreparedSelection.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldMagnifier.kt       core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldMagnifier.kt
 # compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldSelectionState.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextFieldSelectionState.kt
+# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/selection/TextPreparedSelection.kt    core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/selection/TextPreparedSelection.kt
 
 # ── androidx.compose.foundation.text.input.internal.undo ────────────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/input/internal/undo/TextUndoOperation.kt  core/src/vendor/common/kotlin/androidx/compose/foundation/text/input/internal/undo/TextUndoOperation.kt
