@@ -1,7 +1,16 @@
 @file:Suppress("UNUSED", "DEPRECATION")
 @file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
 
-package androidx.compose.ui.node
+package com.compose.desktop.native.node.impl
+
+import androidx.compose.ui.node.LayoutNode
+import androidx.compose.ui.node.LayoutNodeDrawScope
+import androidx.compose.ui.node.MeasureAndLayoutDelegate
+import androidx.compose.ui.node.Owner
+import androidx.compose.ui.node.OwnedLayer
+import androidx.compose.ui.node.OwnerScope
+import androidx.compose.ui.node.OwnerSnapshotObserver
+import androidx.compose.ui.node.RootForTest
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas

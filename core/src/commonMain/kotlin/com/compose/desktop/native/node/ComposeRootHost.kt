@@ -3,7 +3,7 @@ package com.compose.desktop.native.node
 import androidx.compose.runtime.Applier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.node.ComposeOwner
+import com.compose.desktop.native.node.impl.ComposeOwner
 import androidx.compose.ui.node.LayoutNode
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -240,7 +240,7 @@ class ComposeRootHost(inDensity: Float = 1f) {
    build+dispatch is a nativeMain actual. Constructs a single-pointer event and feeds it
    to the owner's PointerInputEventProcessor. inType: 0=Move 1=Press 2=Release. */
 internal expect fun feedPointerToProcessor(
-	inOwner: androidx.compose.ui.node.ComposeOwner,
+	inOwner: com.compose.desktop.native.node.impl.ComposeOwner,
 	inType: Int,
 	inButton: Int,
 	inUptime: Long,
@@ -251,7 +251,7 @@ internal expect fun feedPointerToProcessor(
 /* Builds a Scroll-type PointerInputEvent (scrollDelta) and drives the processor, so the vendored
    Modifier.scrollable's MouseWheelScrollingLogic handles the wheel. nativeMain-only (ctor is native). */
 internal expect fun feedScrollToProcessor(
-	inOwner: androidx.compose.ui.node.ComposeOwner,
+	inOwner: com.compose.desktop.native.node.impl.ComposeOwner,
 	inX: Float,
 	inY: Float,
 	inDeltaX: Float,

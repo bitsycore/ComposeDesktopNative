@@ -7,7 +7,7 @@ import com.compose.desktop.native.modifier.pressable
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.MeasurePolicy
-import androidx.compose.ui.node.ComposeOwner
+import com.compose.desktop.native.node.impl.ComposeOwner
 import androidx.compose.ui.node.LayoutNode
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density

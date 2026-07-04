@@ -8,7 +8,7 @@ import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputEvent
 import androidx.compose.ui.input.pointer.PointerInputEventData
 import androidx.compose.ui.input.pointer.PointerType
-import androidx.compose.ui.node.ComposeOwner
+import com.compose.desktop.native.node.impl.ComposeOwner
 
 // ==================
 // MARK: feedPointerToProcessor — native actual
