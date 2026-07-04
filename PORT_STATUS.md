@@ -28,14 +28,10 @@ rules (pull-verbatim / surface-match / intentional-custom) live in
   through `NativeTextCanvas.drawNativeText`), the DnD engine (`DragAndDropNode`
   vendored), and the **approach/lookahead layout pipeline** (`ApproachLayoutModifierNode`
   + `ApproachMeasureScope` + `LookaheadScope`).
-- Counts: `core/src/commonMain` **100 → 31** `.kt` (`.shim.kt` **30 → 0**;
-  `androidx.compose.*` namespace **50 → 1** file — only
-  `ui.text.platform.Synchronization` remains, a documented irreducible
-  exception atomicfu-backed since Kotlin 2.4 promotes
-  `LESS_VISIBLE_TYPE_ACCESS_IN_INLINE` from warning to error and upstream's
-  `internal expect` public-inline pattern can't be vendored; caller import
-  path is `androidx.compose.ui.text.platform.SynchronizedObject /
-  synchronized`), `core/src/vendor` **591 → 1133** (+ real
+- Counts: `core/src/commonMain` **100 → 30** `.kt` (`.shim.kt` **30 → 0**;
+  `androidx.compose.*` namespace **50 → 0** files — the commonMain project
+  namespace is now `com.compose.desktop.native.*` only), `core/src/vendor`
+  **591 → 1134** (+ real
   `androidx.compose.runtime:runtime-retain` on the classpath —
   `ForgetfulRetainedValuesStore` replaces the project marker; plus
   `androidx.navigationevent:navigationevent-compose`,
