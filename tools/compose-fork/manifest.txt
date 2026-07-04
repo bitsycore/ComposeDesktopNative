@@ -1038,6 +1038,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnRemeasuredModif
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/OnVisibilityChangedModifier.kt   core/src/vendor/common/kotlin/androidx/compose/ui/layout/OnVisibilityChangedModifier.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt            core/src/vendor/common/kotlin/androidx/compose/ui/layout/ParentDataModifier.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PinnableContainer.kt             core/src/vendor/common/kotlin/androidx/compose/ui/layout/PinnableContainer.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/layout/Placeable.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt          core/src/vendor/common/kotlin/androidx/compose/ui/layout/PlacementScopeMarker.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RectRulers.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/layout/RectRulers.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/RemeasurementModifier.kt         core/src/vendor/common/kotlin/androidx/compose/ui/layout/RemeasurementModifier.kt
@@ -1048,7 +1049,6 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/SubcomposeLayout.
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt           core/src/vendor/common/kotlin/androidx/compose/ui/layout/TestModifierUpdater.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt            core/src/vendor/common/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/EmptyLayout.skiko.kt              core/src/vendor/native/kotlin/androidx/compose/ui/layout/EmptyLayout.native.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/layout/Placeable.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/layout/Placeable.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/OffsetToFocusedRect.skiko.kt    core/src/vendor/native/kotlin/androidx/compose/ui/layout/OffsetToFocusedRect.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/OverlayLayout.skiko.kt          core/src/vendor/native/kotlin/androidx/compose/ui/layout/OverlayLayout.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/layout/WindowInsetsRulers.native.kt
