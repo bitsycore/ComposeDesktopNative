@@ -980,8 +980,8 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/PointerButt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/PointerEvent.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/PointerEvent.native.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/PointerInputEvent.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/PointerInputEvent.native.kt
 compose/ui/ui/src/nonJvmMain/kotlin/androidx/compose/ui/input/pointer/SuspendingPointerInputFilter.nonJvm.kt  core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/SuspendingPointerInputFilter.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/TestPointerInputEventData.skiko.kt       core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/TestPointerInputEventData.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/SyntheticEventSender.skiko.kt          core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/SyntheticEventSender.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/pointer/TestPointerInputEventData.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/input/pointer/TestPointerInputEventData.native.kt
 
 # ── androidx.compose.ui.input.pointer.util ──────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/pointer/util/PlatformVelocityTracker.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/pointer/util/PlatformVelocityTracker.kt
