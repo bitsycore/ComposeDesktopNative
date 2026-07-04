@@ -813,77 +813,77 @@ compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/RoundR
 compose/ui/ui-geometry/src/commonMain/kotlin/androidx/compose/ui/geometry/Size.kt               core/src/vendor/common/kotlin/androidx/compose/ui/geometry/Size.kt
 
 # ── androidx.compose.ui.graphics ────────────────────────────────────────────
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Bezier.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Bezier.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/BlendMode.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/BlendMode.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Brush.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Brush.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Canvas.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Canvas.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ClipOp.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ClipOp.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Color.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ColorFilter.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ColorFilter.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ColorMatrix.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ColorMatrix.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Degrees.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Degrees.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/FilterQuality.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/FilterQuality.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Float16.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsContext.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsContext.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsLayerScope.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsLayerScope.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ImageBitmap.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Interpolatable.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Interpolatable.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/IntervalTree.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/IntervalTree.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/LayerOutsets.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/LayerOutsets.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Matrix.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Matrix.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradient.kt                            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradient.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradientConfig.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradientConfig.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Outline.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Outline.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Paint.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Paint.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PaintingStyle.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PaintingStyle.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Path.kt                           core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Path.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathEffect.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathEffect.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathFillType.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathFillType.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathGeometry.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathGeometry.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathHitTester.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathHitTester.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathIterator.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathIterator.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathMeasure.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathMeasure.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathOperation.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathOperation.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathSegment.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathSegment.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathSvg.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathSvg.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PixelMap.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PixelMap.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PointMode.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PointMode.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RectangleShape.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/RectangleShape.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RenderEffect.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/RenderEffect.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shader.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shader.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shadow.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shadow.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shape.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shape.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/StrokeCap.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/StrokeCap.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/StrokeJoin.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/StrokeJoin.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/TileMode.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/TileMode.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/TransformOrigin.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/TransformOrigin.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/VertexMode.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/VertexMode.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Vertices.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Vertices.kt
-compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/BaseMeshGradientRenderer.skiko.kt           core/src/vendor/native/kotlin/androidx/compose/ui/graphics/BaseMeshGradientRenderer.native.kt
-compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/DefaultMeshGradientRenderer.skiko.kt        core/src/vendor/native/kotlin/androidx/compose/ui/graphics/DefaultMeshGradientRenderer.native.kt
-compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.native.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt                 core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Matrices.skiko.kt                  core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/Matrices.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt                     core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPath.skiko.kt            core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedPath.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.skiko.kt      core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt           core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaPathIterator.skiko.kt          core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaPathIterator.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt              core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt
-compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt            core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsLayerModifier.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsLayerModifier.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.skiko.kt             core/src/vendor/native/kotlin/androidx/compose/ui/graphics/ImageBitmap.native.kt
-# compose/ui/ui-graphics/src/nativeMain/kotlin/androidx/compose/ui/graphics/NativeImageAsset.native.kt      core/src/vendor/native/kotlin/androidx/compose/ui/graphics/NativeImageAsset.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.skiko.kt        core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.skiko.kt         core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPathMeasure.skiko.kt   core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedPathMeasure.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedRenderEffect.skiko.kt  core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedRenderEffect.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaGraphicsContext.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaGraphicsContext.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.skiko.kt          core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.native.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaShader.skiko.kt              core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaShader.native.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Bezier.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Bezier.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/BlendMode.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/BlendMode.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Brush.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Brush.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Canvas.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Canvas.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ClipOp.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ClipOp.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Color.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Color.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ColorFilter.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ColorFilter.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ColorMatrix.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ColorMatrix.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Degrees.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Degrees.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ExperimentalGraphicsApi.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/FilterQuality.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/FilterQuality.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Float16.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Float16.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsContext.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsContext.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsLayerScope.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsLayerScope.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/ImageBitmap.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt            core/src/vendor/common/kotlin/androidx/compose/ui/graphics/InlineClassHelper.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Interpolatable.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Interpolatable.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/IntervalTree.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/IntervalTree.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/LayerOutsets.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/LayerOutsets.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Matrix.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Matrix.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradient.kt                          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradient.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradientConfig.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradientConfig.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Outline.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Outline.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Paint.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Paint.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PaintingStyle.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PaintingStyle.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Path.kt                         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Path.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathEffect.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathEffect.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathFillType.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathFillType.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathGeometry.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathGeometry.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathHitTester.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathHitTester.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathIterator.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathIterator.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathMeasure.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathMeasure.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathOperation.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathOperation.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathSegment.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathSegment.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PathSvg.kt                      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PathSvg.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PixelMap.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PixelMap.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/PointMode.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/PointMode.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RectangleShape.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/RectangleShape.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/RenderEffect.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/RenderEffect.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shader.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shader.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shadow.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shadow.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Shape.kt                        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Shape.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/StrokeCap.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/StrokeCap.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/StrokeJoin.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/StrokeJoin.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/TileMode.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/TileMode.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/TransformOrigin.kt                       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/TransformOrigin.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/VertexMode.kt                   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/VertexMode.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/Vertices.kt                     core/src/vendor/common/kotlin/androidx/compose/ui/graphics/Vertices.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/BaseMeshGradientRenderer.skiko.kt         core/src/vendor/native/kotlin/androidx/compose/ui/graphics/BaseMeshGradientRenderer.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/DefaultMeshGradientRenderer.skiko.kt      core/src/vendor/native/kotlin/androidx/compose/ui/graphics/DefaultMeshGradientRenderer.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.skiko.kt             core/src/vendor/native/kotlin/androidx/compose/ui/graphics/MeshGradientRenderer.native.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt               core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/BlendMode.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Matrices.skiko.kt                core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/Matrices.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt                   core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/Rects.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPath.skiko.kt          core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedPath.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.skiko.kt    core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedPathEffect.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPathMeasure.skiko.kt   core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedPathMeasure.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedRenderEffect.skiko.kt  core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaBackedRenderEffect.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt         core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaColorFilter.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaPathIterator.skiko.kt        core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaPathIterator.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt            core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaTileMode.skiko.kt
+compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt          core/src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt
+# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/GraphicsLayerModifier.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/GraphicsLayerModifier.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.skiko.kt           core/src/vendor/native/kotlin/androidx/compose/ui/graphics/ImageBitmap.native.kt
+# compose/ui/ui-graphics/src/nativeMain/kotlin/androidx/compose/ui/graphics/NativeImageAsset.native.kt    core/src/vendor/native/kotlin/androidx/compose/ui/graphics/NativeImageAsset.native.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.skiko.kt      core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.native.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.skiko.kt       core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.native.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaGraphicsContext.skiko.kt   core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaGraphicsContext.native.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.skiko.kt        core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.native.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaShader.skiko.kt            core/src/vendor/native/kotlin/androidx/compose/ui/graphics/SkiaShader.native.kt
 
 # ── androidx.compose.ui.graphics.colorspace ─────────────────────────────────
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/colorspace/Adaptation.kt
