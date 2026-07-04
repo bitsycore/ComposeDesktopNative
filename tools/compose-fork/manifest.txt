@@ -931,16 +931,16 @@ compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow
 # compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt           core/src/vendor/native/kotlin/androidx/compose/ui/graphics/shadow/Blur.native.kt
 
 # ── androidx.compose.ui.graphics.vector ─────────────────────────────────────
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/FastFloatParser.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/FastFloatParser.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/ImageVector.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/ImageVector.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/PathBuilder.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/PathBuilder.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/PathNode.kt         core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/PathNode.kt
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/PathParser.kt       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/PathParser.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/Vector.kt                    core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/Vector.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorComposable.kt          core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorComposable.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt               core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/ImageVector.kt             core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/ImageVector.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/Vector.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/Vector.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt           core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorPainter.kt           core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorPainter.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt             core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorCompose.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/VectorPainter.kt             core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/VectorPainter.kt
 
 # ── androidx.compose.ui.hapticfeedback ──────────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/hapticfeedback/HapticFeedback.kt           core/src/vendor/common/kotlin/androidx/compose/ui/hapticfeedback/HapticFeedback.kt
