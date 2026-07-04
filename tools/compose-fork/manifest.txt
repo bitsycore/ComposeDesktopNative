@@ -926,13 +926,13 @@ compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/painte
 compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/painter/Painter.kt        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/painter/Painter.kt
 
 # ── androidx.compose.ui.graphics.shadow ─────────────────────────────────────
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt
-compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt        core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt
-# compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt
-# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt           core/src/vendor/native/kotlin/androidx/compose/ui/graphics/shadow/Blur.native.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt                core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Blur.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt   core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/DropShadowPainter.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt  core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/InnerShadowPainter.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt              core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/Shadow.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt       core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowContext.kt
+compose/ui/ui-graphics/src/commonMain/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt      core/src/vendor/common/kotlin/androidx/compose/ui/graphics/shadow/ShadowRenderer.kt
+# compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt         core/src/vendor/native/kotlin/androidx/compose/ui/graphics/shadow/Blur.native.kt
 
 # ── androidx.compose.ui.graphics.vector ─────────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt                 core/src/vendor/common/kotlin/androidx/compose/ui/graphics/vector/DrawCache.kt
