@@ -87,9 +87,9 @@ compose/animation/animation-core/src/nonJvmMain/kotlin/androidx/compose/animatio
 compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt  core/src/vendor/common/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt
 
 # ── androidx.compose.animation.graphics.vector ──────────────────────────────
-# compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt     core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt
-# compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/Animator.kt                core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/Animator.kt
-# compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt  core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt
+compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt     core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt
+compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/Animator.kt                core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/Animator.kt
+compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt  core/src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt
 
 # ── androidx.compose.animation.internal ─────────────────────────────────────
 compose/animation/animation/src/commonMain/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.kt         core/src/vendor/common/kotlin/androidx/compose/animation/internal/JvmDefaultWithCompatibility.kt
