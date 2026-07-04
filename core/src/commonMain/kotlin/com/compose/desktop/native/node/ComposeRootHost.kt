@@ -54,6 +54,14 @@ class ComposeRootHost(inDensity: Float = 1f) {
 		// can't establish a focus path (focus-on-click never sticks) and key dispatch crashes.
 		rootNode.modifier = fOwner.focusOwner.modifier
 		fOwner.attach()
+		// Turn on snapshot observation so writes to `mutableStateOf` (ScrollState.value,
+		// LazyList firstVisibleItemIndex, etc.) fire the appropriate invalidation
+		// callbacks — requestRelayout / requestRemeasure — routing through the vendored
+		// MeasureAndLayoutDelegate. Without this, `ScrollState.value = N` mutates the
+		// state but the placement lambda inside ScrollNode.measure never re-runs, so
+		// the child layer's move(IntOffset(0, -scroll)) never happens → scroll offset
+		// is invisible even though the state is updating.
+		fOwner.snapshotObserver.startObserving()
 	}
 
 	fun setConstraints(inWidth: Int, inHeight: Int) {

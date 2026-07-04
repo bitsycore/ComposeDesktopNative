@@ -168,24 +168,7 @@ internal class ComposeOwner(
 		drawBlock: (canvas: Canvas, parentLayer: GraphicsLayer?) -> Unit,
 		invalidateParentLayer: () -> Unit,
 		explicitLayer: GraphicsLayer?,
-	): OwnedLayer = object : OwnedLayer {
-		override fun updateLayerProperties(scope: androidx.compose.ui.graphics.ReusableGraphicsLayerScope) {}
-		override fun isInLayer(position: Offset): Boolean = true
-		override fun move(position: androidx.compose.ui.unit.IntOffset) {}
-		override fun resize(size: androidx.compose.ui.unit.IntSize) {}
-		override fun drawLayer(canvas: Canvas, parentLayer: GraphicsLayer?) { drawBlock(canvas, parentLayer) }
-		override fun updateDisplayList() {}
-		override fun invalidate() {}
-		override fun destroy() {}
-		override fun mapOffset(point: Offset, inverse: Boolean): Offset = point
-		override fun mapBounds(rect: androidx.compose.ui.geometry.MutableRect, inverse: Boolean) {}
-		override fun reuseLayer(drawBlock: (canvas: Canvas, parentLayer: GraphicsLayer?) -> Unit, invalidateParentLayer: () -> Unit) {}
-		override fun transform(matrix: androidx.compose.ui.graphics.Matrix) {}
-		override val underlyingMatrix: androidx.compose.ui.graphics.Matrix = androidx.compose.ui.graphics.Matrix()
-		override fun inverseTransform(matrix: androidx.compose.ui.graphics.Matrix) {}
-		override var frameRate: Float = 0f
-		override var isFrameRateFromParent: Boolean = false
-	}
+	): OwnedLayer = ProjectOwnedLayer(drawBlock)
 
 	// ============
 	//  No-op subsystems (focus / semantics / input / clipboard / text / …).
@@ -337,5 +320,121 @@ internal class ComposeOwner(
 	}
 	override suspend fun textInputSession(
 		session: suspend PlatformTextInputSessionScope.() -> Nothing,
-	): Nothing = throw UnsupportedOperationException("No platform text input on desktop")
+	): Nothing {
+		// SDL IME wire-up isn't done yet; suspend forever so upstream's
+		// LegacyAdaptingPlatformTextInputModifierNode has something to await
+		// instead of throwing on every TextField click. Cancellation of the
+		// launching coroutine (focus loss, dispose) resumes cleanly.
+		kotlinx.coroutines.awaitCancellation()
+	}
+}
+
+// ==================
+// MARK: ProjectOwnedLayer — real OwnedLayer implementing translate + clip
+// ==================
+
+/*
+ The [OwnedLayer] returned by [ComposeOwner.createLayer]. Each modifier that
+ introduces a graphics layer (`Modifier.graphicsLayer`, `Modifier.clip`, or
+ `Placeable.placeRelativeWithLayer` for scroll offsets) drives one of these.
+
+ A no-op stub is enough to make composition run but produces broken visuals:
+ scroll offsets never move children (the "scroll doesn't scroll" bug) and
+ `Modifier.clip` never clips overflowing content. Here we honour the two most
+ load-bearing state fields the vendored `NodeCoordinator` writes:
+
+  * `move(position)` — the child's placement offset (used by
+    `placeRelativeWithLayer` for `verticalScroll`'s scroll translation).
+  * `updateLayerProperties(scope)` — the `graphicsLayer { … }` field bag:
+    `translationX/Y`, `scaleX/Y`, `alpha`, `clip`. Enough for scroll clip
+    (`clipToBounds()` sets `clip = true`) and app-level graphicsLayer usage.
+
+ `drawLayer` wraps the drawBlock in `canvas.save() / translate / scale / clipRect
+ / drawBlock / restore` so those fields actually reach the canvas. Rotation +
+ shadow + colorFilter + renderEffect + explicit `outline` shape are left as TODO
+ (falling back to a rectangular clip when `clip = true`) — matches what the
+ project renderer's Sdl3Canvas / SkiaCanvas currently handle.
+*/
+private class ProjectOwnedLayer(
+	private var drawBlock: (Canvas, GraphicsLayer?) -> Unit,
+) : OwnedLayer {
+	private var fPosition: androidx.compose.ui.unit.IntOffset = androidx.compose.ui.unit.IntOffset.Zero
+	private var fSize: androidx.compose.ui.unit.IntSize = androidx.compose.ui.unit.IntSize.Zero
+
+	private var fTranslationX: Float = 0f
+	private var fTranslationY: Float = 0f
+	private var fScaleX: Float = 1f
+	private var fScaleY: Float = 1f
+	private var fAlpha: Float = 1f
+	private var fClip: Boolean = false
+
+	override fun isInLayer(position: Offset): Boolean {
+		if (!fClip) return true
+		val vLx = position.x - fPosition.x
+		val vLy = position.y - fPosition.y
+		return vLx in 0f..fSize.width.toFloat() && vLy in 0f..fSize.height.toFloat()
+	}
+
+	override fun move(position: androidx.compose.ui.unit.IntOffset) {
+		fPosition = position
+	}
+	override fun updateLayerProperties(scope: androidx.compose.ui.graphics.ReusableGraphicsLayerScope) {
+		fTranslationX = scope.translationX
+		fTranslationY = scope.translationY
+		fScaleX = scope.scaleX
+		fScaleY = scope.scaleY
+		fAlpha = scope.alpha
+		fClip = scope.clip
+	}
+
+	override fun resize(size: androidx.compose.ui.unit.IntSize) {
+		fSize = size
+	}
+
+	override fun drawLayer(canvas: Canvas, parentLayer: GraphicsLayer?) {
+		canvas.save()
+		canvas.translate(fPosition.x + fTranslationX, fPosition.y + fTranslationY)
+		if (fScaleX != 1f || fScaleY != 1f) canvas.scale(fScaleX, fScaleY)
+		if (fClip && fSize.width > 0 && fSize.height > 0) {
+			canvas.clipRect(0f, 0f, fSize.width.toFloat(), fSize.height.toFloat())
+		}
+		drawBlock(canvas, parentLayer)
+		canvas.restore()
+	}
+
+	override fun updateDisplayList() {}
+	override fun invalidate() {}
+	override fun destroy() {}
+	override fun mapOffset(point: Offset, inverse: Boolean): Offset {
+		val vDx = fPosition.x + fTranslationX
+		val vDy = fPosition.y + fTranslationY
+		return if (inverse) Offset(point.x - vDx, point.y - vDy) else Offset(point.x + vDx, point.y + vDy)
+	}
+	override fun mapBounds(rect: androidx.compose.ui.geometry.MutableRect, inverse: Boolean) {
+		val vDx = fPosition.x + fTranslationX
+		val vDy = fPosition.y + fTranslationY
+		val vSx = if (inverse) -1 else 1
+		rect.left += vSx * vDx
+		rect.right += vSx * vDx
+		rect.top += vSx * vDy
+		rect.bottom += vSx * vDy
+	}
+	override fun reuseLayer(
+		drawBlock: (canvas: Canvas, parentLayer: GraphicsLayer?) -> Unit,
+		invalidateParentLayer: () -> Unit,
+	) {
+		this.drawBlock = drawBlock
+		// Reset layer state so a reused layer for a different node starts clean.
+		fPosition = androidx.compose.ui.unit.IntOffset.Zero
+		fSize = androidx.compose.ui.unit.IntSize.Zero
+		fTranslationX = 0f; fTranslationY = 0f
+		fScaleX = 1f; fScaleY = 1f
+		fAlpha = 1f
+		fClip = false
+	}
+	override fun transform(matrix: androidx.compose.ui.graphics.Matrix) {}
+	override val underlyingMatrix: androidx.compose.ui.graphics.Matrix = androidx.compose.ui.graphics.Matrix()
+	override fun inverseTransform(matrix: androidx.compose.ui.graphics.Matrix) {}
+	override var frameRate: Float = 0f
+	override var isFrameRateFromParent: Boolean = false
 }
