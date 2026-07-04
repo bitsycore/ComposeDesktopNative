@@ -197,11 +197,13 @@ class ComposeRootHost(inDensity: Float = 1f) {
 				2 -> findUp<MiddleClickNode>(vHit)?.second?.onClick()
 				else -> {
 					cancelPress()
-					// Focus-on-click: focus the nearest focusable under the cursor (text field / button /
-					// any .focusable). Upstream clickable self-focuses, but plain focusables (text fields)
-					// don't — this gives the intuitive click-to-focus behaviour and is what makes typing
-					// into a clicked text field work (the focused node then receives key/text via B6b).
-					findUp<androidx.compose.ui.focus.FocusTargetNode>(vHit)?.second?.requestFocus()
+					// Removed: legacy `findUp<FocusTargetNode>(vHit)?.second?.requestFocus()`. Upstream
+					// clickable (dispatched via host.onPointerRaw) now handles focus-on-click, and
+					// this legacy line was grabbing the nearest ancestor FocusTargetNode → producing
+					// a SECOND focus request per click landing on an unrelated node. In a scrollable
+					// list of clickables (apidemo sidebar) the ancestor was often a scrolled-off item
+					// whose Focusable.onFocusChange → bringIntoView() then scrolled the list to
+					// reveal *it* instead of leaving the just-clicked item in view.
 					findUp<PressableNode>(vHit)?.let { (node, p) ->
 						fActivePress = p; fActivePressNode = node; p.onChange(true)
 					}
