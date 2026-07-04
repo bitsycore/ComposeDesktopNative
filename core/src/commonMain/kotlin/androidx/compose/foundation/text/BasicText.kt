@@ -6,9 +6,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
@@ -17,27 +19,37 @@ import androidx.compose.ui.unit.sp
 // MARK: BasicText
 // ==================
 
-/* style: TextStyle matches upstream's signature; fontFamily / fontVariationSettings
-   are documented non-upstream additions that the renderer needs for icon-font
-   variable-axis support (upstream's FontFamily abstraction routes through
-   FontFamily.Resolver, which we don't host — see CLAUDE.md).
+/* style / softWrap / overflow / maxLines / minLines / onTextLayout / color
+   mirror upstream's signature. fontFamily / fontVariationSettings are
+   documented non-upstream additions the renderer needs for icon-font
+   variable-axis support (upstream's FontFamily.Resolver routes through
+   platform typeface loaders we don't host).
 
-   Selection support has been retired from this leaf: it previously registered
-   a Selectable with a project SelectionRegistrar so a wrapping
-   SelectionContainer could paint highlights + copy text. That project engine
-   has been removed pending vendoring the upstream selection engine; text
-   currently is not selectable via SelectionContainer. Editable selection
-   inside BasicTextField still works — the field owns its own highlight
-   rendering (SelectionRect + wrapping math). */
+   TODO(BasicText Phase 4): swap this project impl for the vendored
+   upstream `foundation.text.BasicText.kt` once the vendored
+   modifier chain (TextStringSimpleElement +
+   TextAnnotatedStringElement) has a real FontFamily.Resolver +
+   LocalSelectionRegistrar + LocalTextSelectionColors + a
+   TextLayoutResult-producing text leaf. Right now our leaf can't
+   produce a TextLayoutResult, so overflow/maxLines/minLines/onTextLayout
+   are accept-and-ignore. */
 @Composable
 fun BasicText(
     text: String,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
+    onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    overflow: TextOverflow = TextOverflow.Clip,
     softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    minLines: Int = 1,
     fontFamily: String? = null,
     fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
+    @Suppress("UNUSED_PARAMETER") val ignoredOverflow = overflow
+    @Suppress("UNUSED_PARAMETER") val ignoredMaxLines = maxLines
+    @Suppress("UNUSED_PARAMETER") val ignoredMinLines = minLines
+    @Suppress("UNUSED_PARAMETER") val ignoredOnTextLayout = onTextLayout
     val (vColor, vSize, vAlign) = resolveTextStyle(style)
     TextLeaf(text, null, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
 }
@@ -53,10 +65,18 @@ fun BasicText(
     text: AnnotatedString,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
+    onTextLayout: ((TextLayoutResult) -> Unit)? = null,
+    overflow: TextOverflow = TextOverflow.Clip,
     softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    minLines: Int = 1,
     fontFamily: String? = null,
     fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
+    @Suppress("UNUSED_PARAMETER") val ignoredOverflow = overflow
+    @Suppress("UNUSED_PARAMETER") val ignoredMaxLines = maxLines
+    @Suppress("UNUSED_PARAMETER") val ignoredMinLines = minLines
+    @Suppress("UNUSED_PARAMETER") val ignoredOnTextLayout = onTextLayout
     val (vColor, vSize, vAlign) = resolveTextStyle(style)
     TextLeaf(text.text, text.spanStyles, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
 }

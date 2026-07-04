@@ -49,3 +49,21 @@ val LocalSoundEffect = staticCompositionLocalOf<SoundEffect> {
 /** Whether a scroll-capture (accessibility screenshot scrolling) is in progress. Upstream declares
  *  it in the unvendored CompositionLocals.kt; no scroll-capture on SDL, so always false. */
 val LocalScrollCaptureInProgress = staticCompositionLocalOf<Boolean> { false }
+
+/** Text-selection toolbar local — no-op default on desktop (SelectionManager reads it to show
+ *  the floating text menu on mobile long-press; on desktop context menu is opened via right-click
+ *  through the vendored foundation.text.contextmenu tree instead).
+ *  TODO: wire a real TextToolbar impl if we grow a desktop selection UX that wants it. */
+val LocalTextToolbar = staticCompositionLocalOf<TextToolbar> {
+	object : TextToolbar {
+		override fun showMenu(
+			rect: androidx.compose.ui.geometry.Rect,
+			onCopyRequested: (() -> Unit)?,
+			onPasteRequested: (() -> Unit)?,
+			onCutRequested: (() -> Unit)?,
+			onSelectAllRequested: (() -> Unit)?,
+		) { /* no toolbar on desktop */ }
+		override fun hide() {}
+		override val status: TextToolbarStatus get() = TextToolbarStatus.Hidden
+	}
+}
