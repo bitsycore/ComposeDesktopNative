@@ -140,6 +140,7 @@ kotlin {
                 api("org.jetbrains.compose.runtime:runtime:1.11.1")
                 api("org.jetbrains.compose.runtime:runtime-saveable:1.11.1")
                 api("androidx.compose.runtime:runtime-retain:1.11.1")
+                api("androidx.navigationevent:navigationevent-compose:1.1.2")
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.okio)
                 implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")

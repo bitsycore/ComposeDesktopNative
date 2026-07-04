@@ -750,8 +750,12 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/autofill/ContentType.skik
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/autofill/FillableData.skiko.kt     core/src/vendor/native/kotlin/androidx/compose/ui/autofill/FillableData.native.kt
 
 # ── androidx.compose.ui.backhandler ─────────────────────────────────────────
-# compose/ui/ui-backhandler/src/commonMain/kotlin/androidx/compose/ui/backhandler/BackEventCompat.kt  core/src/vendor/common/kotlin/androidx/compose/ui/backhandler/BackEventCompat.kt
-# compose/ui/ui-backhandler/src/commonMain/kotlin/androidx/compose/ui/backhandler/BackHandler.kt      core/src/vendor/common/kotlin/androidx/compose/ui/backhandler/BackHandler.kt
+compose/ui/ui-backhandler/src/commonMain/kotlin/androidx/compose/ui/backhandler/BackEventCompat.kt       core/src/vendor/common/kotlin/androidx/compose/ui/backhandler/BackEventCompat.kt
+compose/ui/ui-backhandler/src/commonMain/kotlin/androidx/compose/ui/backhandler/BackHandler.kt           core/src/vendor/common/kotlin/androidx/compose/ui/backhandler/BackHandler.kt
+compose/ui/ui-backhandler/src/jbMain/kotlin/androidx/compose/ui/backhandler/BackEventCompat.jb.kt        core/src/vendor/native/kotlin/androidx/compose/ui/backhandler/BackEventCompat.native.kt
+compose/ui/ui-backhandler/src/jbMain/kotlin/androidx/compose/ui/backhandler/BackEventHandler.kt          core/src/vendor/native/kotlin/androidx/compose/ui/backhandler/BackEventHandler.kt
+compose/ui/ui-backhandler/src/jbMain/kotlin/androidx/compose/ui/backhandler/BackHandler.jb.kt            core/src/vendor/native/kotlin/androidx/compose/ui/backhandler/BackHandler.native.kt
+compose/ui/ui-backhandler/src/jbMain/kotlin/androidx/compose/ui/backhandler/ProgressBackEventHandler.kt  core/src/vendor/native/kotlin/androidx/compose/ui/backhandler/ProgressBackEventHandler.kt
 
 # ── androidx.compose.ui.draganddrop ─────────────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/draganddrop/DragAndDrop.kt         core/src/vendor/common/kotlin/androidx/compose/ui/draganddrop/DragAndDrop.kt
