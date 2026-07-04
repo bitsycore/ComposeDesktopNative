@@ -961,7 +961,7 @@ compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/key/KeyInputModifi
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/key/KeyInputModifierNode.kt                  core/src/vendor/common/kotlin/androidx/compose/ui/input/key/KeyInputModifierNode.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/key/SoftKeyboardInterceptionModifierNode.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/key/SoftKeyboardInterceptionModifierNode.kt
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/key/SoftwareKeyboardInterceptionModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/key/SoftwareKeyboardInterceptionModifier.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/key/KeyEvent.skiko.kt                       core/src/vendor/native/kotlin/androidx/compose/ui/input/key/KeyEvent.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/input/key/KeyEvent.skiko.kt                         core/src/vendor/native/kotlin/androidx/compose/ui/input/key/KeyEvent.native.kt
 
 # ── androidx.compose.ui.input.nestedscroll ──────────────────────────────────
 compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/input/nestedscroll/NestedScrollModifier.kt  core/src/vendor/common/kotlin/androidx/compose/ui/input/nestedscroll/NestedScrollModifier.kt
@@ -1156,6 +1156,9 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultAccessibi
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultHapticFeedback.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/ui/platform/DefaultHapticFeedback.native.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultTextToolbar.skiko.kt                       core/src/vendor/native/kotlin/androidx/compose/ui/platform/DefaultTextToolbar.native.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultUiApplier.skiko.kt                         core/src/vendor/native/kotlin/androidx/compose/ui/platform/DefaultUiApplier.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/FlushCoroutineDispatcher.skiko.kt                 core/src/vendor/native/kotlin/androidx/compose/ui/platform/FlushCoroutineDispatcher.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/FrameRecomposer.skiko.kt                          core/src/vendor/native/kotlin/androidx/compose/ui/platform/FrameRecomposer.native.kt
+compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/GlobalSnapshotManager.skiko.kt                    core/src/vendor/native/kotlin/androidx/compose/ui/platform/GlobalSnapshotManager.native.kt
 compose/ui/ui/src/nativeMain/kotlin/androidx/compose/ui/platform/NativeActuals.kt                                 core/src/vendor/native/kotlin/androidx/compose/ui/platform/NativeActuals.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/PlatformOutOfFrameExecutor.kt                     core/src/vendor/native/kotlin/androidx/compose/ui/platform/PlatformOutOfFrameExecutor.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/PlatformPrefetchScheduler.skiko.kt                core/src/vendor/native/kotlin/androidx/compose/ui/platform/PlatformPrefetchScheduler.native.kt
@@ -1170,9 +1173,6 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/TranslationsCach
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultViewConfiguration.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/ui/platform/DefaultViewConfiguration.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DefaultViewModelOwnerStore.skiko.kt             core/src/vendor/native/kotlin/androidx/compose/ui/platform/DefaultViewModelOwnerStore.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.skiko.kt        core/src/vendor/native/kotlin/androidx/compose/ui/platform/DisposableSaveableStateRegistry.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/FlushCoroutineDispatcher.skiko.kt               core/src/vendor/native/kotlin/androidx/compose/ui/platform/FlushCoroutineDispatcher.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/FrameRecomposer.skiko.kt                        core/src/vendor/native/kotlin/androidx/compose/ui/platform/FrameRecomposer.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/GlobalSnapshotManager.skiko.kt                  core/src/vendor/native/kotlin/androidx/compose/ui/platform/GlobalSnapshotManager.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/HostDefaultProviderImpl.kt                      core/src/vendor/native/kotlin/androidx/compose/ui/platform/HostDefaultProviderImpl.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/PlatformClipboard.skiko.kt                      core/src/vendor/native/kotlin/androidx/compose/ui/platform/PlatformClipboard.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/platform/PlatformContext.skiko.kt                        core/src/vendor/native/kotlin/androidx/compose/ui/platform/PlatformContext.native.kt
