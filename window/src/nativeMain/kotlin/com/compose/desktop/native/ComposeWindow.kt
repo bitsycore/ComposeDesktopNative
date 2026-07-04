@@ -158,6 +158,15 @@ fun nativeComposeWindow(
         var vFpsFrames = 0
         var vFpsLastMs = SDL_GetTicks()
 
+        // Last observed mouse position (pixel space, same as host.onPointerRaw). Used to
+        // re-dispatch a synthetic Move each frame so hover state refreshes after scroll /
+        // relayout — otherwise items that moved out from under the mouse stay "hovered"
+        // and items now under the mouse never enter hover. Upstream skiko does the
+        // equivalent via SyntheticEventSender.updatePointerPosition().
+        var vLastMouseX = -1f
+        var vLastMouseY = -1f
+        var vHasMousePos = false
+
         while (running) {
             Snapshot.sendApplyNotifications()
 
@@ -198,6 +207,9 @@ fun nativeComposeWindow(
                         // clickable via PointerInputModifierNode). Coexists with the B6a project-node
                         // dispatch above during the interaction migration.
                         host.onPointerRaw(vPx, vPy, vType, vBtn, SDL_GetTicks().toLong())
+                        vLastMouseX = vPx
+                        vLastMouseY = vPy
+                        vHasMousePos = true
                     }
                     is AppEvent.MouseWheel -> {
                         val vDpr = backend.pixelDensity
@@ -232,6 +244,17 @@ fun nativeComposeWindow(
             // Retina resolves to 128px within a 1600×1200 pixel constraint.
             host.setConstraints(backend.pixelWidth, backend.pixelHeight)
             host.measureAndLayout()
+
+            // Refresh hover after layout — re-dispatch the last mouse position as a
+            // synthetic Move so items that scrolled out from under the cursor Exit
+            // and items now under the cursor Enter. Upstream skiko does this via
+            // SyntheticEventSender.updatePointerPosition() from ComposeSceneInputHandler.
+            // The cost is one extra hit-test per frame when the mouse is inside the
+            // window; the tracker's Enter/Exit synthesis is idempotent so re-sends
+            // with an unchanged position are essentially free.
+            if (vHasMousePos) {
+                host.onPointerRaw(vLastMouseX, vLastMouseY, 0, 0, SDL_GetTicks().toLong())
+            }
 
             // ============
             //  Draw — upstream coordinator/DrawModifierNode pipeline → Canvas backend.

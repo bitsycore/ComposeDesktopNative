@@ -95,6 +95,12 @@ fun DropdownMenu(
         val vAboveY = vAnchorTop - vMenu.height
         val vY = if (vMenu.height > 0 && vWinH > 0 && vBelowY + vMenu.height > vWinH && vAboveY >= 0) vAboveY else vBelowY
         val vX = if (vMenu.width > 0 && vWinW > 0) vBaseX.coerceIn(0, (vWinW - vMenu.width).coerceAtLeast(0)) else vBaseX
+        // Swallower ("click landed inside the menu"): explicit interactionSource +
+        // indication = null so hovering the popup doesn't get painted as a giant
+        // 10% black overlay by DefaultDebugIndication (which LocalIndication resolves
+        // to until we vendor MaterialRipple). Individual DropdownMenuItems keep the
+        // default indication for per-row hover feedback.
+        val vSwallowInteraction = remember { MutableInteractionSource() }
         Box(
             modifier = Modifier
                 .offset { IntOffset(vX, vY) }
@@ -105,7 +111,11 @@ fun DropdownMenu(
                 // the menu legible against similar-coloured content behind it.
                 .border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f), DropdownMenuDefaults.Shape)
                 .padding(vertical = 4.dp)
-                .clickable { /* swallow clicks landed inside the menu */ }
+                .clickable(
+                    interactionSource = vSwallowInteraction,
+                    indication = null,
+                    onClick = { /* swallow clicks landed inside the menu */ },
+                )
         ) {
             Column(modifier = Modifier.fillMaxWidth()) { content() }
         }
