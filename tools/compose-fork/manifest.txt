@@ -672,7 +672,7 @@ compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/TextAutoSizeLayoutScope.kt               core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/TextAutoSizeLayoutScope.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/TextStringSimpleElement.kt               core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/TextStringSimpleElement.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/TextStringSimpleNode.kt                  core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/TextStringSimpleNode.kt
-# compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/TextStyleProviderNode.kt               core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/TextStyleProviderNode.kt
+compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/modifiers/TextStyleProviderNode.kt                 core/src/vendor/common/kotlin/androidx/compose/foundation/text/modifiers/TextStyleProviderNode.kt
 
 # ── androidx.compose.foundation.text.selection ──────────────────────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/text/selection/MultiWidgetSelectionDelegate.kt      core/src/vendor/common/kotlin/androidx/compose/foundation/text/selection/MultiWidgetSelectionDelegate.kt
