@@ -3,15 +3,15 @@ package androidx.compose.material
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.sp
 // MARK: Text (Material)
 // ==================
 
+/* Material `Text` matching upstream signature (color / fontSize / textAlign
+   / softWrap / fontFamily are the styling knobs). `fontFamily: String?` is
+   the Material Symbols-friendly form of upstream's `FontFamily?` — we
+   convert to `FontFamily.Named(name)` and thread through `TextStyle`. */
 @Composable
 fun Text(
     text: String,
@@ -31,18 +35,17 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
-    // BasicText is selection-aware: inside a SelectionContainer it joins the
-    // drag-select + copy path automatically (keeping full styling); outside it's
-    // a plain text node. No branching needed here.
     BasicText(
         text = text,
         modifier = modifier,
-        style = androidx.compose.ui.text.TextStyle(color = color, fontSize = fontSize, textAlign = textAlign),
+        style = TextStyle(
+            color = color,
+            fontSize = fontSize,
+            textAlign = textAlign,
+            fontFamily = fontFamily?.let { FontFamily.Named(it) },
+        ),
         softWrap = softWrap,
-        fontFamily = fontFamily,
-        fontVariationSettings = fontVariationSettings,
     )
 }
 
@@ -56,10 +59,10 @@ fun Text(
    span wins on overlap), falling back to the default `color` /
    `fontSize` for unstyled regions.
 
-   Limitation: this is single-line rendering — there's no per-glyph
-   layout pass that can break a run across lines. For multi-line styled
-   text, use explicit '\n' between Text(AnnotatedString) calls or stick
-   to the plain Text(String) overload.
+   Limitation: this is single-line rendering per-line (there's no
+   per-glyph layout that can break a run across lines). For multi-line
+   styled text, use explicit '\n' between Text(AnnotatedString) calls or
+   stick to the plain Text(String) overload.
 
    Decoration (underline / line-through) is drawn via drawBehind under
    each run; background tint is applied via Modifier.background. */
@@ -72,48 +75,46 @@ fun Text(
     textAlign: TextAlign = TextAlign.Start,
     softWrap: Boolean = true,
     fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     // Fast path: when every span is colour-only (the common case — syntax
-    // highlighting), render the whole thing as ONE BasicText. BasicText paints
-    // per-span colours from text.spanStyles in a single node, so a huge
-    // highlighted body stays one node (a SelectionContainer would otherwise turn
-    // the per-run path below into one node per token → freeze). It's also
-    // selection-aware as a single block.
+    // highlighting), render the whole thing as ONE BasicText.
     val vColorOnly = text.spanStyles.all { vR ->
         val vS = vR.item
         !vS.fontSize.isSpecified && vS.fontWeight == null && vS.fontStyle == null &&
             vS.fontFamily == null && (vS.textDecoration == null || vS.textDecoration == TextDecoration.None) &&
             vS.background == Color.Unspecified && !vS.letterSpacing.isSpecified
     }
+    val vBaseStyle = TextStyle(
+        color = color,
+        fontSize = fontSize,
+        textAlign = textAlign,
+        fontFamily = fontFamily?.let { FontFamily.Named(it) },
+    )
     if (vColorOnly) {
         BasicText(
             text = text,
             modifier = modifier,
-            style = androidx.compose.ui.text.TextStyle(color = color, fontSize = fontSize, textAlign = textAlign),
+            style = vBaseStyle,
             softWrap = softWrap,
-            fontFamily = fontFamily,
-            fontVariationSettings = fontVariationSettings,
         )
         return
     }
 
-    // Otherwise (per-span size / weight / family / background / decoration) lay
-    // out each run separately so those styles apply per run.
+    // Per-span size / weight / family / background / decoration path — lay out
+    // each run separately.
     val vLines = splitIntoRunLines(text)
     androidx.compose.foundation.layout.Column(modifier = modifier) {
         for (vLine in vLines) {
-            androidx.compose.foundation.layout.Row {
+            Row {
                 if (vLine.isEmpty()) {
                     // Empty line still needs to take the line-height — emit a
                     // single-space BasicText so the row doesn't collapse to 0px.
-                    BasicText(text = " ", style = androidx.compose.ui.text.TextStyle(color = color, fontSize = fontSize),
-                        softWrap = false, fontFamily = fontFamily, fontVariationSettings = fontVariationSettings)
+                    BasicText(text = " ", style = vBaseStyle, softWrap = false)
                 } else for (vRun in vLine) {
                     val vStyle = vRun.style
                     val vColor = if (vStyle != null && vStyle.color != Color.Unspecified) vStyle.color else color
                     val vSize = if (vStyle != null && vStyle.fontSize.isSpecified) vStyle.fontSize else fontSize
-                    val vFamily = if (vStyle?.fontFamily != null) familyName(vStyle.fontFamily) ?: fontFamily else fontFamily
+                    val vFamily = if (vStyle?.fontFamily != null) vStyle.fontFamily else fontFamily?.let { FontFamily.Named(it) }
                     val vBgModifier = if (vStyle != null && vStyle.background != Color.Unspecified)
                         Modifier.background(vStyle.background) else Modifier
                     val vDec: TextDecoration? = vStyle?.textDecoration
@@ -143,10 +144,15 @@ fun Text(
                     BasicText(
                         text = vRun.text,
                         modifier = vBgModifier.then(vDecorModifier),
-                        style = androidx.compose.ui.text.TextStyle(color = vColor, fontSize = vSize, textAlign = textAlign),
+                        style = TextStyle(
+                            color = vColor,
+                            fontSize = vSize,
+                            textAlign = textAlign,
+                            fontFamily = vFamily,
+                            fontWeight = vStyle?.fontWeight,
+                            fontStyle = vStyle?.fontStyle,
+                        ),
                         softWrap = false,
-                        fontFamily = vFamily,
-                        fontVariationSettings = vStyle?.let { extractFontVariations(it, fontVariationSettings) } ?: fontVariationSettings,
                     )
                 }
             }
@@ -199,50 +205,3 @@ private fun slicedRuns(inText: AnnotatedString, inStart: Int, inEnd: Int): List<
 
 /* One contiguous-style segment of an AnnotatedString. */
 private data class Run(val text: String, val style: SpanStyle?)
-
-/* Split the AnnotatedString at every span boundary so each output run
-   has at most one SpanStyle covering its full span. When multiple
-   SpanStyles overlap, the LAST one (highest index) wins — matches the
-   upstream "later annotations override earlier" rule. */
-private fun splitIntoRuns(inText: AnnotatedString): List<Run> {
-    if (inText.spanStyles.isEmpty() || inText.length == 0) {
-        return listOf(Run(inText.text, null))
-    }
-    val vSet = mutableSetOf(0, inText.length)
-    for (vR in inText.spanStyles) {
-        vSet.add(vR.start.coerceIn(0, inText.length))
-        vSet.add(vR.end.coerceIn(0, inText.length))
-    }
-    val vSorted = vSet.toList().sorted()
-    val vOut = mutableListOf<Run>()
-    for (vI in 0 until vSorted.size - 1) {
-        val vS = vSorted[vI]
-        val vE = vSorted[vI + 1]
-        if (vS == vE) continue
-        // Walk spans in order so the LAST matching one wins.
-        var vActive: SpanStyle? = null
-        for (vR in inText.spanStyles) {
-            if (vR.start <= vS && vR.end >= vE) vActive = vR.item
-        }
-        vOut.add(Run(inText.text.substring(vS, vE), vActive))
-    }
-    return vOut
-}
-
-/* FontFamily → renderer family name. Today only Named falls through;
-   the generic families resolve to the default font. */
-private fun familyName(inFamily: androidx.compose.ui.text.font.FontFamily?): String? = when (inFamily) {
-    is androidx.compose.ui.text.font.FontFamily.Named -> inFamily.name
-    else                                          -> null
-}
-
-/* Translate FontWeight from a SpanStyle into the wght FontVariation
-   the renderer already honours. Falls back to inFallback when no
-   weight is set on the span. */
-private fun extractFontVariations(
-    inSpan: SpanStyle,
-    inFallback: List<FontVariation.Setting>?,
-): List<FontVariation.Setting>? {
-    val vWeight = inSpan.fontWeight?.weight ?: return inFallback
-    return listOf(FontVariation.Setting("wght", vWeight.toFloat()))
-}

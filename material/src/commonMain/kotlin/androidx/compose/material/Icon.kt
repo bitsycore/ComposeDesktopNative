@@ -57,11 +57,11 @@ fun Icon(
     fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     Box(modifier = modifier.size(size)) {
-        Text(
+        com.compose.desktop.native.text.IconText(
             text = codepointToString(codepoint),
+            fontFamily = fontFamily,
             color = tint,
             fontSize = size.value.sp,
-            fontFamily = fontFamily,
             fontVariationSettings = fontVariationSettings,
         )
     }

@@ -325,19 +325,22 @@ fun BasicTextField(
         // selection — which operate on value.text — stay aligned. Without it,
         // the plain single-colour path.
         val vDisplay = remember(value.text, visualTransform) { visualTransform?.invoke(value.text) }
+        val vDisplayStyle = androidx.compose.ui.text.TextStyle(
+            color = color,
+            fontSize = fontSize,
+            fontFamily = fontFamily?.let { androidx.compose.ui.text.font.FontFamily.Named(it) },
+        )
         if (vDisplay != null) {
             BasicText(
                 text = vDisplay,
-                style = androidx.compose.ui.text.TextStyle(color = color, fontSize = fontSize),
-                fontFamily = fontFamily,
+                style = vDisplayStyle,
                 softWrap = !singleLine,
                 modifier = if (singleLine) Modifier.offset(x = (-vScrollX).dp) else Modifier.fillMaxWidth(),
             )
         } else {
             BasicText(
                 text = value.text,
-                style = androidx.compose.ui.text.TextStyle(color = color, fontSize = fontSize),
-                fontFamily = fontFamily,
+                style = vDisplayStyle,
                 softWrap = !singleLine,
                 modifier = if (singleLine) Modifier.offset(x = (-vScrollX).dp) else Modifier.fillMaxWidth(),
             )

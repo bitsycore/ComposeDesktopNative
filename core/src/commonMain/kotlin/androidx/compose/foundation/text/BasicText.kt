@@ -8,7 +8,7 @@ import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -19,20 +19,23 @@ import androidx.compose.ui.unit.sp
 // MARK: BasicText
 // ==================
 
-/* style / softWrap / overflow / maxLines / minLines / onTextLayout / color
-   mirror upstream's signature. fontFamily / fontVariationSettings are
-   documented non-upstream additions the renderer needs for icon-font
-   variable-axis support (upstream's FontFamily.Resolver routes through
-   platform typeface loaders we don't host).
+/* Byte-signature match of upstream `androidx.compose.foundation.text.BasicText`
+   — `style: TextStyle` is the sole styling channel (color / fontSize /
+   textAlign / fontFamily all live inside TextStyle). No non-upstream extras:
+   icon-font rendering with variable-font axes (Material Symbols) uses
+   `com.compose.desktop.native.text.IconText` instead, since upstream
+   TextStyle doesn't model per-usage `fontVariationSettings` (variation is
+   set per-Font at construction time upstream).
 
-   TODO(BasicText Phase 4): swap this project impl for the vendored
-   upstream `foundation.text.BasicText.kt` once the vendored
-   modifier chain (TextStringSimpleElement +
-   TextAnnotatedStringElement) has a real FontFamily.Resolver +
-   LocalSelectionRegistrar + LocalTextSelectionColors + a
-   TextLayoutResult-producing text leaf. Right now our leaf can't
-   produce a TextLayoutResult, so overflow/maxLines/minLines/onTextLayout
-   are accept-and-ignore. */
+   TODO: swap this project impl for the vendored upstream `BasicText.kt`
+   once ParagraphLayoutCache's TextLayoutResult production picks up our
+   SdlParagraph via the FontFamily.Resolver bridge (see Text Phase 4).
+   overflow / maxLines / minLines / onTextLayout are accept-and-ignore
+   today — the project leaf doesn't produce a real TextLayoutResult.
+
+   FontFamily.Named is the only family form the SDL renderer honours;
+   generic FontFamily.SansSerif / Serif / Monospace fall through to the
+   default typeface. */
 @Composable
 fun BasicText(
     text: String,
@@ -43,23 +46,18 @@ fun BasicText(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
-    fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     @Suppress("UNUSED_PARAMETER") val ignoredOverflow = overflow
     @Suppress("UNUSED_PARAMETER") val ignoredMaxLines = maxLines
     @Suppress("UNUSED_PARAMETER") val ignoredMinLines = minLines
     @Suppress("UNUSED_PARAMETER") val ignoredOnTextLayout = onTextLayout
-    val (vColor, vSize, vAlign) = resolveTextStyle(style)
-    TextLeaf(text, null, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
+    val vResolved = resolveTextStyle(style)
+    TextLeaf(text, null, modifier, vResolved.color, vResolved.fontSize, vResolved.textAlign, softWrap, vResolved.fontFamily)
 }
 
-/* AnnotatedString overload — draws `text.text` with per-span colours
-   (text.spanStyles) in a single text node. Spans are color-only for layout:
-   the plain text drives measurement/wrap, so this is safe to use as the
-   display layer of an editable field (cursor / selection map to the plain
-   text). Per-span weight / decoration aren't applied here — for those use the
-   Material Text(AnnotatedString) overload, which lays out per-run. */
+/* AnnotatedString overload — draws `text.text` with per-span colours from
+   text.spanStyles in a single text node. Spans are color-only for layout;
+   the plain text drives measurement/wrap. */
 @Composable
 fun BasicText(
     text: AnnotatedString,
@@ -70,25 +68,30 @@ fun BasicText(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
-    fontFamily: String? = null,
-    fontVariationSettings: List<FontVariation.Setting>? = null,
 ) {
     @Suppress("UNUSED_PARAMETER") val ignoredOverflow = overflow
     @Suppress("UNUSED_PARAMETER") val ignoredMaxLines = maxLines
     @Suppress("UNUSED_PARAMETER") val ignoredMinLines = minLines
     @Suppress("UNUSED_PARAMETER") val ignoredOnTextLayout = onTextLayout
-    val (vColor, vSize, vAlign) = resolveTextStyle(style)
-    TextLeaf(text.text, text.spanStyles, modifier, vColor, vSize, vAlign, softWrap, fontFamily, fontVariationSettings)
+    val vResolved = resolveTextStyle(style)
+    TextLeaf(text.text, text.spanStyles, modifier, vResolved.color, vResolved.fontSize, vResolved.textAlign, softWrap, vResolved.fontFamily)
 }
 
-/* Resolve TextStyle to the (color, fontSize, textAlign) triple our text node
-   accepts. Color.Unspecified → Color.White; TextUnit.Unspecified → 14.sp
-   (matching upstream's defaults); null TextAlign → TextAlign.Start. */
-private fun resolveTextStyle(inStyle: TextStyle): Triple<Color, TextUnit, TextAlign> {
+private data class ResolvedStyle(
+    val color: Color,
+    val fontSize: TextUnit,
+    val textAlign: TextAlign,
+    val fontFamily: String?,
+)
+
+/* Resolve TextStyle → (color, fontSize, textAlign, fontFamily) for the
+   text leaf. Applies project defaults for unspecified values. */
+private fun resolveTextStyle(inStyle: TextStyle): ResolvedStyle {
     val vColor = if (inStyle.color == Color.Unspecified) Color.White else inStyle.color
     val vSize = if (inStyle.fontSize.isUnspecified) 14.sp else inStyle.fontSize
-    val vAlign = inStyle.textAlign ?: TextAlign.Start
-    return Triple(vColor, vSize, vAlign)
+    val vAlign = inStyle.textAlign.let { if (it == TextAlign.Unspecified) TextAlign.Start else it }
+    val vFamily = (inStyle.fontFamily as? FontFamily.Named)?.name
+    return ResolvedStyle(vColor, vSize, vAlign, vFamily)
 }
 
 /* The text leaf node — defers measurement + drawing to the installed renderer. */
@@ -102,11 +105,7 @@ private fun TextLeaf(
     textAlign: TextAlign,
     softWrap: Boolean,
     fontFamily: String?,
-    fontVariationSettings: List<FontVariation.Setting>?,
 ) {
-    // Phase 9 B5: build an upstream LayoutNode via the vendored Layout — sized by the
-    // installed TextMeasurer, drawn by a TextDrawNode (DrawModifierNode) that bridges
-    // to the renderer's native text drawing. Text is a real draw node in the chain.
     val vFontPx = fontSize.value.toInt()
     androidx.compose.ui.layout.Layout(
         modifier = modifier.then(
@@ -118,7 +117,7 @@ private fun TextLeaf(
                 textAlign = textAlign,
                 softWrap = softWrap,
                 fontFamily = fontFamily,
-                fontVariations = fontVariationSettings,
+                fontVariations = null,
             )
         ),
     ) { _, constraints ->
@@ -126,7 +125,7 @@ private fun TextLeaf(
             if (softWrap && constraints.maxWidth != androidx.compose.ui.unit.Constraints.Infinity) constraints.maxWidth
             else Int.MAX_VALUE
         val vSize = com.compose.desktop.native.text.currentTextMeasurer.measure(
-            text, vFontPx, vWrapWidth, fontFamily, fontVariationSettings,
+            text, vFontPx, vWrapWidth, fontFamily, null,
         )
         val w = if (constraints.minWidth >= constraints.maxWidth) constraints.maxWidth
                 else vSize.width.coerceIn(constraints.minWidth, constraints.maxWidth)
