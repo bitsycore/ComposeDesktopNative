@@ -50,6 +50,10 @@ val LocalSoundEffect = staticCompositionLocalOf<SoundEffect> {
  *  it in the unvendored CompositionLocals.kt; no scroll-capture on SDL, so always false. */
 val LocalScrollCaptureInProgress = staticCompositionLocalOf<Boolean> { false }
 
+/** Whether the text-field cursor should blink. Default true; renderer reads via
+ *  TextFieldCoreModifier for the cursor draw pass. */
+val LocalCursorBlinkEnabled = staticCompositionLocalOf<Boolean> { true }
+
 /** Text-selection toolbar local — no-op default on desktop (SelectionManager reads it to show
  *  the floating text menu on mobile long-press; on desktop context menu is opened via right-click
  *  through the vendored foundation.text.contextmenu tree instead).
@@ -93,6 +97,25 @@ internal var defaultUriHandler: UriHandler = object : UriHandler {
 /** Called by nativeMain at renderer init to wire the SDL3 URL handler. */
 fun installDefaultUriHandler(handler: UriHandler) {
 	defaultUriHandler = handler
+}
+
+/** Alias of `androidx.compose.ui.focus.LocalFocusManager` under `ui.platform`
+ *  — upstream declares it in `ui.platform.CompositionLocals.kt` but our
+ *  project puts it in `ui.focus.FocusManagerLocal.kt`. Vendored files
+ *  reference the ui.platform path. */
+val LocalFocusManager
+	get() = androidx.compose.ui.focus.LocalFocusManager
+
+/** Software keyboard controller — no keyboard on desktop; returns null default. */
+val LocalSoftwareKeyboardController = staticCompositionLocalOf<SoftwareKeyboardController?> { null }
+
+/** Window info surfacing focus / IME state. Project has no window-info source yet;
+ *  a no-op impl unblocks vendored TextField code that reads
+ *  `LocalWindowInfo.current.isWindowFocused`. TODO: wire real window focus. */
+val LocalWindowInfo = staticCompositionLocalOf<WindowInfo> {
+	object : WindowInfo {
+		override val isWindowFocused: Boolean = true
+	}
 }
 
 val LocalTextToolbar = staticCompositionLocalOf<TextToolbar> {

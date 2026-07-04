@@ -294,3 +294,63 @@ var SemanticsPropertyReceiver.liveRegion: LiveRegionMode
 var SemanticsPropertyReceiver.paneTitle: String
 	get() = ""
 	set(value) = Unit
+
+// ============
+//  BasicTextField 2 semantics — accept-and-discard actions/props
+
+fun SemanticsPropertyReceiver.copyText(label: String? = null, action: (() -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.cutText(label: String? = null, action: (() -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.pasteText(label: String? = null, action: (() -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.insertTextAtCursor(label: String? = null, action: ((androidx.compose.ui.text.AnnotatedString) -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.performImeAction(label: String? = null, action: (() -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.onImeAction(imeActionType: androidx.compose.ui.text.input.ImeAction, label: String? = null, action: (() -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.onAutofillText(label: String? = null, action: ((androidx.compose.ui.text.AnnotatedString) -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.setSelection(label: String? = null, action: ((Int, Int, Boolean) -> Boolean)?) = Unit
+fun SemanticsPropertyReceiver.setText(label: String? = null, action: ((androidx.compose.ui.text.AnnotatedString) -> Boolean)?) = Unit
+
+var SemanticsPropertyReceiver.editableText: androidx.compose.ui.text.AnnotatedString
+	get() = error("editableText is write-only in this semantics shim")
+	set(value) = Unit
+var SemanticsPropertyReceiver.inputText: androidx.compose.ui.text.AnnotatedString
+	get() = error("inputText is write-only in this semantics shim")
+	set(value) = Unit
+var SemanticsPropertyReceiver.inputTextSuggestionState: Any
+	get() = error("inputTextSuggestionState is write-only in this semantics shim")
+	set(value) = Unit
+var SemanticsPropertyReceiver.isEditable: Boolean
+	get() = true
+	set(value) = Unit
+var SemanticsPropertyReceiver.autofillHighlightOn: Boolean
+	get() = false
+	set(value) = Unit
+var SemanticsPropertyReceiver.hasHighlight: Boolean
+	get() = false
+	set(value) = Unit
+
+/** Small class the accessibility semantics reports when the input has committed
+ *  text / applied a transliteration suggestion. Byte-identical extract from
+ *  upstream SemanticsProperties.kt — pulled out here since we can't vendor
+ *  the whole SemanticsProperties (it collides with our shim's SemanticsPropertyKey). */
+class InputTextSuggestionState(
+	val isCommittedByInputMethodEditor: Boolean = false,
+	val isTransliterationSuggestionSelected: Boolean = false,
+) {
+	override fun equals(other: Any?): Boolean =
+		other is InputTextSuggestionState &&
+			other.isCommittedByInputMethodEditor == isCommittedByInputMethodEditor &&
+			other.isTransliterationSuggestionSelected == isTransliterationSuggestionSelected
+	override fun hashCode(): Int =
+		31 * isCommittedByInputMethodEditor.hashCode() + isTransliterationSuggestionSelected.hashCode()
+	override fun toString(): String =
+		"InputTextSuggestionState(isCommittedByInputMethodEditor=$isCommittedByInputMethodEditor," +
+			" suggestionSelected=$isTransliterationSuggestionSelected)"
+}
+
+var SemanticsPropertyReceiver.textCompositionRange: androidx.compose.ui.text.TextRange?
+	get() = androidx.compose.ui.text.TextRange.Zero
+	set(value) = Unit
+var SemanticsPropertyReceiver.textSelectionRange: androidx.compose.ui.text.TextRange
+	get() = androidx.compose.ui.text.TextRange.Zero
+	set(value) = Unit
+
+fun SemanticsPropertyReceiver.password() = Unit
