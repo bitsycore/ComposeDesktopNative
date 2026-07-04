@@ -28,27 +28,68 @@ rules (pull-verbatim / surface-match / intentional-custom) live in
   through `NativeTextCanvas.drawNativeText`), the DnD engine (`DragAndDropNode`
   vendored), and the **approach/lookahead layout pipeline** (`ApproachLayoutModifierNode`
   + `ApproachMeasureScope` + `LookaheadScope`).
-- Counts: `core/src/commonMain` **100 → 51** `.kt` (`.shim.kt` **30 → 8**),
-  `core/src/vendor` **591 → 804**.
+- Counts: `core/src/commonMain` **100 → 53** `.kt` (`.shim.kt` **30 → 8**),
+  `core/src/vendor` **591 → 908**.
 - `ModifierElements.kt` trimmed — 6 dead project modifier pairs deleted
   (Background / Border / DrawBehind / Focusable / LayoutWeight / Alpha —
   all replaced by their vendored upstream equivalents).
 - 3 project actuals swapped out for byte-identical upstream: FontSynthesis,
   ContextMenuIcons, InteropViewFactoryHolder.
-- **Selection engine — passive registry side vendored** (Phases A+B, 13 files):
-  Selectable / SelectionRegistrar / SelectionRegistrarImpl / Selection /
-  SelectionAdjustment / SelectionHelpers / SelectionLayout / SelectionMagnifier /
-  SimpleLayout / PlatformSelectionBehaviors (+.skiko) / TextSelectionColors /
-  TextSelectionDelegate / MultiWidgetSelectionDelegate + foundation/text/
-  LongPressTextDragObserver. Project `Selection.kt` / `SelectionContainer.kt`
-  retired; project `BasicText.kt` no longer routes through selection (leaf
-  only). Manager side (`SelectionContainer` + `SelectionManager` 1804L +
-  `TextFieldSelectionManager` 1503L + gestures + handles + prepared-selection
-  + `SelectionMode` + `SelectionState`) is NOT vendored — needs
-  `foundation.contextmenu.*`, `TextContextMenuItems`, `Handle`,
-  `DefaultMouseSelectionObserver`, toolbar-modifier family, all unvendored.
-  A pass-through `SelectionContainerStub` keeps existing call sites
-  compiling; nothing selects text via SelectionContainer at runtime yet.
+- **Selection engine — full vendor** (Phases A+B+C, ~25 files): the whole
+  registry + manager + container. `Selectable` / `SelectionRegistrar` /
+  `SelectionRegistrarImpl` / `Selection` / `SelectionAdjustment` /
+  `SelectionHelpers` / `SelectionLayout` / `SelectionMagnifier` / `SimpleLayout`
+  / `PlatformSelectionBehaviors` (+.skiko) / `TextSelectionColors` /
+  `TextSelectionDelegate` / `MultiWidgetSelectionDelegate` +
+  `SelectionContainer` + `SelectionManager` (1804L) + `SelectionState` +
+  `SelectionGestures` + `SelectionHandles` + `SelectionModifier{Element,Node}` +
+  `SelectionController` + foundation/text/`LongPressTextDragObserver` +
+  foundation/text/`TextLinkScope` + `SelectableTextAnnotatedString{Element,Node}`.
+  `SelectionActuals.native.kt` bundles the small per-platform actuals
+  (isCopyKeyEvent / SelectionHandle / selectionMagnifier /
+  addSelectionContainerTextContextMenuComponents / FirstLongPressSelectionAdjustment).
+  Not vendored yet: `TextFieldSelectionManager` (1503L) + `TextPreparedSelection`
+  (need `LegacyTextFieldState` from unvendored `CoreTextField.kt`) and
+  `SelectionMode.kt` (K2 access-scoping bug).
+- **Context menu suites — full vendor** (~15 files): all of
+  `foundation.contextmenu` (`ContextMenuArea` + `ContextMenuUi` + `ContextMenuState`
+  + `ContextMenuGestures` + `ContextMenuPopupPositionProvider` + skiko actuals) +
+  all of `foundation.text.contextmenu` (`data.TextContextMenuData` +
+  `builder.TextContextMenuBuilderScope` + `modifier.TextContextMenu{,Gestures,ToolbarHandler}Modifier`
+  + `provider.{TextContextMenuProvider,BasicTextContextMenuProvider}` +
+  `gestures.RightClickGestures`).
+- **Text engine spine — full vendor** (~10 files): `TextDelegate` +
+  `TextLayoutHelper` + `TextPainter` + `TextMeasurer` + `HeightInLinesModifier`
+  + `TextFieldDelegate` + `EditProcessor` + `TextLayoutResultProxy` +
+  `TextFieldScroll` (+ native) + `TextFieldSize` + `TextFieldGestureModifiers`
+  + `KeyboardActionRunner` + `KeyboardActions`.
+- **BasicTextField 2 (input) leaves — vendored**: `TextFieldState` +
+  `TextFieldBuffer` + `TextFieldCharSequence` + `TextFieldTextStyles` +
+  `TrackedRange` + `UndoState` + `InputTransformation` +
+  `OutputTransformation` + `TextUndoManager` + internal `ChangeTracker` +
+  `MathUtils` + `IntIntervalTree` (1594L) + `Interval` + `TextStyleBuffer` +
+  `undo/TextUndoOperation`.
+- **New foundation vendor** — `foundation.pager` (14 files) +
+  `foundation.lazy.staggeredgrid` (14 files) + `foundation-layout/FlexBox`
+  (2718L) + `foundation-layout/Grid` (2454L) + `foundation/border/BorderLogic`
+  + `foundation/content/*` (5 files) + `foundation/OnClick` +
+  `foundation/gestures/{cupertino,DragGesture.skiko,TapGesturesDetector.skiko}` +
+  `foundation/draganddrop/DragAndDropTarget` + `foundation/selection/*.nonJvm`
+  actuals + `foundation/Clickable.nonJvm`.
+- **New animation vendor** — SharedElement suite (10 files):
+  `AnimateBoundsModifier` + `BoundsAnimation` + `SharedContentNode` +
+  `SharedElement` + `SharedElementEntry` + `SharedTransitionScope` +
+  `SharedTransitionStateMachine` + `SkipToLookaheadSizeNode` +
+  `RenderInTransitionOverlayNodeElement` + `LookaheadAnimationVisualDebugHelper`.
+- **New ui/ui vendor** — `ui/layout/{OnGlobalLayoutListener,OnFirstVisibleModifier,OnVisibilityChangedModifier,LayoutBoundsHolder}` +
+  `ui/FrameRate`.
+- Project extracts/stubs used to bridge (TODO comments included, delete when
+  upstream can vendor): `foundation/text/{HandleExtract,CommonContextMenuAreaExtract,
+  ContextMenuExtract,DefaultCursorThicknessExtract}` +
+  `foundation/text/input/internal/OffsetCoerceInExtract` +
+  `ui/draw/ShadowStub` + `ui/platform/CompositionLocalsShim.kt` additions
+  (LocalFontFamilyResolver + LocalUriHandler + LocalTextToolbar +
+  installDefaultUriHandler wiring).
 - Full **mingwX64** (SDL) + **macOS Skia** + **macOS `-Prenderer=sdl3`** graph is
   compile-green. All verification probes PASS (see [Verification](#verification)).
 
