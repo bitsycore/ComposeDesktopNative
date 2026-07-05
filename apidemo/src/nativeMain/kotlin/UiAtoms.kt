@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -166,13 +168,17 @@ internal fun OutlinedAction(inIcon: Int, inLabel: String, inOnClick: () -> Unit)
     OutlinedButton(onClick = inOnClick) { BtnContent(inIcon, inLabel, c.accent) }
 }
 
-/* Filled red icon+label button for destructive / stop actions (delete, cancel, quit). */
+/* Filled red icon+label button for destructive / stop actions (delete, cancel, quit).
+   Uses the m3 Button so its size + ripple + interaction match every other
+   Button in the app — previously handrolled Box + background + clickable + padding
+   gave it a different height / horizontal padding, and the Discard button sat
+   next to a Button ("Save first…") looking noticeably smaller in dialogs. */
 @Composable
 internal fun DangerButton(inLabel: String, inIcon: Int, inOnClick: () -> Unit) {
     val vRed = methodColor(ReqMethod.DELETE)
-    Box(
-        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(vRed, RoundedCornerShape(6.dp))
-            .clickable(onClick = inOnClick).padding(horizontal = 14.dp, vertical = 9.dp),
+    Button(
+        onClick = inOnClick,
+        colors = ButtonDefaults.buttonColors(containerColor = vRed, contentColor = Color.White),
     ) { BtnContent(inIcon, inLabel, Color.White) }
 }
 
