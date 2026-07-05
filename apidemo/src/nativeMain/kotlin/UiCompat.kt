@@ -77,12 +77,25 @@ fun Dialog(
 	onDismissRequest: () -> Unit,
 	content: @Composable () -> Unit,
 ) {
+	// Neither the scrim nor the content-swallower should paint any hover / press
+	// indication (they exist only to route clicks). LocalIndication resolves to
+	// DefaultDebugIndication here, which paints a 10% black overlay on hover —
+	// on the fullscreen scrim that made the whole dialog visibly darker when
+	// the mouse entered; on the content-swallower it darkened the dialog body.
+	// Explicit interactionSource + indication=null suppresses the overlay
+	// without affecting click routing.
+	val vScrimInteraction = remember { MutableInteractionSource() }
+	val vContentInteraction = remember { MutableInteractionSource() }
 	Popup(onDismissRequest = onDismissRequest) {
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.background(Color(0x80000000L))
-				.clickable { onDismissRequest() },
+				.clickable(
+					interactionSource = vScrimInteraction,
+					indication = null,
+					onClick = onDismissRequest,
+				),
 			contentAlignment = Alignment.Center,
 		) {
 			// Stop scrim click-through: any click inside the dialog body itself
@@ -91,7 +104,11 @@ fun Dialog(
 				modifier = Modifier
 					.widthIn(min = DialogDefaults.MinWidth, max = DialogDefaults.MaxWidth)
 					.background(MaterialTheme.colorScheme.surface, DialogDefaults.Shape)
-					.clickable { /* swallow */ },
+					.clickable(
+						interactionSource = vContentInteraction,
+						indication = null,
+						onClick = { /* swallow */ },
+					),
 			) { content() }
 		}
 	}
