@@ -119,7 +119,13 @@ internal fun RequestTabStrip(
                 var vMod = Modifier
                     .onGloballyPositioned { vLeft[vKey] = it.x }
                     .onSizeChanged { vWidth[vKey] = it.width }
-                if (vDragged) vMod = vMod.zIndex(1f).alpha(0.65f).graphicsLayer(translationX = vDragDx, translationY = 0f)
+                // NOTE: `alpha` and `translationX` MUST be on the same graphicsLayer.
+                // `Modifier.alpha` expands to `graphicsLayer(alpha, clip = true)` — clip is
+                // applied in the ALPHA layer's local coord space (before any child layer's
+                // translation), so `.alpha().graphicsLayer(translationX = X)` clips the drag
+                // ghost inside its original bounds and the ghost disappears as it slides. One
+                // layer with both properties = clip stays false, alpha modulates via layerPaint.
+                if (vDragged) vMod = vMod.zIndex(1f).graphicsLayer(alpha = 0.65f, translationX = vDragDx, translationY = 0f)
                 vMod = vMod
                     .clip(RoundedCornerShape(7.dp))
                     .background(if (vSel) c.accent.copy(alpha = 0.20f) else c.field, RoundedCornerShape(7.dp))

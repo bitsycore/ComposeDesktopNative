@@ -370,7 +370,9 @@ internal fun PackSection(
         var vHeadMod = Modifier.fillMaxWidth()
             .onGloballyPositioned { inDrag.headTop[inPack] = it.y }
             .onSizeChanged { inDrag.headH[inPack] = it.height }
-        if (vHeaderDragged) vHeadMod = vHeadMod.zIndex(1f).alpha(0.65f).graphicsLayer(translationX = 0f, translationY = inDrag.dy)
+        // See RequestTabStrip note: alpha + translation on the SAME graphicsLayer so
+        // clip=false and the drag ghost isn't clipped to its original bounds.
+        if (vHeaderDragged) vHeadMod = vHeadMod.zIndex(1f).graphicsLayer(alpha = 0.65f, translationX = 0f, translationY = inDrag.dy)
         vHeadMod = vHeadMod.clip(RoundedCornerShape(6.dp))
             .background(
                 when {
@@ -478,7 +480,7 @@ internal fun PackSection(
                             .onSizeChanged { inDrag.rowH[vRs] = it.height }
                         // translate is draw-only (doesn't shift absoluteY), so the
                         // cursor offset below stays correct while dragging.
-                        if (vDragged) vMod = vMod.zIndex(1f).alpha(0.65f).graphicsLayer(translationX = 0f, translationY = inDrag.dy)
+                        if (vDragged) vMod = vMod.zIndex(1f).graphicsLayer(alpha = 0.65f, translationX = 0f, translationY = inDrag.dy)
                         if (!inPack.isLinked) vMod = vMod.onDrag(
                                 onStart = { _, vRelY ->
                                     inDrag.clear()
