@@ -2,22 +2,41 @@
 
 # ComposeNativeSDL3
 
-A subset of **Compose Desktop** running on **Kotlin/Native** with **SDL3** for
+A Kotlin/Native port of **Compose Multiplatform** running on **SDL3** for
 windowing and input — **no JVM**. Compiles to native binaries for macOS
-(arm64), Linux (x64/arm64) and Windows (mingwX64).
+(arm64), Linux (x64/arm64), Windows (mingwX64).
 
 Rendering is pluggable behind one `RenderBackend`:
 
-- **Skia** (via Skiko) on macOS + Linux — Metal / OpenGL / CPU raster
+- **Skia** (via Skiko klibs) on macOS + Linux — Metal / OpenGL / CPU raster.
 - **SDL3** (`SDL3_ttf` + `SDL_RenderGeometry`) on Windows, and on macOS/Linux
-  with `-Prenderer=sdl3`
+  when `-Prenderer=sdl3` is passed.
+
+The Compose **runtime** is the official
+`org.jetbrains.compose.runtime:runtime` klibs from Maven — this project
+re-implements the layers on top of it (`androidx.compose.ui.*`,
+`.foundation.*`, `.animation.*`, `.material3.*`) by **vendoring
+upstream Compose Multiplatform verbatim** whenever possible and hand-rolling
+project actuals + SDL3 / Skia glue only where needed.
+
+## Module layout
+
+```
+compose/
+├── ui/               → :ui        (androidx.compose.ui.* + renderers + cinterops)
+├── animation-core/   → :animation-core
+├── foundation/       → :foundation (foundation.* + non-core animation.*)
+├── material3/        → :material3
+├── material-symbols/ → :material-symbols (codepoints + Outlined/Rounded/Sharp)
+└── native/window/    → :window    (nativeComposeWindow + SDL3 main loop)
+```
 
 ## demo — widget & feature showcase
 
 <img src="screenshots/demo.png" width="100%" alt="ComposeNativeSDL3 demo" />
 
-`:demo` is a full tour of the re-implemented Compose + Material surface — 30+
-sidebar screens covering buttons, text fields, layout, modifiers, shapes,
+`:demo` is a full tour of the re-implemented Compose + Material 3 surface —
+30+ sidebar screens covering buttons, text fields, layout, modifiers, shapes,
 images, state & recomposition, scrolling & lazy lists, dialogs, icons, canvas,
 graphics layers, custom layout, animation and gestures.
 
@@ -54,7 +73,7 @@ renderer everywhere.
 ## Minimal app
 
 ```kotlin
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import com.compose.desktop.native.nativeComposeWindow
 
 fun main() = nativeComposeWindow(title = "Hello") {
@@ -64,20 +83,45 @@ fun main() = nativeComposeWindow(title = "Hello") {
 
 The lambda runs with a `ComposeWindowScope` receiver exposing
 `window: ComposeNativeWindow` (`setTitle` / `setSize` / `minimize` /
-`maximize` / `setFullscreen` / `close` / …); the same handle is reachable from
-any nested composable via `LocalComposeNativeWindow.current`.
+`maximize` / `setFullscreen` / `close` / …); the same handle is reachable
+from any nested composable via `LocalComposeNativeWindow.current`.
+
+Add these to your module's `commonMain.dependencies`:
+
+```kotlin
+implementation(project(":window"))            // window + main loop
+implementation(project(":material3"))         // Material 3 widgets
+implementation(project(":material-symbols"))  // icon-font composables (optional)
+```
 
 ## Building
 
 - **macOS:** `brew install sdl3` (Skia is the default; Skiko klibs come from
   Maven).
 - **Linux:** `sudo apt install libsdl3-dev`.
-- **Windows:** SDL3, SDL3_ttf, SDL3_image and FreeType are built from source as
-  **static** libraries by `tools/build-all.sh` into the gitignored in-repo
-  `libs/`, then linked into the executable — the Windows distributable is just
-  `<app>.exe` + `data.kres`, no runtime DLLs.
+- **Windows:** SDL3, SDL3_ttf, SDL3_image and FreeType are built from source
+  as **static** libraries by `tools/build-all.sh` into the gitignored
+  in-repo `libs/`, then linked into the executable — the Windows
+  distributable is just `<app>.exe` + `data.kres`, no runtime DLLs.
 
-See [CLAUDE.md](CLAUDE.md) for the full module layout and build details.
+## Vendoring
+
+The bulk of the `androidx.compose.*` code is vendored byte-for-byte from
+`JetBrains/compose-multiplatform-core` and lives under
+`<module>/src/vendor/` (gitignored — you re-sync on demand). Each module
+carries a `compose-fork.txt` manifest listing which upstream files it pulls
+in.
+
+```bash
+tools/compose-fork/sync.sh                           # sync every module
+tools/compose-fork/sync.sh compose/ui/compose-fork.txt   # one module
+```
+
+Upstream ref pinned in `tools/compose-fork/compose-ref.txt`.
+
+See [CLAUDE.md](CLAUDE.md) for the full architecture, source-set hierarchy,
+vendoring rules, density flow (physical-pixel Option B), and per-area file
+map.
 
 ## License
 
