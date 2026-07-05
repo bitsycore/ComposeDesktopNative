@@ -75,7 +75,27 @@ internal class SdlParagraph(
 	override val width: Float =
 		if (maxWidthPx == Int.MAX_VALUE) (lineWidths.maxOrNull() ?: 0f) else widthConstraint
 	override val height: Float = lineCount * lh
-	override val maxIntrinsicWidth: Float = measureStr(text.replace("\n", " "))
+	// Widest single HARD-BREAK line — NOT the concatenated all-on-one-line width.
+	// Compose's Text(softWrap = false) reads this to decide the paragraph width
+	// (LayoutUtils.finalMaxWidth returns Constraints.Infinity when softWrap=false,
+	// then clamps maxIntrinsicWidth into [minWidth, Infinity]). Measuring the whole
+	// text `.replace("\n", " ")` as one line reported a 17-line gutter as a ~600px
+	// single line, so a Modifier.width(18.dp) gutter Text got laid out at 600px
+	// wide and the line-number column vanished under the body text.
+	override val maxIntrinsicWidth: Float = run {
+		var vMax = 0f
+		var vStart = 0
+		while (vStart <= text.length) {
+			val vNl = text.indexOf('\n', vStart)
+			val vEnd = if (vNl < 0) text.length else vNl
+			val vLine = text.substring(vStart, vEnd)
+			val vW = if (vLine.isEmpty()) 0f else measureStr(vLine)
+			if (vW > vMax) vMax = vW
+			if (vNl < 0) break
+			vStart = vNl + 1
+		}
+		vMax
+	}
 	override val minIntrinsicWidth: Float =
 		text.split(Regex("\\s+")).fold(0f) { acc, w -> max(acc, measureStr(w)) }
 
