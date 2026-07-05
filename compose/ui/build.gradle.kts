@@ -70,11 +70,14 @@ fun isSkiaTarget(targetName: String): Boolean = when (targetName) {
     else -> false
 }
 
+// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
+val vHostSupportsMingw: Boolean by rootProject.extra
+
 kotlin {
     linuxArm64()
     linuxX64()
     macosArm64()
-    mingwX64()
+    if (vHostSupportsMingw) mingwX64()
 
     applyDefaultHierarchyTemplate()
 
@@ -186,9 +189,13 @@ kotlin {
             // SDL3_ttf / SDL3_image / freetype cinterop bindings come from
             // the per-target cinterop block above; no separate Gradle deps.
         }
-        // mingwX64 is SDL3 always — its intermediate is always created.
-        val sdlRendererMingwMain by creating { dependsOn(sdlRendererMain) }
-        mingwX64Main.get().dependsOn(sdlRendererMingwMain)
+        // mingwX64 is SDL3 always — attach its intermediate only when the
+        // target itself was declared (host is Windows). Non-Windows hosts skip
+        // both the target and its source-set wiring.
+        if (vHostSupportsMingw) {
+            val sdlRendererMingwMain by creating { dependsOn(sdlRendererMain) }
+            mingwX64Main.get().dependsOn(sdlRendererMingwMain)
+        }
 
         val macosArm64Main by getting
         val linuxX64Main by getting

@@ -36,11 +36,14 @@ repositories {
 // In-repo (gitignored) native deps; see tools/. Driven off rootDir for portability.
 val vLibs = "${rootDir.invariantSeparatorsPath}/libs"
 
+// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
+val vHostSupportsMingw: Boolean by rootProject.extra
+
 kotlin {
     linuxArm64()
     linuxX64()
     macosArm64()
-    mingwX64()
+    if (vHostSupportsMingw) mingwX64()
 
     targets.withType<KotlinNativeTarget>().all {
         val isMingw = name == "mingwX64"
@@ -125,7 +128,7 @@ kotlin {
         // client-certificate (mTLS) path — which calls the same bundled libcurl
         // directly, since Ktor's engines expose no client-cert API — shares the
         // exact same TLS stack as ordinary requests.
-        getByName("mingwX64Main").dependencies { implementation(libs.ktor.client.curl) }
+        if (vHostSupportsMingw) getByName("mingwX64Main").dependencies { implementation(libs.ktor.client.curl) }
         getByName("macosArm64Main").dependencies { implementation(libs.ktor.client.curl) }
         getByName("linuxX64Main").dependencies { implementation(libs.ktor.client.curl) }
         getByName("linuxArm64Main").dependencies { implementation(libs.ktor.client.curl) }

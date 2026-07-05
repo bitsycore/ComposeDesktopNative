@@ -48,11 +48,14 @@ val composeResGenDir = layout.buildDirectory.dir("generated/composeRes")
 // regardless of where the repo is cloned.
 val vLibs = "${rootDir.invariantSeparatorsPath}/libs"
 
+// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
+val vHostSupportsMingw: Boolean by rootProject.extra
+
 kotlin {
     linuxArm64()
     linuxX64()
     macosArm64()
-    mingwX64()
+    if (vHostSupportsMingw) mingwX64()
 
     targets.withType<KotlinNativeTarget>().all {
         val isMingw = name == "mingwX64"

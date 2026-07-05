@@ -29,11 +29,14 @@ val vHostSdlInclude: String? = when {
     else                          -> null
 }
 
+// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
+val vHostSupportsMingw: Boolean by rootProject.extra
+
 kotlin {
     linuxArm64()
     linuxX64()
     macosArm64()
-    mingwX64()
+    if (vHostSupportsMingw) mingwX64()
 
     applyDefaultHierarchyTemplate()
 
