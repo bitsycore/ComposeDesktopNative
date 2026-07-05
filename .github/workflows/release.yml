@@ -47,21 +47,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # 0.2.0 ships macosArm64 only. linuxX64 fails on K/N sysroot vs
+        # ubuntu-24.04 libSDL3.so GLIBC symbol mismatch, linuxArm64 hits K/N
+        # "Unknown host target: linux aarch64" (no native linux-aarch64 host
+        # toolchain in K/N 2.4), mingwX64 fails because K/N's bundled msys2
+        # mingw ZIP ships c++.exe but not cc1plus — SDL3's CMake calls
+        # enable_language(CXX) unconditionally. Each target needs an
+        # independent fix; adding them back one at a time.
         include:
-          - target: linuxX64
-            os: ubuntu-24.04
-            gradle: LinuxX64
-            multiarch: x86_64-linux-gnu
-          - target: linuxArm64
-            os: ubuntu-24.04-arm
-            gradle: LinuxArm64
-            multiarch: aarch64-linux-gnu
           - target: macosArm64
             os: macos-14
             gradle: MacosArm64
-          - target: mingwX64
-            os: windows-2022
-            gradle: MingwX64
 
     env:
       PUBLISH_URL: https://maven.pkg.github.com/${{ github.repository }}
@@ -176,10 +172,19 @@ jobs:
         run: tools/compose-fork/sync.sh
 
       # ---------------- Build the apps ----------------
+      # Kotlin/Native release-mode LTO pushes the compiler JVM near its heap
+      # limit; the previous run OOM'd with "Compilation failed: Java heap space"
+      # when :demo + :apidemo linked in parallel. Bump the daemon heap to 6G
+      # and force the two link tasks to run sequentially (`--max-workers=1`)
+      # so a single K/N compile owns the heap at a time. Gradle daemon is
+      # spun up fresh (`--no-daemon`) so the heap arg takes effect for this
+      # invocation only.
       - name: Build demo + apidemo (release)
         shell: bash
+        env:
+          GRADLE_OPTS: -Xmx6g -Dfile.encoding=UTF-8
         run: |
-          ./gradlew --no-daemon -PsubsetIcons=true \
+          ./gradlew --no-daemon --max-workers=1 -PsubsetIcons=true \
             -PreleaseVersion=${{ steps.ver.outputs.v }} \
             :demo:linkReleaseExecutable${{ matrix.gradle }} \
             :apidemo:linkReleaseExecutable${{ matrix.gradle }}
