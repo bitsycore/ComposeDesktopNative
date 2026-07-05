@@ -6,10 +6,37 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
 }
 
+// ==================
+// MARK: -PuseReleased=<version> — swap :window / :material3 for published artifacts
+// ==================
+// Default build (no property): :window + :material3 come from `project(...)`
+// so a local `./gradlew :demo:run…` picks up your uncommitted changes.
+// `-PuseReleased=<version>` swaps them for
+//     com.bitsycore.compose.native:desktop-window-<target>:<version>
+//     com.bitsycore.compose.native:desktop-material3-<target>:<version>
+// pulled from GitHub Packages — good for reproducing a release build against
+// the exact artifacts users will get. `:material-symbols` stays a project
+// dep either way — the Zip task below hooks its per-style font download
+// tasks (extra["iconFontDownloadTask<Style>"]), which don't exist on the
+// Maven artifact.
+//
+// GitHub Packages requires auth even for public reads. Provide creds via:
+//   -PgithubUser=<name> -PgithubToken=<pat>    or
+//   env: GITHUB_ACTOR / GITHUB_TOKEN            (auto-set on CI runners)
+val vReleased = (findProperty("useReleased") as String?)?.takeIf { it.isNotBlank() }
+
 repositories {
     google()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    if (vReleased != null) maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/bitsycore/ComposeDesktopNative")
+        credentials {
+            username = (findProperty("githubUser") as? String) ?: System.getenv("GITHUB_ACTOR") ?: ""
+            password = (findProperty("githubToken") as? String) ?: System.getenv("GITHUB_TOKEN") ?: ""
+        }
+    }
 }
 
 // Output dir for the generated Res.* accessor file — wired into nativeMain
@@ -71,13 +98,20 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":window"))
-                implementation(project(":material3"))
+                if (vReleased != null) {
+                    implementation("com.bitsycore.compose.native:desktop-window:$vReleased")
+                    implementation("com.bitsycore.compose.native:desktop-material3:$vReleased")
+                } else {
+                    implementation(project(":window"))
+                    implementation(project(":material3"))
+                }
                 // Single :material-symbols dep brings all three style objects
                 // (Outlined / Rounded / Sharp). Which style FONT(S) actually
                 // end up in data.kres is decided by the Zip task below —
                 // it scans this module's Kotlin sources for style call sites
-                // and bundles only the fonts that are used.
+                // and bundles only the fonts that are used. Stays a project
+                // dep even under -PuseReleased because the Zip task hooks
+                // its per-style font download tasks by name.
                 implementation(project(":material-symbols"))
             }
             // Generated typed Res.* accessors (produced by generateComposeResAccessors).

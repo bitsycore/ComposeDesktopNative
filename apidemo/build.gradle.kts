@@ -13,10 +13,24 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
+// See :demo's build for the full rationale — `-PuseReleased=<version>` swaps
+// :window / :material3 for the published Maven artifacts. `:material-symbols`
+// stays a project dep because the Zip task below hooks its font download
+// tasks by name.
+val vReleased = (findProperty("useReleased") as String?)?.takeIf { it.isNotBlank() }
+
 repositories {
     google()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    if (vReleased != null) maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/bitsycore/ComposeDesktopNative")
+        credentials {
+            username = (findProperty("githubUser") as? String) ?: System.getenv("GITHUB_ACTOR") ?: ""
+            password = (findProperty("githubToken") as? String) ?: System.getenv("GITHUB_TOKEN") ?: ""
+        }
+    }
 }
 
 // In-repo (gitignored) native deps; see tools/. Driven off rootDir for portability.
@@ -82,8 +96,13 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":window"))
-                implementation(project(":material3"))
+                if (vReleased != null) {
+                    implementation("com.bitsycore.compose.native:desktop-window:$vReleased")
+                    implementation("com.bitsycore.compose.native:desktop-material3:$vReleased")
+                } else {
+                    implementation(project(":window"))
+                    implementation(project(":material3"))
+                }
                 // Single :material-symbols dep brings all three style objects
                 // (Outlined / Rounded / Sharp). Which style FONT(S) actually
                 // end up in data.kres is decided by detectUsedStyles() below —
