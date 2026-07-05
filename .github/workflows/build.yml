@@ -61,10 +61,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       # ---------------- Linux (x64 + arm64) ----------------
-      # Skia/Skiko links fontconfig + GL + X11; SDL3 is linked from the system
-      # (sdl3.def: -lSDL3). Prefer the distro libsdl3-dev; only build SDL3 from
-      # source if the runner's apt doesn't carry it.
-      - name: Install Linux deps (+ SDL3)
+      # :ui has four cinterops (sdl3, sdl3_ttf, sdl3_image, freetype), all
+      # exercised on every :ui compile. Install the -dev headers for all four.
+      # Skia/Skiko links fontconfig + GL + X11 for its own use.
+      - name: Install Linux deps (SDL3 family + FreeType + Skia system libs)
         if: runner.os == 'Linux'
         env:
           SDL_REF: release-3.4.10
@@ -72,27 +72,35 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libfontconfig-dev libgl-dev libx11-dev libxext-dev libxrandr-dev \
-            libxi-dev libxcursor-dev libxinerama-dev
-          if sudo apt-get install -y libsdl3-dev; then
-            echo "::notice::Using distro libsdl3-dev"
+            libxi-dev libxcursor-dev libxinerama-dev libfreetype6-dev
+          if sudo apt-get install -y libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev; then
+            echo "::notice::Using distro libsdl3{,-ttf,-image}-dev"
           else
-            echo "::notice::libsdl3-dev not in apt — building SDL3 $SDL_REF from source"
+            echo "::notice::libsdl3* not in apt — building SDL3 + SDL3_ttf + SDL3_image $SDL_REF from source"
             sudo apt-get install -y --no-install-recommends cmake ninja-build pkg-config \
               libxfixes-dev libxss-dev libxtst-dev libxkbcommon-dev
-            git clone --depth 1 -b "$SDL_REF" https://github.com/libsdl-org/SDL.git /tmp/SDL
-            cmake -S /tmp/SDL -B /tmp/SDL/build -G Ninja \
-              -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF \
-              -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF \
-              -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib/${{ matrix.multiarch }}
-            cmake --build /tmp/SDL/build
-            sudo cmake --install /tmp/SDL/build
+            install_sdl_repo() {
+              local repo="$1" src="$2"
+              git clone --depth 1 -b "$SDL_REF" "https://github.com/libsdl-org/$repo.git" "$src"
+              cmake -S "$src" -B "$src/build" -G Ninja \
+                -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
+                -DSDL_SHARED=ON -DSDL_STATIC=OFF \
+                -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DSDLTTF_SAMPLES=OFF -DSDLIMAGE_SAMPLES=OFF \
+                -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib/${{ matrix.multiarch }}
+              cmake --build "$src/build"
+              sudo cmake --install "$src/build"
+            }
+            install_sdl_repo SDL /tmp/SDL
+            install_sdl_repo SDL_ttf /tmp/SDL_ttf
+            install_sdl_repo SDL_image /tmp/SDL_image
             sudo ldconfig
           fi
 
       # ---------------- macOS ----------------
-      - name: Install macOS deps
+      # Same four cinterops as Linux; brew ships all of them.
+      - name: Install macOS deps (SDL3 family + FreeType)
         if: runner.os == 'macOS'
-        run: brew install sdl3
+        run: brew install sdl3 sdl3_ttf sdl3_image freetype
 
       # ---------------- Windows (static libs) ----------------
       # The mingwX64 build links SDL3 / SDL3_ttf / SDL3_image / FreeType
