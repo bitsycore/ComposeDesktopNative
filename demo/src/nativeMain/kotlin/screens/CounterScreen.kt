@@ -3,7 +3,7 @@ import androidx.compose.foundation.shape.CircleShape
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.style.*
@@ -23,7 +23,7 @@ internal fun CounterScreen() {
             ) {
                 Text(
                     text = "Counter: $counter",
-                    color = MaterialTheme.colors.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 32.sp,
                 )
                 Row(
@@ -38,14 +38,14 @@ internal fun CounterScreen() {
                     ) {
                         Text(
                             text = "-",
-                            color = MaterialTheme.colors.onPrimary,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 24.sp,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                         )
                     }
                     OutlinedButton(onClick = { counter = 0 }) {
-                        Text("Reset", color = MaterialTheme.colors.primary)
+                        Text("Reset", color = MaterialTheme.colorScheme.primary)
                     }
                     Button(
                         onClick = { counter++ },
@@ -55,7 +55,7 @@ internal fun CounterScreen() {
                     ) {
                         Text(
                             text = "+",
-                            color = MaterialTheme.colors.onPrimary,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 24.sp,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,

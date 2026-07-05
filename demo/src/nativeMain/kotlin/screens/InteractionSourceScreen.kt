@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import com.compose.desktop.native.modifier.pressable
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.sp
    with animateColorAsState for smooth transitions. */
 @Composable
 internal fun InteractionSourceScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
-	val vSurface = MaterialTheme.colors.surface
-	val vOnSurface = MaterialTheme.colors.onSurface
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
+	val vSurface = MaterialTheme.colorScheme.surface
+	val vOnSurface = MaterialTheme.colorScheme.onSurface
 
 	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 		ScreenTitle(

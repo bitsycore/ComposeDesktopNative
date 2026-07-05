@@ -3,7 +3,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.style.*
@@ -16,34 +16,34 @@ internal fun TextScreen() {
 
         Section("Font sizes", "All TextUnit-typed, scale with theme") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Default text", color = MaterialTheme.colors.onSurface)
-                Text("fontSize 12.sp", fontSize = 12.sp, color = MaterialTheme.colors.onSurface)
-                Text("fontSize 24.sp", fontSize = 24.sp, color = MaterialTheme.colors.onSurface)
-                Text("fontSize 32.sp", fontSize = 32.sp, color = MaterialTheme.colors.onSurface)
+                Text("Default text", color = MaterialTheme.colorScheme.onSurface)
+                Text("fontSize 12.sp", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text("fontSize 24.sp", fontSize = 24.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text("fontSize 32.sp", fontSize = 32.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
         Section("Colors") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Color.Red", color = Color.Red, fontSize = 16.sp)
-                Text("MaterialTheme.colors.primary", color = MaterialTheme.colors.primary, fontSize = 16.sp)
-                Text("MaterialTheme.colors.secondary", color = MaterialTheme.colors.secondary, fontSize = 16.sp)
+                Text("MaterialTheme.colorScheme.primary", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
+                Text("MaterialTheme.colorScheme.secondary", color = MaterialTheme.colorScheme.secondary, fontSize = 16.sp)
             }
         }
 
         Section("TextAlign over fillMaxWidth()") {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.background,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.width(400.dp),
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Start", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                        color = MaterialTheme.colors.onBackground)
+                        color = MaterialTheme.colorScheme.onBackground)
                     Text("Center", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-                        color = MaterialTheme.colors.onBackground)
+                        color = MaterialTheme.colorScheme.onBackground)
                     Text("End", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End,
-                        color = MaterialTheme.colors.onBackground)
+                        color = MaterialTheme.colorScheme.onBackground)
                 }
             }
         }
@@ -51,13 +51,13 @@ internal fun TextScreen() {
         Section("Soft-wrap", "Long text auto-wraps at word boundaries inside a constrained width") {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.background,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.width(280.dp),
             ) {
                 Box(modifier = Modifier.padding(12.dp)) {
                     Text(
                         text = "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!",
-                        color = MaterialTheme.colors.onBackground,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 14.sp,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -68,13 +68,13 @@ internal fun TextScreen() {
         Section("softWrap = false", "Overflows horizontally — Surface clips, content cropped at the right edge") {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.background,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.width(280.dp),
             ) {
                 Box(modifier = Modifier.padding(12.dp)) {
                     Text(
                         text = "This long sentence does not wrap and will get clipped.",
-                        color = MaterialTheme.colors.onBackground,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 14.sp,
                         softWrap = false,
                     )

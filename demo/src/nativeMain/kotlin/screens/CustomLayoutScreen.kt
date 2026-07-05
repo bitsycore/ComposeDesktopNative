@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,8 +28,8 @@ import kotlin.math.max
    Row / Column / Box. */
 @Composable
 internal fun CustomLayoutScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
 
 	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 		ScreenTitle(
@@ -103,12 +103,12 @@ internal fun CustomLayoutScreen() {
 				"child without rewriting its parent's layout.",
 		) {
 			Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-				Text("Before:", fontSize = 14.sp, color = MaterialTheme.colors.onSurface)
+				Text("Before:", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
 				Box(modifier = Modifier
 					.size(80.dp, 40.dp)
 					.background(vPrimary, RoundedCornerShape(6.dp)),
 				)
-				Text("After:", fontSize = 14.sp, color = MaterialTheme.colors.onSurface)
+				Text("After:", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
 				Box(modifier = Modifier
 					.size(80.dp, 40.dp)
 					.background(vSecondary, RoundedCornerShape(6.dp))

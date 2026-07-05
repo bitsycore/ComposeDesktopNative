@@ -50,10 +50,13 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // api so apps depending on :window also get the compose re-impl,
-            // Res/resources, GpuMode, the renderer pipeline, etc. from :core,
-            // plus Material widgets from :material.
+            // Res/resources, GpuMode, and the renderer pipeline from :core.
+            // Material widgets used to be re-exported from :material here; the
+            // module was retired when :apidemo and :demo migrated to :material3.
+            // Apps that want Material 3 widgets pull `implementation(project(":material3"))`
+            // themselves (:material3 doesn't need to be `api`-exposed — the
+            // upstream vendored surface is stable and apps import it directly).
             api(project(":core"))
-            api(project(":material"))
             implementation(libs.kotlinx.coroutines.core)
             // setMain() / resetMain() — see Sdl3MainDispatcher.kt for usage.
             implementation(libs.kotlinx.coroutines.test)

@@ -1,9 +1,9 @@
 package com.compose.desktop.native.icons.material.symbols.rounded
 
-import androidx.compose.material.Icon
-import androidx.compose.material.IconDefaults
-import androidx.compose.material.MaterialIconAxes
-import androidx.compose.material.MaterialIconAxisDefaults
+import com.compose.desktop.native.icons.IconFontIcon
+import com.compose.desktop.native.icons.IconDefaults
+import com.compose.desktop.native.icons.MaterialIconAxes
+import com.compose.desktop.native.icons.MaterialIconAxisDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,7 +62,7 @@ object MaterialSymbolsRounded {
 		opticalSize: Int = MaterialIconAxisDefaults.OpticalSize,
 	) {
 		install()
-		Icon(
+		IconFontIcon(
 			codepoint = icon,
 			fontFamily = Family,
 			contentDescription = contentDescription,

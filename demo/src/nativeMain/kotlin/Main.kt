@@ -2,9 +2,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.darkColors
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,14 +27,11 @@ fun main(args: Array<String>) {
     // Phase 9 B4 probe: render a hand-built upstream LayoutNode tree through
     // ComposeOwner + Sdl3Canvas and screenshot it — proves the upstream pipeline
     // end-to-end without the full ComposeWindow pivot. `--pipetest=<path.bmp>`.
-    val vPipe = args.firstOrNull { it.startsWith("--pipetest") }
-    if (vPipe != null) {
-        val vPath = if ("=" in vPipe) vPipe.substringAfter("=") else "pipetest.bmp"
-        com.compose.desktop.native.renderer.sdl.runUpstreamPipelineProbe(vPath)
-        return
-    }
-    if (args.any { it == "--inputtest" }) {
-        com.compose.desktop.native.renderer.sdl.runInputProbe()
+    // `--pipetest` / `--inputtest` probes are SDL3-renderer-only (defined in
+    // core/src/sdlRendererMain/…/renderer/sdl/UpstreamPipelineProbe.kt) and won't
+    // resolve on the default Skia build. Rebuild with -Prenderer=sdl3 to run them.
+    if (args.any { it.startsWith("--pipetest") || it == "--inputtest" }) {
+        println("[demo] --pipetest / --inputtest are only available under -Prenderer=sdl3")
         return
     }
     // End-to-end verification of the vendored interaction engine: boots a real
@@ -101,7 +98,7 @@ fun main(args: Array<String>) {
         // MaterialSymbolsOutlined / Rounded / Sharp composable — no setup
         // needed here. Apps that want to preload the bytes at startup can
         // still call .install() explicitly.
-        MaterialTheme(colors = darkColors()) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
             if (vCli.screen != null) {
                 val vMatch = Screens.firstOrNull { it.name.equals(vCli.screen, ignoreCase = true) }
                 if (vMatch == null) {
@@ -113,7 +110,7 @@ fun main(args: Array<String>) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.background)
+                            .background(MaterialTheme.colorScheme.background)
                             .padding(24.dp),
                     ) {
                         vMatch.content()
@@ -190,7 +187,7 @@ private fun runClickTest() {
             }
         },
     ) {
-        MaterialTheme(colors = darkColors()) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -229,9 +226,9 @@ private fun runToggleTest() {
             }
         },
     ) {
-        MaterialTheme(colors = darkColors()) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                androidx.compose.material.Switch(
+                androidx.compose.material3.Switch(
                     checked = vChecked,
                     onCheckedChange = { vChecked = it; vChanges++; println("toggletest: onCheckedChange -> $it") },
                 )
@@ -271,7 +268,7 @@ private fun runKeyTest() {
     ) {
         // The exact regression path: a real project BasicTextField, focused by clicking it,
         // receiving typed text (SDL TEXT_INPUT) + editing keys (Backspace) via B6b.
-        MaterialTheme(colors = darkColors()) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 androidx.compose.foundation.text.BasicTextField(
                     value = vText.value,
@@ -309,7 +306,7 @@ private fun runScrollTest() {
             }
         },
     ) {
-        MaterialTheme(colors = darkColors()) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(vScroll)) {
                 repeat(40) { i ->
                     Text("Scroll row $i — lorem ipsum dolor sit", color = Color.White, fontSize = 16.sp)
@@ -367,13 +364,13 @@ private val Screens: List<Screen> = listOf(
 @Composable
 fun App() {
     var current by remember { mutableStateOf(Screens[0]) }
-    val vSidebarBg = MaterialTheme.colors.surface.blend(MaterialTheme.colors.onSurface, 0.02f)
+    val vSidebarBg = MaterialTheme.colorScheme.surface.blend(MaterialTheme.colorScheme.onSurface, 0.02f)
 
     val vSidebarScroll = rememberScrollState()
     val vContentScroll = rememberScrollState()
 
     Row(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
     ) {
         // Sidebar (vertically scrollable — try resizing the window short)
         Column(
@@ -387,7 +384,7 @@ fun App() {
         ) {
             Text(
                 text = "ComposeNativeSDL3",
-                color = MaterialTheme.colors.primary,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth(),
             )
@@ -419,12 +416,12 @@ private fun NavItem(label: String, selected: Boolean, onClick: () -> Unit) {
     val hoveredSrc = remember { MutableInteractionSource() }
     val hovered by hoveredSrc.collectIsHoveredAsState()
     val vBg = when {
-        selected -> MaterialTheme.colors.primary.copy(alpha = 0.20f)
-        hovered  -> MaterialTheme.colors.onSurface.copy(alpha = 0.06f)
+        selected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+        hovered  -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
         else     -> Color.Transparent
     }
-    val vFg = if (selected) MaterialTheme.colors.primary
-              else MaterialTheme.colors.onSurface.copy(alpha = 0.82f)
+    val vFg = if (selected) MaterialTheme.colorScheme.primary
+              else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f)
 
     Box(
         modifier = Modifier

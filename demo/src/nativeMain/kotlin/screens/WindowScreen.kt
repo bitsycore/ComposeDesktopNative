@@ -2,7 +2,7 @@ package screens
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.*
 import com.compose.desktop.native.*
@@ -51,7 +51,7 @@ internal fun WindowScreen() {
                     singleLine = true,
                 )
                 Button(onClick = { window.setTitle(draft) }) {
-                    Text("Set title", color = MaterialTheme.colors.onPrimary)
+                    Text("Set title", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -59,13 +59,13 @@ internal fun WindowScreen() {
         Section("Resize", "SDL_SetWindowSize — both axes in logical points") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { window.setSize(800, 600) }) {
-                    Text("800 × 600", color = MaterialTheme.colors.onPrimary)
+                    Text("800 × 600", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = { window.setSize(1000, 700) }) {
-                    Text("1000 × 700", color = MaterialTheme.colors.onPrimary)
+                    Text("1000 × 700", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = { window.setSize(1280, 800) }) {
-                    Text("1280 × 800", color = MaterialTheme.colors.onPrimary)
+                    Text("1280 × 800", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -73,18 +73,18 @@ internal fun WindowScreen() {
         Section("Window state", "Minimize / maximize / restore / fullscreen") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { window.minimize() }) {
-                    Text("Minimize", color = MaterialTheme.colors.onPrimary)
+                    Text("Minimize", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = { window.maximize() }) {
-                    Text("Maximize", color = MaterialTheme.colors.onPrimary)
+                    Text("Maximize", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = { window.restore() }) {
-                    Text("Restore", color = MaterialTheme.colors.onPrimary)
+                    Text("Restore", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = { window.toggleFullscreen() }) {
                     Text(
                         if (window.isFullscreen) "Exit fullscreen" else "Fullscreen",
-                        color = MaterialTheme.colors.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             }
@@ -94,11 +94,11 @@ internal fun WindowScreen() {
             Button(
                 onClick = { window.close() },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = MaterialTheme.colors.error,
-                    contentColor = MaterialTheme.colors.onError,
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
                 ),
             ) {
-                Text("Close window", color = MaterialTheme.colors.onError)
+                Text("Close window", color = MaterialTheme.colorScheme.onError)
             }
         }
     }

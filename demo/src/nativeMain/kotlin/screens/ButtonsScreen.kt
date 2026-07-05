@@ -4,7 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.style.*
@@ -20,9 +20,9 @@ internal fun ButtonsScreen() {
 
         Section("Filled Button", "Default: RoundedCornerShape(4.dp), Material primary container") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {}) { Text("Action", color = MaterialTheme.colors.onPrimary) }
+                Button(onClick = {}) { Text("Action", color = MaterialTheme.colorScheme.onPrimary) }
                 Button(onClick = {}, enabled = false) {
-                    Text("Disabled", color = MaterialTheme.colors.onPrimary)
+                    Text("Disabled", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -30,10 +30,10 @@ internal fun ButtonsScreen() {
         Section("OutlinedButton", "Transparent fill, 1.dp border, primary content colour") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = {}) {
-                    Text("Outlined", color = MaterialTheme.colors.primary)
+                    Text("Outlined", color = MaterialTheme.colorScheme.primary)
                 }
                 OutlinedButton(onClick = {}, enabled = false) {
-                    Text("Disabled", color = MaterialTheme.colors.primary)
+                    Text("Disabled", color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -41,7 +41,7 @@ internal fun ButtonsScreen() {
         Section("TextButton", "No background, no border — text-only affordance") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = {}) {
-                    Text("Text", color = MaterialTheme.colors.primary)
+                    Text("Text", color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -49,10 +49,10 @@ internal fun ButtonsScreen() {
         Section("Shape variants", "shape = RoundedCornerShape(0/12.dp) and CircleShape with contentPadding 0") {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Button(onClick = {}, shape = RoundedCornerShape(0.dp)) {
-                    Text("Rect", color = MaterialTheme.colors.onPrimary)
+                    Text("Rect", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(onClick = {}, shape = RoundedCornerShape(12.dp)) {
-                    Text("12dp", color = MaterialTheme.colors.onPrimary)
+                    Text("12dp", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Button(
                     onClick = {},
@@ -62,7 +62,7 @@ internal fun ButtonsScreen() {
                 ) {
                     Text(
                         text = "+",
-                        color = MaterialTheme.colors.onPrimary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         fontSize = 20.sp,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,

@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +28,9 @@ import androidx.compose.ui.unit.sp
    LazyVerticalGrid with GridCells.Fixed + GridCells.Adaptive. */
 @Composable
 internal fun LazyExtraScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
-	val vOnSurface = MaterialTheme.colors.onSurface
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
+	val vOnSurface = MaterialTheme.colorScheme.onSurface
 
 	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 		ScreenTitle(

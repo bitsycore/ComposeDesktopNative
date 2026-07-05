@@ -12,7 +12,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
@@ -763,12 +763,12 @@ private fun App() {
 
     val vC = if (vDark) DarkColors else LightColors
     val vMat = if (vDark) {
-        darkColors(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
+        darkColorScheme(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
     } else {
-        lightColors(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
+        lightColorScheme(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
     }
 
-    MaterialTheme(colors = vMat) {
+    MaterialTheme(colorScheme = vMat) {
         CompositionLocalProvider(LocalAppColors provides vC) {
             val c = vC
             val vP = activePack()   // the active pack/scope (may be the loose root)

@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,7 +70,7 @@ internal fun DispatchersScreen() {
                             }
                         }
                     },
-                ) { Text("Load (simulated 1.5 s)", color = MaterialTheme.colors.onPrimary) }
+                ) { Text("Load (simulated 1.5 s)", color = MaterialTheme.colorScheme.onPrimary) }
 
                 if (vLoading) CircularProgressIndicator()
 
@@ -80,7 +80,7 @@ internal fun DispatchersScreen() {
             Spacer(modifier = Modifier.width(0.dp))
             Text("Loads completed: $vTickCount",
                  fontSize = 12.sp,
-                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         }
 
         Section(
@@ -110,7 +110,7 @@ internal fun DispatchersScreen() {
                             }
                         }
                     },
-                ) { Text("Spawn 5", color = MaterialTheme.colors.primary) }
+                ) { Text("Spawn 5", color = MaterialTheme.colorScheme.primary) }
 
                 if (vRunning) CircularProgressIndicator()
                 Text("Completed: $vCount / 5", fontSize = 13.sp)

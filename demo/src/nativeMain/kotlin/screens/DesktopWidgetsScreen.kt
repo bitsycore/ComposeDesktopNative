@@ -9,12 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.SegmentedButton
-import androidx.compose.material.SegmentedButtonDefaults
-import androidx.compose.material.SingleChoiceSegmentedButtonRow
-import androidx.compose.material.Text
-import androidx.compose.material.ToggleButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,8 +52,8 @@ internal fun DesktopWidgetsScreen() {
                     ) {
                         Text(
                             vLabel,
-                            color = if (vSel == vIdx) MaterialTheme.colors.primary
-                                    else MaterialTheme.colors.onSurface,
+                            color = if (vSel == vIdx) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurface,
                             fontSize = 13.sp,
                         )
                     }
@@ -68,13 +68,13 @@ internal fun DesktopWidgetsScreen() {
             var vUnder by remember { mutableStateOf(false) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ToggleButton(checked = vBold, onCheckedChange = { vBold = it }) {
-                    Text("B", color = MaterialTheme.colors.onSurface, fontSize = 14.sp)
+                    Text("B", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
                 }
                 ToggleButton(checked = vItalic, onCheckedChange = { vItalic = it }) {
-                    Text("I", color = MaterialTheme.colors.onSurface, fontSize = 14.sp)
+                    Text("I", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
                 }
                 ToggleButton(checked = vUnder, onCheckedChange = { vUnder = it }) {
-                    Text("U", color = MaterialTheme.colors.onSurface, fontSize = 14.sp)
+                    Text("U", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
                 }
             }
         }
@@ -95,19 +95,19 @@ internal fun DesktopWidgetsScreen() {
         Section("Toolbar + StatusBar", "Top action strip + bottom status line — desktop chrome essentials.") {
             Column(modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colors.background),
+                .background(MaterialTheme.colorScheme.background),
             ) {
                 Toolbar {
-                    Text("File", color = MaterialTheme.colors.onSurface, fontSize = 13.sp,
+                    Text("File", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp,
                          modifier = Modifier.padding(end = 12.dp))
-                    Text("Edit", color = MaterialTheme.colors.onSurface, fontSize = 13.sp,
+                    Text("Edit", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp,
                          modifier = Modifier.padding(end = 12.dp))
-                    Text("View", color = MaterialTheme.colors.onSurface, fontSize = 13.sp)
+                    Text("View", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
                 }
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
-                    .background(MaterialTheme.colors.surface),
+                    .background(MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center,
                 ) { Text("Content area", color = Color(0x88FFFFFFL), fontSize = 12.sp) }
                 StatusBar {
@@ -124,16 +124,16 @@ internal fun DesktopWidgetsScreen() {
                     first = {
                         Box(modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.surface),
+                            .background(MaterialTheme.colorScheme.surface),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Sidebar", color = MaterialTheme.colors.onSurface, fontSize = 13.sp) }
+                        ) { Text("Sidebar", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp) }
                     },
                     second = {
                         Box(modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.background),
+                            .background(MaterialTheme.colorScheme.background),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Editor", color = MaterialTheme.colors.onBackground, fontSize = 13.sp) }
+                        ) { Text("Editor", color = MaterialTheme.colorScheme.onBackground, fontSize = 13.sp) }
                     },
                 )
             }
@@ -146,16 +146,16 @@ internal fun DesktopWidgetsScreen() {
                     first = {
                         Box(modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.surface),
+                            .background(MaterialTheme.colorScheme.surface),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Editor", color = MaterialTheme.colors.onSurface, fontSize = 13.sp) }
+                        ) { Text("Editor", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp) }
                     },
                     second = {
                         Box(modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colors.background),
+                            .background(MaterialTheme.colorScheme.background),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Output", color = MaterialTheme.colors.onBackground, fontSize = 13.sp) }
+                        ) { Text("Output", color = MaterialTheme.colorScheme.onBackground, fontSize = 13.sp) }
                     },
                 )
             }

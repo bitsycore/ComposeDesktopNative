@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,9 +34,9 @@ import androidx.compose.ui.unit.sp
    draggable square via per-frame deltas. */
 @Composable
 internal fun GestureScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
-	val vOnSurface = MaterialTheme.colors.onSurface
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
+	val vOnSurface = MaterialTheme.colorScheme.onSurface
 
 	Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 		ScreenTitle(
@@ -85,7 +85,7 @@ internal fun GestureScreen() {
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(200.dp)
-					.background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp)),
+					.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp)),
 			) {
 				Box(
 					modifier = Modifier

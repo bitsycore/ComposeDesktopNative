@@ -4,7 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.*
@@ -27,15 +27,15 @@ internal fun LayoutScreen() {
                 Box(modifier = Modifier
                     .weight(1f)
                     .height(40.dp)
-                    .background(MaterialTheme.colors.primary)) {}
+                    .background(MaterialTheme.colorScheme.primary)) {}
                 Box(modifier = Modifier
                     .weight(2f)
                     .height(40.dp)
-                    .background(MaterialTheme.colors.secondary)) {}
+                    .background(MaterialTheme.colorScheme.secondary)) {}
                 Box(modifier = Modifier
                     .weight(1f)
                     .height(40.dp)
-                    .background(MaterialTheme.colors.primary)) {}
+                    .background(MaterialTheme.colorScheme.primary)) {}
                 Swatch("B")
             }
         }
@@ -52,16 +52,16 @@ internal fun LayoutScreen() {
                 Box(modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colors.primary)) {}
+                    .background(MaterialTheme.colorScheme.primary)) {}
                 Box(modifier = Modifier
                     .weight(1f, fill = false)
                     .height(20.dp)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colors.secondary)) {}
+                    .background(MaterialTheme.colorScheme.secondary)) {}
                 Box(modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colors.primary)) {}
+                    .background(MaterialTheme.colorScheme.primary)) {}
             }
         }
 
@@ -93,7 +93,7 @@ internal fun LayoutScreen() {
         Section("Box with contentAlignment.Center") {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.background,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.size(120.dp),
             ) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Swatch("•") }

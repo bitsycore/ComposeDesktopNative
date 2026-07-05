@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -27,9 +27,9 @@ import androidx.compose.ui.unit.sp
 internal fun CanvasScreen() {
     // Hoist theme colours out of the @Composable scope; DrawScope lambdas
     // are plain functions and can't read CompositionLocals directly.
-    val vPrimary = MaterialTheme.colors.primary
-    val vSecondary = MaterialTheme.colors.secondary
-    val vOnSurface = MaterialTheme.colors.onSurface
+    val vPrimary = MaterialTheme.colorScheme.primary
+    val vSecondary = MaterialTheme.colorScheme.secondary
+    val vOnSurface = MaterialTheme.colorScheme.onSurface
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ScreenTitle(

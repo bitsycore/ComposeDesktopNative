@@ -6,7 +6,7 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.style.*
@@ -28,8 +28,8 @@ internal fun LazyColumnScreen() {
             val state = rememberLazyListState()
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colors.background,
-                border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f)),
+                color = MaterialTheme.colorScheme.background,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
                 modifier = Modifier.width(420.dp).height(260.dp),
             ) {
                 LazyColumn(
@@ -40,7 +40,7 @@ internal fun LazyColumnScreen() {
                     item {
                         Text(
                             "LazyColumn — first item (a header)",
-                            color = MaterialTheme.colors.primary,
+                            color = MaterialTheme.colorScheme.primary,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(vertical = 6.dp),
                         )
@@ -49,7 +49,7 @@ internal fun LazyColumnScreen() {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(MaterialTheme.colors.surface, RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(6.dp))
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -57,12 +57,12 @@ internal fun LazyColumnScreen() {
                             Box(
                                 modifier = Modifier
                                     .size(28.dp)
-                                    .background(MaterialTheme.colors.primary, CircleShape),
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     "$i",
-                                    color = MaterialTheme.colors.onPrimary,
+                                    color = MaterialTheme.colorScheme.onPrimary,
                                     fontSize = 12.sp,
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Center,
@@ -70,7 +70,7 @@ internal fun LazyColumnScreen() {
                             }
                             Text(
                                 "Item $i — generated via LazyColumn.items(100) { i -> … }",
-                                color = MaterialTheme.colors.onSurface,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp,
                             )
                         }
@@ -86,8 +86,8 @@ internal fun LazyColumnScreen() {
             val names = remember { listOf("Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta") }
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colors.background,
-                border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f)),
+                color = MaterialTheme.colorScheme.background,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
                 modifier = Modifier.width(320.dp).height(160.dp),
             ) {
                 LazyColumn(
@@ -97,7 +97,7 @@ internal fun LazyColumnScreen() {
                     itemsIndexed(names) { idx, name ->
                         Text(
                             "$idx. $name",
-                            color = MaterialTheme.colors.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 13.sp,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         )

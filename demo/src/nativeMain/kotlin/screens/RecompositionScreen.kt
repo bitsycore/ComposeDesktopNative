@@ -2,7 +2,7 @@ package screens
 
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.*
 
@@ -68,8 +68,8 @@ private fun InnerCounterBlock(counter: Int, onChange: (Int) -> Unit) {
     trackRecomposition("Recomposition/inner")
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = { onChange(counter + 1) }) { Text("+", color = MaterialTheme.colors.onPrimary) }
-            Text("Counter: $counter", color = MaterialTheme.colors.onBackground, fontSize = 16.sp)
+            Button(onClick = { onChange(counter + 1) }) { Text("+", color = MaterialTheme.colorScheme.onPrimary) }
+            Text("Counter: $counter", color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
         }
     }
 }
@@ -79,7 +79,7 @@ private fun SiblingBlock() {
     trackRecomposition("Recomposition/sibling")
     Text(
         "This block doesn't read the counter — its log stays at #1.",
-        color = MaterialTheme.colors.onBackground,
+        color = MaterialTheme.colorScheme.onBackground,
         fontSize = 12.sp,
     )
 }

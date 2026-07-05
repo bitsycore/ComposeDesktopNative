@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
    Sdl3DrawScope.linearisePath / fanFill pipeline. */
 @Composable
 internal fun PathScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
 
 	// Build paths once and reuse — Path is mutable but compose-stable
 	// while the commands don't change.

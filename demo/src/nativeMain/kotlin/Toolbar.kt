@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Toolbar(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colors.surface,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     showDivider: Boolean = true,
     content: @Composable () -> Unit,
@@ -46,7 +46,7 @@ fun Toolbar(
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = Alignment.CenterVertically,
         ) { content() }
-        if (showDivider) Divider()
+        if (showDivider) HorizontalDivider()
     }
 }
 
@@ -60,12 +60,12 @@ fun Toolbar(
 @Composable
 fun StatusBar(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colors.surface,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
     showDivider: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     androidx.compose.foundation.layout.Column(modifier = modifier.fillMaxWidth()) {
-        if (showDivider) Divider()
+        if (showDivider) HorizontalDivider()
         Row(
             modifier = Modifier
                 .fillMaxWidth()

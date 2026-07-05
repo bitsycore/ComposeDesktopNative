@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,10 +34,10 @@ import androidx.compose.ui.unit.sp
    one, or clear focus globally. */
 @Composable
 internal fun FocusRequesterScreen() {
-	val vPrimary = MaterialTheme.colors.primary
-	val vSecondary = MaterialTheme.colors.secondary
-	val vSurface = MaterialTheme.colors.surface
-	val vOnSurface = MaterialTheme.colors.onSurface
+	val vPrimary = MaterialTheme.colorScheme.primary
+	val vSecondary = MaterialTheme.colorScheme.secondary
+	val vSurface = MaterialTheme.colorScheme.surface
+	val vOnSurface = MaterialTheme.colorScheme.onSurface
 	val vFocusManager = LocalFocusManager.current
 
 	val vReqA = remember { FocusRequester() }

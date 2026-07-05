@@ -5,7 +5,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
@@ -20,11 +20,11 @@ internal fun ModifiersScreen() {
             Box(
                 modifier = Modifier
                     .width(220.dp)
-                    .background(MaterialTheme.colors.primary, RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                     .border(2.dp, Color.White, RoundedCornerShape(8.dp))
                     .padding(16.dp),
             ) {
-                Text("Content", color = MaterialTheme.colors.onPrimary)
+                Text("Content", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
 
@@ -32,11 +32,11 @@ internal fun ModifiersScreen() {
             Box(
                 modifier = Modifier
                     .size(width = 160.dp, height = 60.dp)
-                    .background(MaterialTheme.colors.primary, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
                     .clip(RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("clipped", color = MaterialTheme.colors.onPrimary)
+                Text("clipped", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
 
@@ -53,16 +53,16 @@ internal fun ModifiersScreen() {
                 Box(
                     modifier = Modifier
                         .defaultMinSize(minWidth = 120.dp, minHeight = 40.dp)
-                        .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp)),
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
                     contentAlignment = Alignment.Center,
-                ) { Text("min 120 × 40", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                ) { Text("min 120 × 40", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
 
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp)),
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
                     contentAlignment = Alignment.Center,
-                ) { Text("40", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                ) { Text("40", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
             }
         }
 
@@ -70,21 +70,21 @@ internal fun ModifiersScreen() {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
                     modifier = Modifier
-                        .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
                         .padding(16.dp),
-                ) { Text("padding(16.dp)", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                ) { Text("padding(16.dp)", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
 
                 Box(
                     modifier = Modifier
-                        .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
                         .padding(horizontal = 28.dp, vertical = 6.dp),
-                ) { Text("padding(horizontal = 28, vertical = 6)", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                ) { Text("padding(horizontal = 28, vertical = 6)", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
 
                 Box(
                     modifier = Modifier
-                        .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
                         .padding(start = 28.dp, top = 4.dp, end = 4.dp, bottom = 16.dp),
-                ) { Text("padding(start = 28, top = 4, end = 4, bottom = 16)", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                ) { Text("padding(start = 28, top = 4, end = 4, bottom = 16)", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
             }
         }
 
@@ -92,10 +92,10 @@ internal fun ModifiersScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colors.primary, RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
                     .padding(12.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text("fillMaxWidth()", color = MaterialTheme.colors.onPrimary, fontSize = 13.sp) }
+            ) { Text("fillMaxWidth()", color = MaterialTheme.colorScheme.onPrimary, fontSize = 13.sp) }
         }
 
         Section(
@@ -108,9 +108,9 @@ internal fun ModifiersScreen() {
                     Box(
                         modifier = Modifier
                             .size(width = 76.dp, height = 40.dp)
-                            .background(MaterialTheme.colors.primary.copy(alpha = vA), RoundedCornerShape(6.dp)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = vA), RoundedCornerShape(6.dp)),
                         contentAlignment = Alignment.Center,
-                    ) { Text("α $vA", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                    ) { Text("α $vA", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
                 }
             }
         }
@@ -125,10 +125,10 @@ internal fun ModifiersScreen() {
                         modifier = Modifier
                             .alpha(vA)
                             .size(width = 96.dp, height = 56.dp)
-                            .background(MaterialTheme.colors.primary, RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                             .border(2.dp, Color.White, RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center,
-                    ) { Text("alpha $vA", color = MaterialTheme.colors.onPrimary, fontSize = 12.sp) }
+                    ) { Text("alpha $vA", color = MaterialTheme.colorScheme.onPrimary, fontSize = 12.sp) }
                 }
             }
         }

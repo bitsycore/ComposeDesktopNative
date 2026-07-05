@@ -72,6 +72,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":window"))
+                implementation(project(":material3"))
                 implementation(project(":material-symbols:outlined"))
                 implementation(project(":material-symbols:rounded"))
                 implementation(project(":material-symbols:sharp"))

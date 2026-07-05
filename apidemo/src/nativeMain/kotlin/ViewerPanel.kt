@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.*
 import com.compose.desktop.native.scrollbar.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
@@ -427,7 +427,7 @@ internal fun BodyView(
                     if (vIdx > 0) append('\n')
                     append(vIdx + 1)
                     if (vM != null) {
-                        val vRows = vM.wrap(vSrc, 12, vBodyWidthPx, monoFontFamily).lines.size.coerceAtLeast(1)
+                        val vRows = vM.wrap(vSrc, 12, vBodyWidthPx, monoFontFamilyName).lines.size.coerceAtLeast(1)
                         repeat(vRows - 1) { append('\n') }
                     }
                 }
@@ -485,7 +485,7 @@ internal fun BodyView(
                         textStyle = androidx.compose.ui.text.TextStyle(
                             color = c.text,
                             fontSize = 12.sp,
-                            fontFamily = monoFontFamily?.let { com.compose.desktop.native.text.namedFontFamily(it) },
+                            fontFamily = monoFontFamily,
                         ),
                         cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
                         visualTransformation = vHlTransform ?: androidx.compose.ui.text.input.VisualTransformation.None,

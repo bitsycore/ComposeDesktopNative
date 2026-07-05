@@ -14,7 +14,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
@@ -184,7 +184,7 @@ internal fun UrlBar(
         // so the bar never changes height when toggling — Cancel is just red.
         if (inLoading) Button(
             onClick = inOnCancel,
-            colors = ButtonDefaults.buttonColors(backgroundColor = methodColor(ReqMethod.DELETE), contentColor = Color.White),
+            colors = ButtonDefaults.buttonColors(containerColor = methodColor(ReqMethod.DELETE), contentColor = Color.White),
         ) { BtnContent(MaterialSymbols.Stop, "Cancel", Color.White) }
         else Button(onClick = inOnSend) { BtnContent(MaterialSymbols.Send, "Send", c.onAccent) }
     }

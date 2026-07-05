@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +44,7 @@ internal fun ClipboardScreen() {
                 OutlinedTextField(
                     value = draft,
                     onValueChange = { draft = it },
-                    label = "Text to copy",
+                    label = { Text("Text to copy") },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Button(onClick = {
@@ -52,7 +52,7 @@ internal fun ClipboardScreen() {
                     note = "Copied ${draft.length} char(s) to the system clipboard."
                     refresh()
                 }) {
-                    Text("Copy", color = MaterialTheme.colors.onPrimary)
+                    Text("Copy", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -61,15 +61,15 @@ internal fun ClipboardScreen() {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = { pasted = clipboard.getText()?.text; refresh() }) {
-                        Text("Paste", color = MaterialTheme.colors.onPrimary)
+                        Text("Paste", color = MaterialTheme.colorScheme.onPrimary)
                     }
                     OutlinedButton(onClick = { refresh() }) {
-                        Text("hasText = $hasText", color = MaterialTheme.colors.primary)
+                        Text("hasText = $hasText", color = MaterialTheme.colorScheme.primary)
                     }
                 }
                 Text(
                     pasted?.let { "Clipboard contents: \"$it\"" } ?: "(press Paste to read the clipboard)",
-                    color = MaterialTheme.colors.onBackground,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 14.sp,
                 )
             }
@@ -87,10 +87,10 @@ internal fun ClipboardScreen() {
                     note = "Wrote to the clipboard from a non-Composable function."
                     refresh()
                 }) {
-                    Text("Copy via global (no Composable)", color = MaterialTheme.colors.onPrimary)
+                    Text("Copy via global (no Composable)", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 if (note != null) {
-                    Text(note!!, color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Text(note!!, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 12.sp)
                 }
             }
         }

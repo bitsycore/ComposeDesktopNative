@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,12 +45,12 @@ internal fun IconsScreen() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         MaterialSymbolsOutlined(
                             MaterialSymbols.Home,
-                            tint = MaterialTheme.colors.primary,
+                            tint = MaterialTheme.colorScheme.primary,
                             size = 32.dp,
                             weight = vWeight,
                         )
                         Text(vWeight.toString(), fontSize = 11.sp,
-                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -67,12 +67,12 @@ internal fun IconsScreen() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         MaterialSymbolsOutlined(
                             MaterialSymbols.Favorite,
-                            tint = MaterialTheme.colors.primary,
+                            tint = MaterialTheme.colorScheme.primary,
                             size = 32.dp,
                             fill = vFill,
                         )
                         Text(vFill.toString(), fontSize = 11.sp,
-                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -89,13 +89,13 @@ internal fun IconsScreen() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         MaterialSymbolsOutlined(
                             MaterialSymbols.Star,
-                            tint = MaterialTheme.colors.primary,
+                            tint = MaterialTheme.colorScheme.primary,
                             size = 32.dp,
                             grade = vGrade,
                             fill = 1f,
                         )
                         Text(vGrade.toString(), fontSize = 11.sp,
-                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -112,12 +112,12 @@ internal fun IconsScreen() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         MaterialSymbolsOutlined(
                             MaterialSymbols.Settings,
-                            tint = MaterialTheme.colors.primary,
+                            tint = MaterialTheme.colorScheme.primary,
                             size = 32.dp,
                             opticalSize = vSize,
                         )
                         Text(vSize.toString(), fontSize = 11.sp,
-                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
             }
@@ -131,30 +131,30 @@ internal fun IconsScreen() {
                 horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colors.primary, size = 40.dp)
+                        tint = MaterialTheme.colorScheme.primary, size = 40.dp)
                     Text("Default", fontSize = 10.sp,
-                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colors.primary, size = 40.dp,
+                        tint = MaterialTheme.colorScheme.primary, size = 40.dp,
                         fill = 1f, weight = 700)
                     Text("fill=1 wght=700", fontSize = 10.sp,
-                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colors.primary, size = 40.dp,
+                        tint = MaterialTheme.colorScheme.primary, size = 40.dp,
                         fill = 1f, weight = 100)
                     Text("fill=1 wght=100", fontSize = 10.sp,
-                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colors.primary, size = 40.dp,
+                        tint = MaterialTheme.colorScheme.primary, size = 40.dp,
                         fill = 1f, weight = 500, grade = 200, opticalSize = 40)
                     Text("fill=1 wght=500 GRAD=200 opsz=40", fontSize = 10.sp,
-                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 }
             }
         }
@@ -197,7 +197,7 @@ internal fun IconsScreen() {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 styleIcon(vCp)
                                 Text(vLabel, fontSize = 11.sp,
-                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f))
+                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                             }
                         }
                     }
@@ -206,13 +206,13 @@ internal fun IconsScreen() {
         }
 
         Section("MaterialSymbolsOutlined", "Family: \"${MaterialSymbolsOutlined.Family}\".") {
-            iconRow { cp -> MaterialSymbolsOutlined(cp, tint = MaterialTheme.colors.primary) }
+            iconRow { cp -> MaterialSymbolsOutlined(cp, tint = MaterialTheme.colorScheme.primary) }
         }
         Section("MaterialSymbolsRounded", "Family: \"${MaterialSymbolsRounded.Family}\".") {
-            iconRow { cp -> MaterialSymbolsRounded(cp, tint = MaterialTheme.colors.primary) }
+            iconRow { cp -> MaterialSymbolsRounded(cp, tint = MaterialTheme.colorScheme.primary) }
         }
         Section("MaterialSymbolsSharp", "Family: \"${MaterialSymbolsSharp.Family}\".") {
-            iconRow { cp -> MaterialSymbolsSharp(cp, tint = MaterialTheme.colors.primary) }
+            iconRow { cp -> MaterialSymbolsSharp(cp, tint = MaterialTheme.colorScheme.primary) }
         }
 
         Section(
@@ -232,7 +232,7 @@ internal fun IconsScreen() {
                     Spacer(modifier = Modifier.width(80.dp))
                     for (vLabel in listOf("Outlined", "Rounded", "Sharp")) {
                         Text(vLabel, fontSize = 12.sp,
-                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.55f),
+                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                              modifier = Modifier.width(48.dp))
                     }
                 }
@@ -240,11 +240,11 @@ internal fun IconsScreen() {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                         Text(vName, fontSize = 13.sp,
-                             color = MaterialTheme.colors.onSurface,
+                             color = MaterialTheme.colorScheme.onSurface,
                              modifier = Modifier.width(80.dp))
-                        MaterialSymbolsOutlined(vCp, tint = MaterialTheme.colors.primary)
-                        MaterialSymbolsRounded(vCp, tint = MaterialTheme.colors.primary)
-                        MaterialSymbolsSharp(vCp, tint = MaterialTheme.colors.primary)
+                        MaterialSymbolsOutlined(vCp, tint = MaterialTheme.colorScheme.primary)
+                        MaterialSymbolsRounded(vCp, tint = MaterialTheme.colorScheme.primary)
+                        MaterialSymbolsSharp(vCp, tint = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -254,15 +254,15 @@ internal fun IconsScreen() {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 IconButton(onClick = {}) {
                     MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colors.primary, fill = 1f, weight = 600)
+                        tint = MaterialTheme.colorScheme.primary, fill = 1f, weight = 600)
                 }
                 IconButton(onClick = {}) {
                     MaterialSymbolsRounded(MaterialSymbols.Share,
-                        tint = MaterialTheme.colors.onSurface)
+                        tint = MaterialTheme.colorScheme.onSurface)
                 }
                 IconButton(onClick = {}) {
                     MaterialSymbolsSharp(MaterialSymbols.MoreVert,
-                        tint = MaterialTheme.colors.onSurface)
+                        tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }

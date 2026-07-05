@@ -5,7 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.*
@@ -28,9 +28,9 @@ internal fun TextFieldScreen() {
             TextField(
                 value = single,
                 onValueChange = { single = it },
-                label = "Name",
-                placeholder = "Type your name…",
-                supportingText = "Click, drag-select, ⌘C / ⌘V / ⌘Z",
+                label = { Text("Name") },
+                placeholder = { Text("Type your name…") },
+                supportingText = { Text("Click, drag-select, ⌘C / ⌘V / ⌘Z") },
                 modifier = Modifier.width(320.dp),
             )
         }
@@ -39,8 +39,8 @@ internal fun TextFieldScreen() {
             OutlinedTextField(
                 value = outlined,
                 onValueChange = { outlined = it },
-                label = "Email",
-                placeholder = "user@example.com",
+                label = { Text("Email") },
+                placeholder = { Text("user@example.com") },
                 modifier = Modifier.width(320.dp),
             )
         }
@@ -49,9 +49,9 @@ internal fun TextFieldScreen() {
             TextField(
                 value = withError,
                 onValueChange = { withError = it },
-                label = "Password",
+                label = { Text("Password") },
                 isError = true,
-                supportingText = "Too short",
+                supportingText = { Text("Too short") },
                 modifier = Modifier.width(320.dp),
             )
         }
@@ -60,7 +60,7 @@ internal fun TextFieldScreen() {
             OutlinedTextField(
                 value = multi,
                 onValueChange = { multi = it },
-                label = "Bio",
+                label = { Text("Bio") },
                 modifier = Modifier.width(420.dp),
             )
         }
@@ -75,7 +75,7 @@ internal fun TextFieldScreen() {
             OutlinedTextField(
                 value = soft,
                 onValueChange = { soft = it },
-                label = "Long form",
+                label = { Text("Long form") },
                 modifier = Modifier.width(320.dp),
             )
         }
@@ -85,7 +85,7 @@ internal fun TextFieldScreen() {
             TextField(
                 value = oneLine,
                 onValueChange = { oneLine = it },
-                label = "Title",
+                label = { Text("Title") },
                 singleLine = true,
                 modifier = Modifier.width(280.dp),
             )
@@ -94,8 +94,8 @@ internal fun TextFieldScreen() {
         Section("Raw BasicTextField", "No chrome — bare cursor + text") {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.15f)),
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)),
                 modifier = Modifier.width(320.dp),
             ) {
                 Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
@@ -103,10 +103,10 @@ internal fun TextFieldScreen() {
                         value = raw,
                         onValueChange = { raw = it },
                         textStyle = androidx.compose.ui.text.TextStyle(
-                            color = MaterialTheme.colors.onSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 16.sp,
                         ),
-                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colors.primary),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

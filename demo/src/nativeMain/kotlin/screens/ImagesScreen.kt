@@ -5,7 +5,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.painter.*
@@ -65,12 +65,12 @@ internal fun ImagesScreen() {
             val vText = remember { Res.readBytes(Res.files.notice)?.decodeToString() ?: "(resource missing)" }
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = MaterialTheme.colors.background,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     vText,
-                    color = MaterialTheme.colors.onBackground,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(12.dp),
                 )
@@ -88,7 +88,7 @@ private fun LabeledImage(label: String, painter: Painter) {
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .background(MaterialTheme.colors.background, RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.background, RoundedCornerShape(8.dp))
                 .padding(10.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -99,7 +99,7 @@ private fun LabeledImage(label: String, painter: Painter) {
                 contentScale = ContentScale.Fit,
             )
         }
-        Text(label, color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f), fontSize = 11.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 11.sp)
     }
 }
 
@@ -112,7 +112,7 @@ private fun ScaledImage(label: String, scale: ContentScale) {
         Box(
             modifier = Modifier
                 .size(width = 110.dp, height = 64.dp)
-                .background(MaterialTheme.colors.background, RoundedCornerShape(6.dp))
+                .background(MaterialTheme.colorScheme.background, RoundedCornerShape(6.dp))
                 .clip(RoundedCornerShape(6.dp)),
         ) {
             Image(
@@ -122,6 +122,6 @@ private fun ScaledImage(label: String, scale: ContentScale) {
                 contentScale = scale,
             )
         }
-        Text(label, color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f), fontSize = 11.sp)
+        Text(label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), fontSize = 11.sp)
     }
 }

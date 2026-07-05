@@ -33,7 +33,15 @@ import androidx.compose.ui.unit.IntOffset
 // material3 file `internal/BasicEdgeToEdgeDialog.skiko.kt` passes explicitly.
 // Add them as accept-and-ignore params so upstream call sites compile — none
 // have effect on this desktop renderer (no OS window insets, no soft keyboard).
-@androidx.compose.ui.ExperimentalComposeUiApi
+//
+// NB: NOT marked @ExperimentalComposeUiApi. The expect `DialogProperties` in
+// commonMain isn't marked experimental (see core/src/vendor/…/Dialog.kt), and
+// annotating the actual with an experimental marker cascades opt-in to every
+// widget that has `properties: DialogProperties = DialogProperties()` as a
+// param default — notably m3's AlertDialog, whose default value on the expect
+// signature transitively requires opt-in of ExperimentalComposeUiApi at every
+// call site. Users would see "This API is experimental" pointed at their own
+// `AlertDialog(...)` line even though upstream AlertDialog isn't experimental.
 actual class DialogProperties actual constructor(
 	actual val dismissOnBackPress: Boolean,
 	actual val dismissOnClickOutside: Boolean,

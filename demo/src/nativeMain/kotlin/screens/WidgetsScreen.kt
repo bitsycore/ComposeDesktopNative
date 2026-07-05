@@ -5,18 +5,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Checkbox
-import androidx.compose.material.Chip
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Divider
-import androidx.compose.material.FilterChip
-import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButton
-import androidx.compose.material.Slider
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
-import androidx.compose.material.TriStateCheckbox
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -114,7 +114,7 @@ internal fun WidgetsScreen() {
         Section("Divider", "Thin horizontal rule.") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Above the line", fontSize = 14.sp)
-                Divider()
+                HorizontalDivider()
                 Text("Below the line", fontSize = 14.sp)
             }
         }
@@ -123,14 +123,14 @@ internal fun WidgetsScreen() {
         Section("Chip / FilterChip", "Outlined pill for filters or quick actions.") {
             var vChip by remember { mutableStateOf(setOf("Apple", "Berry")) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Chip(onClick = {}) { Text("Action", color = MaterialTheme.colors.onSurface, fontSize = 13.sp) }
+                // m3: AssistChip requires an explicit label slot; the content-lambda-only m2 form is gone.
+                AssistChip(onClick = {}, label = { Text("Action", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp) })
                 for (vLabel in listOf("Apple", "Berry", "Cherry")) {
                     FilterChip(
                         selected = vLabel in vChip,
-                        onClick = {
-                            vChip = if (vLabel in vChip) vChip - vLabel else vChip + vLabel
-                        },
-                    ) { Text(vLabel, color = MaterialTheme.colors.onSurface, fontSize = 13.sp) }
+                        onClick = { vChip = if (vLabel in vChip) vChip - vLabel else vChip + vLabel },
+                        label = { Text(vLabel, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp) },
+                    )
                 }
             }
         }

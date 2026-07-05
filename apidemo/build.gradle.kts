@@ -83,6 +83,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":window"))
+                implementation(project(":material3"))
                 implementation(project(":material-symbols:outlined"))
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)

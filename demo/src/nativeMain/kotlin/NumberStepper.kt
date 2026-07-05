@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +70,7 @@ fun NumberStepper(
                 text = value.toString(),
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
-                color = if (enabled) MaterialTheme.colors.onSurface else Color(0x66FFFFFFL),
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else Color(0x66FFFFFFL),
             )
         }
         StepperButton(
@@ -99,7 +99,7 @@ private fun StepperButton(
         Text(
             text = symbol,
             fontSize = 16.sp,
-            color = if (enabled) MaterialTheme.colors.onSurface else Color(0x66FFFFFFL),
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else Color(0x66FFFFFFL),
         )
     }
 }

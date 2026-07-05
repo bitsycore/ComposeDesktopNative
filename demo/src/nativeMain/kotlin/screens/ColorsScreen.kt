@@ -4,7 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.*
@@ -19,13 +19,13 @@ internal fun ColorsScreen() {
         ScreenTitle("Colors", "MaterialTheme.colors palette swatches")
         Section("Theme palette") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val c = MaterialTheme.colors
-                ColorRow("primary",         c.primary,         c.onPrimary)
-                ColorRow("primaryVariant",  c.primaryVariant,  c.onPrimary)
-                ColorRow("secondary",       c.secondary,       c.onSecondary)
-                ColorRow("background",      c.background,      c.onBackground)
-                ColorRow("surface",         c.surface,         c.onSurface)
-                ColorRow("error",           c.error,           c.onError)
+                val c = MaterialTheme.colorScheme
+                ColorRow("primary",             c.primary,          c.onPrimary)
+                ColorRow("primaryContainer",    c.primaryContainer, c.onPrimaryContainer)
+                ColorRow("secondary",           c.secondary,        c.onSecondary)
+                ColorRow("background",          c.background,       c.onBackground)
+                ColorRow("surface",             c.surface,          c.onSurface)
+                ColorRow("error",               c.error,            c.onError)
             }
         }
     }

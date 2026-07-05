@@ -5,7 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.style.*
@@ -30,8 +30,8 @@ internal fun ScrollScreen() {
             val vScroll = rememberScrollState()
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colors.background,
-                border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.12f)),
+                color = MaterialTheme.colorScheme.background,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
                 modifier = Modifier.width(400.dp).height(200.dp),
             ) {
                 Box(
@@ -49,12 +49,12 @@ internal fun ScrollScreen() {
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
-                                        .background(MaterialTheme.colors.primary, CircleShape),
+                                        .background(MaterialTheme.colorScheme.primary, CircleShape),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = "$i",
-                                        color = MaterialTheme.colors.onPrimary,
+                                        color = MaterialTheme.colorScheme.onPrimary,
                                         fontSize = 11.sp,
                                         modifier = Modifier.fillMaxWidth(),
                                         textAlign = TextAlign.Center,
@@ -62,7 +62,7 @@ internal fun ScrollScreen() {
                                 }
                                 Text(
                                     "Row $i — scroll to see all 40 items",
-                                    color = MaterialTheme.colors.onBackground,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 14.sp,
                                 )
                             }
@@ -78,7 +78,7 @@ internal fun ScrollScreen() {
         ) {
             Text(
                 "Both panes were wrapped in verticalScroll(rememberScrollState()) inside App().",
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
             )
         }

@@ -9,7 +9,6 @@ pluginManagement {
 
 rootProject.name = "ComposeNativeSDL3"
 include(":core")
-include(":material")
 include(":material3")
 include(":window")
 include(":material-symbols")
