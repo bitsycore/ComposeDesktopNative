@@ -1,8 +1,5 @@
 package com.compose.desktop.native.window
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
@@ -14,9 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Popup
 
@@ -37,7 +34,11 @@ import androidx.compose.ui.window.Popup
    Popups register via the `Popup` composable in androidx.compose.ui.window.
    Re-registration on each composition keeps the captured-state lambdas fresh;
    DisposableEffect's onDispose runs when the parent removes the popup from the
-   tree, removing the entry from the host. */
+   tree, removing the entry from the host.
+
+   Lives in :ui (not :foundation) — the whole `ui.window` pair (Dialog + Popup +
+   PopupHost) uses only androidx.compose.ui.layout.Layout for positioning, no
+   foundation.background / .layout.Box / .layout.offset. */
 class PopupHostState internal constructor() {
 
 	internal class Entry(val id: Any, var content: @Composable () -> Unit)
@@ -93,41 +94,33 @@ class PopupHostState internal constructor() {
 	}
 }
 
-/* CompositionLocal that the composeWindow() entry point installs. Reading it
-   without a host installed surfaces a clear error rather than silently
-   ignoring the popup — popups outside a composeWindow root are not
-   supported. */
 val LocalPopupHost = compositionLocalOf<PopupHostState> {
 	error("No PopupHostState in composition — popups must be hosted by composeWindow(...).")
 }
 
-/* Helper used by composeWindow to obtain the host state. Constructing
-   PopupHostState requires the internal visibility, so the public factory is
-   exposed here. */
 fun createPopupHostState(): PopupHostState = PopupHostState()
 
 // ==================
 // MARK: PopupLayer
 // ==================
 
-/* The host's overlay renderer. Goes at the end of the root composition so
-   its children draw above the main tree. */
+/* Overlay renderer: goes at the end of the root composition so its children
+   draw above the main tree. Keyed by entry id so each popup re-composes with
+   its own state. */
 @Composable
 fun PopupLayer(inHost: PopupHostState) {
-	// Iterate by id so each popup re-composes with its own state.
 	for (vEntry in inHost.entries) {
 		key(vEntry.id) { vEntry.content() }
 	}
 }
 
 // ==================
-// MARK: PositionedPopup
+// MARK: PopupOutsideDismiss
 // ==================
 
 /* Registers an event-level "dismiss on press outside [inX,inY,inW,inH]" with the
    popup host so the dismissing press is NOT consumed (it still reaches whatever
-   is under it — no dead first click). The caller supplies the content's window
-   rect (position is known; size comes from onSizeChanged). */
+   is under it — no dead first click). */
 @Composable
 fun PopupOutsideDismiss(inX: Int, inY: Int, inW: Int, inH: Int, onDismissRequest: () -> Unit) {
 	val vHost = LocalPopupHost.current
@@ -136,17 +129,14 @@ fun PopupOutsideDismiss(inX: Int, inY: Int, inW: Int, inH: Int, onDismissRequest
 	DisposableEffect(Unit) { onDispose { vHost.removeDismisser(vId) } }
 }
 
-/* Convenience overlay anchored at an absolute window position. Used by
-   Tooltip / ContextMenu. Closes on a press outside its bounds via the host's
-   event-level dismissal — so that press also reaches the content under it (no
-   fullscreen catcher to swallow it). Not part of official Compose.
+// ==================
+// MARK: PositionedPopup
+// ==================
 
-   `x`/`y` are LAYOUT PIXELS (matches `LayoutCoordinates.positionInRoot` /
-   `IntOffset`), not `Dp`. The layout pass runs in physical pixels (see
-   `ComposeWindow` § HiDPI: `LocalDensity` = DPR, constraints in `pixelWidth`),
-   so callers that get an anchor position from `onGloballyPositioned` are
-   already in the same space — no `.dp` round-trip is needed and doing one
-   double-scales the offset on Retina. */
+/* Overlay anchored at an absolute window position. Used by Tooltip / ContextMenu.
+   Closes on a press outside its bounds via the host's event-level dismissal.
+   `x`/`y` are LAYOUT PIXELS (matches `LayoutCoordinates.positionInRoot`), not
+   `Dp` — layout runs in physical pixels under the Option-B density flow. */
 @Composable
 fun PositionedPopup(
 	x: Int,
@@ -156,11 +146,22 @@ fun PositionedPopup(
 ) {
 	Popup(onDismissRequest = onDismissRequest) {
 		var vSize by remember { mutableStateOf(IntSize.Zero) }
-		Box(
-			modifier = Modifier
-				.offset { IntOffset(x, y) }
-				.onSizeChanged { vSize = it },
-		) { content() }
+		// Absolute-position child via a plain Layout — no `Modifier.offset` (that
+		// lives in :foundation). The parent Popup layer fills the window, so we
+		// report the window's constraints and place the child at (x, y).
+		Layout(
+			content = content,
+			modifier = Modifier.onSizeChanged { vSize = it },
+		) { measurables, constraints ->
+			val vChildConstraints = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
+			val vChildren = measurables.map { it.measure(vChildConstraints) }
+			// Own size = union of children (usually one). Place all at (x, y).
+			val vW = vChildren.maxOfOrNull { it.width } ?: 0
+			val vH = vChildren.maxOfOrNull { it.height } ?: 0
+			layout(vW, vH) {
+				vChildren.forEach { it.place(x, y) }
+			}
+		}
 		PopupOutsideDismiss(x, y, vSize.width, vSize.height, onDismissRequest)
 	}
 }

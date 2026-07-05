@@ -1064,10 +1064,6 @@ compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/viewinterop/InteropViewHolder.skiko.kt         src/vendor/native/kotlin/androidx/compose/ui/viewinterop/InteropViewHolder.native.kt
 
 # ── androidx.compose.ui.window ──────────────────────────────────────────────
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Dialog.kt                           src/vendor/common/kotlin/androidx/compose/ui/window/Dialog.kt
-compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Popup.kt                            src/vendor/common/kotlin/androidx/compose/ui/window/Popup.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/ComposeSceneLayerMeasurePolicy.kt  src/vendor/native/kotlin/androidx/compose/ui/window/ComposeSceneLayerMeasurePolicy.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/Dialog.skiko.kt                    src/vendor/native/kotlin/androidx/compose/ui/window/Dialog.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/OnBackClickEventHandler.kt         src/vendor/native/kotlin/androidx/compose/ui/window/OnBackClickEventHandler.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/Popup.skiko.kt                     src/vendor/native/kotlin/androidx/compose/ui/window/Popup.native.kt
-# compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/WindowExceptionHandler.kt          src/vendor/native/kotlin/androidx/compose/ui/window/WindowExceptionHandler.native.kt
+# Dialog.kt + Popup.kt (+ our project actuals for them) live in :ui — the ui.window
+# package name matches the module boundary now that the actuals were rewritten to
+# use androidx.compose.ui.layout.Layout + drawBehind instead of foundation.Box.

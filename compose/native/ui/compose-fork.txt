@@ -1,5 +1,5 @@
-# Files vendored VERBATIM from JetBrains/compose-multiplatform-core into :compose:native:core.
-# Re-sync with: tools/compose-fork/sync.sh :compose:native:core   (or `sync.sh` for every module).
+# Files vendored VERBATIM from JetBrains/compose-multiplatform-core into :compose:native:ui.
+# Re-sync with: tools/compose-fork/sync.sh :compose:native:ui   (or `sync.sh` for every module).
 # Upstream ref pinned in tools/compose-fork/compose-ref.txt.
 #
 # Format:  <upstream-path-under-clone>  <dest-relative-to-this-module>
@@ -699,10 +699,10 @@ compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/viewinterop/InteropViewFa
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/viewinterop/InteropViewHolder.skiko.kt       src/vendor/native/kotlin/androidx/compose/ui/viewinterop/InteropViewHolder.native.kt
 
 # ── androidx.compose.ui.window ──────────────────────────────────────────────
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Dialog.kt                           src/vendor/common/kotlin/androidx/compose/ui/window/Dialog.kt
+compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Popup.kt                            src/vendor/common/kotlin/androidx/compose/ui/window/Popup.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/WindowExceptionHandler.kt            src/vendor/common/kotlin/androidx/compose/ui/window/WindowExceptionHandler.kt
 compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/OnBackClickEventHandler.kt           src/vendor/native/kotlin/androidx/compose/ui/window/OnBackClickEventHandler.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Dialog.kt                         src/vendor/common/kotlin/androidx/compose/ui/window/Dialog.kt
-# compose/ui/ui/src/commonMain/kotlin/androidx/compose/ui/window/Popup.kt                          src/vendor/common/kotlin/androidx/compose/ui/window/Popup.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/ComposeSceneLayerMeasurePolicy.kt  src/vendor/native/kotlin/androidx/compose/ui/window/ComposeSceneLayerMeasurePolicy.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/Dialog.skiko.kt                    src/vendor/native/kotlin/androidx/compose/ui/window/Dialog.native.kt
 # compose/ui/ui/src/skikoMain/kotlin/androidx/compose/ui/window/Popup.skiko.kt                     src/vendor/native/kotlin/androidx/compose/ui/window/Popup.native.kt

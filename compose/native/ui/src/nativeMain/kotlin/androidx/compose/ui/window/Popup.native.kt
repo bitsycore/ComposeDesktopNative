@@ -1,8 +1,5 @@
 package androidx.compose.ui.window
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -11,11 +8,12 @@ import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import com.compose.desktop.native.window.LocalPopupHost
 
 // ==================
@@ -28,6 +26,10 @@ import com.compose.desktop.native.window.LocalPopupHost
  root via the project's PopupHostState (no OS popup window). Behaviour flags on
  PopupProperties are accepted for source-compat; outside-click dismissal / modality are
  the caller's responsibility (Dialog draws a scrim, DropdownMenu installs a click-catcher).
+
+ Lives in :ui (not :foundation) — positioning goes through androidx.compose.ui.layout.Layout
+ directly instead of Box + Modifier.fillMaxSize + Modifier.offset, so this pair stays
+ in the module its package name suggests.
 */
 
 actual class PopupProperties {
@@ -95,7 +97,7 @@ actual class PopupProperties {
 	}
 }
 
-/* Overlay at the window root, positioned by [alignment] + [offset] (logical points). */
+/* Overlay at the window root, positioned by [alignment] + [offset] (in PIXELS). */
 @Composable
 actual fun Popup(
 	alignment: Alignment,
@@ -109,18 +111,13 @@ actual fun Popup(
 	// Snapshot the CompositionLocals at the call site so the hosted content (rendered at
 	// the composition root by PopupLayer) still sees MaterialTheme + app locals.
 	val vLocals = currentCompositionLocalContext
-	// Official contract: `offset` is in PIXELS (IntOffset), applied after `alignment`.
-	// Use the pixel-based `Modifier.offset { … }` — `.offset(Dp, Dp)` would run
-	// the value through density.toPx() and double-scale on HiDPI.
+	// alignment=TopStart + offset=(0,0) short-circuits to raw content; anything
+	// else goes through the alignment-and-offset Layout below.
 	val vPositioned: @Composable () -> Unit =
 		if (alignment == Alignment.TopStart && offset.x == 0 && offset.y == 0) {
 			content
 		} else {
-			{
-				Box(modifier = Modifier.fillMaxSize(), contentAlignment = alignment) {
-					Box(modifier = Modifier.offset { offset }) { content() }
-				}
-			}
+			{ AlignedOffsetLayout(alignment, offset, content) }
 		}
 	SideEffect {
 		vHost.upsert(vId) {
@@ -129,6 +126,35 @@ actual fun Popup(
 	}
 	DisposableEffect(Unit) {
 		onDispose { vHost.remove(vId) }
+	}
+}
+
+/* Fills the window (constraint.max) and places `content` at `alignment` +
+   pixel-space `offset`. Replaces the old `Box(Modifier.fillMaxSize()) { Box(offset {...}) { content } }`
+   with a single Layout so no androidx.compose.foundation.layout deps are pulled. */
+@Composable
+private fun AlignedOffsetLayout(
+	alignment: Alignment,
+	offset: IntOffset,
+	content: @Composable () -> Unit,
+) {
+	Layout(content) { measurables, constraints ->
+		// Measure the child with the window's constraints relaxed on the min side
+		// (Popup content shouldn't be forced to fill; it should be its intrinsic size).
+		val vChildConstraints = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
+		val vChildren = measurables.map { it.measure(vChildConstraints) }
+		val vChildW = vChildren.maxOfOrNull { it.width } ?: 0
+		val vChildH = vChildren.maxOfOrNull { it.height } ?: 0
+		layout(constraints.maxWidth, constraints.maxHeight) {
+			val vAlignOffset = alignment.align(
+				IntSize(vChildW, vChildH),
+				IntSize(constraints.maxWidth, constraints.maxHeight),
+				layoutDirection,
+			)
+			val vX = vAlignOffset.x + offset.x
+			val vY = vAlignOffset.y + offset.y
+			vChildren.forEach { it.place(vX, vY) }
+		}
 	}
 }
 
