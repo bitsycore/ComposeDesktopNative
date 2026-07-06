@@ -64,6 +64,12 @@ fun main(args: Array<String>) {
         runBackTest()
         return
     }
+    // Live-screen variant: boots the real Search screen, clicks the SearchBar
+    // to expand it, presses Escape, and dumps before/after screenshots.
+    if (args.any { it == "--searchesctest" }) {
+        runSearchEscTest()
+        return
+    }
     // Verifies the vendored scroll system: a Column(verticalScroll) scrolls when wheel
     // events are injected through the live pipeline (MouseWheelScrollingLogic).
     if (args.any { it == "--scrolltest" }) {
@@ -145,22 +151,38 @@ fun main(args: Array<String>) {
    collapses an expanded m3 SearchBar on Escape). */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 private fun runBackTest() {
-    val vBackFired = mutableStateOf(false)
+    val vBackNoFocus = mutableStateOf(false)
+    val vBackFocused = mutableStateOf(false)
+    val vText = mutableStateOf("")
     nativeComposeWindow(
         title = "backtest",
-        width = 300,
-        height = 150,
+        width = 400,
+        height = 200,
         onFrame = { _, frameIndex ->
             when (frameIndex) {
+                // Phase 1: Escape with NOTHING focused.
                 20 -> {
                     com.compose.desktop.native.injectKey(41, true)   // SDL_SCANCODE_ESCAPE
                     com.compose.desktop.native.injectKey(41, false)
                     true
                 }
-                50 -> {
+                // Phase 2: click the text field to focus it, then Escape —
+                // the user-facing SearchBar scenario (field focused while
+                // the back handler should collapse the bar).
+                30 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 100f); true }
+                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 100f); true }
+                44 -> {
+                    com.compose.desktop.native.injectKey(41, true)
+                    com.compose.desktop.native.injectKey(41, false)
+                    true
+                }
+                70 -> {
+                    println("backtest: noFocus=${vBackNoFocus.value} focused=${vBackFocused.value}")
                     println(
-                        if (vBackFired.value) "backtest: PASS (Escape completed a back navigation)"
-                        else "backtest: FAIL (BackHandler never fired)"
+                        if (vBackNoFocus.value && vBackFocused.value)
+                            "backtest: PASS (Escape completed back navigation with and without a focused field)"
+                        else
+                            "backtest: FAIL (noFocus=${vBackNoFocus.value} focusedField=${vBackFocused.value})"
                     )
                     false
                 }
@@ -169,8 +191,63 @@ private fun runBackTest() {
         },
     ) {
         @Suppress("DEPRECATION")
-        androidx.compose.ui.backhandler.BackHandler(enabled = !vBackFired.value) { vBackFired.value = true }
-        Text(if (vBackFired.value) "back fired" else "waiting for Escape", color = Color.White)
+        androidx.compose.ui.backhandler.BackHandler(enabled = true) {
+            if (!vBackNoFocus.value) vBackNoFocus.value = true else vBackFocused.value = true
+        }
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                // The NEW state-based field — the one m3 SearchBar's InputField
+                // uses — so the probe exercises its key handler, not the legacy
+                // value-based one.
+                androidx.compose.foundation.text.BasicTextField(
+                    state = androidx.compose.foundation.text.input.rememberTextFieldState(),
+                )
+            }
+        }
+    }
+}
+
+/* Boots the REAL Search screen, clicks the first SearchBar's input field
+   (expands it), presses Escape, and writes esc_before.bmp / esc_after.bmp —
+   the expanded overlay must be visible in `before` and gone in `after`. */
+private fun runSearchEscTest() {
+    fun snap(inBridge: com.compose.desktop.native.RenderBackend, inName: String) {
+        val vSnap = inBridge.snapshotBgra() ?: return
+        val (vW, vH, vBgra) = vSnap
+        writeFile(inName, encodeBmpBgra32(vW, vH, vBgra))
+        println("searchesctest: wrote $inName")
+    }
+    nativeComposeWindow(
+        title = "searchesctest",
+        width = 1000,
+        height = 700,
+        onFrame = { vBridge, vFrame ->
+            when (vFrame) {
+                30 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 230f); true }
+                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 230f); true }
+                70 -> { snap(vBridge, "esc_before.bmp"); true }
+                80 -> {
+                    com.compose.desktop.native.injectKey(41, true)   // Escape
+                    com.compose.desktop.native.injectKey(41, false)
+                    true
+                }
+                130 -> { snap(vBridge, "esc_after.bmp"); false }
+                else -> true
+            }
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            val vScroll = rememberScrollState()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .verticalScroll(vScroll)
+                    .padding(24.dp),
+            ) {
+                screens.M3SearchScreen()
+            }
+        }
     }
 }
 

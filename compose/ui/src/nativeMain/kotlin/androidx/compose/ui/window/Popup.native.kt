@@ -108,6 +108,13 @@ actual fun Popup(
 ) {
 	val vHost = LocalPopupHost.current
 	val vId = remember { Any() }
+	// ESC (→ back navigation) dismisses the popup, matching upstream desktop's
+	// dismissOnBackPress behaviour (open DropdownMenus close on Escape).
+	if (properties.dismissOnBackPress && onDismissRequest != null) {
+		@Suppress("DEPRECATION")
+		@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+		androidx.compose.ui.backhandler.BackHandler(enabled = true, onBack = onDismissRequest)
+	}
 	// Snapshot the CompositionLocals at the call site so the hosted content (rendered at
 	// the composition root by PopupLayer) still sees MaterialTheme + app locals.
 	val vLocals = currentCompositionLocalContext

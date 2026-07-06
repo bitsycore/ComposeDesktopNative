@@ -26,8 +26,9 @@ import androidx.compose.ui.unit.IntSize
 
  dismissOnBackPress / dismissOnClickOutside: `dismissOnClickOutside` is
  wired — the scrim itself intercepts clicks and calls `onDismissRequest`.
- `dismissOnBackPress` is source-compat only (SDL desktop doesn't have a
- hardware back gesture; the material `Dialog` composable is what wires ESC).
+ `dismissOnBackPress` registers a BackHandler on the window's
+ NavigationEventDispatcher — an unconsumed ESC completes a back navigation
+ (ComposeWindow's BackNavigationInput), which dismisses the topmost dialog.
  usePlatformDefaultWidth is accepted but has no effect (there is no platform
  default width on desktop).
 
@@ -72,6 +73,16 @@ actual fun Dialog(
 	properties: DialogProperties,
 	content: @Composable () -> Unit,
 ) {
+	// ESC (→ back navigation) dismisses the dialog. Registered here — not only
+	// in Popup — because a dialog with dismissOnClickOutside=false passes a
+	// null onDismissRequest to the popup but must still honour back-press.
+	// Composition order makes the most recently opened dialog the topmost
+	// enabled handler, so nested dialogs dismiss innermost-first.
+	if (properties.dismissOnBackPress) {
+		@Suppress("DEPRECATION")
+		@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+		androidx.compose.ui.backhandler.BackHandler(enabled = true, onBack = onDismissRequest)
+	}
 	Popup(
 		alignment = Alignment.Center,
 		offset = IntOffset(0, 0),
