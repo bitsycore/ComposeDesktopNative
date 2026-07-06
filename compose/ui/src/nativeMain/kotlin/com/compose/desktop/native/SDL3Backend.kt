@@ -40,6 +40,12 @@ class SDL3Backend(
             return false
         }
 
+        // Deliver the mouse click that GIVES the window focus instead of
+        // swallowing it (SDL's default eats it — the first click on an
+        // unfocused window would only activate it, and the button under the
+        // cursor would never fire). Desktop apps expect click-through.
+        SDL_SetHint("SDL_MOUSE_FOCUS_CLICKTHROUGH", "1")
+
         if (gpuMode is GpuMode.Skia.OpenGL) {
             SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MAJOR_VERSION, 3)
             SDL_GL_SetAttribute(SDL_GLAttr.SDL_GL_CONTEXT_MINOR_VERSION, 2)

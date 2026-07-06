@@ -568,7 +568,7 @@ private data class Screen(val name: String, val content: @Composable () -> Unit)
      (com.compose.desktop.native.*): the window handle, OS clipboard, coroutine
      dispatchers on the SDL main loop, and desktop-only composite widgets. */
 private enum class Category(val label: String) {
-    Foundation("Foundation · UI · Animation"),
+    Foundation("Core"),
     Material3("Material 3"),
     Native("Native · Desktop"),
 }
