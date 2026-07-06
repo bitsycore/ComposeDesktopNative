@@ -111,13 +111,19 @@ internal class ComposeOwner(
 	// ============
 	//  Layout-driving members — forward to the delegate
 
+	// affectsLookahead MUST reach the delegate's lookahead entry points —
+	// dropping it starves the lookahead pass, and anything built on
+	// LookaheadScope (SharedTransitionLayout, animateContentSize-style
+	// intermediate layouts) dies with "LookaheadDelegate has not been
+	// measured yet" the moment it needs a lookahead measure.
 	override fun onRequestMeasure(
 		layoutNode: LayoutNode,
 		affectsLookahead: Boolean,
 		forceRequest: Boolean,
 		scheduleMeasureAndLayout: Boolean,
 	) {
-		fDelegate.requestRemeasure(layoutNode, forceRequest)
+		if (affectsLookahead) fDelegate.requestLookaheadRemeasure(layoutNode, forceRequest)
+		else fDelegate.requestRemeasure(layoutNode, forceRequest)
 	}
 
 	override fun onRequestRelayout(
@@ -125,7 +131,8 @@ internal class ComposeOwner(
 		affectsLookahead: Boolean,
 		forceRequest: Boolean,
 	) {
-		fDelegate.requestRelayout(layoutNode, forceRequest)
+		if (affectsLookahead) fDelegate.requestLookaheadRelayout(layoutNode, forceRequest)
+		else fDelegate.requestRelayout(layoutNode, forceRequest)
 	}
 
 	override fun measureAndLayout(sendPointerUpdate: Boolean) {

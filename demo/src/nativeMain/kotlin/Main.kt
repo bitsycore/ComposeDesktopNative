@@ -78,6 +78,12 @@ fun main(args: Array<String>) {
         runMultiWindowTest()
         return
     }
+    // Verifies the lookahead pass: a SharedTransitionLayout shared-element
+    // morph runs both directions without crashing.
+    if (args.any { it == "--sharedtest" }) {
+        runSharedTest()
+        return
+    }
     // Verifies the vendored scroll system: a Column(verticalScroll) scrolls when wheel
     // events are injected through the live pipeline (MouseWheelScrollingLogic).
     if (args.any { it == "--scrolltest" }) {
@@ -256,6 +262,60 @@ private fun runBackTest() {
                 androidx.compose.foundation.text.BasicTextField(
                     state = androidx.compose.foundation.text.input.rememberTextFieldState(),
                 )
+            }
+        }
+    }
+}
+
+/* Drives a SharedTransitionLayout shared-element morph both directions from
+   the frame counter (no clicks) — it requires the LOOKAHEAD pass, which dies
+   with "LookaheadDelegate has not been measured yet" if the owner drops
+   affectsLookahead measure/relayout requests. Reaching the end frame = PASS. */
+@OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+private fun runSharedTest() {
+    val vBig = mutableStateOf(false)
+    nativeComposeWindow(
+        title = "sharedtest",
+        width = 300,
+        height = 300,
+        onFrame = { _, vFrame ->
+            when (vFrame) {
+                20 -> { vBig.value = true; true }    // small → big morph
+                70 -> { vBig.value = false; true }   // big → small morph
+                130 -> {
+                    println("sharedtest: PASS (shared-element morph ran both directions)")
+                    false
+                }
+                else -> true
+            }
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            androidx.compose.animation.SharedTransitionLayout {
+                Column {
+                    androidx.compose.animation.AnimatedVisibility(visible = !vBig.value) {
+                        Box(
+                            modifier = Modifier
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(key = "box"),
+                                    animatedVisibilityScope = this@AnimatedVisibility,
+                                )
+                                .size(48.dp)
+                                .background(Color(0xFF7C4DFF), RoundedCornerShape(8.dp)),
+                        )
+                    }
+                    androidx.compose.animation.AnimatedVisibility(visible = vBig.value) {
+                        Box(
+                            modifier = Modifier
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(key = "box"),
+                                    animatedVisibilityScope = this@AnimatedVisibility,
+                                )
+                                .size(160.dp)
+                                .background(Color(0xFF26A69A), RoundedCornerShape(24.dp)),
+                        )
+                    }
+                }
             }
         }
     }
