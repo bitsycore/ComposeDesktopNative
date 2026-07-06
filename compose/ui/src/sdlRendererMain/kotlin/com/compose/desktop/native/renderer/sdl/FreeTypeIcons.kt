@@ -15,6 +15,10 @@ import com.compose.desktop.native.graphics.a8
 // MARK: FreeTypeIcons
 // ==================
 
+// Glyph texture cache cap — (icon × size × axis-set) entries; textures are
+// small (icon-sized), the cap just bounds pathological churn.
+private const val kGlyphCacheMax: Int = 512
+
 /* Variable-font icon rasterisation for the SDL3 renderer. SDL3_ttf 3.2's
    public API has no axis-set, so we go directly to FreeType for icon-font
    families — FT_Set_Var_Design_Coordinates drives the OpenType FILL /
@@ -75,12 +79,15 @@ internal class FreeTypeIcons {
 
 	private val fVariants = mutableMapOf<VariantKey, Variant>()
 
+	// No tint in the key — glyphs are rasterised white (RGB=255, A=coverage)
+	// and tinted at blit time via SDL texture colour/alpha modulation, so a
+	// colour or alpha animation reuses one texture instead of caching one per
+	// colour step.
 	private data class GlyphKey(
 		val family: String,
 		val variationsKey: String,
 		val codepoint: Int,
 		val pixelSize: Int,
-		val argb: Int,
 	)
 
 	private class CachedGlyph(
@@ -95,7 +102,11 @@ internal class FreeTypeIcons {
 		val bearingTop: Int,
 	)
 
-	private val fGlyphs = mutableMapOf<GlyphKey, CachedGlyph?>()
+	// LRU-capped (entries can be null = cached "no glyph" miss); eviction
+	// destroys the SDL texture so icon-heavy sessions can't grow VRAM forever.
+	private val fGlyphs = LruCache<GlyphKey, CachedGlyph?>(kGlyphCacheMax) { vGlyph ->
+		vGlyph?.tex?.let { SDL_DestroyTexture(it.reinterpret()) }
+	}
 
 	// ============
 	//  Init / destroy
@@ -115,10 +126,7 @@ internal class FreeTypeIcons {
 	}
 
 	fun destroy() {
-		for (vGlyph in fGlyphs.values) {
-			vGlyph?.tex?.let { SDL_DestroyTexture(it.reinterpret()) }
-		}
-		fGlyphs.clear()
+		fGlyphs.clear()  // onEvict destroys the SDL textures
 
 		for (vVariant in fVariants.values) {
 			FT_Done_Face(vVariant.face)
@@ -166,15 +174,19 @@ internal class FreeTypeIcons {
 		// the cache key on logical size + DPR so a 2x context and 1x context
 		// don't clobber each other.
 		val vPhys = (inPixelSize * inDpr).toInt().coerceAtLeast(1)
-		val vKey = GlyphKey(inFamily, vVariationsKey, inCodepoint, vPhys, inColor.toArgb())
+		val vKey = GlyphKey(inFamily, vVariationsKey, inCodepoint, vPhys)
 		val vGlyph: CachedGlyph? = if (fGlyphs.containsKey(vKey)) {
 			fGlyphs[vKey]
 		} else {
-			val vNew = rasterise(inSdlRenderer, inFamily, inCodepoint, vPhys, inColor, inVariations, vVariationsKey)
+			val vNew = rasterise(inSdlRenderer, inFamily, inCodepoint, vPhys, inVariations, vVariationsKey)
 			fGlyphs[vKey] = vNew
 			vNew
 		}
 		if (vGlyph == null) return false
+
+		// Tint at blit time — white texture × colour mod ≡ the old colour bake.
+		SDL_SetTextureColorMod(vGlyph.tex.reinterpret(), inColor.r8.toUByte(), inColor.g8.toUByte(), inColor.b8.toUByte())
+		SDL_SetTextureAlphaMod(vGlyph.tex.reinterpret(), inColor.a8.toUByte())
 
 		// Glyph bitmap is in physical pixels; the SDL renderer scale brings
 		// it back to logical when we blit. Centre in the box, then SNAP the
@@ -305,7 +317,6 @@ internal class FreeTypeIcons {
 		inFamily: String,
 		inCodepoint: Int,
 		inPixelSize: Int,
-		inColor: ComposeColor,
 		inVariations: List<FontVariation.Setting>,
 		inVariationsKey: String,
 	): CachedGlyph? {
@@ -373,7 +384,7 @@ internal class FreeTypeIcons {
 		val vSrcH = vBitmap.rows.toInt()
 		if (vSrcW <= 0 || vSrcH <= 0) return null
 
-		val vTex = uploadBitmap(inSdlRenderer, vBitmap, inColor, vSS) ?: return null
+		val vTex = uploadBitmap(inSdlRenderer, vBitmap, vSS) ?: return null
 		// CachedGlyph dimensions are POST-downsample (texture size), so the
 		// later blit math gives the right logical size.
 		return CachedGlyph(
@@ -391,14 +402,14 @@ internal class FreeTypeIcons {
 	/* FreeType's normal-mode bitmap is 8-bit grayscale (FT_PIXEL_MODE_GRAY,
 	   coverage 0..255) at kSupersampleFactor× the target size. We
 	   downsample with a kSupersampleFactor² box filter on the way into an
-	   ARGB8888 SDL_Surface where RGB = tint colour, A = downsampled
-	   coverage. Pitch can be negative (top-down) — we walk source rows by
-	   sign. The box-filter step is what fuses the thin inner-ring gaps
-	   produced by FreeType's interpolation of overlapping subpaths. */
+	   ARGB8888 SDL_Surface where RGB = white (tint applied per-blit via
+	   texture colour mod), A = downsampled coverage. Pitch can be negative
+	   (top-down) — we walk source rows by sign. The box-filter step is what
+	   fuses the thin inner-ring gaps produced by FreeType's interpolation
+	   of overlapping subpaths. */
 	private fun uploadBitmap(
 		inSdlRenderer: COpaquePointer,
 		inBitmap: FT_Bitmap,
-		inColor: ComposeColor,
 		inSS: Int,
 	): COpaquePointer? {
 		val vSrcW = inBitmap.width.toInt()
@@ -418,10 +429,7 @@ internal class FreeTypeIcons {
 			return null
 		}
 		val vDstPitch = vSurface.pointed.pitch
-		val vR = inColor.r8.toUByte()
-		val vG = inColor.g8.toUByte()
-		val vB = inColor.b8.toUByte()
-		val vColorAlpha = inColor.a8
+		val vWhite: UByte = 255u
 
 		val vNorm = vSS * vSS
 		for (vDy in 0 until vDstH) {
@@ -442,14 +450,13 @@ internal class FreeTypeIcons {
 						vSum += vBuf[vSrcRow + vX].toInt() and 0xFF
 					}
 				}
-				val vCov = vSum / vNorm
-				val vA = ((vCov * vColorAlpha) / 255).coerceIn(0, 255)
+				val vCov = (vSum / vNorm).coerceIn(0, 255)
 				val vBase = vDstRowBase + vDx * 4
 				// ARGB8888 in little-endian memory is laid out [B, G, R, A].
-				vDst[vBase + 0] = vB
-				vDst[vBase + 1] = vG
-				vDst[vBase + 2] = vR
-				vDst[vBase + 3] = vA.toUByte()
+				vDst[vBase + 0] = vWhite
+				vDst[vBase + 1] = vWhite
+				vDst[vBase + 2] = vWhite
+				vDst[vBase + 3] = vCov.toUByte()
 			}
 		}
 
@@ -493,6 +500,4 @@ internal class FreeTypeIcons {
 		vChars[3] = (inTag and 0xFF).toChar()
 		return vChars.concatToString()
 	}
-
-	private fun ComposeColor.toArgb(): Int = (a8 shl 24) or (r8 shl 16) or (g8 shl 8) or b8
 }

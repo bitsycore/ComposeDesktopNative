@@ -92,11 +92,11 @@ internal class Sdl3Canvas(
 	// Axis-aligned bounding box of a user-space rect after the affine (SDL clips
 	// only to a rect; a rotated clip degrades to its AABB).
 	private fun mapRectAABB(inL: Float, inT: Float, inR: Float, inB: Float): IntArray {
-		val vXs = floatArrayOf(mapX(inL, inT), mapX(inR, inT), mapX(inR, inB), mapX(inL, inB))
-		val vYs = floatArrayOf(mapY(inL, inT), mapY(inR, inT), mapY(inR, inB), mapY(inL, inB))
+		val vX0 = mapX(inL, inT); val vX1 = mapX(inR, inT); val vX2 = mapX(inR, inB); val vX3 = mapX(inL, inB)
+		val vY0 = mapY(inL, inT); val vY1 = mapY(inR, inT); val vY2 = mapY(inR, inB); val vY3 = mapY(inL, inB)
 		return intArrayOf(
-			vXs.minOrNull()!!.toInt(), vYs.minOrNull()!!.toInt(),
-			vXs.maxOrNull()!!.toInt(), vYs.maxOrNull()!!.toInt(),
+			minOf(vX0, vX1, vX2, vX3).toInt(), minOf(vY0, vY1, vY2, vY3).toInt(),
+			maxOf(vX0, vX1, vX2, vX3).toInt(), maxOf(vY0, vY1, vY2, vY3).toInt(),
 		)
 	}
 
@@ -339,44 +339,48 @@ internal class Sdl3Canvas(
 		val vLeft = inBbox[0].toFloat(); val vTop = inBbox[1].toFloat()
 		val vRight = inBbox[2].toFloat(); val vBottom = inBbox[3].toFloat()
 		val vSeg = 12
-		// Collect triangle vertices (x, y) for all four corner cutouts.
-		val vVerts = ArrayList<Float>()
-		fun cutout(inApexX: Float, inApexY: Float, inCx: Float, inCy: Float, inRx: Float, inRy: Float, inStartDeg: Float) {
-			if (inRx <= 0f || inRy <= 0f) return
-			var vPrevX = 0f; var vPrevY = 0f
-			for (vI in 0..vSeg) {
-				val vAngle = ((inStartDeg + 90f * vI / vSeg) * (PI / 180.0)).toFloat()
-				val vPx = inCx + inRx * cos(vAngle)
-				val vPy = inCy + inRy * sin(vAngle)
-				if (vI > 0) {
-					vVerts.add(inApexX); vVerts.add(inApexY)
-					vVerts.add(vPrevX); vVerts.add(vPrevY)
-					vVerts.add(vPx); vVerts.add(vPy)
-				}
-				vPrevX = vPx; vPrevY = vPy
-			}
-		}
 		val vTl = inRoundRect.topLeftCornerRadius
 		val vTr = inRoundRect.topRightCornerRadius
 		val vBr = inRoundRect.bottomRightCornerRadius
 		val vBl = inRoundRect.bottomLeftCornerRadius
-		cutout(vLeft, vTop, vLeft + vTl.x, vTop + vTl.y, vTl.x, vTl.y, 180f)
-		cutout(vRight, vTop, vRight - vTr.x, vTop + vTr.y, vTr.x, vTr.y, 270f)
-		cutout(vRight, vBottom, vRight - vBr.x, vBottom - vBr.y, vBr.x, vBr.y, 0f)
-		cutout(vLeft, vBottom, vLeft + vBl.x, vBottom - vBl.y, vBl.x, vBl.y, 90f)
-		val vCount = vVerts.size / 2
-		if (vCount == 0) return
+		// Upper bound: 4 corners × vSeg triangles × 3 vertices. Written straight
+		// into the native SDL_Vertex buffer — the old ArrayList<Float> staging
+		// boxed ~300 floats per clip layer per frame.
+		fun cornerCount(inR: androidx.compose.ui.geometry.CornerRadius): Int =
+			if (inR.x <= 0f || inR.y <= 0f) 0 else vSeg * 3
+		val vMax = cornerCount(vTl) + cornerCount(vTr) + cornerCount(vBr) + cornerCount(vBl)
+		if (vMax == 0) return
 		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
 		SDL_SetRenderDrawBlendMode(vRenderer, SDL_BLENDMODE_NONE)
 		memScoped {
-			val vBuf = allocArray<SDL_Vertex>(vCount)
-			for (vI in 0 until vCount) {
-				vBuf[vI].position.x = vVerts[vI * 2]
-				vBuf[vI].position.y = vVerts[vI * 2 + 1]
-				vBuf[vI].color.r = 0f; vBuf[vI].color.g = 0f; vBuf[vI].color.b = 0f; vBuf[vI].color.a = 0f
-				vBuf[vI].tex_coord.x = 0f; vBuf[vI].tex_coord.y = 0f
+			val vBuf = allocArray<SDL_Vertex>(vMax)
+			var vIdx = 0
+			fun put(inX: Float, inY: Float) {
+				vBuf[vIdx].position.x = inX; vBuf[vIdx].position.y = inY
+				vBuf[vIdx].color.r = 0f; vBuf[vIdx].color.g = 0f; vBuf[vIdx].color.b = 0f; vBuf[vIdx].color.a = 0f
+				vBuf[vIdx].tex_coord.x = 0f; vBuf[vIdx].tex_coord.y = 0f
+				vIdx++
 			}
-			SDL_RenderGeometry(vRenderer, null, vBuf, vCount, null, 0)
+			fun cutout(inApexX: Float, inApexY: Float, inCx: Float, inCy: Float, inRx: Float, inRy: Float, inStartDeg: Float) {
+				if (inRx <= 0f || inRy <= 0f) return
+				var vPrevX = 0f; var vPrevY = 0f
+				for (vI in 0..vSeg) {
+					val vAngle = ((inStartDeg + 90f * vI / vSeg) * (PI / 180.0)).toFloat()
+					val vPx = inCx + inRx * cos(vAngle)
+					val vPy = inCy + inRy * sin(vAngle)
+					if (vI > 0) {
+						put(inApexX, inApexY)
+						put(vPrevX, vPrevY)
+						put(vPx, vPy)
+					}
+					vPrevX = vPx; vPrevY = vPy
+				}
+			}
+			cutout(vLeft, vTop, vLeft + vTl.x, vTop + vTl.y, vTl.x, vTl.y, 180f)
+			cutout(vRight, vTop, vRight - vTr.x, vTop + vTr.y, vTr.x, vTr.y, 270f)
+			cutout(vRight, vBottom, vRight - vBr.x, vBottom - vBr.y, vBr.x, vBr.y, 0f)
+			cutout(vLeft, vBottom, vLeft + vBl.x, vBottom - vBl.y, vBl.x, vBl.y, 90f)
+			if (vIdx > 0) SDL_RenderGeometry(vRenderer, null, vBuf, vIdx, null, 0)
 		}
 		SDL_SetRenderDrawBlendMode(vRenderer, SDL_BLENDMODE_BLEND)
 	}

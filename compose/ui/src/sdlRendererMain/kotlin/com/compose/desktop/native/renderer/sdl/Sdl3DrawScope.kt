@@ -303,7 +303,7 @@ internal class Sdl3DrawScope(
 		val vCy = fOriginY + topLeft.y + size.height / 2f
 		val vRx = size.width / 2f
 		val vRy = size.height / 2f
-		val vSeg = arcSegments(sweepAngle)
+		val vSeg = arcSegments(sweepAngle, max(vRx, vRy))
 
 		when (style) {
 			Fill -> emitFilledArc(vCx, vCy, vRx, vRy, startAngle, sweepAngle, useCenter, vSeg, vSampler)
@@ -349,12 +349,12 @@ internal class Sdl3DrawScope(
 		val vRx = size.width / 2f
 		val vRy = size.height / 2f
 		when (style) {
-			Fill -> emitFilledArc(vCx, vCy, vRx, vRy, 0f, 360f, true, 24, vSampler)
+			Fill -> emitFilledArc(vCx, vCy, vRx, vRy, 0f, 360f, true, arcSegments(360f, max(vRx, vRy)), vSampler)
 			is Stroke -> {
 				// Approximate oval stroke as ring between r - w/2 and r + w/2
 				// using the smaller axis as the radius reference.
 				val vR = kotlin.math.min(vRx, vRy)
-				emitStrokedArc(vCx, vCy, vR - style.width / 2f, vR + style.width / 2f, 0f, 360f, 24, vSampler)
+				emitStrokedArc(vCx, vCy, vR - style.width / 2f, vR + style.width / 2f, 0f, 360f, arcSegments(360f, vR + style.width / 2f), vSampler)
 			}
 		}
 	}
@@ -387,11 +387,12 @@ internal class Sdl3DrawScope(
 			emitQuad(vX + vR, vY, vX + vW - vR, vY, vX + vW - vR, vY + vR, vX + vR, vY + vR, vSampler)
 			// Bottom edge
 			emitQuad(vX + vR, vY + vH - vR, vX + vW - vR, vY + vH - vR, vX + vW - vR, vY + vH, vX + vR, vY + vH, vSampler)
-			// 4 corner fills
-			emitFilledArc(vX + vR,          vY + vR,         vR, vR, 180f,  90f, false, 8, vSampler)
-			emitFilledArc(vX + vW - vR,     vY + vR,         vR, vR, 270f,  90f, false, 8, vSampler)
-			emitFilledArc(vX + vW - vR,     vY + vH - vR,    vR, vR,   0f,  90f, false, 8, vSampler)
-			emitFilledArc(vX + vR,          vY + vH - vR,    vR, vR,  90f,  90f, false, 8, vSampler)
+			// 4 corner fills — segment count adapts to the corner radius.
+			val vSeg = arcSegments(90f, vR)
+			emitFilledArc(vX + vR,          vY + vR,         vR, vR, 180f,  90f, false, vSeg, vSampler)
+			emitFilledArc(vX + vW - vR,     vY + vR,         vR, vR, 270f,  90f, false, vSeg, vSampler)
+			emitFilledArc(vX + vW - vR,     vY + vH - vR,    vR, vR,   0f,  90f, false, vSeg, vSampler)
+			emitFilledArc(vX + vR,          vY + vH - vR,    vR, vR,  90f,  90f, false, vSeg, vSampler)
 			// Under rotation/shear the four outer straight edges become diagonal —
 			// feather them (corners already AA via the arcs). Axis-aligned: skip.
 			if (fMb != 0f || fMc != 0f) {
@@ -407,10 +408,11 @@ internal class Sdl3DrawScope(
 			lineCore(brush, Offset(topLeft.x + vW, topLeft.y + cornerRadius), Offset(topLeft.x + vW, topLeft.y + vH - cornerRadius), vSw, StrokeCap.Butt, alpha)
 			lineCore(brush, Offset(topLeft.x + vW - cornerRadius, topLeft.y + vH), Offset(topLeft.x + cornerRadius, topLeft.y + vH), vSw, StrokeCap.Butt, alpha)
 			lineCore(brush, Offset(topLeft.x, topLeft.y + vH - cornerRadius), Offset(topLeft.x, topLeft.y + cornerRadius), vSw, StrokeCap.Butt, alpha)
-			emitStrokedArc(vX + vR,      vY + vR,      vR - vSw / 2f, vR + vSw / 2f, 180f, 90f, 8, vSampler)
-			emitStrokedArc(vX + vW - vR, vY + vR,      vR - vSw / 2f, vR + vSw / 2f, 270f, 90f, 8, vSampler)
-			emitStrokedArc(vX + vW - vR, vY + vH - vR, vR - vSw / 2f, vR + vSw / 2f,   0f, 90f, 8, vSampler)
-			emitStrokedArc(vX + vR,      vY + vH - vR, vR - vSw / 2f, vR + vSw / 2f,  90f, 90f, 8, vSampler)
+			val vSeg = arcSegments(90f, vR + vSw / 2f)
+			emitStrokedArc(vX + vR,      vY + vR,      vR - vSw / 2f, vR + vSw / 2f, 180f, 90f, vSeg, vSampler)
+			emitStrokedArc(vX + vW - vR, vY + vR,      vR - vSw / 2f, vR + vSw / 2f, 270f, 90f, vSeg, vSampler)
+			emitStrokedArc(vX + vW - vR, vY + vH - vR, vR - vSw / 2f, vR + vSw / 2f,   0f, 90f, vSeg, vSampler)
+			emitStrokedArc(vX + vR,      vY + vH - vR, vR - vSw / 2f, vR + vSw / 2f,  90f, 90f, vSeg, vSampler)
 		}
 	}
 
@@ -441,8 +443,9 @@ internal class Sdl3DrawScope(
 			vSampler,
 		)
 		if (cap == StrokeCap.Round) {
-			emitFilledArc(vX1, vY1, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 8, vSampler)
-			emitFilledArc(vX2, vY2, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, 8, vSampler)
+			val vCapSeg = arcSegments(360f, strokeWidth / 2f)
+			emitFilledArc(vX1, vY1, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, vCapSeg, vSampler)
+			emitFilledArc(vX2, vY2, strokeWidth / 2f, strokeWidth / 2f, 0f, 360f, true, vCapSeg, vSampler)
 		}
 	}
 
@@ -455,13 +458,29 @@ internal class Sdl3DrawScope(
 	//  UI sizes); refine if needed.
 
 	private fun linearisePath(inPath: ComposePath): List<List<Pair<Float, Float>>> {
+		// Path is now an interface; our concrete impl is ProjectPath in
+		// nativeMain. Cast to read the PathCommand list directly — falls
+		// back to an empty path if a foreign Path implementation slips in.
+		val vProject = inPath as? com.compose.desktop.native.graphics.ProjectPath
+
+		// Unchanged paths reuse the polylines cached on the path itself —
+		// re-linearising every frame allocated the full nested list per draw.
+		// Only valid when the scope origin is baked to 0 (the Sdl3Canvas flow,
+		// where the affine carries all positioning); legacy nonzero-origin
+		// scopes recompute as before.
+		val vCanCache = vProject != null && fOriginX == 0f && fOriginY == 0f
+		if (vCanCache) {
+			val vCached = vProject!!.linearised
+			if (vCached != null && vProject.linearisedKey == vProject.contentKey) {
+				@Suppress("UNCHECKED_CAST")
+				return vCached as List<List<Pair<Float, Float>>>
+			}
+		}
+
 		val vSubs = mutableListOf<MutableList<Pair<Float, Float>>>()
 		var vCurrent: MutableList<Pair<Float, Float>>? = null
 		var vCx = 0f; var vCy = 0f
-		// Path is now an interface; our concrete impl is ProjectPath in
-		// commonMain. Cast to read the PathCommand list directly — falls
-		// back to an empty path if a foreign Path implementation slips in.
-		val vCommands = (inPath as? com.compose.desktop.native.graphics.ProjectPath)?.commands ?: emptyList()
+		val vCommands = vProject?.commands ?: emptyList()
 		for (vCmd in vCommands) when (vCmd) {
 			is PathCommand.MoveTo -> {
 				vCx = fOriginX + vCmd.x; vCy = fOriginY + vCmd.y
@@ -506,6 +525,10 @@ internal class Sdl3DrawScope(
 				val vFirst = vList.firstOrNull() ?: continue
 				if (vList.last() != vFirst) vList.add(vFirst)
 			}
+		}
+		if (vCanCache) {
+			vProject!!.linearised = vSubs
+			vProject.linearisedKey = vProject.contentKey
 		}
 		return vSubs
 	}
@@ -569,15 +592,15 @@ internal class Sdl3DrawScope(
 	// ============
 	//  Tessellation primitives
 
-	/* Number of arc segments proportional to sweep — 64 around a full
-	   circle, never less than 8 for very short arcs (avoids visible
-	   facets at the head when sweep is small). */
-	private fun arcSegments(inSweepDeg: Float): Int {
+	/* Number of arc segments from the arc's PIXEL length — one chord per ~4px
+	   of arc, so a 4px chip corner doesn't spend as many vertices as a 200px
+	   progress ring, and big shapes stop showing facets. The ~1px AA feather
+	   hides residual chord flatness; bounds keep tiny arcs ≥3 chords and
+	   giant ones ≤48. */
+	private fun arcSegments(inSweepDeg: Float, inRadius: Float): Int {
 		val vAbs = if (inSweepDeg < 0) -inSweepDeg else inSweepDeg
-		// Lower than a non-AA renderer would need: the ~1px feather hides the
-		// facets, so ~24 segments/full-circle stays smooth at UI sizes while
-		// keeping the (fringe-tripled) vertex count near the pre-AA budget.
-		return max(6, ((vAbs / 360f) * 24f).toInt() + 1)
+		val vArcLen = 2f * PI.toFloat() * inRadius * (vAbs / 360f)
+		return ((vArcLen / 4f).toInt() + 1).coerceIn(3, 48)
 	}
 
 	private fun emitFilledArc(
@@ -668,7 +691,7 @@ internal class Sdl3DrawScope(
 		val vRad = inAtAngleDeg * (PI / 180.0).toFloat()
 		val vPx = inCx + inR * cos(vRad)
 		val vPy = inCy + inR * sin(vRad)
-		emitFilledArc(vPx, vPy, inCapRadius, inCapRadius, 0f, 360f, true, 8, inSampler)
+		emitFilledArc(vPx, vPy, inCapRadius, inCapRadius, 0f, 360f, true, arcSegments(360f, inCapRadius), inSampler)
 	}
 
 	private fun emitQuad(
@@ -802,7 +825,7 @@ private fun Sdl3DrawScope.linearSampler(inB: LinearGradient, inSize: Size, inAlp
 	val vDy = vEy - vSy
 	val vLen2 = vDx * vDx + vDy * vDy
 	val vColors = inB.gradientColors
-	val vStops = inB.gradientStops
+	val vStops = inB.gradientStops ?: uniformStops(vColors.size)
 	return { x, y ->
 		val vT = if (vLen2 < 1e-6f) 0f
 		         else (((x - vSx) * vDx + (y - vSy) * vDy) / vLen2).coerceIn(0f, 1f)
@@ -816,7 +839,7 @@ private fun Sdl3DrawScope.radialSampler(inB: RadialGradient, inSize: Size, inAlp
 	val vCy = originY + resolveY(inB.gradientCenter.y, inSize.height)
 	val vR = if (inB.gradientRadius.isFinite()) inB.gradientRadius else (inSize.minDimension / 2f)
 	val vColors = inB.gradientColors
-	val vStops = inB.gradientStops
+	val vStops = inB.gradientStops ?: uniformStops(vColors.size)
 	return { x, y ->
 		val vDx = x - vCx; val vDy = y - vCy
 		val vT = if (vR < 1e-6f) 0f
@@ -830,7 +853,7 @@ private fun Sdl3DrawScope.sweepSampler(inB: SweepGradient, inSize: Size, inAlpha
 	val vCx = originX + resolveX(inB.gradientCenter.x, inSize.width)
 	val vCy = originY + resolveY(inB.gradientCenter.y, inSize.height)
 	val vColors = inB.gradientColors
-	val vStops = inB.gradientStops
+	val vStops = inB.gradientStops ?: uniformStops(vColors.size)
 	return { x, y ->
 		// atan2 returns radians in [-π, π]. Map to [0, 1] going clockwise from
 		// 3 o'clock to match Skia's sweep gradient convention.
@@ -840,16 +863,23 @@ private fun Sdl3DrawScope.sweepSampler(inB: SweepGradient, inSize: Size, inAlpha
 	}
 }
 
-/* Sample the colour at position [0..1] along the gradient. Uses uniform
-   distribution when stops is null, otherwise the user-supplied stops. */
+/* Uniform stop positions for a gradient with no explicit stops. Built ONCE
+   per sampler (not per vertex — the old per-vertex list allocation dominated
+   gradient fills). Sizes < 2 return an empty list; sampleColors early-outs
+   before reading stops in those cases. */
+private fun uniformStops(inCount: Int): List<Float> =
+	if (inCount < 2) emptyList() else List(inCount) { it / (inCount - 1f) }
+
+/* Sample the colour at position [0..1] along the gradient. */
 private fun sampleColors(
 	inColors: List<ComposeColor>,
-	inStops: List<Float>?,
+	inStops: List<Float>,
 	inT: Float,
 ): ComposeColor {
 	if (inColors.isEmpty()) return ComposeColor.Transparent
 	if (inColors.size == 1) return inColors[0]
-	val vStops = inStops ?: (0 until inColors.size).map { it / (inColors.size - 1f) }
+	val vStops = inStops
+	if (vStops.isEmpty()) return inColors[0]
 	// Walk to the bracketing stop pair.
 	if (inT <= vStops.first()) return inColors.first()
 	if (inT >= vStops.last()) return inColors.last()

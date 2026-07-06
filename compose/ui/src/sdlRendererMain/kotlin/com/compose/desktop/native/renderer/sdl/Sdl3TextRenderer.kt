@@ -30,6 +30,8 @@ import sdl3.SDL_PIXELFORMAT_ARGB8888
 import sdl3.SDL_RenderTexture
 import sdl3.SDL_DestroySurface
 import sdl3.SDL_Color
+import sdl3.SDL_SetTextureAlphaMod
+import sdl3.SDL_SetTextureColorMod
 import sdl3_ttf.TTF_CloseFont
 import sdl3_ttf.TTF_GetFontHeight
 import sdl3_ttf.TTF_GetStringSize
@@ -47,6 +49,12 @@ import androidx.compose.ui.unit.Density
 // ==================
 // MARK: Sdl3TextRenderer (mingwX64 fallback)
 // ==================
+
+// Cache caps. Textures: ~a few hundred distinct visible strings is plenty for a
+// screenful of UI; evicted entries destroy their GPU texture and re-rasterise on
+// next use. Widths: pure ints, capped by clear (see fWidthCache).
+private const val kTextureCacheMax: Int = 768
+private const val kWidthCacheMax: Int = 16384
 
 /* Text via SDL3_ttf. Caches TTF_Font per size, and a per-(text, color,
    fontSize) SDL_Texture so repeated frames don't re-rasterise the same
@@ -81,8 +89,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         if (inDpr == fDpr) return
         fDpr = inDpr
         // Invalidate everything keyed off the old DPR-baked sizes.
-        for (v in fTextureCache.values) SDL_DestroyTexture(v.tex.reinterpret())
-        fTextureCache.clear()
+        fTextureCache.clear()  // onEvict destroys the SDL textures
         for (f in fFontCache.values) TTF_CloseFont(f.reinterpret())
         fFontCache.clear()
         fWidthCache.clear()
@@ -125,12 +132,29 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
     // keep retrying every frame.
     private val fMissingFamilies = mutableSetOf<String>()
 
-    // Cached glyph textures: (family, text, fontSize, packedARGB, variations) → texture.
-    private data class TextureKey(val family: String?, val text: String, val fontSize: Int, val color: Int, val variations: String)
+    // Cached glyph textures: (family, text, fontSize, variations) → texture.
+    // Glyphs are rasterised WHITE (RGB=255, A=coverage); the tint colour and
+    // alpha are applied at blit time via SDL_SetTextureColorMod/AlphaMod, so
+    // colour/alpha animations don't grow the cache or re-rasterise.
+    private data class TextureKey(val family: String?, val text: String, val fontSize: Int, val variations: String)
     private data class CachedTexture(val tex: COpaquePointer, val w: Int, val h: Int)
-    private val fTextureCache = mutableMapOf<TextureKey, CachedTexture>()
+    // LRU-capped: every unique string ever rendered used to keep a GPU texture
+    // alive for the whole session (TextField keystrokes, response bodies, …).
+    private val fTextureCache = LruCache<TextureKey, CachedTexture>(kTextureCacheMax) {
+        SDL_DestroyTexture(it.tex.reinterpret())
+    }
+
+    /* Applies the tint at blit time — the cached texture is white glyphs with
+       coverage alpha; modulation multiplies per-channel, exactly what baking
+       the colour into the surface used to do. */
+    private fun applyTint(inTex: COpaquePointer, inColor: ComposeColor) {
+        SDL_SetTextureColorMod(inTex.reinterpret(), inColor.r8.toUByte(), inColor.g8.toUByte(), inColor.b8.toUByte())
+        SDL_SetTextureAlphaMod(inTex.reinterpret(), inColor.a8.toUByte())
+    }
 
     // Cached measured widths in LOGICAL points keyed by (family, text, size, variations).
+    // Cap-and-clear (not LRU): lookups stay a single hash op on the hot measure
+    // path, and re-measuring after a rare full clear is cheap.
     private data class WidthKey(val family: String?, val text: String, val fontSize: Int, val variations: String)
     private val fWidthCache = mutableMapOf<WidthKey, Int>()
 
@@ -144,8 +168,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
     }
 
     fun destroy() {
-        for (v in fTextureCache.values) SDL_DestroyTexture(v.tex.reinterpret())
-        fTextureCache.clear()
+        fTextureCache.clear()  // onEvict destroys the SDL textures
         for (f in fFontCache.values) TTF_CloseFont(f.reinterpret())
         fFontCache.clear()
         for ((vMem, _) in fFontMem.values) nativeHeap.free(vMem)
@@ -299,6 +322,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             }
         }
         val vLogical = (vPhys / fDpr).toInt()
+        if (fWidthCache.size >= kWidthCacheMax) fWidthCache.clear()
         fWidthCache[vKey] = vLogical
         return vLogical
     }
@@ -379,8 +403,9 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                 val vVars = runVars(vRun)
                 val vSeg = runSeg(vRun)
                 val vAdvance = measureWidth(vSeg, inFontSize, inFontFamily, vVars).toFloat()
-                val vCachedSeg = getOrCreateTexture(inFontFamily, vSeg, inFontSize, vRun.color, vVars)
+                val vCachedSeg = getOrCreateTexture(inFontFamily, vSeg, inFontSize, vVars)
                 if (vCachedSeg != null) {
+                    applyTint(vCachedSeg.tex, vRun.color)
                     val vLogW = vCachedSeg.w / fDpr
                     val vLogH = vCachedSeg.h / fDpr
                     val vPenY = inY + (inBoxHeight - vLogH) / 2f
@@ -398,7 +423,8 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             return
         }
 
-        val vCached = getOrCreateTexture(inFontFamily, vText, inFontSize, inColor, inFontVariations) ?: return
+        val vCached = getOrCreateTexture(inFontFamily, vText, inFontSize, inFontVariations) ?: return
+        applyTint(vCached.tex, inColor)
 
         // Texture dimensions are physical pixels (rasterised at fontSize *
         // DPR). Convert to logical for the dst rect so SDL_SetRenderScale's
@@ -465,20 +491,20 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inFontFamily: String?,
         inText: String,
         inFontSize: Int,
-        inColor: ComposeColor,
         inFontVariations: List<FontVariation.Setting>? = null,
     ): CachedTexture? {
-        val vKey = TextureKey(inFontFamily, inText, inFontSize, inColor.toArgb(), variationsKey(inFontVariations))
+        val vKey = TextureKey(inFontFamily, inText, inFontSize, variationsKey(inFontVariations))
         fTextureCache[vKey]?.let { return it }
 
         val vRenderer = backend.renderer ?: return null
         val vFont = getFont(inFontFamily, inFontSize, inFontVariations) ?: return null
         val vTex = memScoped {
+            // White glyphs — tint applied per-blit via texture colour/alpha mod.
             val vColor = alloc<SDL_Color>()
-            vColor.r = inColor.r8.toUByte()
-            vColor.g = inColor.g8.toUByte()
-            vColor.b = inColor.b8.toUByte()
-            vColor.a = inColor.a8.toUByte()
+            vColor.r = 255u
+            vColor.g = 255u
+            vColor.b = 255u
+            vColor.a = 255u
             val vSurface = TTF_RenderText_Blended(
                 vFont.reinterpret(),
                 inText,
@@ -585,9 +611,6 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         val vIo = SDL_IOFromConstMem(vSlot.first, vSlot.second.convert()) ?: return null
         return TTF_OpenFontIO(vIo.reinterpret(), true, inPhysicalPt)
     }
-
-    private fun ComposeColor.toArgb(): Int =
-        (a8 shl 24) or (r8 shl 16) or (g8 shl 8) or b8
 
     /* Decodes the codepoint at the given char index, handling UTF-16
        surrogate pairs for supplementary-plane characters. Material Symbols
