@@ -180,6 +180,30 @@ enabled), but verify caret lands correctly in apidemo URL field + body editor.
       bumps on reset/translate) + cache slot on the path; `linearisePath`
       reuses it when the scope origin is 0 (the Sdl3Canvas flow)
 
+## Skia renderer — audit of the same fixes/optims (2026-07-06)
+
+Checked whether each SDL fix applies to the skikoRenderer path:
+
+- **Icon centring** — not affected: `SkiaCanvas.drawNativeText` passes the full
+  node box and `SkiaTextRenderer.drawText`'s single-line branch cap-centres in
+  it (no per-line lineHeight band).
+- **White-glyph colormod / texture LRU** — N/A: Skia draws vector glyphs with
+  the paint colour; there are no per-string or per-colour textures.
+- **`fWidthCache` growth** — SAME issue; ported the 16384 cap-and-clear into
+  `SkiaTextRenderer.estimateTextWidth`. ⚠ compile-unverified: skikoRendererMain
+  doesn't build on Windows — verify with a macOS/Linux build.
+- **Render-on-demand loop, lazy SdlParagraph intrinsics, prefix-advance
+  arrays** — shared code (`:window` + nativeMain), Skia builds get them
+  automatically. Verify on macOS that skipped presents don't blank the window
+  (CAMetalLayer retains the last drawable; EXPOSED → RedrawNeeded forces a
+  repaint) and that caret blink / flings still wake the loop.
+- **Gradient stops / adaptive tessellation / path polyline cache / clip
+  cutouts** — N/A: Skia has real shaders, paths, and clips.
+- Follow-up (both renderers): `fFontCache` / `fTypefaceCache` grow per distinct
+  (family × axis-set × size) — fine today, but an ANIMATED wght axis would
+  create a font per intermediate weight. Cap or quantise if weight animations
+  ever land.
+
 ## Parked (verify first / low ROI)
 
 - `ProjectOwnedLayer.drawLayer` reportedly calls `shape.createOutline` per

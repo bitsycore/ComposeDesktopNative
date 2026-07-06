@@ -31,6 +31,11 @@ import org.jetbrains.skia.FontVariation as SkiaFontVariation
 // MARK: SkiaTextRenderer
 // ==================
 
+// Width-cache cap — cap-and-clear like the SDL renderer (Sdl3TextRenderer):
+// wrap candidates over large bodies otherwise cache every partial-line
+// substring for the whole session. Lookups stay a single hash op.
+private const val kWidthCacheMax: Int = 16384
+
 /* Replaces SDL3TextRenderer. Uses Skia for measurement + draw.
 
    IMPORTANT: in Skiko 0.144.6, the typefaces returned by FontMgr.default
@@ -327,6 +332,7 @@ class SkiaTextRenderer {
         // Round up so the layout box never falls short of the drawn glyphs;
         // a 0.5px undershoot still clips antialiased pixels on the right edge.
         val vWidth = kotlin.math.ceil(vAdvances.sum()).toInt().coerceAtLeast(0)
+        if (fWidthCache.size >= kWidthCacheMax) fWidthCache.clear()
         fWidthCache[vCacheKey] = vWidth
         return vWidth
     }
