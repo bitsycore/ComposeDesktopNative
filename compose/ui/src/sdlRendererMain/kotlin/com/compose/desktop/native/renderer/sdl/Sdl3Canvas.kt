@@ -129,7 +129,8 @@ internal class Sdl3Canvas(
 		val prevClip: IntArray?,      // SDL clip rect active before this clip
 		val region: IntArray,         // [l,t,r,b] absolute px actually cleared + composited back
 		val bbox: IntArray,           // [l,t,r,b] absolute px of the full rounded rect (corner math)
-		val roundRect: RoundRect,     // the rounded outline (local coords, for corner radii)
+		val roundRect: RoundRect?,    // rounded outline (corner cutouts) — null for diff-rect mode
+		val diffRect: IntArray? = null, // ClipOp.Difference: [l,t,r,b] to ZERO before compositing
 	)
 	private val fClipLayers = ArrayDeque<OffscreenClip>()
 
@@ -202,9 +203,42 @@ internal class Sdl3Canvas(
 	}
 
 	override fun clipRect(left: Float, top: Float, right: Float, bottom: Float, clipOp: ClipOp) {
+		if (clipOp == ClipOp.Difference) {
+			clipRectDifference(left, top, right, bottom)
+			return
+		}
 		fScope.flush()
 		fClip = intersect(fClip, mapRectAABB(left, top, right, bottom))
 		applyClip()
+	}
+
+	// ClipOp.Difference — "draw everywhere EXCEPT this rect". SDL clips only to
+	// a rect, so the subtree renders into an offscreen target and the excluded
+	// rect is zeroed before compositing back on the matching restore(). This is
+	// what cuts the floating-label notch out of OutlinedTextField's border —
+	// treating Difference as intersect clipped the border TO the notch instead
+	// (a floating line under the label, no outline anywhere else).
+	private fun clipRectDifference(inL: Float, inT: Float, inR: Float, inB: Float) {
+		val vDiff = mapRectAABB(inL, inT, inR, inB)
+		val vRegion = fClip ?: intArrayOf(0, 0, fSize.width.toInt(), fSize.height.toInt())
+		if (fClipTargets == null || fSize.width < 1f || fSize.height < 1f ||
+			vRegion[2] <= vRegion[0] || vRegion[3] <= vRegion[1]
+		) {
+			// No offscreen pool — degrade by IGNORING the exclusion. Drawing the
+			// full content (border passing under the label) is far less wrong
+			// than clipping to the excluded rect.
+			return
+		}
+		fScope.flush()
+		val vTarget = fClipTargets.target(fClipLayers.size, fSize.width.toInt(), fSize.height.toInt()) ?: return
+		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
+		val vPrevTarget = SDL_GetRenderTarget(vRenderer)
+		val vPrevClip = fClip
+		SDL_SetRenderTarget(vRenderer, vTarget.reinterpret())
+		fClip = vRegion
+		applyClip()
+		clearRegion(vRegion)
+		fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPrevClip, vRegion, vRegion, null, vDiff))
 	}
 
 	override fun clipPath(path: ComposePath, clipOp: ClipOp) {
@@ -292,7 +326,14 @@ internal class Sdl3Canvas(
 		val vLayer = fClipLayers.removeLastOrNull() ?: return
 		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
 		fScope.flush()
-		zeroRoundRectCorners(vLayer.bbox, vLayer.roundRect)
+		val vRound = vLayer.roundRect
+		if (vRound != null) {
+			zeroRoundRectCorners(vLayer.bbox, vRound)
+		} else if (vLayer.diffRect != null) {
+			// Difference clip: punch the excluded rect out of the scratch layer.
+			val vCut = intersect(vLayer.diffRect, vLayer.region)
+			if (vCut[2] > vCut[0] && vCut[3] > vCut[1]) clearRegion(vCut)
+		}
 		SDL_SetRenderTarget(vRenderer, vLayer.prevTarget?.reinterpret())
 		fClip = vLayer.prevClip
 		applyClip()

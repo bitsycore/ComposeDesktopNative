@@ -19,7 +19,9 @@ internal fun TextFieldScreen() {
         )
 
         var single by remember { mutableStateOf("") }
-        var outlined by remember { mutableStateOf("") }
+        // Pre-filled so the floating label (and the border cutout behind it —
+        // the ClipOp.Difference path in the SDL canvas) is visible at rest.
+        var outlined by remember { mutableStateOf("user@example.com") }
         var withError by remember { mutableStateOf("abc") }
         var multi by remember { mutableStateOf("Hello\nMulti-line text\nReturn to add a line\nUp / Down to navigate") }
         var raw by remember { mutableStateOf("BasicTextField (no chrome)") }
