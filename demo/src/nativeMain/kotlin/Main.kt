@@ -109,12 +109,18 @@ fun main(args: Array<String>) {
                     println("Unknown --screen='${vCli.screen}'. Available: ${AllScreens.joinToString { it.name }}")
                     Text("Unknown screen: ${vCli.screen}", color = Color.Red, fontSize = 16.sp)
                 } else {
-                    // Single screen, no sidebar — wraps in the standard 24dp
-                    // content padding plus background so visuals match the App.
+                    // Single screen, no sidebar — SAME wrapper as the App's
+                    // content pane (verticalScroll ⇒ infinite max height!) so
+                    // screenshot verification exercises the constraints screens
+                    // actually get when navigated to interactively. A plain
+                    // bounded Box here used to hide "scrollable measured with
+                    // infinite height" crashes from the --screenshot sweeps.
+                    val vScroll = rememberScrollState()
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background)
+                            .verticalScroll(vScroll)
                             .padding(24.dp),
                     ) {
                         vMatch.content()

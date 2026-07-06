@@ -34,6 +34,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollField
+import androidx.compose.material3.ScrollFieldDefaults
 import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Snackbar
@@ -179,7 +180,10 @@ internal fun M3MiscScreen() {
 		}
 
 		Section("ScrollField", "Vertically-snapping value field (drag it)") {
-			Box(modifier = Modifier.width(120.dp)) {
+			// ScrollField is a VerticalPager inside — it MUST get a bounded
+			// height (the screen's outer scroll column measures children with
+			// infinite max height, which scrollables reject).
+			Box(modifier = Modifier.width(120.dp).height(ScrollFieldDefaults.ScrollFieldHeight)) {
 				ScrollField(state = rememberScrollFieldState(itemCount = 10, index = 3))
 			}
 		}
