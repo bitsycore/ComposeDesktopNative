@@ -358,8 +358,11 @@ internal class Sdl3Canvas(
 		return fScope
 	}
 
-	// Solid colour only for now; gradient Paint.shader support is a B4 follow-up.
-	private fun brushFor(inPaint: Paint): Brush = SolidColor(inPaint.color)
+	// Gradient brushes stash themselves on the Paint's shader (ShaderBrush.applyTo
+	// otherwise loses everything but color=Black — see CanvasPaintActuals). Recover
+	// the gradient so the tessellator's per-vertex sampler paints it; fall back to
+	// the solid paint colour for plain fills.
+	private fun brushFor(inPaint: Paint): Brush = inPaint.shader?.brush ?: SolidColor(inPaint.color)
 
 	private fun styleFor(inPaint: Paint): DrawStyle =
 		if (inPaint.style == PaintingStyle.Stroke) Stroke(inPaint.strokeWidth, cap = inPaint.strokeCap)

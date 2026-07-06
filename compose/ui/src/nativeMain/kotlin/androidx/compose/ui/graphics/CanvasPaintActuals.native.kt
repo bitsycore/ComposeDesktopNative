@@ -40,12 +40,28 @@ actual fun Paint(): Paint = ProjectPaint()
 //  pipeline — gradient rasterisation goes through
 //  com.compose.desktop.native.graphics.GradientBridge directly, not Shader.
 
-actual class Shader internal constructor()
+// SDL3 has no GPU shader stage — it samples gradients per-vertex straight from a
+// Brush (see Sdl3DrawScope.samplerFor). ShaderBrush.applyTo only ever leaves a
+// Shader on the Paint (and forces color = Black), so the gradient descriptor
+// would otherwise be lost and Modifier.background(Brush.linearGradient(...)) would
+// paint solid black. We stash the reconstructed gradient Brush here (its anchor
+// points are already resolved against the draw size by createShader) so
+// Sdl3Canvas.brushFor can recover it. Null for non-gradient shaders.
+actual class Shader internal constructor() {
+	internal var brush: Brush? = null
+}
 
 internal actual class TransformShader actual constructor() {
 	actual var shader: Shader? = null
 	actual fun transform(matrix: Matrix?) {}
 }
+
+// Rebuild the gradient stops as (position, color) pairs when explicit stops were
+// supplied; otherwise fall back to the evenly-distributed colors overload.
+private fun gradientStops(colors: List<Color>, colorStops: List<Float>?): Array<Pair<Float, Color>>? =
+	if (colorStops != null && colorStops.size == colors.size)
+		Array(colors.size) { colorStops[it] to colors[it] }
+	else null
 
 internal actual fun ActualLinearGradientShader(
 	from: Offset,
@@ -53,7 +69,13 @@ internal actual fun ActualLinearGradientShader(
 	colors: List<Color>,
 	colorStops: List<Float>?,
 	tileMode: TileMode,
-): Shader = Shader()
+): Shader = Shader().also {
+	val stops = gradientStops(colors, colorStops)
+	it.brush = if (stops != null)
+		Brush.linearGradient(*stops, start = from, end = to, tileMode = tileMode)
+	else
+		Brush.linearGradient(colors = colors, start = from, end = to, tileMode = tileMode)
+}
 
 internal actual fun ActualRadialGradientShader(
 	center: Offset,
@@ -61,13 +83,25 @@ internal actual fun ActualRadialGradientShader(
 	colors: List<Color>,
 	colorStops: List<Float>?,
 	tileMode: TileMode,
-): Shader = Shader()
+): Shader = Shader().also {
+	val stops = gradientStops(colors, colorStops)
+	it.brush = if (stops != null)
+		Brush.radialGradient(*stops, center = center, radius = radius, tileMode = tileMode)
+	else
+		Brush.radialGradient(colors = colors, center = center, radius = radius, tileMode = tileMode)
+}
 
 internal actual fun ActualSweepGradientShader(
 	center: Offset,
 	colors: List<Color>,
 	colorStops: List<Float>?,
-): Shader = Shader()
+): Shader = Shader().also {
+	val stops = gradientStops(colors, colorStops)
+	it.brush = if (stops != null)
+		Brush.sweepGradient(*stops, center = center)
+	else
+		Brush.sweepGradient(colors = colors, center = center)
+}
 
 internal actual fun ActualImageShader(
 	image: ImageBitmap,
