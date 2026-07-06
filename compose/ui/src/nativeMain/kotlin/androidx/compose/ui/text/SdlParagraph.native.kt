@@ -59,16 +59,23 @@ internal class SdlParagraph(
 	private val maxWidthPx: Int =
 		if (widthConstraint.isFinite() && widthConstraint > 0f) widthConstraint.toInt() else Int.MAX_VALUE
 
-	private val wrapped = currentTextMeasurer.wrap(text, fontPx, maxWidthPx, family)
+	// The paragraph's fontWeight mapped onto the variable font's `wght` axis.
+	// Threaded through BOTH measurement and paint so the layout box matches the
+	// weighted glyphs — otherwise heavier text is measured at Normal width and
+	// the last character clips (e.g. "Search" → "Searc").
+	private val variations: List<androidx.compose.ui.text.font.FontVariation.Setting>? =
+		style.fontWeight?.let { listOf(androidx.compose.ui.text.font.FontVariation.weight(it.weight)) }
+
+	private val wrapped = currentTextMeasurer.wrap(text, fontPx, maxWidthPx, family, variations)
 	private val allLines: List<String> = wrapped.lines
 	private val lineStarts: IntArray = wrapped.lineStarts
-	private val lh: Float = currentTextMeasurer.lineHeight(fontPx, family).coerceAtLeast(1f)
+	private val lh: Float = currentTextMeasurer.lineHeight(fontPx, family, variations).coerceAtLeast(1f)
 
 	override val lineCount: Int = minOf(allLines.size, maxLines).coerceAtLeast(1)
 	override val didExceedMaxLines: Boolean = allLines.size > maxLines
 
 	private fun measureStr(inStr: String): Float =
-		currentTextMeasurer.measure(inStr, fontPx, Int.MAX_VALUE, family).width.toFloat()
+		currentTextMeasurer.measure(inStr, fontPx, Int.MAX_VALUE, family, variations).width.toFloat()
 
 	private val lineWidths: FloatArray = FloatArray(lineCount) { measureStr(allLines[it]) }
 
@@ -257,7 +264,7 @@ internal class SdlParagraph(
 			inTextAlign = vAlign,
 			inSoftWrap = maxWidthPx != Int.MAX_VALUE,
 			inFontFamily = family,
-			inFontVariations = null,
+			inFontVariations = variations,
 		)
 	}
 
