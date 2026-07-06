@@ -41,7 +41,9 @@ compose/
 │                                    the consumer Zip task bundles only the fonts
 │                                    a style was actually called from.
 └── native/
-    └── window/      → :window    — nativeComposeWindow() + SDL3 main loop
+    └── window/      → :window    — nativeComposeApp { Window(...) {} } multi-window
+                                    shell + SDL3 main loop; nativeComposeWindow()
+                                    is the single-window wrapper
 
 demo/                → :demo      — flagship showcase app (30+ screens)
 apidemo/             → :apidemo   — Postman-style REST API manager

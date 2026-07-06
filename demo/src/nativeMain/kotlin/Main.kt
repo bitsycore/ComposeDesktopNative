@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.desktop.native.icons.MaterialSymbols
 import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.desktop.native.Window
+import com.compose.desktop.native.nativeComposeApp
 import com.compose.desktop.native.nativeComposeWindow
 import demo.DropdownMenu
 import demo.DropdownMenuItem
@@ -70,6 +72,12 @@ fun main(args: Array<String>) {
         runSearchEscTest()
         return
     }
+    // Verifies nativeComposeApp multi-window: two Windows render concurrently,
+    // one closes via state, the app keeps running on the survivor.
+    if (args.any { it == "--multiwintest" }) {
+        runMultiWindowTest()
+        return
+    }
     // Verifies the vendored scroll system: a Column(verticalScroll) scrolls when wheel
     // events are injected through the live pipeline (MouseWheelScrollingLogic).
     if (args.any { it == "--scrolltest" }) {
@@ -90,7 +98,12 @@ fun main(args: Array<String>) {
         append(" [").append(vCli.gpu).append("]")
     }
 
-    nativeComposeWindow(
+    // Multi-window app shell: the showcase window plus any extra windows opened
+    // from WindowScreen's "Multi-window" section (state-driven, Compose Desktop
+    // style — the count IS the windows' lifetime).
+    nativeComposeApp {
+    Window(
+        onCloseRequest = { exitApplication() },
         title = vTitle,
         width = vCli.width,
         height = vCli.height,
@@ -141,6 +154,47 @@ fun main(args: Array<String>) {
             } else {
                 App()
             }
+        }
+    }
+    // Extra windows opened from WindowScreen — one Window() per count; closing
+    // one (OS button or its Close button) decrements the state.
+    repeat(ExtraWindowCount.value) { vIdx ->
+        Window(
+            onCloseRequest = { ExtraWindowCount.value-- },
+            title = "Extra window ${vIdx + 1}",
+            width = 460,
+            height = 300,
+            gpu = vCli.gpu,
+        ) {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                ExtraWindowContent(vIdx + 1)
+            }
+        }
+    }
+    }
+}
+
+/* Content of the demo's extra windows — each has its own composition, focus,
+   input routing, and render loop; the counter proves per-window state. */
+@Composable
+private fun com.compose.desktop.native.ComposeWindowScope.ExtraWindowContent(inIndex: Int) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("Extra window #$inIndex", color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
+            Text(
+                "own composition · own renderer · own input",
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                fontSize = 12.sp,
+            )
+            var vClicks by remember { mutableStateOf(0) }
+            androidx.compose.material3.Button(onClick = { vClicks++ }) { Text("clicks: $vClicks") }
+            androidx.compose.material3.OutlinedButton(onClick = { window.close() }) { Text("Close window") }
         }
     }
 }
@@ -205,6 +259,59 @@ private fun runBackTest() {
             }
         }
     }
+}
+
+/* Boots TWO windows via nativeComposeApp, asserts both render, closes the
+   second by flipping the state that composes its Window(), and asserts the app
+   keeps running on the first — the multi-window lifecycle end-to-end. */
+private fun runMultiWindowTest() {
+    val vShowSecond = mutableStateOf(true)
+    var vSecondFrames = 0
+    var vResult = "FAIL (main window never reached the end frame)"
+    nativeComposeApp {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "multiwin main",
+            width = 400,
+            height = 200,
+            onFrame = { _, vFrame ->
+                when (vFrame) {
+                    40 -> {
+                        if (vSecondFrames == 0) {
+                            vResult = "FAIL (second window never rendered)"
+                            false
+                        } else {
+                            vShowSecond.value = false  // close the second window via state
+                            true
+                        }
+                    }
+                    80 -> {
+                        vResult =
+                            if (!vShowSecond.value && vSecondFrames > 0)
+                                "PASS (both windows rendered; second closed via state; app survived on the first)"
+                            else "FAIL (second=$vSecondFrames showSecond=${vShowSecond.value})"
+                        false
+                    }
+                    else -> true
+                }
+            },
+        ) {
+            Text("main window", color = Color.White)
+        }
+        if (vShowSecond.value) {
+            Window(
+                onCloseRequest = { vShowSecond.value = false },
+                title = "multiwin second",
+                width = 300,
+                height = 150,
+                onFrame = { _, _ -> vSecondFrames++; true },
+            ) {
+                Text("second window", color = Color.White)
+            }
+        }
+    }
+    println("multiwintest: secondFrames=$vSecondFrames")
+    println("multiwintest: $vResult")
 }
 
 /* Boots the REAL Search screen, clicks the first SearchBar's input field

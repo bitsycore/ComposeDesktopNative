@@ -13,17 +13,22 @@ import sdl3.*
 // MARK: SDL3EventMapper
 // ==================
 
+/* Events carry the SDL window id they belong to (0 = unknown — injected test
+   events; the loop routes those to its first window). Quit is app-level. */
 sealed class AppEvent {
 	data object Quit : AppEvent()
-	data class Pointer(val event: LegacyPointerEvent) : AppEvent()
-	data class Key(val event: KeyEvent) : AppEvent()
-	data class TextInput(val text: String) : AppEvent()
-	data class MouseWheel(val x: Int, val y: Int, val deltaX: Float, val deltaY: Float) : AppEvent()
-	data object WindowResized : AppEvent()
+	data class Pointer(val event: LegacyPointerEvent, val windowId: UInt = 0u) : AppEvent()
+	data class Key(val event: KeyEvent, val windowId: UInt = 0u) : AppEvent()
+	data class TextInput(val text: String, val windowId: UInt = 0u) : AppEvent()
+	data class MouseWheel(val x: Int, val y: Int, val deltaX: Float, val deltaY: Float, val windowId: UInt = 0u) : AppEvent()
+	data class WindowResized(val windowId: UInt = 0u) : AppEvent()
+	/* The user asked THIS window to close (OS close button). The loop routes it
+	   through the window's close-interception then its onCloseRequest. */
+	data class WindowClose(val windowId: UInt = 0u) : AppEvent()
 	/* The OS invalidated the window contents (expose / un-minimise / focus
-	   regain). Carries no data — the render-on-demand main loop uses it to
-	   force a frame even though no state changed. */
-	data object RedrawNeeded : AppEvent()
+	   regain). The render-on-demand main loop uses it to force a frame even
+	   though no state changed. */
+	data class RedrawNeeded(val windowId: UInt = 0u) : AppEvent()
 }
 
 fun pollEvents(): List<AppEvent> {
@@ -49,7 +54,7 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 				x = mb.x.toInt(), y = mb.y.toInt(),
 				type = PointerEventType.Press,
 				button = mapButton(mb.button)
-			))
+			), mb.windowID)
 		}
 
 		SDL_EVENT_MOUSE_BUTTON_UP -> {
@@ -58,7 +63,7 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 				x = mb.x.toInt(), y = mb.y.toInt(),
 				type = PointerEventType.Release,
 				button = mapButton(mb.button)
-			))
+			), mb.windowID)
 		}
 
 		SDL_EVENT_MOUSE_MOTION -> {
@@ -66,16 +71,21 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 			AppEvent.Pointer(LegacyPointerEvent(
 				x = mm.x.toInt(), y = mm.y.toInt(),
 				type = PointerEventType.Move
-			))
+			), mm.windowID)
 		}
 
 		SDL_EVENT_KEY_DOWN -> mapKey(e.key, KeyEventType.KeyDown)
 		SDL_EVENT_KEY_UP -> mapKey(e.key, KeyEventType.KeyUp)
 
-		SDL_EVENT_WINDOW_RESIZED -> AppEvent.WindowResized
+		SDL_EVENT_WINDOW_RESIZED -> AppEvent.WindowResized(e.window.windowID)
 		// Backing-store size / DPR changes flow through the same resize path.
-		SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED -> AppEvent.WindowResized
-		SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED -> AppEvent.WindowResized
+		SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED -> AppEvent.WindowResized(e.window.windowID)
+		SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED -> AppEvent.WindowResized(e.window.windowID)
+
+		// Per-window close (OS close button). SDL also fires QUIT after the
+		// LAST window's close request — the loop treats that as app exit only
+		// when no window vetoed.
+		SDL_EVENT_WINDOW_CLOSE_REQUESTED -> AppEvent.WindowClose(e.window.windowID)
 
 		// Content invalidations — the idle-skipping main loop must render a
 		// frame after these even though no Compose state changed.
@@ -83,11 +93,11 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 		SDL_EVENT_WINDOW_SHOWN,
 		SDL_EVENT_WINDOW_RESTORED,
 		SDL_EVENT_WINDOW_MAXIMIZED,
-		SDL_EVENT_WINDOW_FOCUS_GAINED -> AppEvent.RedrawNeeded
+		SDL_EVENT_WINDOW_FOCUS_GAINED -> AppEvent.RedrawNeeded(e.window.windowID)
 
 		SDL_EVENT_TEXT_INPUT -> {
 			val vText = e.text.text?.toKString().orEmpty()
-			if (vText.isEmpty()) null else AppEvent.TextInput(vText)
+			if (vText.isEmpty()) null else AppEvent.TextInput(vText, e.text.windowID)
 		}
 
 		SDL_EVENT_MOUSE_WHEEL -> {
@@ -97,6 +107,7 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 				y = mw.mouse_y.toInt(),
 				deltaX = mw.x,
 				deltaY = mw.y,
+				windowId = mw.windowID,
 			)
 		}
 
@@ -121,7 +132,7 @@ private fun mapKey(inKk: SDL_KeyboardEvent, inType: KeyEventType): AppEvent.Key 
 		isCtrlPressed = (vMod and SDL_KMOD_CTRL.toInt()) != 0,
 		isAltPressed = (vMod and SDL_KMOD_ALT.toInt()) != 0,
 		isMetaPressed = (vMod and SDL_KMOD_GUI.toInt()) != 0,
-	))
+	), inKk.windowID)
 }
 
 private fun mapButton(b: UByte): PointerButton = when (b.toInt()) {

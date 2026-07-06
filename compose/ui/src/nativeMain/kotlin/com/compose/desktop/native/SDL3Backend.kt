@@ -107,12 +107,21 @@ class SDL3Backend(
         return true
     }
 
-    fun destroy() {
+    /* Stable SDL identifier of this backend's window — events carry it, so the
+       multi-window loop can route them to the right instance. 0 before init. */
+    val windowId: UInt
+        get() = window?.let { SDL_GetWindowID(it.reinterpret()) } ?: 0u
+
+    /* Tears down this backend's window + renderer. inQuitSdl controls the
+       process-wide SDL_Quit(): a multi-window app destroys each window with
+       false and calls SDL_Quit once (via the app runtime) after the last —
+       SDL_Quit shuts down ALL subsystems regardless of other live windows. */
+    fun destroy(inQuitSdl: Boolean = true) {
         glContext?.let { SDL_GL_DestroyContext(it.reinterpret()) }
         metalView?.let { SDL_Metal_DestroyView(it.reinterpret()) }
         renderer?.let { SDL_DestroyRenderer(it.reinterpret()) }
         window?.let { SDL_DestroyWindow(it.reinterpret()) }
-        SDL_Quit()
+        if (inQuitSdl) SDL_Quit()
         glContext = null
         metalView = null
         renderer = null

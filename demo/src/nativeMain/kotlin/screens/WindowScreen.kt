@@ -11,6 +11,11 @@ import com.compose.desktop.native.*
 // MARK: Window screen
 // ==================
 
+/* Extra demo windows opened from this screen. The app composition in Main.kt
+   reads it and declares one Window() per count — the state IS the windows'
+   lifetime (multi-window, Compose Desktop style). */
+val ExtraWindowCount = mutableStateOf(0)
+
 @Composable
 internal fun WindowScreen() {
     val window = LocalComposeNativeWindow.current
@@ -19,6 +24,16 @@ internal fun WindowScreen() {
             "Window",
             "ComposeNativeWindow handle — read live state, retitle, resize, minimize, fullscreen, close.",
         )
+
+        Section("Multi-window", "nativeComposeApp hosts several Window()s — each click composes one more") {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(onClick = { ExtraWindowCount.value++ }) { Text("Open extra window") }
+                Text("open: ${ExtraWindowCount.value}", fontSize = 13.sp)
+            }
+        }
 
         Section("Live state", "Refreshes automatically — every property is snapshot-backed") {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
