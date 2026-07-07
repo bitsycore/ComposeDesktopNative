@@ -435,7 +435,12 @@ private fun runSearchEscTest() {
    shrinkVertically): logs the AV container's animated size and the window-Y of a
    marker Box below it every frame, toggling visibility three times. Diagnoses
    (a) a size snap between just-before-end and end of the animation and (b)
-   instant (non-animated) transitions on subsequent toggles. */
+   instant (non-animated) transitions on subsequent toggles.
+
+   Expected healthy trace: ~24 smooth frames per toggle ending exactly at 0/60,
+   PLUS one 16px marker jump when the fully-shrunk node unmounts (exit end) or
+   mounts (enter start) — that's the parent's spacedBy(16) collapsing, inherent
+   upstream behaviour (spacing applies to zero-height children too), NOT a bug. */
 private fun runAnimVisTest() {
     val vShown = mutableStateOf(true)
     var vAvSize = androidx.compose.ui.unit.IntSize(-1, -1)
@@ -462,7 +467,14 @@ private fun runAnimVisTest() {
         },
     ) {
         MaterialTheme(colorScheme = darkColorScheme()) {
-            Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            // spacedBy mirrors the demo's Section column — the end-of-exit jump
+            // reported on the FoundationExtra screen involves the spacing around
+            // the AnimatedVisibility node collapsing when the node unmounts.
+            Column(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(Modifier.size(30.dp).background(androidx.compose.ui.graphics.Color(0xFFC07040)))
                 androidx.compose.animation.AnimatedVisibility(
                     visible = vShown.value,
                     modifier = Modifier.onSizeChanged { vAvSize = it },

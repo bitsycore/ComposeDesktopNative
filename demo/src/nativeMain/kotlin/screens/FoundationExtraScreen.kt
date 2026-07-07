@@ -49,23 +49,32 @@ internal fun FoundationExtraScreen() {
 
 		Section("AnimatedVisibility", "Enter = fade + expand; exit = fade + shrink") {
 			var vShown by remember { mutableStateOf(true) }
-			Button(onClick = { vShown = !vShown }) { Text(if (vShown) "Hide" else "Show") }
-			AnimatedVisibility(
-				visible = vShown,
-				enter = fadeIn() + expandVertically(),
-				exit = fadeOut() + shrinkVertically(),
-			) {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(60.dp)
-						.background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(8.dp)),
+			// One unspaced Column child: the Section column's spacedBy(10) would
+			// otherwise keep a NON-animated gap around the AnimatedVisibility node
+			// and drop it abruptly when the node unmounts at exit end (inherent
+			// upstream behaviour — spacing applies to zero-height children too).
+			// The gap lives INSIDE the animated content instead, so it expands and
+			// shrinks with it.
+			Column {
+				Button(onClick = { vShown = !vShown }) { Text(if (vShown) "Hide" else "Show") }
+				AnimatedVisibility(
+					visible = vShown,
+					enter = fadeIn() + expandVertically(),
+					exit = fadeOut() + shrinkVertically(),
 				) {
-					Text(
-						"Animated content",
-						modifier = Modifier.padding(14.dp),
-						color = MaterialTheme.colorScheme.onTertiaryContainer,
-					)
+					Box(
+						modifier = Modifier
+							.padding(top = 10.dp)
+							.fillMaxWidth()
+							.height(60.dp)
+							.background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(8.dp)),
+					) {
+						Text(
+							"Animated content",
+							modifier = Modifier.padding(14.dp),
+							color = MaterialTheme.colorScheme.onTertiaryContainer,
+						)
+					}
 				}
 			}
 		}
@@ -112,11 +121,15 @@ internal fun FoundationExtraScreen() {
 		Section("SharedTransitionLayout", "sharedElement morphs the box between its two states") {
 			SharedTransitionLayout {
 				var vBig by remember { mutableStateOf(false) }
-				Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+				// Unspaced Column, gap carried inside each AnimatedVisibility — see
+				// the AnimatedVisibility section above for why (spacedBy around an
+				// AV node collapses non-animated when the node unmounts).
+				Column {
 					Button(onClick = { vBig = !vBig }) { Text(if (vBig) "Shrink" else "Grow") }
 					AnimatedVisibility(visible = !vBig) {
 						Box(
 							modifier = Modifier
+								.padding(top = 8.dp)
 								.sharedElement(
 									sharedContentState = rememberSharedContentState(key = "stBox"),
 									animatedVisibilityScope = this@AnimatedVisibility,
@@ -128,6 +141,7 @@ internal fun FoundationExtraScreen() {
 					AnimatedVisibility(visible = vBig) {
 						Box(
 							modifier = Modifier
+								.padding(top = 8.dp)
 								.sharedElement(
 									sharedContentState = rememberSharedContentState(key = "stBox"),
 									animatedVisibilityScope = this@AnimatedVisibility,
