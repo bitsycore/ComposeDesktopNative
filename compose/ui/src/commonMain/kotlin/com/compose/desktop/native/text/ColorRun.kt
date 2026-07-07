@@ -5,6 +5,8 @@ import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.TextUnit
 
 // ==================
 // MARK: Per-line style runs (renderer helper)
@@ -12,26 +14,38 @@ import androidx.compose.ui.text.font.FontWeight
 
 /* Project render glue with no official Compose equivalent — the text renderers
    turn an AnnotatedString's spans into per-line style runs (colour + weight +
-   italic). Lives in `com.compose.desktop.native.text` rather than
-   `androidx.compose.ui.text`. */
+   italic + background + decoration + size). Lives in
+   `com.compose.desktop.native.text` rather than `androidx.compose.ui.text`. */
 
-/* A run of one colour + weight + italic within a wrapped line, line-local
-   [start, end) cols. `weight` is the OpenType wght axis (100..900, 400 = default),
-   `italic` = true when the span's FontStyle == Italic. Measurement is still base-
-   style, so a bold run's glyphs paint into the same rect as regular's; that's a
-   known simplification (real fidelity needs a re-wrap per style run). */
+/* A run of one style within a wrapped line, line-local [start, end) cols.
+   `weight` is the OpenType wght axis (100..900, 400 = default), `italic` =
+   FontStyle.Italic (paragraph base or span), `background` = SpanStyle.background
+   (Unspecified = none), `underline`/`lineThrough` = TextDecoration flags
+   (paragraph base or span), `fontSize` = the span's size (Unspecified = the
+   paragraph size; Em scales it, Sp resolves through the density).
+
+   Measurement/wrapping is still base-style, so a bold/resized run's glyphs
+   paint into a line box wrapped at base metrics; that's a known simplification
+   (real fidelity needs a re-wrap per style run). Paint-time advances DO use
+   the run's own style, so runs push each other over correctly. */
 class ColorRun(
 	val start: Int,
 	val end: Int,
 	val color: Color,
 	val weight: Int = 400,
 	val italic: Boolean = false,
+	val background: Color = Color.Unspecified,
+	val underline: Boolean = false,
+	val lineThrough: Boolean = false,
+	val fontSize: TextUnit = TextUnit.Unspecified,
 )
 
 /* Style runs for a single wrapped line, given the AnnotatedString spans (whose
    start/end index the ORIGINAL text) and this line's start offset. Gaps use
-   the base style; overlapping spans compose colour last-wins, weight
-   max-wins (bold beats regular), italic OR-wins.
+   the base style; overlapping spans compose colour/background/size last-wins,
+   weight max-wins (bold beats regular), italic/underline/lineThrough OR-wins
+   (also OR'd with the paragraph-level base flags — a span's explicit
+   TextDecoration.None can't clear a base decoration; simplification).
 
    Spans are assumed sorted by start with non-decreasing end (true for the
    tokenizers and for buildAnnotatedString appended in order). That lets us
@@ -44,6 +58,9 @@ fun lineColorRuns(
 	inLineStart: Int,
 	inSpans: List<Range<SpanStyle>>,
 	inDefault: Color,
+	inBaseItalic: Boolean = false,
+	inBaseUnderline: Boolean = false,
+	inBaseLineThrough: Boolean = false,
 ): List<ColorRun> {
 	val vN = inLine.length
 	if (vN == 0) return emptyList()
@@ -53,6 +70,10 @@ fun lineColorRuns(
 	val vCols = arrayOfNulls<Color>(vN)
 	val vWgt = IntArray(vN)
 	val vIt = BooleanArray(vN)
+	val vBg = arrayOfNulls<Color>(vN)
+	val vUl = BooleanArray(vN)
+	val vSt = BooleanArray(vN)
+	val vSz = arrayOfNulls<TextUnit>(vN)
 	// First span whose end reaches into this line (skip the prefix before it).
 	var vIdx = firstSpanReaching(inSpans, inLineStart)
 	while (vIdx < inSpans.size) {
@@ -64,7 +85,14 @@ fun lineColorRuns(
 		val vColor = vS.item.color
 		val vSpanWeight = vS.item.fontWeight?.weight ?: 0
 		val vSpanItalic = vS.item.fontStyle == FontStyle.Italic
-		if (vColor == Color.Unspecified && vSpanWeight == 0 && !vSpanItalic) continue
+		val vSpanBg = vS.item.background
+		val vDeco = vS.item.textDecoration
+		val vSpanUl = vDeco != null && vDeco.contains(TextDecoration.Underline)
+		val vSpanSt = vDeco != null && vDeco.contains(TextDecoration.LineThrough)
+		val vSpanSz = vS.item.fontSize
+		if (vColor == Color.Unspecified && vSpanWeight == 0 && !vSpanItalic &&
+			vSpanBg == Color.Unspecified && !vSpanUl && !vSpanSt && vSpanSz == TextUnit.Unspecified
+		) continue
 		val vA = vS.start - inLineStart
 		val vB = vS.end - inLineStart
 		if (vB <= 0 || vA >= vN) continue
@@ -74,6 +102,10 @@ fun lineColorRuns(
 			if (vColor != Color.Unspecified) vCols[i] = vColor
 			if (vSpanWeight > vWgt[i]) vWgt[i] = vSpanWeight
 			if (vSpanItalic) vIt[i] = true
+			if (vSpanBg != Color.Unspecified) vBg[i] = vSpanBg
+			if (vSpanUl) vUl[i] = true
+			if (vSpanSt) vSt[i] = true
+			if (vSpanSz != TextUnit.Unspecified) vSz[i] = vSpanSz
 			i++
 		}
 	}
@@ -84,14 +116,22 @@ fun lineColorRuns(
 	while (i < vN) {
 		val vC = vCols[i] ?: inDefault
 		val vW = if (vWgt[i] == 0) 400 else vWgt[i]
-		val vI = vIt[i]
+		val vI = vIt[i] || inBaseItalic
+		val vB = vBg[i] ?: Color.Unspecified
+		val vU = vUl[i] || inBaseUnderline
+		val vS2 = vSt[i] || inBaseLineThrough
+		val vZ = vSz[i] ?: TextUnit.Unspecified
 		var j = i + 1
 		while (j < vN &&
 			(vCols[j] ?: inDefault) == vC &&
 			(if (vWgt[j] == 0) 400 else vWgt[j]) == vW &&
-			vIt[j] == vI
+			(vIt[j] || inBaseItalic) == vI &&
+			(vBg[j] ?: Color.Unspecified) == vB &&
+			(vUl[j] || inBaseUnderline) == vU &&
+			(vSt[j] || inBaseLineThrough) == vS2 &&
+			(vSz[j] ?: TextUnit.Unspecified) == vZ
 		) j++
-		vRuns.add(ColorRun(i, j, vC, vW, vI))
+		vRuns.add(ColorRun(i, j, vC, vW, vI, vB, vU, vS2, vZ))
 		i = j
 	}
 	return vRuns

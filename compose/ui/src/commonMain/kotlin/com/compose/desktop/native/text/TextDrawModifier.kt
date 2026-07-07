@@ -10,6 +10,7 @@ import androidx.compose.ui.text.AnnotatedString.Range
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 
 // ==================
 // MARK: Native text drawing bridge (B5)
@@ -39,6 +40,10 @@ interface NativeTextCanvas {
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
 		inFontVariations: List<FontVariation.Setting>?,
+		// Paragraph-level TextStyle.fontStyle == Italic + merged textDecoration
+		// (underline / line-through). Per-run overrides ride in via inSpans.
+		inBaseItalic: Boolean = false,
+		inTextDecoration: TextDecoration? = null,
 	)
 }
 

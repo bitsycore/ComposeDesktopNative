@@ -694,8 +694,13 @@ internal class Sdl3Canvas(
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
 		inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?,
+		inBaseItalic: Boolean,
+		inTextDecoration: androidx.compose.ui.text.style.TextDecoration?,
 	) {
 		fScope.flush()
+		// Paragraph-level decoration bits forwarded to every wrapped line.
+		val vUnderline = inTextDecoration?.contains(androidx.compose.ui.text.style.TextDecoration.Underline) == true
+		val vLineThrough = inTextDecoration?.contains(androidx.compose.ui.text.style.TextDecoration.LineThrough) == true
 		// Fold the layer's alpha stack into the text colour; SDL3_ttf has no per-blit
 		// alpha (SDL_SetTextureAlphaMod would work, but we bake it in here to keep
 		// the renderer path simple).
@@ -756,6 +761,9 @@ internal class Sdl3Canvas(
 				inFontVariations = inFontVariations,
 				inSpans = inSpans,
 				inTextStart = vWrapped.lineStarts.getOrElse(vIdx) { 0 },
+				inItalic = inBaseItalic,
+				inUnderline = vUnderline,
+				inLineThrough = vLineThrough,
 			)
 		}
 	}

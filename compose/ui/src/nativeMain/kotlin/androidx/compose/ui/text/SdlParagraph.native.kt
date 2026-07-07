@@ -275,14 +275,15 @@ internal class SdlParagraph(
 	// ============
 	//  Paint — Phase 2. Route through NativeTextCanvas.drawNativeText using the
 	//  paragraph's already-computed wrap so no re-measure happens at draw time.
-	//  Shadow / textDecoration / drawStyle / blendMode aren't wired yet (SDL text
-	//  path draws opaque glyphs; those are accept-and-ignore).
+	//  textDecoration (paint param merged with the style's own) + the style's
+	//  italic reach the renderer; per-run span styles ride in via inSpans.
+	//  Shadow / drawStyle / blendMode aren't wired (accept-and-ignore).
 
 	private fun paintCore(
 		inCanvas: Canvas,
 		inColor: Color,
 		@Suppress("UNUSED_PARAMETER") inShadow: Shadow?,
-		@Suppress("UNUSED_PARAMETER") inDecoration: TextDecoration?,
+		inDecoration: TextDecoration?,
 		@Suppress("UNUSED_PARAMETER") inDrawStyle: DrawStyle?,
 		@Suppress("UNUSED_PARAMETER") inBlendMode: BlendMode,
 	) {
@@ -302,6 +303,8 @@ internal class SdlParagraph(
 			inSoftWrap = maxWidthPx != Int.MAX_VALUE,
 			inFontFamily = family,
 			inFontVariations = variations,
+			inBaseItalic = style.fontStyle == androidx.compose.ui.text.font.FontStyle.Italic,
+			inTextDecoration = inDecoration ?: style.textDecoration,
 		)
 	}
 

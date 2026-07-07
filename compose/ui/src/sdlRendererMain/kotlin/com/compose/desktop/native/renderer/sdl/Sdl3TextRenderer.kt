@@ -32,7 +32,12 @@ import sdl3.SDL_DestroySurface
 import sdl3.SDL_Color
 import sdl3.SDL_SetTextureAlphaMod
 import sdl3.SDL_SetTextureColorMod
+import sdl3.SDL_BLENDMODE_BLEND
+import sdl3.SDL_RenderFillRect
+import sdl3.SDL_SetRenderDrawBlendMode
+import sdl3.SDL_SetRenderDrawColor
 import sdl3_ttf.TTF_CloseFont
+import sdl3_ttf.TTF_GetFontAscent
 import sdl3_ttf.TTF_GetFontHeight
 import sdl3_ttf.TTF_GetStringSize
 import sdl3_ttf.TTF_Init
@@ -41,10 +46,13 @@ import sdl3_ttf.TTF_OpenFontIO
 import sdl3_ttf.TTF_Quit
 import sdl3_ttf.TTF_RenderText_Blended
 import sdl3_ttf.TTF_SetFontAxisValue
+import sdl3_ttf.TTF_SetFontStyle
 import sdl3_ttf.TTF_StringToTag
 import sdl3.SDL_IOFromConstMem
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 
 // ==================
 // MARK: Sdl3TextRenderer (mingwX64 fallback)
@@ -55,6 +63,14 @@ import androidx.compose.ui.unit.Density
 // next use. Widths: pure ints, capped by clear (see fWidthCache).
 private const val kTextureCacheMax: Int = 768
 private const val kWidthCacheMax: Int = 16384
+
+// SDL_ttf TTF_STYLE_* bits (values from SDL_ttf.h). Set per rasterise/measure
+// call — synthetic italic and underline/strikethrough bake into the cached
+// white-glyph texture (SDL_ttf computes the decoration metrics) and get tinted
+// with the run colour at blit time like the glyphs themselves.
+private const val kStyleItalic: Int = 0x02
+private const val kStyleUnderline: Int = 0x04
+private const val kStyleStrikethrough: Int = 0x08
 
 /* Text via SDL3_ttf. Caches TTF_Font per size, and a per-(text, color,
    fontSize) SDL_Texture so repeated frames don't re-rasterise the same
@@ -136,7 +152,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
     // Glyphs are rasterised WHITE (RGB=255, A=coverage); the tint colour and
     // alpha are applied at blit time via SDL_SetTextureColorMod/AlphaMod, so
     // colour/alpha animations don't grow the cache or re-rasterise.
-    private data class TextureKey(val family: String?, val text: String, val fontSize: Int, val variations: String)
+    private data class TextureKey(val family: String?, val text: String, val fontSize: Int, val variations: String, val style: Int)
     private data class CachedTexture(val tex: COpaquePointer, val w: Int, val h: Int)
     // LRU-capped: every unique string ever rendered used to keep a GPU texture
     // alive for the whole session (TextField keystrokes, response bodies, …).
@@ -155,7 +171,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
     // Cached measured widths in LOGICAL points keyed by (family, text, size, variations).
     // Cap-and-clear (not LRU): lookups stay a single hash op on the hot measure
     // path, and re-measuring after a rare full clear is cheap.
-    private data class WidthKey(val family: String?, val text: String, val fontSize: Int, val variations: String)
+    private data class WidthKey(val family: String?, val text: String, val fontSize: Int, val variations: String, val style: Int)
     private val fWidthCache = mutableMapOf<WidthKey, Int>()
 
     /* Returns false if TTF couldn't init. */
@@ -294,6 +310,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inFontSize: Int,
         inFontFamily: String? = null,
         inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null,
+        inStyle: Int = 0,
     ): Int {
         if (inText.isEmpty()) return 0
         // Tabs → spaces for measurement (width-only; original '\t' kept).
@@ -302,7 +319,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // TTF_GetStringSize reports the weighted width and layout matches paint.
         // Key tab-containing text by the current tab width (see SkiaTextRenderer).
         val vKeyText = if ('\t' in inText) "${TextLayoutConfig.tabWidth} $inText" else inText
-        val vKey = WidthKey(inFontFamily, vKeyText, inFontSize, variationsKey(inFontVariations))
+        val vKey = WidthKey(inFontFamily, vKeyText, inFontSize, variationsKey(inFontVariations), inStyle)
         fWidthCache[vKey]?.let { return it }
         val vFont = getFont(inFontFamily, inFontSize, inFontVariations) ?: run {
             val vEst = (vText.length * inFontSize * 0.6f).toInt()
@@ -313,6 +330,9 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         memScoped {
             val vW = alloc<IntVar>()
             val vH = alloc<IntVar>()
+            // Style set per call (handles are shared) — synthetic italic widens
+            // the reported box, so styled measure matches the styled texture.
+            TTF_SetFontStyle(vFont.reinterpret(), inStyle.toUInt())
             // Length = 0 → SDL_ttf calls strlen on the UTF-8 string. Don't
             // pass inText.length: that's UTF-16 code-unit count, but the C
             // side wants byte count. Non-ASCII chars (e.g. em-dash → 3
@@ -320,11 +340,23 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             if (TTF_GetStringSize(vFont.reinterpret(), vText, 0u, vW.ptr, vH.ptr)) {
                 vPhys = vW.value
             }
+            TTF_SetFontStyle(vFont.reinterpret(), 0u)
         }
         val vLogical = (vPhys / fDpr).toInt()
         if (fWidthCache.size >= kWidthCacheMax) fWidthCache.clear()
         fWidthCache[vKey] = vLogical
         return vLogical
+    }
+
+    /* Ascent of the font at inFontSize in LOGICAL points — used to align
+       mixed-size runs on a common baseline. */
+    private fun fontAscent(
+        inFontSize: Int,
+        inFontFamily: String?,
+        inFontVariations: List<FontVariation.Setting>? = null,
+    ): Float {
+        val vFont = getFont(inFontFamily, inFontSize, inFontVariations) ?: return inFontSize * 0.8f
+        return TTF_GetFontAscent(vFont.reinterpret()).toFloat() / fDpr
     }
 
     /* Renders one already-wrapped line at (inX, inY) inside a box of
@@ -343,9 +375,17 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>? = null,
         inSpans: List<Range<SpanStyle>>? = null,
         inTextStart: Int = 0,
+        inItalic: Boolean = false,
+        inUnderline: Boolean = false,
+        inLineThrough: Boolean = false,
     ) {
         if (inText.isEmpty()) return
         val vRenderer = backend.renderer ?: return
+        // Paragraph-level style bits (TextStyle.fontStyle / paint textDecoration).
+        val vBaseStyle =
+            (if (inItalic) kStyleItalic else 0) or
+            (if (inUnderline) kStyleUnderline else 0) or
+            (if (inLineThrough) kStyleStrikethrough else 0)
 
         // Icon-font path: anything registered in IconFont gets routed through
         // FreeType so variable-font axes work. We treat the text as a single
@@ -373,22 +413,40 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // Tabs → spaces for non-icon text (draw-only; callers keep '\t').
         val vText = expandTabs(inText)
 
-        // Per-span colours: split this (already-wrapped) line into same-colour
+        // Per-span styles: split this (already-wrapped) line into same-style
         // segments — mapped from original-text indices via inTextStart — and
         // blit each as its own texture at its prefix x. Tabs expand for both the
         // prefix measure and the texture so offsets and glyphs agree.
         if (inSpans != null) {
-            // O(spans + line length) style runs (colour + weight + italic), instead
-            // of an O(chars × spans) per-character scan.
-            val vRuns = lineColorRuns(inText, inTextStart, inSpans, inColor)
+            // O(spans + line length) style runs (colour + weight + italic +
+            // background + decoration + size), instead of an O(chars × spans)
+            // per-character scan.
+            val vRuns = lineColorRuns(
+                inText, inTextStart, inSpans, inColor,
+                inBaseItalic = inItalic,
+                inBaseUnderline = inUnderline,
+                inBaseLineThrough = inLineThrough,
+            )
             // A run's own SpanStyle.fontWeight overrides the paragraph base weight;
             // 400 means "no run weight" so it inherits the base (paragraph) axes.
             fun runVars(inRun: ColorRun): List<androidx.compose.ui.text.font.FontVariation.Setting>? =
                 if (inRun.weight != 400) listOf(FontVariation.weight(inRun.weight)) else inFontVariations
             fun runSeg(inRun: ColorRun): String = expandTabs(inText.substring(inRun.start, inRun.end))
-            // Line width = sum of each run's width at ITS weight (for alignment).
+            // Per-run pixel size: SpanStyle.fontSize — Em scales the paragraph
+            // size, Sp resolves through the window DPR (the same density
+            // SdlParagraph resolved the base size with). Unspecified inherits.
+            fun runPx(inRun: ColorRun): Int = when (inRun.fontSize.type) {
+                TextUnitType.Em -> (inFontSize * inRun.fontSize.value).roundToInt().coerceAtLeast(1)
+                TextUnitType.Sp -> (inRun.fontSize.value * fDpr).roundToInt().coerceAtLeast(1)
+                else            -> inFontSize
+            }
+            fun runStyle(inRun: ColorRun): Int =
+                (if (inRun.italic) kStyleItalic else 0) or
+                (if (inRun.underline) kStyleUnderline else 0) or
+                (if (inRun.lineThrough) kStyleStrikethrough else 0)
+            // Line width = sum of each run's width at ITS style (for alignment).
             var vLineW = 0f
-            for (vRun in vRuns) vLineW += measureWidth(runSeg(vRun), inFontSize, inFontFamily, runVars(vRun)).toFloat()
+            for (vRun in vRuns) vLineW += measureWidth(runSeg(vRun), runPx(vRun), inFontFamily, runVars(vRun), runStyle(vRun)).toFloat()
             val vPenX0 = when (inAlign) {
                 TextAlign.Start  -> inX.toFloat()
                 TextAlign.Center -> inX + (inBoxWidth - vLineW) / 2f
@@ -396,19 +454,45 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                 else             -> inX.toFloat()
             }
             fun snap(inV: Float): Float = kotlin.math.round(inV * fDpr) / fDpr
-            // Walk runs left to right, advancing by each run's weighted advance so
-            // a bold run pushes the following runs over by the right amount.
+            // Common baseline: centre the BASE font's cell in the line box (same
+            // as the non-span path), then sit every run's baseline on it. Without
+            // this, a bigger/smaller run would centre its own texture and float
+            // off the baseline.
+            val vBaseCellH = textMeasurer.lineHeight(inFontSize, inFontFamily, inFontVariations)
+            val vBaselineY = inY + (inBoxHeight - vBaseCellH) / 2f + fontAscent(inFontSize, inFontFamily, inFontVariations)
+            // Walk runs left to right, advancing by each run's styled advance so
+            // a bold/resized run pushes the following runs over by the right amount.
             var vRunX = vPenX0
             for (vRun in vRuns) {
                 val vVars = runVars(vRun)
                 val vSeg = runSeg(vRun)
-                val vAdvance = measureWidth(vSeg, inFontSize, inFontFamily, vVars).toFloat()
-                val vCachedSeg = getOrCreateTexture(inFontFamily, vSeg, inFontSize, vVars)
+                val vPx = runPx(vRun)
+                val vStyle = runStyle(vRun)
+                val vAdvance = measureWidth(vSeg, vPx, inFontFamily, vVars, vStyle).toFloat()
+                // SpanStyle.background — fill the run's slice of the line band
+                // behind the glyphs.
+                if (vRun.background != ComposeColor.Unspecified && vRun.background.alpha > 0f) {
+                    memScoped {
+                        val vRect = alloc<SDL_FRect>()
+                        vRect.x = snap(vRunX)
+                        vRect.y = inY.toFloat()
+                        vRect.w = vAdvance
+                        vRect.h = inBoxHeight.toFloat()
+                        SDL_SetRenderDrawBlendMode(vRenderer.reinterpret(), SDL_BLENDMODE_BLEND)
+                        SDL_SetRenderDrawColor(
+                            vRenderer.reinterpret(),
+                            vRun.background.r8.toUByte(), vRun.background.g8.toUByte(),
+                            vRun.background.b8.toUByte(), vRun.background.a8.toUByte(),
+                        )
+                        SDL_RenderFillRect(vRenderer.reinterpret(), vRect.ptr)
+                    }
+                }
+                val vCachedSeg = getOrCreateTexture(inFontFamily, vSeg, vPx, vVars, vStyle)
                 if (vCachedSeg != null) {
                     applyTint(vCachedSeg.tex, vRun.color)
                     val vLogW = vCachedSeg.w / fDpr
                     val vLogH = vCachedSeg.h / fDpr
-                    val vPenY = inY + (inBoxHeight - vLogH) / 2f
+                    val vPenY = vBaselineY - fontAscent(vPx, inFontFamily, vVars)
                     memScoped {
                         val vDst = alloc<SDL_FRect>()
                         vDst.x = snap(vRunX)
@@ -423,7 +507,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             return
         }
 
-        val vCached = getOrCreateTexture(inFontFamily, vText, inFontSize, inFontVariations) ?: return
+        val vCached = getOrCreateTexture(inFontFamily, vText, inFontSize, inFontVariations, vBaseStyle) ?: return
         applyTint(vCached.tex, inColor)
 
         // Texture dimensions are physical pixels (rasterised at fontSize *
@@ -492,8 +576,9 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inText: String,
         inFontSize: Int,
         inFontVariations: List<FontVariation.Setting>? = null,
+        inStyle: Int = 0,
     ): CachedTexture? {
-        val vKey = TextureKey(inFontFamily, inText, inFontSize, variationsKey(inFontVariations))
+        val vKey = TextureKey(inFontFamily, inText, inFontSize, variationsKey(inFontVariations), inStyle)
         fTextureCache[vKey]?.let { return it }
 
         val vRenderer = backend.renderer ?: return null
@@ -505,13 +590,18 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             vColor.g = 255u
             vColor.b = 255u
             vColor.a = 255u
+            // Style set per call (handles are shared): synthetic italic shear +
+            // underline/strikethrough bake into the (cached) texture.
+            TTF_SetFontStyle(vFont.reinterpret(), inStyle.toUInt())
             val vSurface = TTF_RenderText_Blended(
                 vFont.reinterpret(),
                 inText,
                 // 0 → strlen on the UTF-8 string (see measureWidth).
                 0u,
                 vColor.readValue(),
-            ) ?: return@memScoped null
+            )
+            TTF_SetFontStyle(vFont.reinterpret(), 0u)
+            if (vSurface == null) return@memScoped null
             // sdl3 and sdl3_ttf cinterops both declare SDL_Surface — they
             // refer to the same C struct but Kotlin sees them as distinct
             // types. Reinterpret to bridge, then convert to a known ARGB

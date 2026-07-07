@@ -212,6 +212,11 @@ internal class SkiaCanvas(
 		inSoftWrap: Boolean,
 		inFontFamily: String?,
 		inFontVariations: List<androidx.compose.ui.text.font.FontVariation.Setting>?,
+		// Paragraph-level italic / decoration — accepted for interface parity;
+		// the Skia run pipeline doesn't consume them yet (SDL renderer does).
+		// TODO(skia): wire into SkiaTextRenderer like Sdl3TextRenderer.drawText.
+		inBaseItalic: Boolean,
+		inTextDecoration: androidx.compose.ui.text.style.TextDecoration?,
 	) {
 		fTextRenderer?.drawText(
 			inCanvas = fCanvas,
