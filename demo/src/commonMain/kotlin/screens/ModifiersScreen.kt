@@ -43,7 +43,7 @@ internal fun ModifiersScreen() {
         Section("offset(x = 20.dp, y = 10.dp)", "Visual nudge only — doesn't change measured size or sibling layout") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Swatch("A")
-                Box(modifier = Modifier.offset(x = 20.dp, y = 10.dp)) { Swatch("B↘") }
+                Box(modifier = Modifier.offset(x = 20.dp, y = 10.dp)) { Swatch("B") }
                 Swatch("C")
             }
         }

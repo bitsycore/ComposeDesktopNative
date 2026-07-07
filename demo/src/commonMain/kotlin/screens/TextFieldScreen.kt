@@ -35,7 +35,7 @@ internal fun TextFieldScreen() {
                 onValueChange = { single = it },
                 label = { Text("Name") },
                 placeholder = { Text("Type your name…") },
-                supportingText = { Text("Click, drag-select, ⌘C / ⌘V / ⌘Z") },
+                supportingText = { Text("Click, drag-select, CMD+C / CMD+V / CMD+Z") },
                 modifier = Modifier.width(320.dp),
             )
         }
