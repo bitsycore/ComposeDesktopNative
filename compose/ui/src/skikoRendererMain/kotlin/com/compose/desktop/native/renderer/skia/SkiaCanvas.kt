@@ -68,23 +68,6 @@ internal class SkiaCanvas(
 		inSpotColor: androidx.compose.ui.graphics.Color,
 	) {
 		if (inElevationPx <= 0f) return
-		val vRect: Rect
-		val vRadius: Float
-		when (inOutline) {
-			is androidx.compose.ui.graphics.Outline.Rectangle -> {
-				vRect = inOutline.rect; vRadius = 0f
-			}
-			is androidx.compose.ui.graphics.Outline.Rounded -> {
-				val vRr = inOutline.roundRect
-				vRect = Rect(vRr.left, vRr.top, vRr.right, vRr.bottom)
-				vRadius = vRr.topLeftCornerRadius.x
-			}
-			is androidx.compose.ui.graphics.Outline.Generic -> {
-				vRect = inOutline.path.getBounds(); vRadius = 0f
-			}
-		}
-		if (vRect.width <= 0f || vRect.height <= 0f) return
-
 		val vOffsetY = inElevationPx * 0.4f
 		val vPaint = SkPaint().apply {
 			color = toSkiaColor(inSpotColor.copy(alpha = 0.28f * inSpotColor.alpha))
@@ -93,16 +76,33 @@ internal class SkiaCanvas(
 				sigma = inElevationPx * 0.5f + 0.5f,
 			)
 		}
-		fCanvas.drawRRect(
-			org.jetbrains.skia.RRect.makeLTRB(
-				vRect.left,
-				vRect.top + vOffsetY,
-				vRect.right,
-				vRect.bottom + vOffsetY,
-				vRadius,
-			),
-			vPaint,
-		)
+		when (inOutline) {
+			is androidx.compose.ui.graphics.Outline.Rectangle -> {
+				val vR = inOutline.rect
+				fCanvas.drawRRect(
+					org.jetbrains.skia.RRect.makeLTRB(vR.left, vR.top + vOffsetY, vR.right, vR.bottom + vOffsetY, 0f),
+					vPaint,
+				)
+			}
+			is androidx.compose.ui.graphics.Outline.Rounded -> {
+				val vRr = inOutline.roundRect
+				fCanvas.drawRRect(
+					org.jetbrains.skia.RRect.makeLTRB(
+						vRr.left, vRr.top + vOffsetY, vRr.right, vRr.bottom + vOffsetY,
+						vRr.topLeftCornerRadius.x,
+					),
+					vPaint,
+				)
+			}
+			is androidx.compose.ui.graphics.Outline.Generic -> {
+				// Blur the ACTUAL path — CutCornerShape / GenericShape shadows
+				// follow the real outline instead of the bounding rect.
+				fCanvas.save()
+				fCanvas.translate(0f, vOffsetY)
+				fCanvas.drawPath(toSkiaPath(inOutline.path), vPaint)
+				fCanvas.restore()
+			}
+		}
 		vPaint.close()
 	}
 

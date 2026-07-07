@@ -461,6 +461,36 @@ internal class Sdl3Canvas(
 		inSpotColor: androidx.compose.ui.graphics.Color,
 	) {
 		if (inElevationPx <= 0f) return
+
+		// Generic paths (CutCornerShape, GenericShape) don't 9-slice — blur the
+		// ACTUAL path mask once (Sdl3ShadowCache.getGeneric) and blit it. Falls
+		// through to the bounds-rect approximation only when that fails.
+		if (inOutline is androidx.compose.ui.graphics.Outline.Generic &&
+			fShadowCache != null && fMb == 0f && fMc == 0f
+		) {
+			val vBlurG = inElevationPx.coerceAtLeast(1f)
+			val vEntry = fShadowCache.getGeneric(inOutline.path, vBlurG.toInt().coerceAtLeast(1))
+			if (vEntry != null) {
+				val vAlphaG = 0.28f * inSpotColor.alpha * fAlpha
+				val vOffY = inElevationPx * 0.4f
+				fScope.flush()
+				SDL_SetTextureColorMod(
+					vEntry.tex.reinterpret(),
+					inSpotColor.r8.toUByte(), inSpotColor.g8.toUByte(), inSpotColor.b8.toUByte(),
+				)
+				SDL_SetTextureAlphaMod(vEntry.tex.reinterpret(), (vAlphaG * 255f).toInt().coerceIn(0, 255).toUByte())
+				memScoped {
+					val vDst = alloc<SDL_FRect>()
+					vDst.x = fMa * vEntry.originX + fMe
+					vDst.y = fMd * (vEntry.originY + vOffY) + fMf
+					vDst.w = fMa * vEntry.w
+					vDst.h = fMd * vEntry.h
+					SDL_RenderTexture(fRenderer.reinterpret(), vEntry.tex.reinterpret(), null, vDst.ptr)
+				}
+				return
+			}
+		}
+
 		val vRect: Rect
 		val vRadius: Float
 		when (inOutline) {
