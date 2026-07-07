@@ -7,8 +7,9 @@ import androidx.compose.ui.window.rememberWindowState
 import demo.shell.App
 
 // The JVM comparison app's entry point. Runs the SAME shared App() shell + Core /
-// Material 3 screens as :demo, but on Compose Desktop (JVM) against upstream
-// Compose. Compare side-by-side with `:demo:runDebugExecutable<host>`.
+// Material 3 screens (expressive included) as :demo, but on Compose Desktop (JVM)
+// against upstream org.jetbrains.compose. Compare side-by-side with
+// `:demo:runDebugExecutable<host>`.
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
@@ -16,7 +17,7 @@ fun main() = application {
         state = rememberWindowState(width = 1000.dp, height = 700.dp),
     ) {
         MaterialTheme(colorScheme = darkColorScheme()) {
-            App()
+            App(isJvm = true)
         }
     }
 }

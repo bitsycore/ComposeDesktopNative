@@ -36,11 +36,11 @@ kotlin {
             // commonMain. Compile the very same files here against upstream Compose.
             kotlin.srcDir(rootProject.file("demo/src/commonMain/kotlin"))
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.animation)
-                implementation(compose.material3)
-                implementation(compose.ui)
+                implementation("org.jetbrains.compose.runtime:runtime:1.12.0-alpha03")
+                implementation("org.jetbrains.compose.foundation:foundation:1.12.0-alpha03")
+                implementation("org.jetbrains.compose.animation:animation:1.12.0-alpha03")
+                implementation("org.jetbrains.compose.material3:material3:1.12.0-alpha03")
+                implementation("org.jetbrains.compose.ui:ui:1.12.0-alpha03")
             }
         }
         jvmMain {
@@ -49,7 +49,7 @@ kotlin {
             resources.srcDir(rootProject.file("demo/src/nativeMain/composeResources"))
             dependencies {
                 implementation(compose.desktop.currentOs)
-                implementation(compose.materialIconsExtended)
+                implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             }
         }
     }

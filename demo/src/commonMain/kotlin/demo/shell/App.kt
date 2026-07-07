@@ -47,7 +47,7 @@ import demo.shim.blend
    getPlatformCategories() contributes). Nothing here touches project-only APIs —
    the same code runs on native today and on a future jvm target. */
 @Composable
-fun App() {
+fun App(isJvm: Boolean = false) {
     val categories = remember { allCategories() }
     var category by remember { mutableStateOf(categories.first()) }
     var current by remember { mutableStateOf(category.screens.first()) }
@@ -68,7 +68,7 @@ fun App() {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = "ComposeNativeSDL3",
+                text = if(isJvm) "Compose JVM" else "Compose Native",
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth(),
