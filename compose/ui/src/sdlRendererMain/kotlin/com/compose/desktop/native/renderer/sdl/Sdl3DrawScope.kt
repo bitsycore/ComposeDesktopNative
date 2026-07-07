@@ -329,24 +329,94 @@ internal class Sdl3DrawScope(
 		// Linearise the path into polyline sub-paths, then fan-triangulate
 		// each. Stroking is approximated as a per-segment thick quad.
 		val vSampler = samplerFor(brush, size, alpha)
-		val vSubpaths = linearisePath(path)
 		when (style) {
 			Fill -> {
-				// EVEN-ODD two-contour path = a ring (Modifier.border on a
-				// non-simple shape: outer ∪ inset, see ProjectPath.op). The two
-				// rounded-rect contours linearise to matching point counts, so
-				// fill the gap as a strip between them instead of fan-filling each
-				// (which would paint the inner region solid — a filled shape).
-				val vEvenOdd = (path as? com.compose.desktop.native.graphics.ProjectPath)?.fillType ==
-					androidx.compose.ui.graphics.PathFillType.EvenOdd
-				if (vEvenOdd && vSubpaths.size == 2 && vSubpaths[0].size == vSubpaths[1].size) {
-					ringFill(vSubpaths[0], vSubpaths[1], vSampler)
-				} else {
-					for (vSub in vSubpaths) fanFill(vSub, vSampler)
+				// EVEN-ODD two-contour path = a ring (Modifier.border on a non-simple
+				// shape: outer ∪ inset, see ProjectPath.op). Draw it as a real stroked
+				// rounded rect — straight edges + AA'd corner arcs, exactly like a
+				// symmetric rounded border — so it's pixel-identical to the rest.
+				val vProj = path as? com.compose.desktop.native.graphics.ProjectPath
+				if (vProj != null && vProj.fillType == androidx.compose.ui.graphics.PathFillType.EvenOdd) {
+					if (strokeEvenOddRingBorder(vProj, brush, alpha, vSampler)) return
+					// Fallback for a ring we can't recognise: fill the strip between
+					// the two contours (still a ring, just without the arc AA).
+					val vSubpaths = linearisePath(path)
+					if (vSubpaths.size == 2 && vSubpaths[0].size == vSubpaths[1].size) {
+						ringFill(vSubpaths[0], vSubpaths[1], vSampler)
+					} else {
+						for (vSub in vSubpaths) fanFill(vSub, vSampler)
+					}
+					return
 				}
+				for (vSub in linearisePath(path)) fanFill(vSub, vSampler)
 			}
-			is Stroke -> for (vSub in vSubpaths) strokePolyline(vSub, style.width, vSampler)
+			is Stroke -> for (vSub in linearisePath(path)) strokePolyline(vSub, style.width, vSampler)
 		}
+	}
+
+	// Detects a Modifier.border ring — the even-odd concatenation of an outer
+	// addRoundRect and its inset (both emitted by ProjectPath.addRoundRect, so a
+	// fixed 10-command pattern each) — and renders it as a proper stroked rounded
+	// rect: straight edges via lineCore + corners via the AA'd emitStrokedArc, the
+	// SAME primitives roundRectCore uses for symmetric borders. Pixel-identical to
+	// those. Returns false (caller falls back) if the path isn't such a ring.
+	private fun strokeEvenOddRingBorder(inPath: com.compose.desktop.native.graphics.ProjectPath, inBrush: Brush, inAlpha: Float, inSampler: Sampler): Boolean {
+		val vCmds = inPath.commands
+		if (vCmds.size != 20) return false
+		val vO = parseAddRoundRect(vCmds, 0) ?: return false
+		val vIn = parseAddRoundRect(vCmds, 10) ?: return false
+		val vL = vO[0]; val vT = vO[1]; val vR = vO[2]; val vB = vO[3]
+		val vSw = vIn[0] - vL
+		if (vSw <= 0.05f) return false
+		// Inset must be uniform on all four sides (a true border ring).
+		if (kotlin.math.abs((vIn[1] - vT) - vSw) > 0.5f ||
+			kotlin.math.abs((vR - vIn[2]) - vSw) > 0.5f ||
+			kotlin.math.abs((vB - vIn[3]) - vSw) > 0.5f
+		) return false
+		val vTlx = vO[4]; val vTly = vO[5]; val vTrx = vO[6]; val vTry = vO[7]
+		val vBrx = vO[8]; val vBry = vO[9]; val vBlx = vO[10]; val vBly = vO[11]
+		// emitStrokedArc is circular — bail on elliptical corners.
+		if (kotlin.math.abs(vTlx - vTly) > 0.5f || kotlin.math.abs(vTrx - vTry) > 0.5f ||
+			kotlin.math.abs(vBrx - vBry) > 0.5f || kotlin.math.abs(vBlx - vBly) > 0.5f
+		) return false
+
+		val vHalf = vSw / 2f
+		// Straight sides — centerline inset by half the stroke, width = stroke.
+		lineCore(inBrush, Offset(vL + vTlx, vT + vHalf), Offset(vR - vTrx, vT + vHalf), vSw, StrokeCap.Butt, inAlpha) // top
+		lineCore(inBrush, Offset(vR - vHalf, vT + vTry), Offset(vR - vHalf, vB - vBry), vSw, StrokeCap.Butt, inAlpha) // right
+		lineCore(inBrush, Offset(vR - vBrx, vB - vHalf), Offset(vL + vBlx, vB - vHalf), vSw, StrokeCap.Butt, inAlpha) // bottom
+		lineCore(inBrush, Offset(vL + vHalf, vB - vBly), Offset(vL + vHalf, vT + vTly), vSw, StrokeCap.Butt, inAlpha) // left
+		// Corner arcs (concentric ring [R−sw, R] at the corner centre). Square
+		// corners (R≈0) are already covered where the straight edges overlap.
+		if (vTlx > 0.05f) emitStrokedArc(fOriginX + vL + vTlx, fOriginY + vT + vTly, vTlx - vSw, vTlx, 180f, 90f, arcSegments(90f, vTlx), inSampler)
+		if (vTrx > 0.05f) emitStrokedArc(fOriginX + vR - vTrx, fOriginY + vT + vTry, vTrx - vSw, vTrx, 270f, 90f, arcSegments(90f, vTrx), inSampler)
+		if (vBrx > 0.05f) emitStrokedArc(fOriginX + vR - vBrx, fOriginY + vB - vBry, vBrx - vSw, vBrx, 0f, 90f, arcSegments(90f, vBrx), inSampler)
+		if (vBlx > 0.05f) emitStrokedArc(fOriginX + vL + vBlx, fOriginY + vB - vBly, vBlx - vSw, vBlx, 90f, 90f, arcSegments(90f, vBlx), inSampler)
+		return true
+	}
+
+	// Parses a 10-command run emitted by ProjectPath.addRoundRect (Move, Line,
+	// Cubic, Line, Cubic, Line, Cubic, Line, Cubic, Close) back into its rect
+	// bounds + per-corner radii: [l, t, r, b, tlx, tly, trx, try, brx, bry, blx, bly].
+	private fun parseAddRoundRect(inCmds: List<PathCommand>, inOff: Int): FloatArray? {
+		val vM = inCmds[inOff] as? PathCommand.MoveTo ?: return null
+		val vL1 = inCmds[inOff + 1] as? PathCommand.LineTo ?: return null
+		val vC2 = inCmds[inOff + 2] as? PathCommand.CubicTo ?: return null
+		val vL3 = inCmds[inOff + 3] as? PathCommand.LineTo ?: return null
+		val vC4 = inCmds[inOff + 4] as? PathCommand.CubicTo ?: return null
+		val vL5 = inCmds[inOff + 5] as? PathCommand.LineTo ?: return null
+		val vC6 = inCmds[inOff + 6] as? PathCommand.CubicTo ?: return null
+		val vL7 = inCmds[inOff + 7] as? PathCommand.LineTo ?: return null
+		@Suppress("UNUSED_VARIABLE") val vC8 = inCmds[inOff + 8] as? PathCommand.CubicTo ?: return null
+		if (inCmds[inOff + 9] !is PathCommand.Close) return null
+		val vT = vM.y; val vR = vC2.x; val vB = vC4.y; val vL = vC6.x
+		return floatArrayOf(
+			vL, vT, vR, vB,
+			vM.x - vL, vL7.y - vT,   // tl
+			vR - vL1.x, vC2.y - vT,  // tr
+			vR - vC4.x, vB - vL3.y,  // br
+			vL5.x - vL, vB - vC6.y,  // bl
+		)
 	}
 
 	// Fills the band between two same-length, point-corresponding closed contours
@@ -363,30 +433,50 @@ internal class Sdl3DrawScope(
 	) {
 		val vN = minOf(inOuter.size, inInner.size)
 		if (vN < 2) return
-		// Solid band. Contours are closed (last == first), so segments 0..N-2 loop.
+		val vHalf = 0.5f * kAaFeather
+		// Contours are closed (last == first), so segments 0..N-2 cover the loop.
 		for (vI in 0 until vN - 1) {
 			val (vOx0, vOy0) = inOuter[vI]; val (vOx1, vOy1) = inOuter[vI + 1]
 			val (vIx0, vIy0) = inInner[vI]; val (vIx1, vIy1) = inInner[vI + 1]
-			emitTri(vOx0, vOy0, vOx1, vOy1, vIx1, vIy1, inSampler)
-			emitTri(vOx0, vOy0, vIx1, vIy1, vIx0, vIy0, inSampler)
-		}
-		// Feather ONLY the corner-arc (non-axis-aligned) edges — outward on the outer
-		// boundary, inward on the inner — so the curves antialias while the straight
-		// sides stay crisp and exactly strokeWidth.
-		for (vI in 0 until vN - 1) {
-			val (vOx0, vOy0) = inOuter[vI]; val (vOx1, vOy1) = inOuter[vI + 1]
 			val vEdx = vOx1 - vOx0; val vEdy = vOy1 - vOy0
-			if (kotlin.math.abs(vEdx) < 0.35f || kotlin.math.abs(vEdy) < 0.35f) continue // straight side
-			val (vIx0, vIy0) = inInner[vI]; val (vIx1, vIy1) = inInner[vI + 1]
-			val vD0x = vOx0 - vIx0; val vD0y = vOy0 - vIy0
-			val vD1x = vOx1 - vIx1; val vD1y = vOy1 - vIy1
-			val vL0 = sqrt(vD0x * vD0x + vD0y * vD0y)
-			val vL1 = sqrt(vD1x * vD1x + vD1y * vD1y)
-			if (vL0 < 1e-4f || vL1 < 1e-4f) continue
-			val vN0x = vD0x / vL0 * kAaFeather; val vN0y = vD0y / vL0 * kAaFeather
-			val vN1x = vD1x / vL1 * kAaFeather; val vN1y = vD1y / vL1 * kAaFeather
-			emitFringeQuad(vOx0, vOy0, vOx1, vOy1, vOx1 + vN1x, vOy1 + vN1y, vOx0 + vN0x, vOy0 + vN0y, inSampler)
-			emitFringeQuad(vIx0, vIy0, vIx1, vIy1, vIx1 - vN1x, vIy1 - vN1y, vIx0 - vN0x, vIy0 - vN0y, inSampler)
+			// Straight (axis-aligned) sides: crisp full-width band, matching the
+			// renderer's non-AA straight strokes on the adjacent square segments.
+			if (kotlin.math.abs(vEdx) < 0.35f || kotlin.math.abs(vEdy) < 0.35f) {
+				emitTri(vOx0, vOy0, vOx1, vOy1, vIx1, vIy1, inSampler)
+				emitTri(vOx0, vOy0, vIx1, vIy1, vIx0, vIy0, inSampler)
+				continue
+			}
+			// Corner arcs: STRADDLE the AA on each boundary (solid core inset by half
+			// a feather, fringe fading across the contour) so the curve stays exactly
+			// strokeWidth — no outward bulge that would fatten or heighten it — yet
+			// antialiases.
+			var vN0x = vOx0 - vIx0; var vN0y = vOy0 - vIy0
+			var vN1x = vOx1 - vIx1; var vN1y = vOy1 - vIy1
+			val vL0 = sqrt(vN0x * vN0x + vN0y * vN0y)
+			val vL1 = sqrt(vN1x * vN1x + vN1y * vN1y)
+			if (vL0 < 1e-4f || vL1 < 1e-4f) {
+				emitTri(vOx0, vOy0, vOx1, vOy1, vIx1, vIy1, inSampler)
+				emitTri(vOx0, vOy0, vIx1, vIy1, vIx0, vIy0, inSampler)
+				continue
+			}
+			vN0x /= vL0; vN0y /= vL0; vN1x /= vL1; vN1y /= vL1
+			val vIn0 = minOf(vHalf, vL0 * 0.5f); val vIn1 = minOf(vHalf, vL1 * 0.5f)
+			val vSoO0x = vOx0 - vN0x * vIn0; val vSoO0y = vOy0 - vN0y * vIn0
+			val vSoO1x = vOx1 - vN1x * vIn1; val vSoO1y = vOy1 - vN1y * vIn1
+			val vSoI0x = vIx0 + vN0x * vIn0; val vSoI0y = vIy0 + vN0y * vIn0
+			val vSoI1x = vIx1 + vN1x * vIn1; val vSoI1y = vIy1 + vN1y * vIn1
+			emitTri(vSoO0x, vSoO0y, vSoO1x, vSoO1y, vSoI1x, vSoI1y, inSampler)
+			emitTri(vSoO0x, vSoO0y, vSoI1x, vSoI1y, vSoI0x, vSoI0y, inSampler)
+			emitFringeQuad(
+				vSoO0x, vSoO0y, vSoO1x, vSoO1y,
+				vOx1 + vN1x * vHalf, vOy1 + vN1y * vHalf, vOx0 + vN0x * vHalf, vOy0 + vN0y * vHalf,
+				inSampler,
+			)
+			emitFringeQuad(
+				vSoI0x, vSoI0y, vSoI1x, vSoI1y,
+				vIx1 - vN1x * vHalf, vIy1 - vN1y * vHalf, vIx0 - vN0x * vHalf, vIy0 - vN0y * vHalf,
+				inSampler,
+			)
 		}
 	}
 
