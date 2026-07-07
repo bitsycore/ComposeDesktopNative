@@ -156,18 +156,20 @@ fun main(args: Array<String>) {
             }
         }
     }
-    // Extra windows opened from WindowScreen — one Window() per count; closing
-    // one (OS button or its Close button) decrements the state.
-    repeat(ExtraWindowCount.value) { vIdx ->
-        Window(
-            onCloseRequest = { ExtraWindowCount.value-- },
-            title = "Extra window ${vIdx + 1}",
-            width = 460,
-            height = 300,
-            gpu = vCli.gpu,
-        ) {
-            MaterialTheme(colorScheme = darkColorScheme()) {
-                ExtraWindowContent(vIdx + 1)
+    // Extra windows opened from WindowScreen — one Window() per id, keyed by id so
+    // closing one (OS button or its Close button) removes exactly THAT window.
+    for (vId in ExtraWindows) {
+        key(vId) {
+            Window(
+                onCloseRequest = { ExtraWindows.remove(vId) },
+                title = "Extra window $vId",
+                width = 460,
+                height = 300,
+                gpu = vCli.gpu,
+            ) {
+                MaterialTheme(colorScheme = darkColorScheme()) {
+                    ExtraWindowContent(vId)
+                }
             }
         }
     }
@@ -177,7 +179,7 @@ fun main(args: Array<String>) {
 /* Content of the demo's extra windows — each has its own composition, focus,
    input routing, and render loop; the counter proves per-window state. */
 @Composable
-private fun com.compose.desktop.native.ComposeWindowScope.ExtraWindowContent(inIndex: Int) {
+private fun com.compose.desktop.native.ComposeWindowScope.ExtraWindowContent(inId: Int) {
     Box(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
@@ -186,7 +188,7 @@ private fun com.compose.desktop.native.ComposeWindowScope.ExtraWindowContent(inI
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Extra window #$inIndex", color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
+            Text("Extra window #$inId", color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
             Text(
                 "own composition · own renderer · own input",
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),

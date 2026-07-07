@@ -12,9 +12,16 @@ import com.compose.desktop.native.*
 // ==================
 
 /* Extra demo windows opened from this screen. The app composition in Main.kt
-   reads it and declares one Window() per count — the state IS the windows'
-   lifetime (multi-window, Compose Desktop style). */
-val ExtraWindowCount = mutableStateOf(0)
+   declares one keyed Window() per id in this list — the list IS the windows'
+   lifetime (multi-window, Compose Desktop style). Each window is keyed by its
+   own id, so closing one removes exactly THAT id (a count would always drop the
+   last-declared window, closing the wrong one). */
+val ExtraWindows = mutableStateListOf<Int>()
+private var fNextExtraWindowId = 1
+
+fun openExtraWindow() {
+    ExtraWindows.add(fNextExtraWindowId++)
+}
 
 @Composable
 internal fun WindowScreen() {
@@ -30,8 +37,8 @@ internal fun WindowScreen() {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Button(onClick = { ExtraWindowCount.value++ }) { Text("Open extra window") }
-                Text("open: ${ExtraWindowCount.value}", fontSize = 13.sp)
+                Button(onClick = { openExtraWindow() }) { Text("Open extra window") }
+                Text("open: ${ExtraWindows.size}", fontSize = 13.sp)
             }
         }
 
