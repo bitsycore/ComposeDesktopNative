@@ -66,6 +66,7 @@ val Material3Screens: List<DemoScreen> = listOf(
     DemoScreen("Cards") { CardsScreen() },
     DemoScreen("Chips") { ChipsScreen() },
     DemoScreen("Lists") { ListItemsScreen() },
+    DemoScreen("Dialogs") { DialogsScreen() },
     DemoScreen("Sheets") { M3SheetsScreen() },
     DemoScreen("Drawers") { M3DrawersScreen() },
     DemoScreen("AppBars") { M3AppBarsScreen() },

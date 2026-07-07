@@ -18,10 +18,8 @@ actual fun getPlatformCategories(): List<DemoCategory> = listOf(
         DemoScreen("FoundationExtra") { FoundationExtraScreen() },
     )),
     DemoCategory("material3", "Material 3", listOf(
-        // Material 3 screens that lean on project-only APIs, so they can't be common:
-        // Dialogs uses the project Dialog / DropdownMenu / TooltipBox (UiCompat),
-        // Icons demos the variable-font axes + Outlined/Rounded/Sharp families.
-        DemoScreen("Dialogs") { DialogsScreen() },
+        // Icons demos the variable-font axes + Outlined/Rounded/Sharp families — project-only,
+        // no upstream analog, so it can't be common.
         DemoScreen("Icons") { IconsScreen() },
     )),
     DemoCategory("native", "Native", listOf(

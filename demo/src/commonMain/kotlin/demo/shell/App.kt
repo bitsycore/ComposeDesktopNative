@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import demo.registry.DemoCategory
 import demo.registry.allCategories
-import demo.shim.DemoAnchoredMenu
 import demo.shim.DemoIcon
 import demo.shim.blend
 
@@ -117,59 +118,51 @@ private fun CategorySelector(
     var expanded by remember { mutableStateOf(false) }
     val triggerBg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
 
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-        DemoAnchoredMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            anchor = { anchorModifier ->
-                Row(
-                    modifier = anchorModifier
-                        .fillMaxWidth()
-                        .background(triggerBg, RoundedCornerShape(8.dp))
-                        .clickable { expanded = !expanded }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column {
-                        Text(
-                            text = "CATEGORY",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                            fontSize = 9.sp,
-                        )
-                        Text(
-                            text = category.label,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 13.sp,
-                        )
-                    }
-                    DemoIcon(
-                        if (expanded) DemoIcon.ExpandLess else DemoIcon.ExpandMore,
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        size = 20.dp,
-                    )
-                }
-            },
-            menu = {
-                for (candidate in categories) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(36.dp)
-                            .clickable { onSelect(candidate); expanded = false }
-                            .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
+    // The trigger + DropdownMenu share this Box; material3's DropdownMenu anchors
+    // to its parent's bounds, so the menu drops just below the trigger.
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(triggerBg, RoundedCornerShape(8.dp))
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                Text(
+                    text = "CATEGORY",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    fontSize = 9.sp,
+                )
+                Text(
+                    text = category.label,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 13.sp,
+                )
+            }
+            DemoIcon(
+                if (expanded) DemoIcon.ExpandLess else DemoIcon.ExpandMore,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                size = 20.dp,
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            for (candidate in categories) {
+                DropdownMenuItem(
+                    text = {
                         Text(
                             text = candidate.label,
                             color = if (candidate.id == category.id) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
                         )
-                    }
-                }
-            },
-        )
+                    },
+                    onClick = { onSelect(candidate); expanded = false },
+                )
+            }
+        }
     }
 }
 

@@ -1,61 +1,55 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package screens
-import demo.DropdownMenu
-import demo.DropdownMenuItem
-import demo.TooltipBox
-import demo.menuAnchor
-import demo.rememberMenuAnchor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 internal fun DialogsScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ScreenTitle(
             "Dialogs + overlays",
-            "Built on the popup host installed by composeWindow — appear above all content.",
+            "material3 AlertDialog, DropdownMenu, Snackbar, and TooltipBox — all on the popup host.",
         )
 
-        // Dialog
-        Section("Dialog / AlertDialog", "Modal: click the scrim to dismiss.") {
+        // AlertDialog
+        Section("AlertDialog", "Modal: confirm / dismiss buttons, click the scrim to dismiss.") {
             var vShow by remember { mutableStateOf(false) }
             Button(onClick = { vShow = true }) {
                 Text("Open dialog", color = MaterialTheme.colorScheme.onPrimary)
             }
             if (vShow) {
-                // Full m3 AlertDialog (title/text/confirmButton/dismissButton slots).
-                // The `expect fun AlertDialog(onDismissRequest, confirmButton, ..., title, text, ...)`
-                // isn't marked ExperimentalMaterial3Api itself, but overload resolution
-                // seems to still route through the deprecated experimental variant
-                // (`fun AlertDialog(onDismissRequest, modifier, properties, content)` at
-                // line 213 of material3/AlertDialog.kt) even with @OptIn — probably a
-                // Kotlin frontend issue with @Deprecated + @ExperimentalMaterial3Api overloads.
-                // Positional (not-named) arguments dodge the ambiguity.
+                // Positional (not-named) onDismissRequest / confirmButton dodge an
+                // overload-resolution ambiguity between the current and the deprecated
+                // experimental AlertDialog signatures.
                 AlertDialog(
                     { vShow = false },
                     {
@@ -82,25 +76,24 @@ internal fun DialogsScreen() {
         }
 
         // DropdownMenu
-        Section("DropdownMenu", "Anchored popup with selectable items. Click outside to dismiss. The anchor's window-coordinate position is tracked via Modifier.menuAnchor.") {
+        Section("DropdownMenu", "Anchored popup with selectable items — anchors below the trigger. Click outside to dismiss.") {
             var vExpanded by remember { mutableStateOf(false) }
-            val vAnchor = rememberMenuAnchor()
             var vSelected by remember { mutableStateOf("None") }
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
-                    onClick = { vExpanded = !vExpanded },
-                    modifier = Modifier.menuAnchor(vAnchor),
-                ) { Text("Open menu", color = MaterialTheme.colorScheme.primary) }
-                DropdownMenu(
-                    expanded = vExpanded,
-                    onDismissRequest = { vExpanded = false },
-                    anchor = vAnchor,
-                    offsetY = 4.dp,
-                ) {
-                    for (vLabel in listOf("Apple", "Banana", "Cherry", "Date")) {
-                        DropdownMenuItem(onClick = { vSelected = vLabel; vExpanded = false }) {
-                            Text(vLabel, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                // The menu shares this Box with its trigger, so it anchors to the button.
+                Box {
+                    OutlinedButton(onClick = { vExpanded = !vExpanded }) {
+                        Text("Open menu", color = MaterialTheme.colorScheme.primary)
+                    }
+                    DropdownMenu(expanded = vExpanded, onDismissRequest = { vExpanded = false }) {
+                        for (vLabel in listOf("Apple", "Banana", "Cherry", "Date")) {
+                            DropdownMenuItem(
+                                text = { Text(vLabel, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp) },
+                                onClick = { vSelected = vLabel; vExpanded = false },
+                            )
                         }
                     }
                 }
@@ -124,12 +117,20 @@ internal fun DialogsScreen() {
         }
 
         // Tooltip
-        Section("TooltipBox", "Hover the target — text appears below it after a 600 ms delay.") {
+        Section("TooltipBox / PlainTooltip", "Hover the target — the tooltip appears anchored above it.") {
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                TooltipBox(text = "Save the document") {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Save the document") } },
+                    state = rememberTooltipState(),
+                ) {
                     Button(onClick = {}) { Text("Save", color = MaterialTheme.colorScheme.onPrimary) }
                 }
-                TooltipBox(text = "Discard changes (cannot be undone).") {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = { PlainTooltip { Text("Discard changes (cannot be undone).") } },
+                    state = rememberTooltipState(),
+                ) {
                     OutlinedButton(onClick = {}) { Text("Discard", color = MaterialTheme.colorScheme.primary) }
                 }
             }
