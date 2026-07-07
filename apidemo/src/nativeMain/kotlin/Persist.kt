@@ -106,8 +106,9 @@ fun saveAppState(inState: AppState) {
 
 /* Open the per-user app-data folder where the state file lives in the OS file
    manager. Revealing the state file opens its containing folder, which SDL has
-   already created even when nothing's been saved yet. */
-fun openSettingsFolder(): Boolean {
-    val vPath = stateFilePath() ?: return false
-    return revealInFileManager(vPath)
+   already created even when nothing's been saved yet. Fire-and-forget — the
+   reveal launches off the main thread (see revealInFileManager). */
+fun openSettingsFolder() {
+    val vPath = stateFilePath() ?: return
+    revealInFileManager(vPath)
 }
