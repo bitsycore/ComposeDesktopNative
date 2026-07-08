@@ -71,7 +71,11 @@ fun Navigation3Screen() {
 	val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 	androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
 		val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-			println("Navigation3 demo: window lifecycle $event -> ${lifecycleOwner.lifecycle.currentState}")
+			// event.targetState = the state this event lands in (ON_CREATE →
+			// CREATED, ON_START → STARTED, …). Reading lifecycle.currentState
+			// here instead would show RESUMED for the catch-up replay a late
+			// observer receives — the registry itself never moved.
+			println("Navigation3 demo: window lifecycle $event -> ${event.targetState}")
 		}
 		lifecycleOwner.lifecycle.addObserver(observer)
 		onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
