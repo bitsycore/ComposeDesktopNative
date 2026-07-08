@@ -52,6 +52,27 @@ fun Navigation3Screen() {
 	val current = backStack.lastOrNull() ?: Nav3Home
 	val canGoBack = backStack.size > 1
 
+	// Screen-level store owner + the ViewModel shared by ALL detail entries.
+	// Obtained OUTSIDE the NavDisplay entries, so it isn't per-entry scoped —
+	// the entries capture the same instance through their content lambdas.
+	val sharedOwner = androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner()
+	val totals = androidx.lifecycle.viewmodel.compose.viewModel(viewModelStoreOwner = sharedOwner) {
+		Nav3TotalsViewModel()
+	}
+
+	// Console trace of the WINDOW lifecycle (driven by SDL focus/visibility:
+	// focused → RESUMED, unfocused → STARTED, minimised/hidden → CREATED).
+	// Adding the observer replays catch-up events (ON_CREATE/START/RESUME) at
+	// screen open, then live transitions print as you focus/minimise the window.
+	val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+	androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+		val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+			println("Navigation3 demo: window lifecycle $event -> ${lifecycleOwner.lifecycle.currentState}")
+		}
+		lifecycleOwner.lifecycle.addObserver(observer)
+		onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+	}
+
 	Column(
 		modifier = Modifier.fillMaxWidth().clipToBounds(),
 		verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -114,6 +135,7 @@ fun Navigation3Screen() {
 			when (nav3Route) {
 				Nav3Home -> NavEntry(nav3Route) {
 					Nav3HomeContent(
+						totals = totals,
 						onOpen = { id -> backStack.add(Nav3Detail(id)) }
 					)
 				}
@@ -121,6 +143,7 @@ fun Navigation3Screen() {
 				is Nav3Detail -> NavEntry(nav3Route) {
 					Nav3DetailContent(
 						id = nav3Route.id,
+						totals = totals,
 						onBack = { backStack.removeLastOrNull() }
 					)
 				}
@@ -131,7 +154,7 @@ fun Navigation3Screen() {
 
 // Home destination — a list; tapping a card pushes a Detail route.
 @Composable
-private fun Nav3HomeContent(onOpen: (Int) -> Unit) {
+private fun Nav3HomeContent(totals: Nav3TotalsViewModel, onOpen: (Int) -> Unit) {
 	Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 		Text(
 			"Home",
@@ -144,6 +167,12 @@ private fun Nav3HomeContent(onOpen: (Int) -> Unit) {
 				"JVM/upstream Compose.",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
+		)
+		Text(
+			"Total increments across ALL details: ${totals.total} — one shared ViewModel " +
+				"(screen-scoped store owner), unlike the per-entry counters below.",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.tertiary,
 		)
 		for (id in 1..10) {
 			Card(
@@ -174,9 +203,17 @@ private class Nav3DetailViewModel : androidx.lifecycle.ViewModel() {
 	var counter by androidx.compose.runtime.mutableStateOf(0)
 }
 
+// SHARED ViewModel: one instance for ALL detail entries. It lives in a store
+// owner scoped to the Navigation3Screen call site (rememberViewModelStoreOwner,
+// parented by the window's owner) — pushing/popping details never touches it,
+// so it accumulates the total across every Nav3Detail.
+private class Nav3TotalsViewModel : androidx.lifecycle.ViewModel() {
+	var total by androidx.compose.runtime.mutableStateOf(0)
+}
+
 // Detail destination — reads its id off the route instance, pops on Back.
 @Composable
-private fun Nav3DetailContent(id: Int, onBack: () -> Unit) {
+private fun Nav3DetailContent(id: Int, totals: Nav3TotalsViewModel, onBack: () -> Unit) {
 	val vm = androidx.lifecycle.viewmodel.compose.viewModel { Nav3DetailViewModel() }
 	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 		Text(
@@ -196,8 +233,14 @@ private fun Nav3DetailContent(id: Int, onBack: () -> Unit) {
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.primary,
 		)
+		Text(
+			"Shared total across all details: ${totals.total} — the SAME " +
+				"Nav3TotalsViewModel instance every detail entry sees.",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.tertiary,
+		)
 		Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-			Button(onClick = { vm.counter++ }) { Text("Increment") }
+			Button(onClick = { vm.counter++; totals.total++ }) { Text("Increment") }
 			Button(onClick = onBack) { Text("Go back") }
 		}
 	}

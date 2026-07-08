@@ -525,6 +525,18 @@ internal class WindowInstance(
 				}
 			}
 		}
+		// First composition done (setContent is synchronous) — promote the
+		// window lifecycle from CREATED to the focus/visibility-derived state.
+		// Composition itself runs at CREATED so enableSavedStateHandles()
+		// callers see a legal state, mirroring upstream desktop's
+		// compose-first-resume-after ordering.
+		architectureOwner.setLifecycleState(
+			when {
+				!windowVisible -> androidx.lifecycle.Lifecycle.State.CREATED
+				windowFocused -> androidx.lifecycle.Lifecycle.State.RESUMED
+				else -> androidx.lifecycle.Lifecycle.State.STARTED
+			}
+		)
 		return true
 	}
 
@@ -716,7 +728,11 @@ private class WindowArchitectureOwner :
 	init {
 		savedStateController.performAttach()
 		savedStateController.performRestore(null)
-		lifecycle.currentState = androidx.lifecycle.Lifecycle.State.RESUMED
+		// CREATED (not RESUMED) until the first composition is done — code that
+		// runs enableSavedStateHandles() during composition (nav3's decorators,
+		// rememberViewModelStoreOwner, …) requires INITIALIZED/CREATED, and
+		// upstream desktop windows likewise compose first and resume after.
+		lifecycle.currentState = androidx.lifecycle.Lifecycle.State.CREATED
 	}
 
 	/* Focus/visibility-driven state (see WindowInstance.onActivationEvent).
