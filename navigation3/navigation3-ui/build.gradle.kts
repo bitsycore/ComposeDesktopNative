@@ -22,8 +22,6 @@ kotlin {
 	sourceSets {
 		commonMain {
 			dependencies {
-				// AnimatedContent / SharedTransitionScope + (transitively) :ui → nav3-runtime,
-				// navigationevent(-compose), lifecycle.compose, ui.window, ui.util.
 				api(project(":animation"))
 				api(project(":ui"))
 				api("androidx.navigation3:navigation3-runtime:1.2.0-alpha05")

@@ -47,7 +47,7 @@ since `LocalContentColor` defaults to black without a `Surface`.
 
 ### `:navigation3-ui` module (`navigation3/navigation3-ui`, artifactId `desktop-navigation3-ui`)
 Vendored from the JetBrains fork like the compose modules (publishes per-target, like `:material3`).
-- Manifest `navigation3/navigation3-ui/compose-fork.txt`: `selectRoot` + folder directives copy
+- Manifest `navigation3/navigation3-ui/compose-fork.txt`: `SET_ROOT` + folder directives copy
   `commonMain` → `src/vendor/common`, `macosMain` → `src/vendor/native` (the K/N actuals for the 3
   `default*TransitionSpec` expects).
 - `api("androidx.navigation3:navigation3-runtime:1.2.0-alpha05")` — the vendored UI is from a
@@ -118,10 +118,10 @@ per-file, non-idempotent edit that must be reconciled on every upstream ref bump
 
 ## Tooling added to `tools/compose-fork/sync.py` (all committed, reusable)
 
-- **`selectRoot=` + folder directives** (`src/ -> dest/`): one line vendors a whole source-set tree.
+- **`SET_ROOT=` + folder directives** (`src/ -> dest/`): one line vendors a whole source-set tree.
 - **Auto-annotation on every sync** (idempotent): under each folder directive, commented
   `#     | src -> dest` lines list the files it copies; a trailing `# >>> GAPS … # <<< GAPS` block
-  lists upstream `.kt` under `selectRoot` **not** yet vendored (new upstream files show up here).
+  lists upstream `.kt` under `SET_ROOT` **not** yet vendored (new upstream files show up here).
   Uncomment any `#     | ` line to pin it as a per-file entry (the leading `|` is stripped by the
   parser). `--gaps`/`--fill` runs the annotation without copying.
 - **`!<path>` exclusions**: skip a file from a folder copy (and delete a stale copy) — the mechanism
