@@ -112,6 +112,7 @@ kotlin {
                     implementation(project(":material-symbols"))
                 }
                 implementation(project(":navigation3-ui"))
+                implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
             }
         }
         nativeMain {

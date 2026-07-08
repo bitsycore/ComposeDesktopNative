@@ -163,6 +163,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 					is AppEvent.WindowClose -> runtime.windowFor(vEvent.windowId)?.requestClose()
 					is AppEvent.WindowResized -> runtime.windowFor(vEvent.windowId)?.onResizedEvent()
 					is AppEvent.RedrawNeeded -> runtime.windowFor(vEvent.windowId)?.let { it.needsFrame = true }
+					is AppEvent.WindowActivation -> runtime.windowFor(vEvent.windowId)?.onActivationEvent(vEvent)
 					is AppEvent.Pointer -> runtime.windowFor(vEvent.windowId)?.onPointerEvent(vEvent)
 					is AppEvent.MouseWheel -> runtime.windowFor(vEvent.windowId)?.onWheelEvent(vEvent)
 					is AppEvent.Key -> runtime.windowFor(vEvent.windowId)?.onKeyEvent(vEvent)
@@ -385,6 +386,37 @@ internal class WindowInstance(
 	}
 	private val backNavigationInput = BackNavigationInput()
 
+	// WINDOW-scoped architecture-components owner (Lifecycle + ViewModelStore +
+	// SavedStateRegistry) — the same trio upstream desktop's
+	// DefaultArchitectureComponentsOwner supplies through the window
+	// PlatformContext (compose/ui skikoMain PlatformOwnerProvider.skiko.kt).
+	// viewModel(), SavedStateHandle plumbing and navigation3's
+	// rememberViewModelStoreNavEntryDecorator all resolve their parent owners
+	// from this; destroy() moves it to DESTROYED and clears the store.
+	private val architectureOwner = WindowArchitectureOwner()
+
+	// Window focus / visibility → Lifecycle.State, Compose Desktop's mapping:
+	// focused → RESUMED, visible unfocused → STARTED, hidden/minimised →
+	// CREATED. Starts focused+visible (SDL fires FOCUS_GAINED right after
+	// creation anyway; headless probe runs simply stay RESUMED).
+	private var windowFocused = true
+	private var windowVisible = true
+
+	fun onActivationEvent(inEvent: AppEvent.WindowActivation) {
+		inEvent.focused?.let { windowFocused = it }
+		inEvent.visible?.let { windowVisible = it }
+		architectureOwner.setLifecycleState(
+			when {
+				!windowVisible -> androidx.lifecycle.Lifecycle.State.CREATED
+				windowFocused -> androidx.lifecycle.Lifecycle.State.RESUMED
+				else -> androidx.lifecycle.Lifecycle.State.STARTED
+			}
+		)
+		// Shown / restored / focus-gained also invalidate the contents — keep
+		// the pre-lifecycle RedrawNeeded behaviour of these SDL events.
+		needsFrame = true
+	}
+
 	fun init(inScope: CoroutineScope): Boolean {
 		if (!backend.init()) return false
 		backend.updateWindowSize()
@@ -454,21 +486,25 @@ internal class WindowInstance(
 				// interface's all-zero defaults are exactly right.
 				androidx.compose.ui.platform.LocalPlatformWindowInsets provides
 					object : androidx.compose.ui.platform.PlatformWindowInsets {},
-				// A resumed lifecycle owner at the composition root — lifecycle-aware
-				// content (Navigation 3's NavDisplay, lifecycle-viewmodel-navigation3, …)
-				// reads LocalLifecycleOwner and errors if it's absent. A desktop window is
-				// always "resumed" while composed.
-				androidx.lifecycle.compose.LocalLifecycleOwner provides remember {
-					object : androidx.lifecycle.LifecycleOwner {
-						override val lifecycle =
-							androidx.lifecycle.LifecycleRegistry.createUnsafe(this).apply {
-								currentState = androidx.lifecycle.Lifecycle.State.RESUMED
-							}
-					}
-				},
+				// The window's architecture-components owner backs all three arch
+				// locals, exactly like upstream desktop's window PlatformContext:
+				// - LocalLifecycleOwner: RESUMED for the window's whole life;
+				//   lifecycle-aware content (NavDisplay, rememberLifecycleOwner, …)
+				//   errors without it.
+				// - LocalViewModelStoreOwner: window-scoped ViewModels (google
+				//   lifecycle-viewmodel-compose's local is a plain composition
+				//   local; the JB HostDefault route doesn't exist in the google
+				//   artifacts this port ships).
+				// - LocalSavedStateRegistryOwner: SavedStateHandle / rememberSaveable
+				//   registry parent (nav3's ViewModelStoreNavEntryDecorator requires it).
+				androidx.lifecycle.compose.LocalLifecycleOwner provides architectureOwner,
+				androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner provides architectureOwner,
+				androidx.savedstate.compose.LocalSavedStateRegistryOwner provides architectureOwner,
 				// Runtime-level host defaults — this window's navigation-event
-				// owner (SearchBar / sheets back plumbing), null for keys this
-				// port has no equivalent of (viewmodel store).
+				// owner (SearchBar / sheets back plumbing). The viewmodel store
+				// is provided through the plain LocalViewModelStoreOwner above
+				// instead: the google lifecycle artifacts this port ships have no
+				// HostDefault key for it (that mechanism is JB-variant-only).
 				androidx.compose.runtime.LocalHostDefaultProvider provides
 					remember {
 						object : androidx.compose.runtime.HostDefaultProvider {
@@ -628,6 +664,9 @@ internal class WindowInstance(
 	fun destroy() {
 		composition?.dispose()
 		composition = null
+		// Window gone → DESTROYED lifecycle + ViewModels cleared (onCleared
+		// runs), matching upstream desktop's window-scoped owner lifetime.
+		architectureOwner.destroy()
 		recomposer?.cancel()
 		recomposer = null
 		recomposeJob?.cancel()
@@ -635,6 +674,65 @@ internal class WindowInstance(
 		renderBackend?.destroy()
 		renderBackend = null
 		backend.destroy(inQuitSdl = false)
+	}
+}
+
+// ==================
+// MARK: WindowArchitectureOwner
+// ==================
+
+/* Per-window architecture-components owner, modeled on upstream desktop's
+   DefaultArchitectureComponentsOwner (compose/ui skikoMain
+   PlatformOwnerProvider.skiko.kt): one object implements LifecycleOwner +
+   ViewModelStoreOwner + SavedStateRegistryOwner (+ the SavedState-aware
+   default ViewModel factory), so viewModel(), SavedStateHandle and
+   rememberSaveable-backed registries all resolve against the WINDOW scope.
+
+   The lifecycle registry uses createUnsafe (no main-thread enforcement) —
+   same as the root owner this replaces; the SDL loop is single-threaded
+   anyway. RESUMED from construction; destroy() moves to DESTROYED and clears
+   the ViewModelStore (onCleared runs). SavedState restores from nothing (no
+   process-death persistence on desktop — upstream desktop passes null too). */
+private class WindowArchitectureOwner :
+	androidx.lifecycle.LifecycleOwner,
+	androidx.lifecycle.ViewModelStoreOwner,
+	androidx.lifecycle.HasDefaultViewModelProviderFactory,
+	androidx.savedstate.SavedStateRegistryOwner {
+
+	override val lifecycle = androidx.lifecycle.LifecycleRegistry.createUnsafe(this)
+	override val viewModelStore = androidx.lifecycle.ViewModelStore()
+
+	private val savedStateController = androidx.savedstate.SavedStateRegistryController.create(this)
+	override val savedStateRegistry: androidx.savedstate.SavedStateRegistry
+		get() = savedStateController.savedStateRegistry
+
+	override val defaultViewModelProviderFactory = androidx.lifecycle.SavedStateViewModelFactory()
+	override val defaultViewModelCreationExtras: androidx.lifecycle.viewmodel.CreationExtras
+		get() = androidx.lifecycle.viewmodel.MutableCreationExtras().also {
+			it[androidx.lifecycle.SAVED_STATE_REGISTRY_OWNER_KEY] = this
+			it[androidx.lifecycle.VIEW_MODEL_STORE_OWNER_KEY] = this
+		}
+
+	init {
+		savedStateController.performAttach()
+		savedStateController.performRestore(null)
+		lifecycle.currentState = androidx.lifecycle.Lifecycle.State.RESUMED
+	}
+
+	/* Focus/visibility-driven state (see WindowInstance.onActivationEvent).
+	   Ignored once destroyed — a stray SDL event during teardown must not
+	   resurrect the registry. */
+	fun setLifecycleState(inState: androidx.lifecycle.Lifecycle.State) {
+		if (lifecycle.currentState != androidx.lifecycle.Lifecycle.State.DESTROYED &&
+			lifecycle.currentState != inState
+		) {
+			lifecycle.currentState = inState
+		}
+	}
+
+	fun destroy() {
+		lifecycle.currentState = androidx.lifecycle.Lifecycle.State.DESTROYED
+		viewModelStore.clear()
 	}
 }
 

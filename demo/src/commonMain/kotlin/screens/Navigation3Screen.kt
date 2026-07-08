@@ -6,15 +6,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 
 // ==================
@@ -72,7 +76,15 @@ fun Navigation3Screen() {
 		}
 		HorizontalDivider()
 		NavDisplay(
-
+			// Order matters: the saveable decorator must wrap the viewmodel one —
+			// it provides each entry's own SavedStateRegistryOwner (still
+			// INITIALIZED) that enableSavedStateHandles() requires; reversed, the
+			// VM decorator captures the window's registry owner (already RESUMED)
+			// and throws. Same order as upstream's samples.
+			entryDecorators = listOf(
+				rememberSaveableStateHolderNavEntryDecorator(),
+				rememberViewModelStoreNavEntryDecorator(),
+			),
 			backStack = backStack,
 
 			// Push: new screen from right
@@ -154,9 +166,18 @@ private fun Nav3HomeContent(onOpen: (Int) -> Unit) {
 	}
 }
 
+// Per-entry ViewModel: created by the first composition of a Nav3Detail entry
+// (scoped by rememberViewModelStoreNavEntryDecorator to the ENTRY, not the
+// screen), survives recompositions and revisits while the entry stays on the
+// back stack, and is cleared (onCleared) when the entry pops.
+private class Nav3DetailViewModel : androidx.lifecycle.ViewModel() {
+	var counter by androidx.compose.runtime.mutableStateOf(0)
+}
+
 // Detail destination — reads its id off the route instance, pops on Back.
 @Composable
 private fun Nav3DetailContent(id: Int, onBack: () -> Unit) {
+	val vm = androidx.lifecycle.viewmodel.compose.viewModel { Nav3DetailViewModel() }
 	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 		Text(
 			"Detail #$id",
@@ -169,6 +190,15 @@ private fun Nav3DetailContent(id: Int, onBack: () -> Unit) {
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSurfaceVariant,
 		)
-		Button(onClick = onBack) { Text("Go back") }
+		Text(
+			"ViewModel counter: ${vm.counter} — lives in this entry's ViewModelStore " +
+				"(viewModelStoreNavEntryDecorator); popping the entry clears it.",
+			style = MaterialTheme.typography.bodyMedium,
+			color = MaterialTheme.colorScheme.primary,
+		)
+		Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+			Button(onClick = { vm.counter++ }) { Text("Increment") }
+			Button(onClick = onBack) { Text("Go back") }
+		}
 	}
 }

@@ -29,6 +29,15 @@ sealed class AppEvent {
 	   regain). The render-on-demand main loop uses it to force a frame even
 	   though no state changed. */
 	data class RedrawNeeded(val windowId: UInt = 0u) : AppEvent()
+	/* Focus / visibility transitions driving the window's Lifecycle (Compose
+	   Desktop mapping: focused → RESUMED, visible unfocused → STARTED,
+	   hidden / minimised → CREATED). Null = "this event doesn't change it".
+	   Also implies RedrawNeeded for the shown/focused transitions. */
+	data class WindowActivation(
+		val windowId: UInt = 0u,
+		val focused: Boolean? = null,
+		val visible: Boolean? = null,
+	) : AppEvent()
 }
 
 fun pollEvents(): List<AppEvent> {
@@ -90,10 +99,17 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 		// Content invalidations — the idle-skipping main loop must render a
 		// frame after these even though no Compose state changed.
 		SDL_EVENT_WINDOW_EXPOSED,
+		SDL_EVENT_WINDOW_MAXIMIZED -> AppEvent.RedrawNeeded(e.window.windowID)
+
+		// Focus / visibility → the window's Lifecycle state (the loop also
+		// treats these as redraw triggers, preserving the old RedrawNeeded
+		// behaviour of SHOWN / RESTORED / FOCUS_GAINED).
+		SDL_EVENT_WINDOW_FOCUS_GAINED -> AppEvent.WindowActivation(e.window.windowID, focused = true)
+		SDL_EVENT_WINDOW_FOCUS_LOST -> AppEvent.WindowActivation(e.window.windowID, focused = false)
 		SDL_EVENT_WINDOW_SHOWN,
-		SDL_EVENT_WINDOW_RESTORED,
-		SDL_EVENT_WINDOW_MAXIMIZED,
-		SDL_EVENT_WINDOW_FOCUS_GAINED -> AppEvent.RedrawNeeded(e.window.windowID)
+		SDL_EVENT_WINDOW_RESTORED -> AppEvent.WindowActivation(e.window.windowID, visible = true)
+		SDL_EVENT_WINDOW_HIDDEN,
+		SDL_EVENT_WINDOW_MINIMIZED -> AppEvent.WindowActivation(e.window.windowID, visible = false)
 
 		SDL_EVENT_TEXT_INPUT -> {
 			val vText = e.text.text?.toKString().orEmpty()
