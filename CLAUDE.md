@@ -57,19 +57,24 @@ compose/
 └── sdl/                             ("Compose SDL" — project modules, not upstream CMP artifacts)
     ├── window/                      → :window     — nativeComposeApp { Window(...) {} } multi-window
     │                                               shell + SDL3 main loop; nativeComposeWindow() wrapper
-    ├── material-symbols/            → :material-symbols — codepoints + all three style objects
-    │                                               (Outlined / Rounded / Sharp). Apps get one dep;
-    │                                               the consumer Zip task bundles only the fonts used.
-    └── navigation3-ui/              → :navigation3-ui — a minimal NavDisplay reimpl. Navigation 3's
-                                                    runtime (androidx.navigation3:navigation3-runtime +
-                                                    lifecycle-viewmodel-navigation3) ARE real Maven KMP
-                                                    artifacts (all targets, api-exposed by :ui), but
-                                                    navigation3-ui/NavDisplay has no K/N desktop build
-                                                    (its non-Android upstream is NotImplemented), so the
-                                                    display is reimplemented here on this project's
-                                                    AnimatedContent.
+    └── material-symbols/            → :material-symbols — codepoints + all three style objects
+                                                    (Outlined / Rounded / Sharp). Apps get one dep;
+                                                    the consumer Zip task bundles only the fonts used.
 
-demo/                → :demo      — flagship showcase app (30+ screens)
+navigation3/
+└── navigation3-ui/                  → :navigation3-ui — androidx.navigation3.ui.* + scene machinery,
+                                                    VENDORED verbatim from upstream (SET_ROOT manifest).
+                                                    Navigation 3's runtime layers (navigation3-runtime,
+                                                    lifecycle-viewmodel-navigation3) are real Maven KMP
+                                                    artifacts used as-is (see "Known Compatible" below);
+                                                    only this UI module has no K/N desktop artifact. The
+                                                    native actual (NavDisplay.native.kt) is MANUALLY
+                                                    VENDORED: it mirrors the ANDROID transition defaults
+                                                    (700ms fades, predictive-pop spring/scaleOut) because
+                                                    the upstream macos actual ships all-None (no animation).
+
+demo/                → :demo      — flagship showcase app (30+ screens) + the CLI probe suite
+demojvm/             → :demojvm   — the same demo screens on stock JVM Compose Desktop (parity reference)
 apidemo/             → :apidemo   — Postman-style REST API manager
 tools/               → vendor-sync + Windows static-lib build scripts (bash + python)
 libs/                → gitignored per-host static SDL3 / SDL3_ttf / SDL3_image / FreeType
@@ -323,42 +328,42 @@ build tell you what broke.
 ### Renderer + main loop
 - `compose/sdl/window/src/nativeMain/…/ComposeWindow.kt` — main loop,
   recomposer lifecycle, SDL event dispatch, composition-local seeding.
-- `compose/ui/src/nativeMain/…/RenderBackend.kt` — the interface.
-- `compose/ui/src/nativeMain/…/GpuMode.kt` — sealed renderer / driver picker.
-- `compose/ui/src/skikoRendererMain/…/renderer/skia/SkiaRenderBackend.kt`.
-- `compose/ui/src/sdlRendererMain/…/renderer/sdl/Sdl3RenderBackend.kt`.
-- `compose/ui/src/sdlRendererMain/…/renderer/sdl/FreeTypeIcons.kt` —
+- `compose/ui/ui/src/nativeMain/…/RenderBackend.kt` — the interface.
+- `compose/ui/ui/src/nativeMain/…/GpuMode.kt` — sealed renderer / driver picker.
+- `compose/ui/ui/src/skikoRendererMain/…/renderer/skia/SkiaRenderBackend.kt`.
+- `compose/ui/ui/src/sdlRendererMain/…/renderer/sdl/Sdl3RenderBackend.kt`.
+- `compose/ui/ui/src/sdlRendererMain/…/renderer/sdl/FreeTypeIcons.kt` —
   variable-font axis rasterisation (SDL3_ttf has no axis-set API; we go
   to FreeType directly for icon families).
 
 ### Layout / composition wiring
-- `compose/ui/src/commonMain/…/node/ComposeRootHost.kt` — root LayoutNode
+- `compose/ui/ui/src/commonMain/…/node/ComposeRootHost.kt` — root LayoutNode
   host, hit-test, event dispatch, snapshot observer.
-- `compose/ui/src/commonMain/…/node/impl/ComposeOwner.kt` — the
+- `compose/ui/ui/src/commonMain/…/node/impl/ComposeOwner.kt` — the
   project `Owner` implementation + `ProjectOwnedLayer` (graphicsLayer / clip /
   alpha bridge).
-- `compose/ui/src/commonMain/…/node/NodeApplier.kt`.
+- `compose/ui/ui/src/commonMain/…/node/NodeApplier.kt`.
 
 ### Text
-- `compose/ui/src/nativeMain/…/ui/text/SdlParagraph.native.kt` — the
+- `compose/ui/ui/src/nativeMain/…/ui/text/SdlParagraph.native.kt` — the
   bridged `Paragraph` implementation (measurement, hit-test, line metrics,
   span painting).
-- `compose/ui/src/nativeMain/…/ui/text/ParagraphFactories.native.kt` —
+- `compose/ui/ui/src/nativeMain/…/ui/text/ParagraphFactories.native.kt` —
   actuals for the `Paragraph(…)` / `ParagraphIntrinsics(…)` factory family.
-- `compose/ui/src/commonMain/…/text/TextMeasurer.kt` — `NativeTextMeasurer`
+- `compose/ui/ui/src/commonMain/…/text/TextMeasurer.kt` — `NativeTextMeasurer`
   interface (per-renderer implementations: `SkiaTextRenderer` /
   `Sdl3TextRenderer`).
 
 ### Icons
-- `compose/foundation/src/nativeMain/…/icons/IconFontIcon.kt` —
+- `compose/foundation/foundation/src/nativeMain/…/icons/IconFontIcon.kt` —
   codepoint-based `Icon` composable + `MaterialIconAxes` /
   `MaterialIconAxisDefaults`.
 - `compose/sdl/material-symbols/src/…/MaterialSymbols{Outlined,Rounded,Sharp}.kt`.
 
 ### Resources
-- `compose/ui/src/commonMain/…/res/Res.kt` — the project's
+- `compose/ui/ui/src/commonMain/…/res/Res.kt` — the project's
   `androidx.compose.ui.res` reimpl (`Painter`, `ImageLoader`).
-- `compose/ui/src/nativeMain/…/ResourceIO.kt` — opens `data.kres` once via
+- `compose/ui/ui/src/nativeMain/…/ResourceIO.kt` — opens `data.kres` once via
   `SDL_GetBasePath()` + parses central directory; each entry served by an
   `fseek + fread`.
 
@@ -437,6 +442,62 @@ that should surface in tooling.
   pins module IDs into its klib metadata; a stale cache surfaces as
   `Unknown dependent library com.bitsycore.compose.sdl:core` (or
   whatever the old module name was).
+
+## Known Compatible — official Maven KMP artifacts used AS-IS
+
+Before reimplementing or vendoring ANYTHING androidx, check Maven: a lot of
+the architecture stack publishes real Kotlin/Native desktop klibs
+(mingwX64 + linuxX64/arm64 + macosArm64) and runs on this port unmodified.
+Sometimes the GOOGLE coordinates (`androidx.*`) have the K/N variant,
+sometimes the JETBRAINS ones (`org.jetbrains.*`) — check both before
+concluding an artifact "doesn't exist" for our targets.
+
+Verified in-tree (api-exposed by `:ui` unless noted):
+
+- `org.jetbrains.compose.runtime:runtime` / `runtime-saveable` 1.11.1 —
+  THE Compose runtime (composition, snapshots, recomposer). Never vendored.
+- `androidx.compose.runtime:runtime-retain` 1.11.1 (google coordinates).
+- `androidx.lifecycle:*` **2.11.0** (google): `lifecycle-runtime-compose`,
+  `lifecycle-viewmodel`, `lifecycle-viewmodel-compose`,
+  `lifecycle-viewmodel-savedstate`, **`lifecycle-viewmodel-navigation3`** —
+  the whole ViewModel + SavedStateHandle + nav3-decorator stack needed ZERO
+  reimplementation; only the window-side owners had to be provided (see
+  caveats).
+- `androidx.savedstate:savedstate` / `savedstate-compose` **1.5.0** (google).
+- `androidx.navigation3:navigation3-runtime` **1.1.4** — backstack / NavEntry
+  / decorators. Only navigation3-UI (NavDisplay) lacks a K/N desktop artifact
+  → vendored as `:navigation3-ui`.
+- `androidx.navigationevent:navigationevent-compose` 1.1.2 — predictive-back
+  event plumbing (BackHandler, NavDisplay gestures).
+- `androidx.collection:collection` — plain Maven dep, not a module.
+- Infra: `kotlinx-coroutines-core`, `atomicfu`, `okio`,
+  `kotlinx-serialization`.
+
+Caveats that make these work here (all already wired — listed so nobody
+"fixes" them away):
+
+- The google `LocalViewModelStoreOwner` / `LocalSavedStateRegistryOwner` /
+  `LocalLifecycleOwner` are PLAIN composition locals — the JB HostDefault
+  mechanism (`compositionLocalWithHostDefaultOf`) does not exist in google
+  artifacts. `WindowArchitectureOwner` (ComposeWindow.kt) provides all three
+  per window, mirrors upstream desktop's DefaultArchitectureComponentsOwner,
+  calls `enableSavedStateHandles()` at construction, and follows SDL focus /
+  visibility (focused → RESUMED, unfocused → STARTED, minimised → CREATED).
+- The window composes its FIRST composition at CREATED and resumes after —
+  `enableSavedStateHandles()` callers running in composition require
+  lifecycle ≤ CREATED. Related contract: `rememberViewModelStoreOwner()` with
+  its default `savedStateRegistryOwner` THROWS at a RESUMED call site (same
+  on Android) — scope shared VMs to the window owner (`viewModel { }` outside
+  the entries, the `activityViewModels()` analog) instead.
+- nav3 entry decorators: saveable BEFORE viewmodel —
+  `listOf(rememberSaveableStateHolderNavEntryDecorator(),
+  rememberViewModelStoreNavEntryDecorator())`.
+- `Dispatchers.Main.immediate` must run inline on the main thread
+  (Sdl3MainDispatcher) — androidx.lifecycle's main-thread enforcement
+  round-trips through it; a queue-only Main deadlocks composition.
+- Regression probes: `demo --nav3test` (nav3 + ViewModels + lifecycle,
+  composed late at RESUMED like the real sidebar flow), `--backtest`
+  (navigationevent), `--multiwintest` (per-window owners).
 
 ## License
 

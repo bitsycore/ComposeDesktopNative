@@ -21,14 +21,38 @@ project actuals + SDL3 / Skia glue only where needed.
 
 ## Module layout
 
+One Gradle module per upstream Compose artifact — the directory tree mirrors
+upstream's `compose/` layout, gradle paths stay short via `projectDir`
+redirects.
+
 ```
 compose/
-├── ui/               → :ui        (androidx.compose.ui.* + renderers + cinterops)
-├── animation-core/   → :animation-core
-├── foundation/       → :foundation (foundation.* + non-core animation.*)
-├── material3/        → :material3
-├── material-symbols/ → :material-symbols (codepoints + Outlined/Rounded/Sharp)
-└── native/window/    → :window    (nativeComposeWindow + SDL3 main loop)
+├── ui/
+│   ├── ui/               → :ui              (androidx.compose.ui.* + renderers + cinterops)
+│   ├── ui-util/          → :ui-util
+│   ├── ui-geometry/      → :ui-geometry
+│   ├── ui-unit/          → :ui-unit
+│   └── ui-backhandler/   → :ui-backhandler
+├── animation/
+│   ├── animation-core/   → :animation-core
+│   ├── animation/        → :animation
+│   └── animation-graphics/ → :animation-graphics
+├── foundation/
+│   ├── foundation/       → :foundation
+│   └── foundation-layout/ → :foundation-layout
+├── material3/material3/  → :material3
+├── material/material-ripple/ → :material-ripple
+└── sdl/                  (project modules — the SDL integration layer)
+    ├── window/           → :window          (nativeComposeApp { Window(...) } + SDL3 main loop,
+    │                                         per-window Lifecycle/ViewModelStore/SavedState owners)
+    └── material-symbols/ → :material-symbols (codepoints + Outlined/Rounded/Sharp icon fonts)
+
+navigation3/
+└── navigation3-ui/       → :navigation3-ui  (vendored NavDisplay + scene machinery — the one
+                                              Navigation 3 layer without a K/N desktop artifact)
+
+demo/     → :demo     (showcase + CLI probe suite)   demojvm/ → :demojvm (JVM parity twin)
+apidemo/  → :apidemo  (Postman-style REST client)
 ```
 
 ## demo — widget & feature showcase
@@ -122,6 +146,37 @@ Upstream ref pinned in `tools/compose-fork/compose-ref.txt`.
 See [CLAUDE.md](CLAUDE.md) for the full architecture, source-set hierarchy,
 vendoring rules, density flow (physical-pixel Option B), and per-area file
 map.
+
+## Known Compatible — official artifacts that just work
+
+A surprising amount of the androidx architecture stack ships real
+Kotlin/Native desktop klibs (mingwX64, linuxX64/arm64, macosArm64) and runs
+on this port **unmodified** — no reimplementation, no vendoring. Sometimes
+the Google coordinates (`androidx.*`) carry the K/N variant, sometimes the
+JetBrains ones (`org.jetbrains.*`) — check both.
+
+Verified working in-tree:
+
+| Artifact | Version | Notes |
+|---|---|---|
+| `org.jetbrains.compose.runtime:runtime`, `runtime-saveable` | 1.11.1 | the Compose runtime itself — never reimplemented |
+| `androidx.compose.runtime:runtime-retain` | 1.11.1 | google coordinates |
+| `androidx.lifecycle:lifecycle-runtime-compose` | 2.11.0 | `LocalLifecycleOwner`, `rememberLifecycleOwner`, `repeatOnLifecycle` |
+| `androidx.lifecycle:lifecycle-viewmodel(-compose, -savedstate)` | 2.11.0 | full ViewModel + SavedStateHandle stack |
+| `androidx.lifecycle:lifecycle-viewmodel-navigation3` | 2.11.0 | per-entry ViewModel scoping for Navigation 3 |
+| `androidx.savedstate:savedstate`, `savedstate-compose` | 1.5.0 | |
+| `androidx.navigation3:navigation3-runtime` | 1.1.4 | backstack / NavEntry / decorators (only the UI layer needed vendoring → `:navigation3-ui`) |
+| `androidx.navigationevent:navigationevent-compose` | 1.1.2 | predictive back / BackHandler plumbing |
+| `androidx.collection:collection` | — | |
+| `kotlinx-coroutines`, `atomicfu`, `okio`, `kotlinx-serialization` | — | infrastructure |
+
+The window layer supplies what these expect from a host: per-window
+`LifecycleOwner` (driven by real SDL focus/visibility events — focused →
+RESUMED, unfocused → STARTED, minimized → CREATED), `ViewModelStoreOwner`
+(the `activityViewModels()` analog, `SavedStateHandle`-enabled) and
+`SavedStateRegistryOwner`, plus a `Dispatchers.Main` with a true `immediate`.
+ViewModels scope per nav entry, per window, or anywhere in between — same
+semantics as Android.
 
 ## License
 
