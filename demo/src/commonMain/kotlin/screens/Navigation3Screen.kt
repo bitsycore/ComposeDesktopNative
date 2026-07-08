@@ -223,6 +223,20 @@ private class Nav3TotalsViewModel : androidx.lifecycle.ViewModel() {
 @Composable
 private fun Nav3DetailContent(id: Int, totals: Nav3TotalsViewModel, onBack: () -> Unit) {
 	val vm = androidx.lifecycle.viewmodel.compose.viewModel { Nav3DetailViewModel() }
+
+	// Per-DESTINATION lifecycle: inside a NavEntry, LocalLifecycleOwner is the
+	// ENTRY's own owner (NavDisplay's scene lifecycle + the BackStackAware
+	// decorator, parented by the window's): ON_RESUME when this entry is on top
+	// and the transition settled; ON_PAUSE while a transition runs or the
+	// window unfocuses; down to CREATED while animating out after a pop.
+	val entryLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
+	androidx.compose.runtime.DisposableEffect(entryLifecycle) {
+		val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+			println("Navigation3 demo: detail #$id lifecycle $event -> ${event.targetState}")
+		}
+		entryLifecycle.lifecycle.addObserver(observer)
+		onDispose { entryLifecycle.lifecycle.removeObserver(observer) }
+	}
 	Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 		Text(
 			"Detail #$id",

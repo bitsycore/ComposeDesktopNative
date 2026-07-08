@@ -453,13 +453,24 @@ private fun runNav3Test() {
         onFrame = { vBridge, vFrame ->
             when (vFrame) {
                 30 -> { vShow.value = true; true }
-                90 -> {
+                // Push Detail #1 (click its card) → per-entry lifecycle goes
+                // CREATED/STARTED during the slide, RESUMED once settled.
+                60 -> { com.compose.sdl.injectMouseEvent(1, 500f, 216f); true }
+                62 -> { com.compose.sdl.injectMouseEvent(2, 500f, 216f); true }
+                // Pop with ESC → ON_PAUSE, then CREATED while animating out,
+                // then the entry disposes.
+                120 -> {
+                    com.compose.sdl.injectKey(41, true)
+                    com.compose.sdl.injectKey(41, false)
+                    true
+                }
+                180 -> {
                     val vSnap = vBridge.snapshotBgra()
                     if (vSnap != null) {
                         val (vW, vH, vBgra) = vSnap
                         writeFile("nav3late.bmp", encodeBmpBgra32(vW, vH, vBgra))
                         println("nav3test: wrote nav3late.bmp (${vW}x${vH})")
-                        println("nav3test: PASS (Navigation3 composed at RESUMED without crashing)")
+                        println("nav3test: PASS (Navigation3 composed at RESUMED; push + pop ran)")
                     } else println("nav3test: FAIL (no snapshot)")
                     false
                 }
