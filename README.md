@@ -157,18 +157,17 @@ JetBrains ones (`org.jetbrains.*`) — check both.
 
 Verified working in-tree:
 
-| Artifact | Version | Notes |
-|---|---|---|
-| `org.jetbrains.compose.runtime:runtime`, `runtime-saveable` | 1.11.1 | the Compose runtime itself — never reimplemented |
-| `androidx.compose.runtime:runtime-retain` | 1.11.1 | google coordinates |
-| `androidx.lifecycle:lifecycle-runtime-compose` | 2.11.0 | `LocalLifecycleOwner`, `rememberLifecycleOwner`, `repeatOnLifecycle` |
-| `androidx.lifecycle:lifecycle-viewmodel(-compose, -savedstate)` | 2.11.0 | full ViewModel + SavedStateHandle stack |
-| `androidx.lifecycle:lifecycle-viewmodel-navigation3` | 2.11.0 | per-entry ViewModel scoping for Navigation 3 |
-| `androidx.savedstate:savedstate`, `savedstate-compose` | 1.5.0 | |
-| `androidx.navigation3:navigation3-runtime` | 1.1.4 | backstack / NavEntry / decorators (only the UI layer needed vendoring → `:navigation3-ui`) |
-| `androidx.navigationevent:navigationevent-compose` | 1.1.2 | predictive back / BackHandler plumbing |
-| `androidx.collection:collection` | — | |
-| `kotlinx-coroutines`, `atomicfu`, `okio`, `kotlinx-serialization` | — | infrastructure |
+| Artifact                                                        | Notes                                                                                      |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| `org.jetbrains.compose.runtime:runtime`, `runtime-saveable`     | the Compose runtime itself — never reimplemented                                           |
+| `androidx.compose.runtime:runtime-retain`                       | google coordinates                                                                         |
+| `androidx.lifecycle:lifecycle-runtime-compose`                  | `LocalLifecycleOwner`, `rememberLifecycleOwner`, `repeatOnLifecycle`                       |
+| `androidx.lifecycle:lifecycle-viewmodel(-compose, -savedstate)` | full ViewModel + SavedStateHandle stack                                                    |
+| `androidx.lifecycle:lifecycle-viewmodel-navigation3`            | per-entry ViewModel scoping for Navigation 3                                               |
+| `androidx.savedstate:savedstate`, `savedstate-compose`          |                                                                                            |
+| `androidx.navigation3:navigation3-runtime`                      | backstack / NavEntry / decorators (only the UI layer needed vendoring → `:navigation3-ui`) |
+| `androidx.navigationevent:navigationevent-compose`              | predictive back / BackHandler plumbing                                                     |
+| `androidx.collection:collection`                                |                                                                                            |
 
 The window layer supplies what these expect from a host: per-window
 `LifecycleOwner` (driven by real SDL focus/visibility events — focused →
