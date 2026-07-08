@@ -41,7 +41,7 @@ rootProject.name = "ComposeSDL"
 //   :foundation-layout (compose/foundation/foundation-layout)  androidx.compose.foundation.layout.*
 //   :material3         (compose/material3/material3)           androidx.compose.material3.*
 //   :material-ripple   (compose/material/material-ripple)      androidx.compose.material.ripple.*
-//   :material-symbols  (compose/material-symbols)              icon-font modules (outlined / rounded / sharp)
+//   :material-symbols  (compose/sdl/material-symbols)          icon-font modules (outlined / rounded / sharp)
 // androidx.collection comes from Maven.
 // Module PATHS stay short (:ui, :foundation, …) so build files stay terse
 // Our customs modules are in compose/sdl/ like window
@@ -64,7 +64,7 @@ project(":foundation-layout").projectDir = file("compose/foundation/foundation-l
 project(":material3").projectDir = file("compose/material3/material3")
 project(":material-ripple").projectDir = file("compose/material/material-ripple")
 project(":window").projectDir = file("compose/sdl/window")
-project(":material-symbols").projectDir = file("compose/material-symbols")
+project(":material-symbols").projectDir = file("compose/sdl/material-symbols")
 
 // Demo App testing foundation, animation, ui and material3
 include(":demo")

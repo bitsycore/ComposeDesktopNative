@@ -38,8 +38,9 @@ compose/
 │                                                   (cinterops + both renderer pipelines live here; still the
 │                                                    merged ui mega-module — not split into ui-text/ui-graphics/…)
 ├── animation/
-│   ├── animation-core/              → :animation-core  — androidx.compose.animation.core.*
-│   └── animation/                   → :animation       — androidx.compose.animation.* (non-core; incl. animation-graphics.*)
+│   ├── animation-core/              → :animation-core     — androidx.compose.animation.core.*
+│   ├── animation/                   → :animation          — androidx.compose.animation.* (non-core)
+│   └── animation-graphics/          → :animation-graphics — androidx.compose.animation.graphics.*
 ├── foundation/
 │   ├── foundation/                  → :foundation       — androidx.compose.foundation.*
 │   └── foundation-layout/           → :foundation-layout — androidx.compose.foundation.layout.*
@@ -47,12 +48,12 @@ compose/
 │   └── material3/                   → :material3   — androidx.compose.material3.*
 ├── material/
 │   └── material-ripple/             → :material-ripple — androidx.compose.material.ripple.*
-├── material-symbols/                → :material-symbols — codepoints + all three style objects
-│                                                   (Outlined / Rounded / Sharp). Apps get one dep;
-│                                                   the consumer Zip task bundles only the fonts used.
-└── sdl/                             ("Compose SDL" — the SDL3 integration layer)
-    └── window/                      → :window     — nativeComposeApp { Window(...) {} } multi-window
-                                                    shell + SDL3 main loop; nativeComposeWindow() wrapper
+└── sdl/                             ("Compose SDL" — project modules, not upstream CMP artifacts)
+    ├── window/                      → :window     — nativeComposeApp { Window(...) {} } multi-window
+    │                                               shell + SDL3 main loop; nativeComposeWindow() wrapper
+    └── material-symbols/            → :material-symbols — codepoints + all three style objects
+                                                    (Outlined / Rounded / Sharp). Apps get one dep;
+                                                    the consumer Zip task bundles only the fonts used.
 
 demo/                → :demo      — flagship showcase app (30+ screens)
 apidemo/             → :apidemo   — Postman-style REST API manager
@@ -333,7 +334,7 @@ build tell you what broke.
 - `compose/foundation/src/nativeMain/…/icons/IconFontIcon.kt` —
   codepoint-based `Icon` composable + `MaterialIconAxes` /
   `MaterialIconAxisDefaults`.
-- `compose/material-symbols/src/…/MaterialSymbols{Outlined,Rounded,Sharp}.kt`.
+- `compose/sdl/material-symbols/src/…/MaterialSymbols{Outlined,Rounded,Sharp}.kt`.
 
 ### Resources
 - `compose/ui/src/commonMain/…/res/Res.kt` — the project's
