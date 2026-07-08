@@ -29,21 +29,30 @@ Library modules mirror upstream Compose Multiplatform's `compose/` tree.
 Only `:window` is inherently native (SDL3 main loop) and lives under
 `compose/native/`.
 
+One Gradle module per upstream artifact; the directory mirrors the upstream
+`compose/` path, the gradle path is kept short (redirected via `projectDir`).
+
 ```
 compose/
-├── ui/              → :ui        — androidx.compose.ui.* + com.compose.desktop.native.*
-│                                    (cinterops + both renderer pipelines live here)
-├── animation-core/  → :animation-core — androidx.compose.animation.core.*
-├── foundation/      → :foundation — androidx.compose.foundation.* + non-core animation.*
-├── material3/       → :material3  — androidx.compose.material3.*
-├── material-symbols/ → :material-symbols — codepoints + all three style objects
-│                                    (Outlined / Rounded / Sharp). Apps get one dep;
-│                                    the consumer Zip task bundles only the fonts
-│                                    a style was actually called from.
+├── ui/                              → :ui        — androidx.compose.ui.* + com.compose.desktop.native.*
+│                                                   (cinterops + both renderer pipelines live here; still the
+│                                                    merged ui mega-module — not split into ui-text/ui-graphics/…)
+├── animation/
+│   ├── animation-core/              → :animation-core  — androidx.compose.animation.core.*
+│   └── animation/                   → :animation       — androidx.compose.animation.* (non-core; incl. animation-graphics.*)
+├── foundation/
+│   ├── foundation/                  → :foundation       — androidx.compose.foundation.*
+│   └── foundation-layout/           → :foundation-layout — androidx.compose.foundation.layout.*
+├── material3/
+│   └── material3/                   → :material3   — androidx.compose.material3.*
+├── material/
+│   └── material-ripple/             → :material-ripple — androidx.compose.material.ripple.*
+├── material-symbols/                → :material-symbols — codepoints + all three style objects
+│                                                   (Outlined / Rounded / Sharp). Apps get one dep;
+│                                                   the consumer Zip task bundles only the fonts used.
 └── native/
-    └── window/      → :window    — nativeComposeApp { Window(...) {} } multi-window
-                                    shell + SDL3 main loop; nativeComposeWindow()
-                                    is the single-window wrapper
+    └── window/                      → :window     — nativeComposeApp { Window(...) {} } multi-window
+                                                    shell + SDL3 main loop; nativeComposeWindow() wrapper
 
 demo/                → :demo      — flagship showcase app (30+ screens)
 apidemo/             → :apidemo   — Postman-style REST API manager
@@ -54,15 +63,24 @@ libs/                → gitignored per-host static SDL3 / SDL3_ttf / SDL3_image
 
 Module PATHS stay short (`:ui`, `:foundation`, `:window`, …) —
 `settings.gradle.kts` redirects `projectDir` for each so build files across
-the repo stay terse.
+the repo stay terse. `androidx.collection` is a plain Maven dependency
+(`androidx.collection:collection`), not a module — same as other simple
+androidx KMP libs.
 
 ## Dependency graph
 
 ```
-:ui   ←  :animation-core  ←  :foundation  ←  :material3  ← :apidemo, :demo
-        └─────────────────← :foundation ←  :window       ←────┘
-                            └─────────← :material-symbols ←──┘
+:ui  ←  :animation-core  ←  :animation          ←  :foundation  ←  :material3  ← :demo, :apidemo
+:ui  ←  :foundation-layout  ←──────────────────────┘   ↑              ↑
+                        :material-ripple  ←────────────┘──────────────┘
+:foundation, :animation-core  ←  :window ;  :foundation, :material3  ←  :material-symbols
 ```
+
+All edges are `api`, so a consumer of `:foundation` / `:material3` transitively
+sees the split modules. Full DAG: `:animation-core → :ui`; `:foundation-layout → :ui`;
+`:animation → :animation-core, :foundation-layout`; `:foundation → :animation,
+:foundation-layout, :animation-core, :ui`; `:material-ripple → :foundation, :animation-core`;
+`:material3 → :foundation, :material-ripple, :animation-core, :foundation-layout`.
 
 `:ui` is the leaf. Everything above it can only touch renderer / cinterop
 internals via `:ui`'s public surface. `:window` depends on `:ui` +

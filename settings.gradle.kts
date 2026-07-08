@@ -34,26 +34,27 @@ dependencyResolutionManagement {
 
 rootProject.name = "ComposeNativeSDL3"
 
-// Library modules mirror upstream Compose Multiplatform's `compose/` tree
-// (ui, foundation, animation-core, material3, material-symbols at the top
-// level). The current split:
-//   :ui              — androidx.compose.ui.* + com.compose.desktop.native.*
-//                      (cinterops + both renderer pipelines). Package-source-wise
-//                      cross-platform-friendly; renderer bindings + cinterops
-//                      are what pin it to native today.
-//   :animation-core  — androidx.compose.animation.core.*
-//   :foundation      — androidx.compose.foundation.* + androidx.compose.animation.*
-//                      (non-core; merged to sidestep the foundation-layout
-//                      circular dep without splitting :foundation-layout too)
-//   :material3       — androidx.compose.material3.*
-//   :material-symbols — icon-font modules (outlined / rounded / sharp)
-// Module PATHS stay short (:ui, :foundation, …) so build files across the
-// repo stay terse; each project's directory is redirected via projectDir below.
+// Library modules mirror upstream Compose Multiplatform's `compose/` tree — one
+// Gradle module per upstream artifact (dir = upstream path, gradle path kept short):
+//   :ui              (compose/ui)                     androidx.compose.ui.* + com.compose.desktop.native.*
+//                                                     (cinterops + both renderer pipelines; still the merged
+//                                                     ui mega-module — not split further yet).
+//   :animation-core  (compose/animation/animation-core)      androidx.compose.animation.core.*
+//   :animation       (compose/animation/animation)           androidx.compose.animation.* (non-core; incl. animation-graphics.*)
+//   :foundation      (compose/foundation/foundation)         androidx.compose.foundation.*
+//   :foundation-layout (compose/foundation/foundation-layout) androidx.compose.foundation.layout.*
+//   :material3       (compose/material3/material3)            androidx.compose.material3.*
+//   :material-ripple (compose/material/material-ripple)       androidx.compose.material.ripple.*
+//   :material-symbols (compose/material-symbols)     icon-font modules (outlined / rounded / sharp)
+// DAG (all `api`): foundation → animation, foundation-layout, animation-core, ui;
+//   animation → animation-core, foundation-layout; material3 → foundation, material-ripple;
+//   material-ripple → foundation, animation-core. androidx.collection comes from Maven.
+// Module PATHS stay short (:ui, :foundation, …) so build files stay terse; each
+// project's directory is redirected via projectDir below.
 //
 // :window is the exception — it owns nativeComposeWindow(), the SDL3 main
 // loop, and the recomposer lifecycle. That's inherently native, so it
-// stays under compose/native/window/. Everything else lives directly
-// under compose/.
+// stays under compose/native/window/.
 include(":ui")
 include(":animation-core")
 include(":animation")
