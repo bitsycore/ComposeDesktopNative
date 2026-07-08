@@ -86,8 +86,8 @@ kotlin {
         commonMain {
             dependencies {
                 if (vReleased != null) {
-                    implementation("com.bitsycore.compose.native:desktop-window:$vReleased")
-                    implementation("com.bitsycore.compose.native:desktop-material3:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-window:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-material3:$vReleased")
                     // Swap :material-symbols too — otherwise its transitive
                     // project deps (:foundation, :animation-core, :ui) collide
                     // with the same klibs pulled from Maven via desktop-window,
@@ -96,7 +96,7 @@ kotlin {
                     // regardless — the Zip task below still references its
                     // Gradle Project object via rootProject.project(...) to
                     // read the per-style font-download task extras.
-                    implementation("com.bitsycore.compose.native:desktop-material-symbols:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-material-symbols:$vReleased")
                 } else {
                     implementation(project(":window"))
                     implementation(project(":material3"))

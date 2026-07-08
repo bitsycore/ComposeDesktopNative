@@ -415,7 +415,7 @@ that should surface in tooling.
 - After a module rename or IC-cache mismatch: nuke
   `demo/build/kotlin-native-ic-cache` (or `apidemo/build/…`). Kotlin/Native
   pins module IDs into its klib metadata; a stale cache surfaces as
-  `Unknown dependent library com.bitsycore.compose.native:core` (or
+  `Unknown dependent library com.bitsycore.compose.sdl:core` (or
   whatever the old module name was).
 
 ## License

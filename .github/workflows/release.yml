@@ -7,7 +7,7 @@ name: Release
 #        - Builds Release binaries of :demo + :apidemo for its target.
 #        - Zips <target>-demo.zip + <target>-apidemo.zip (executable + data.kres).
 #        - Publishes the library klibs Gradle knows how to build on this host
-#          to GitHub Packages (com.bitsycore.compose.native:desktop-*).
+#          to GitHub Packages (com.bitsycore.compose.sdl:desktop-*).
 #        - Uploads the two zips as workflow artifacts for the release job.
 #   2. `release` — downloads every artifact, attaches them to a fresh
 #      GitHub Release named after the tag.
@@ -17,7 +17,7 @@ name: Release
 # skipped for now: `compileCommonMainKotlinMetadata` trips on Kotlin 2.4's
 # stricter `@OptionalExpectation` checks against our vendored files.
 # Consumers pin the per-target artifact directly, e.g.
-# `com.bitsycore.compose.native:desktop-ui-macosarm64:0.2.0`.
+# `com.bitsycore.compose.sdl:desktop-ui-macosarm64:0.2.0`.
 
 on:
   push:

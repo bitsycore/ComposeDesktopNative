@@ -16,8 +16,8 @@ plugins {
 // Default build (no property): :window + :material3 come from `project(...)`
 // so a local `./gradlew :demo:run…` picks up your uncommitted changes.
 // `-PuseReleased=<version>` swaps them for
-//     com.bitsycore.compose.native:desktop-window-<target>:<version>
-//     com.bitsycore.compose.native:desktop-material3-<target>:<version>
+//     com.bitsycore.compose.sdl:desktop-window-<target>:<version>
+//     com.bitsycore.compose.sdl:desktop-material3-<target>:<version>
 // pulled from GitHub Packages — good for reproducing a release build against
 // the exact artifacts users will get. `:material-symbols` stays a project
 // dep either way — the Zip task below hooks its per-style font download
@@ -105,8 +105,8 @@ kotlin {
         commonMain {
             dependencies {
                 if (vReleased != null) {
-                    implementation("com.bitsycore.compose.native:desktop-window:$vReleased")
-                    implementation("com.bitsycore.compose.native:desktop-material3:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-window:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-material3:$vReleased")
                     // Swap :material-symbols too — otherwise its transitive
                     // project deps (:foundation, :animation-core, :ui) collide
                     // with the same klibs pulled from Maven via desktop-window,
@@ -115,7 +115,7 @@ kotlin {
                     // regardless — the Zip task below still references its
                     // Gradle Project object via rootProject.project(...) to
                     // read the per-style font-download task extras.
-                    implementation("com.bitsycore.compose.native:desktop-material-symbols:$vReleased")
+                    implementation("com.bitsycore.compose.sdl:desktop-material-symbols:$vReleased")
                 } else {
                     implementation(project(":window"))
                     implementation(project(":material3"))

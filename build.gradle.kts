@@ -27,9 +27,9 @@ apiValidation {
 }
 
 // ==================
-// MARK: Publishing — com.bitsycore.compose.native:desktop-<module>
+// MARK: Publishing — com.bitsycore.compose.sdl:desktop-<module>
 // ==================
-// Library modules publish under group `com.bitsycore.compose.native` with
+// Library modules publish under group `com.bitsycore.compose.sdl` with
 // artifactId `desktop-<module>` (e.g. :core -> desktop-core,
 // :material-symbols:outlined -> desktop-material-symbols-outlined). KMP adds the
 // per-target suffix (…-linuxx64 etc.) and the root `kotlinMultiplatform` metadata.
@@ -40,7 +40,7 @@ apiValidation {
 // Artifacts are GPG-signed only when $SIGNING_KEY (ASCII-armored) is present.
 
 allprojects {
-    group = "com.bitsycore.compose.native"
+    group = "com.bitsycore.compose.sdl"
     version = (findProperty("releaseVersion") as String?)?.takeIf { it.isNotBlank() } ?: "0.0.0-SNAPSHOT"
 }
 
