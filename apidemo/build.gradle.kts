@@ -19,20 +19,6 @@ plugins {
 // tasks by name.
 val vReleased = (findProperty("useReleased") as String?)?.takeIf { it.isNotBlank() }
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    if (vReleased != null) maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/bitsycore/ComposeDesktopNative")
-        credentials {
-            username = (findProperty("githubUser") as? String) ?: System.getenv("GITHUB_ACTOR") ?: ""
-            password = (findProperty("githubToken") as? String) ?: System.getenv("GITHUB_TOKEN") ?: ""
-        }
-    }
-}
-
 // In-repo (gitignored) native deps; see tools/. Driven off rootDir for portability.
 val vLibs = "${rootDir.invariantSeparatorsPath}/libs"
 

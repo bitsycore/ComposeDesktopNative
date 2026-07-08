@@ -28,12 +28,6 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 // -Prenderer=sdl3 flips macOS/Linux targets onto sdlRendererMain (Skiko-free build).
 val useSdl3Everywhere = (findProperty("renderer") as? String) == "sdl3"
 

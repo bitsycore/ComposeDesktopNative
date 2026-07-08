@@ -29,20 +29,6 @@ plugins {
 //   env: GITHUB_ACTOR / GITHUB_TOKEN            (auto-set on CI runners)
 val vReleased = (findProperty("useReleased") as String?)?.takeIf { it.isNotBlank() }
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    if (vReleased != null) maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/bitsycore/ComposeDesktopNative")
-        credentials {
-            username = (findProperty("githubUser") as? String) ?: System.getenv("GITHUB_ACTOR") ?: ""
-            password = (findProperty("githubToken") as? String) ?: System.getenv("GITHUB_TOKEN") ?: ""
-        }
-    }
-}
-
 // Output dir for the generated Res.* accessor file — wired into nativeMain
 // sources and produced by the generateComposeResAccessors task below.
 val composeResGenDir = layout.buildDirectory.dir("generated/composeRes")

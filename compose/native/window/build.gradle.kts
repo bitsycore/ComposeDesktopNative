@@ -14,12 +14,6 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 // See core/build.gradle.kts for the rationale on the host-side -I.
 val vHostOs = System.getProperty("os.name")
 val vHostSdlInclude: String? = when {

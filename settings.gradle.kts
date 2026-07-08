@@ -7,6 +7,31 @@ pluginManagement {
     }
 }
 
+// Single source of dependency repositories for every module (was duplicated in each
+// module's build.gradle.kts). PREFER_SETTINGS: these win; a stray project-level
+// repositories{} is ignored (with a warning) rather than failing the build.
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        // -PuseReleased=<version> swaps :window / :material3 / :material-symbols for the
+        // published artifacts (see demo/apidemo build.gradle.kts). Only added when set.
+        val useReleased = providers.gradleProperty("useReleased").orNull?.takeIf { it.isNotBlank() }
+        if (useReleased != null) {
+            maven {
+                name = "GitHubPackages"
+                setUrl("https://maven.pkg.github.com/bitsycore/ComposeDesktopNative")
+                credentials {
+                    username = providers.gradleProperty("githubUser").orNull ?: System.getenv("GITHUB_ACTOR") ?: ""
+                    password = providers.gradleProperty("githubToken").orNull ?: System.getenv("GITHUB_TOKEN") ?: ""
+                }
+            }
+        }
+    }
+}
+
 rootProject.name = "ComposeNativeSDL3"
 
 // Library modules mirror upstream Compose Multiplatform's `compose/` tree

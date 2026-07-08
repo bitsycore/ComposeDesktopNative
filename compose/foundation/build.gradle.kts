@@ -34,12 +34,6 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 // Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
 val vHostSupportsMingw: Boolean by rootProject.extra
 

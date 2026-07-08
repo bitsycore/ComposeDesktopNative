@@ -20,12 +20,6 @@ plugins {
 // depends on the native-only project modules (:window / :material3 / …), which a
 // JVM target can't resolve — so the two apps share source, not a source set.
 
-repositories {
-    google()
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 kotlin {
     jvm()
 
