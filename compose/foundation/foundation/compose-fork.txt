@@ -7,14 +7,6 @@
 # candidate. Never hand-edit the vendored files — change this manifest / the ref
 # and re-run sync.sh.
 
-# ── androidx.compose.animation.graphics ─────────────────────────────────────
-compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt  src/vendor/common/kotlin/androidx/compose/animation/graphics/ExperimentalAnimationGraphicsApi.kt
-
-# ── androidx.compose.animation.graphics.vector ──────────────────────────────
-compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt     src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatedImageVector.kt
-compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/Animator.kt                src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/Animator.kt
-compose/animation/animation-graphics/src/commonMain/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt  src/vendor/common/kotlin/androidx/compose/animation/graphics/vector/AnimatorAnimationSpecs.kt
-
 # ── androidx.compose.foundation ─────────────────────────────────────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/Background.kt                             src/vendor/common/kotlin/androidx/compose/foundation/Background.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/BasicMarquee.kt                           src/vendor/common/kotlin/androidx/compose/foundation/BasicMarquee.kt
