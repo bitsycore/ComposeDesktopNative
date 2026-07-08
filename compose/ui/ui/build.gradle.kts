@@ -148,6 +148,13 @@ kotlin {
             // obvious they are generated — never hand-edit; re-run sync instead.
             kotlin.srcDir("src/vendor/common/kotlin")
             dependencies {
+                // Split-out lower ui artifacts (CMP layout). The graphics/text/framework
+                // vendored code + renderers here import ui.util / ui.geometry / ui.unit /
+                // ui.backhandler from these modules.
+                api(project(":ui-util"))
+                api(project(":ui-geometry"))
+                api(project(":ui-unit"))
+                api(project(":ui-backhandler"))
                 api("org.jetbrains.compose.runtime:runtime:1.11.1")
                 api("org.jetbrains.compose.runtime:runtime-saveable:1.11.1")
                 api("androidx.compose.runtime:runtime-retain:1.11.1")

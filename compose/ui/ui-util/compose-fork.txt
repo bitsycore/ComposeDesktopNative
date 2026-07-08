@@ -1,0 +1,22 @@
+# Files vendored VERBATIM from JetBrains/compose-multiplatform-core into :compose:ui:ui-util.
+# Re-sync with: tools/compose-fork/sync.sh :compose:ui:ui-util   (or `sync.sh` for every module).
+# Upstream ref pinned in tools/compose-fork/compose-ref.txt.
+#
+# Format:  <upstream-path-under-clone>  <dest-relative-to-this-module>
+# Grouped by androidx package (alphabetical). Uncommented = vendored, commented =
+# candidate. Never hand-edit the vendored files — change this manifest / the ref
+# and re-run sync.sh.
+
+# ── androidx.compose.ui ─────────────────────────────────────────────────────
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/ExperimentalComposeUiApi.kt        src/vendor/common/kotlin/androidx/compose/ui/ExperimentalComposeUiApi.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/ExperimentalIndirectPointerApi.kt  src/vendor/common/kotlin/androidx/compose/ui/ExperimentalIndirectPointerApi.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/ExperimentalMediaQueryApi.kt       src/vendor/common/kotlin/androidx/compose/ui/ExperimentalMediaQueryApi.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/InternalComposeUiApi.kt            src/vendor/common/kotlin/androidx/compose/ui/InternalComposeUiApi.kt
+
+# ── androidx.compose.ui.util ────────────────────────────────────────────────
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/InlineClassHelper.kt         src/vendor/common/kotlin/androidx/compose/ui/util/InlineClassHelper.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/ListUtils.kt                 src/vendor/common/kotlin/androidx/compose/ui/util/ListUtils.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/MathHelpers.kt               src/vendor/common/kotlin/androidx/compose/ui/util/MathHelpers.kt
+compose/ui/ui-util/src/commonMain/kotlin/androidx/compose/ui/util/Trace.kt                     src/vendor/common/kotlin/androidx/compose/ui/util/Trace.kt
+compose/ui/ui-util/src/nonJvmMain/kotlin/androidx/compose/ui/util/InlineClassHelper.nonJvm.kt  src/vendor/native/kotlin/androidx/compose/ui/util/InlineClassHelper.native.kt
+compose/ui/ui-util/src/macosMain/kotlin/androidx/compose/ui/util/Trace.macos.kt                src/vendor/native/kotlin/androidx/compose/ui/util/Trace.native.kt

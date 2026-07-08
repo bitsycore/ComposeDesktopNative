@@ -34,9 +34,15 @@ One Gradle module per upstream artifact; the directory mirrors the upstream
 
 ```
 compose/
-├── ui/                              → :ui        — androidx.compose.ui.* + com.compose.sdl.*
-│                                                   (cinterops + both renderer pipelines live here; still the
-│                                                    merged ui mega-module — not split into ui-text/ui-graphics/…)
+├── ui/
+│   ├── ui/                          → :ui        — androidx.compose.ui.* (ui + ui-graphics + ui-text) +
+│   │                                               com.compose.sdl.* — cinterops + BOTH renderer pipelines live
+│   │                                               here. ui-graphics/ui-text can't split off: their Canvas /
+│   │                                               Paragraph `expect`s are the renderers' `actual`s (same-module).
+│   ├── ui-util/                     → :ui-util       — androidx.compose.ui.util.* (+ Experimental/InternalComposeUiApi)
+│   ├── ui-geometry/                 → :ui-geometry   — androidx.compose.ui.geometry.*
+│   ├── ui-unit/                     → :ui-unit       — androidx.compose.ui.unit.*
+│   └── ui-backhandler/              → :ui-backhandler — androidx.compose.ui.backhandler.*
 ├── animation/
 │   ├── animation-core/              → :animation-core     — androidx.compose.animation.core.*
 │   ├── animation/                   → :animation          — androidx.compose.animation.* (non-core)
@@ -78,15 +84,20 @@ androidx KMP libs.
 ```
 
 All edges are `api`, so a consumer of `:foundation` / `:material3` transitively
-sees the split modules. Full DAG: `:animation-core → :ui`; `:foundation-layout → :ui`;
-`:animation → :animation-core, :foundation-layout`; `:foundation → :animation,
-:foundation-layout, :animation-core, :ui`; `:material-ripple → :foundation, :animation-core`;
+sees the split modules. Full DAG: `:ui-util → collection`; `:ui-geometry → :ui-util`;
+`:ui-unit → :ui-geometry, :ui-util`; `:ui-backhandler → :ui-util, navigationevent`;
+`:ui → :ui-util, :ui-geometry, :ui-unit, :ui-backhandler`; `:animation-core → :ui`;
+`:foundation-layout → :ui`; `:animation → :animation-core, :foundation-layout`;
+`:foundation → :animation, :foundation-layout, :animation-core, :ui`;
+`:material-ripple → :foundation, :animation-core`;
 `:material3 → :foundation, :material-ripple, :animation-core, :foundation-layout`.
 
-`:ui` is the leaf. Everything above it can only touch renderer / cinterop
-internals via `:ui`'s public surface. `:window` depends on `:ui` +
-`:foundation` (needs `LazyList`-style scaffolding to install the popup /
-scaffold layer at the composition root).
+`:ui` is the renderer/cinterop hub (the ui-graphics + ui-text `expect`s resolve to
+its SDL/Skia renderer `actual`s). The pure lower artifacts (`:ui-util`,
+`:ui-geometry`, `:ui-unit`, `:ui-backhandler`) are split out below it. Everything
+above `:ui` can only touch renderer / cinterop internals via its public surface.
+`:window` depends on `:ui` + `:foundation` (needs `LazyList`-style scaffolding to
+install the popup / scaffold layer at the composition root).
 
 ## Vendoring philosophy — read this before writing any `androidx.compose.*` code
 
