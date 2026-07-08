@@ -51,6 +51,7 @@ kotlin {
             dependencies {
                 api(project(":ui"))
                 api(project(":animation-core"))
+                api(project(":foundation-layout"))
             }
         }
         nativeMain {

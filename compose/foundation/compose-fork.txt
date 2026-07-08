@@ -185,45 +185,6 @@ compose/foundation/foundation/src/nonJvmMain/kotlin/androidx/compose/foundation/
 compose/foundation/foundation/src/skikoMain/kotlin/androidx/compose/foundation/internal/PlatformUtils.kt                                   src/vendor/native/kotlin/androidx/compose/foundation/internal/PlatformUtils.native.kt
 compose/foundation/foundation/src/nativeMain/kotlin/androidx/compose/foundation/internal/System.native.kt                                  src/vendor/native/kotlin/androidx/compose/foundation/internal/System.native.kt
 
-# ── androidx.compose.foundation.layout ──────────────────────────────────────
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AlignmentLine.kt                 src/vendor/common/kotlin/androidx/compose/foundation/layout/AlignmentLine.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Arrangement.kt                   src/vendor/common/kotlin/androidx/compose/foundation/layout/Arrangement.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/AspectRatio.kt                   src/vendor/common/kotlin/androidx/compose/foundation/layout/AspectRatio.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Box.kt                           src/vendor/common/kotlin/androidx/compose/foundation/layout/Box.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt            src/vendor/common/kotlin/androidx/compose/foundation/layout/BoxWithConstraints.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Column.kt                        src/vendor/common/kotlin/androidx/compose/foundation/layout/Column.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ComposeFoundationLayoutFlags.kt  src/vendor/common/kotlin/androidx/compose/foundation/layout/ComposeFoundationLayoutFlags.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt          src/vendor/common/kotlin/androidx/compose/foundation/layout/ContextualFlowLayout.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ExperimentalFlexBoxApi.kt        src/vendor/common/kotlin/androidx/compose/foundation/layout/ExperimentalFlexBoxApi.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ExperimentalGridApi.kt           src/vendor/common/kotlin/androidx/compose/foundation/layout/ExperimentalGridApi.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/ExperimentalLayoutApi.kt         src/vendor/common/kotlin/androidx/compose/foundation/layout/ExperimentalLayoutApi.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlexBox.kt                       src/vendor/common/kotlin/androidx/compose/foundation/layout/FlexBox.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayout.kt                    src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayout.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt      src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutBuildingBlocks.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt            src/vendor/common/kotlin/androidx/compose/foundation/layout/FlowLayoutOverflow.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Grid.kt                          src/vendor/common/kotlin/androidx/compose/foundation/layout/Grid.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Intrinsic.kt                     src/vendor/common/kotlin/androidx/compose/foundation/layout/Intrinsic.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/LayoutScopeMarker.kt             src/vendor/common/kotlin/androidx/compose/foundation/layout/LayoutScopeMarker.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Offset.kt                        src/vendor/common/kotlin/androidx/compose/foundation/layout/Offset.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Padding.kt                       src/vendor/common/kotlin/androidx/compose/foundation/layout/Padding.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Row.kt                           src/vendor/common/kotlin/androidx/compose/foundation/layout/Row.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt                 src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnImpl.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt        src/vendor/common/kotlin/androidx/compose/foundation/layout/RowColumnMeasurePolicy.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/RulerAlignment.kt                src/vendor/common/kotlin/androidx/compose/foundation/layout/RulerAlignment.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Size.kt                          src/vendor/common/kotlin/androidx/compose/foundation/layout/Size.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Spacer.kt                        src/vendor/common/kotlin/androidx/compose/foundation/layout/Spacer.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/Visible.kt                       src/vendor/common/kotlin/androidx/compose/foundation/layout/Visible.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/WindowInsets.kt                  src/vendor/common/kotlin/androidx/compose/foundation/layout/WindowInsets.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/WindowInsetsPadding.kt           src/vendor/common/kotlin/androidx/compose/foundation/layout/WindowInsetsPadding.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/WindowInsetsSize.kt              src/vendor/common/kotlin/androidx/compose/foundation/layout/WindowInsetsSize.kt
-compose/foundation/foundation-layout/src/skikoMain/kotlin/androidx/compose/foundation/layout/WindowInsets.skiko.kt             src/vendor/native/kotlin/androidx/compose/foundation/layout/WindowInsets.native.kt
-compose/foundation/foundation-layout/src/skikoMain/kotlin/androidx/compose/foundation/layout/WindowInsetsPadding.skiko.kt      src/vendor/native/kotlin/androidx/compose/foundation/layout/WindowInsetsPadding.native.kt
-
-# ── androidx.compose.foundation.layout.internal ─────────────────────────────
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/internal/InlineClassHelper.kt                   src/vendor/common/kotlin/androidx/compose/foundation/layout/internal/InlineClassHelper.kt
-compose/foundation/foundation-layout/src/commonMain/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.kt         src/vendor/common/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.kt
-compose/foundation/foundation-layout/src/nonJvmMain/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.nonJvm.kt  src/vendor/native/kotlin/androidx/compose/foundation/layout/internal/JvmDefaultWithCompatibility.native.kt
-
 # ── androidx.compose.foundation.lazy ────────────────────────────────────────
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyDsl.kt                       src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyDsl.kt
 compose/foundation/foundation/src/commonMain/kotlin/androidx/compose/foundation/lazy/LazyItemScope.kt                 src/vendor/common/kotlin/androidx/compose/foundation/lazy/LazyItemScope.kt
