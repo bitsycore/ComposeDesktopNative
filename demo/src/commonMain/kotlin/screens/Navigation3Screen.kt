@@ -1,5 +1,7 @@
 package screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -45,14 +49,20 @@ fun Navigation3Screen() {
 	val canGoBack = backStack.size > 1
 
 	Column(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = Modifier.fillMaxWidth().clipToBounds(),
 		verticalArrangement = Arrangement.spacedBy(12.dp),
 	) {
 		// Header: back affordance + live back-stack depth.
 		Row(verticalAlignment = Alignment.CenterVertically) {
-			if (canGoBack) {
-				FilledTonalButton(onClick = { backStack.removeLastOrNull() }) { Text("‹ Back") }
-				Spacer(Modifier.width(12.dp))
+			AnimatedVisibility (
+				canGoBack,
+				enter = expandIn { IntSize.Zero } + fadeIn(),
+				exit = shrinkOut { IntSize.Zero } + fadeOut()
+			) {
+				Row {
+					FilledTonalButton(onClick = { backStack.removeLastOrNull() }) { Text("‹ Back") }
+					Spacer(Modifier.width(12.dp))
+				}
 			}
 			Text(
 				"Navigation 3 — depth ${backStack.size}",
@@ -62,16 +72,47 @@ fun Navigation3Screen() {
 		}
 		HorizontalDivider()
 		NavDisplay(
+
 			backStack = backStack,
+
+			// Push: new screen from right
+			transitionSpec = {
+				slideInHorizontally(
+					animationSpec = tween(300),
+					initialOffsetX = { it }
+				) + fadeIn() togetherWith
+				slideOutHorizontally(
+					animationSpec = tween(300),
+					targetOffsetX = { -it }
+				) + fadeOut()
+			},
+
+			// Pop: previous screen from left
+			popTransitionSpec = {
+				slideInHorizontally(
+					animationSpec = tween(300),
+					initialOffsetX = { -it }
+				) + fadeIn() togetherWith
+					slideOutHorizontally(
+						animationSpec = tween(300),
+						targetOffsetX = { it }
+					) + fadeOut()
+			},
 		) { nav3Route ->
-			when(nav3Route) {
+			when (nav3Route) {
 				Nav3Home -> NavEntry(nav3Route) {
-					Nav3HomeContent(onOpen = { id -> backStack.add(Nav3Detail(id)) })
+					Nav3HomeContent(
+						onOpen = { id -> backStack.add(Nav3Detail(id)) }
+					)
 				}
-                is Nav3Detail -> NavEntry(nav3Route) {
-					Nav3DetailContent(id = nav3Route.id, onBack = { backStack.removeLastOrNull() })
+
+				is Nav3Detail -> NavEntry(nav3Route) {
+					Nav3DetailContent(
+						id = nav3Route.id,
+						onBack = { backStack.removeLastOrNull() }
+					)
 				}
-            }
+			}
 		}
 	}
 }
