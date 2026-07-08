@@ -1,7 +1,7 @@
 package apidemo
 
-import com.compose.desktop.native.appDataDir
-import com.compose.desktop.native.revealInFileManager
+import com.compose.sdl.appDataDir
+import com.compose.sdl.revealInFileManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okio.FileSystem

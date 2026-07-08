@@ -17,9 +17,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import com.compose.desktop.native.layout.intOffset
-import com.compose.desktop.native.window.LocalPopupHost
-import com.compose.desktop.native.window.PopupOutsideDismiss
+import com.compose.sdl.layout.intOffset
+import com.compose.sdl.window.LocalPopupHost
+import com.compose.sdl.window.PopupOutsideDismiss
 
 // ==================
 // MARK: Popup — native actuals for the vendored expect

@@ -52,7 +52,7 @@ kotlin {
     // Give us a real `nativeMain` intermediate source set (all targets are
     // native today). Screens that only touch androidx.compose.* live in
     // commonMain so a future jvm() target can compile them against upstream
-    // Compose; project-only (com.compose.desktop.native.*) screens + the SDL3
+    // Compose; project-only (com.compose.sdl.*) screens + the SDL3
     // entry point stay in nativeMain.
     applyDefaultHierarchyTemplate()
 
@@ -180,8 +180,8 @@ val generateComposeResAccessors = tasks.register("generateComposeResAccessors") 
         vSb.appendLine("package composeresources.generated")
         vSb.appendLine()
         vSb.appendLine("import androidx.compose.ui.graphics.painter.Painter")
-        vSb.appendLine("import com.compose.desktop.native.res.Res")
-        vSb.appendLine("import com.compose.desktop.native.res.painterResource")
+        vSb.appendLine("import com.compose.sdl.res.Res")
+        vSb.appendLine("import com.compose.sdl.res.painterResource")
         vSb.appendLine()
         File(vSrcDir, "drawable").listFiles()?.filter { it.isFile }?.sortedBy { it.name }?.forEach { vFile ->
             vSb.appendLine(

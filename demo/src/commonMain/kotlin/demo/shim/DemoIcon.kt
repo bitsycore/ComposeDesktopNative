@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 
 /* A platform-neutral icon reference for the shared demo screens. On native it
    maps to a Material Symbols codepoint rendered by the project icon-font engine
-   (com.compose.desktop.native.icons); on a future jvm target it maps to an
+   (com.compose.sdl.icons); on a future jvm target it maps to an
    androidx.compose.material.icons ImageVector. Shared screens reference icons
    ONLY through this enum, so the exact same code compiles on both stacks. */
 enum class DemoIcon {

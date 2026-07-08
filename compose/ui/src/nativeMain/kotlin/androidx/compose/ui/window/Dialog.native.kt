@@ -23,7 +23,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import com.compose.desktop.native.window.LocalPopupExitHandle
+import com.compose.sdl.window.LocalPopupExitHandle
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 

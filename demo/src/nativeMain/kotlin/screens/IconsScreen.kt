@@ -14,12 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.icons.MaterialSymbols
-import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.desktop.native.icons.material.symbols.rounded.MaterialSymbolsRounded
-import com.compose.desktop.native.icons.material.symbols.sharp.MaterialSymbolsSharp
+import com.compose.sdl.icons.MaterialSymbols
+import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.rounded.MaterialSymbolsRounded
+import com.compose.sdl.icons.material.symbols.sharp.MaterialSymbolsSharp
 import composeresources.generated.heart
-import com.compose.desktop.native.res.Res
+import com.compose.sdl.res.Res
 
 @Composable
 internal fun IconsScreen() {

@@ -1,9 +1,9 @@
 package apidemo
 
 import androidx.compose.ui.text.font.FontFamily
-import com.compose.desktop.native.icons.IconFont
-import com.compose.desktop.native.loadComposeResourceBytes
-import com.compose.desktop.native.text.namedFontFamily
+import com.compose.sdl.icons.IconFont
+import com.compose.sdl.loadComposeResourceBytes
+import com.compose.sdl.text.namedFontFamily
 
 // ==================
 // MARK: Monospace body font

@@ -11,7 +11,7 @@ package androidx.compose.ui.text.font
  *     `Default`, `SansSerif`, `Serif`, `Monospace`, `Cursive`, and `LoadedFontFamily`
  *     through `SkiaFontLoader` to produce a real `SkTypeface`. Our text renderer
  *     (SdlParagraph / SkiaParagraph) reads `TextStyle.fontFamily` and
- *     [com.compose.desktop.native.text.NamedFont] directly to look the family up
+ *     [com.compose.sdl.text.NamedFont] directly to look the family up
  *     against its registered font table, so the resolver's typeface is never
  *     consulted. A no-op adapter (returns an [TypefaceResult.Immutable] wrapping
  *     `Unit`) is enough to keep the resolver stack compiling / not throwing.

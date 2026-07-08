@@ -6,9 +6,9 @@ import androidx.compose.ui.graphics.colorspace.ColorSpace
 import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import com.compose.desktop.native.graphics.ProjectCanvas
-import com.compose.desktop.native.graphics.ProjectImageBitmap
-import com.compose.desktop.native.graphics.ProjectPaint
+import com.compose.sdl.graphics.ProjectCanvas
+import com.compose.sdl.graphics.ProjectImageBitmap
+import com.compose.sdl.graphics.ProjectPaint
 
 // ==================
 // MARK: Canvas/Paint native actuals
@@ -16,7 +16,7 @@ import com.compose.desktop.native.graphics.ProjectPaint
 
 // Thin actuals for the vendored Paint / Shader / ColorFilter / PathEffect /
 // ImageBitmap / Canvas factories + opaque platform types. The concrete impls
-// (where any) live in com.compose.desktop.native.graphics per FIDELITY
+// (where any) live in com.compose.sdl.graphics per FIDELITY
 // relocate rule; the project pipeline does not currently use these types
 // (renderers go through Brush / DrawScope), so the actuals are stubs that
 // satisfy the expect contracts and let upstream-shaped consumers compile.
@@ -38,7 +38,7 @@ actual fun Paint(): Paint = ProjectPaint()
 //  by K2's expect+actual same-source-set rule for
 //  `internal expect fun ByteArray.putBytesInto`). SDL3 has no shader
 //  pipeline — gradient rasterisation goes through
-//  com.compose.desktop.native.graphics.GradientBridge directly, not Shader.
+//  com.compose.sdl.graphics.GradientBridge directly, not Shader.
 
 // SDL3 has no GPU shader stage — it samples gradients per-vertex straight from a
 // Brush (see Sdl3DrawScope.samplerFor). ShaderBrush.applyTo only ever leaves a
@@ -143,7 +143,7 @@ internal actual fun ActualImageBitmap(
 	hasAlpha: Boolean,
 	colorSpace: ColorSpace,
 ): ImageBitmap =
-	com.compose.desktop.native.graphics.offscreenRenderer
+	com.compose.sdl.graphics.offscreenRenderer
 		?.createImageBitmap(width, height, config, hasAlpha, colorSpace)
 		?: ProjectImageBitmap(width, height, config, hasAlpha, colorSpace)
 
@@ -156,7 +156,7 @@ internal actual fun createImageBitmap(bytes: ByteArray): ImageBitmap =
 actual typealias NativeCanvas = Any
 
 internal actual fun ActualCanvas(image: ImageBitmap): Canvas =
-	com.compose.desktop.native.graphics.offscreenRenderer?.createCanvas(image) ?: ProjectCanvas()
+	com.compose.sdl.graphics.offscreenRenderer?.createCanvas(image) ?: ProjectCanvas()
 
 // PathMeasure actuals live per-renderer:
 //   * skikoRenderer: vendored SkiaBackedPathMeasure.skiko.kt.

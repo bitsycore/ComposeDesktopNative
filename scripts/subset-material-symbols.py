@@ -41,7 +41,7 @@ CONST_RE = re.compile(r"const\s+val\s+(\w+)\s*=\s*0x([0-9a-fA-F]+)")
 # Matches MaterialSymbols.Name in any Kotlin source.
 USAGE_RE = re.compile(r"\bMaterialSymbols\.(\w+)\b")
 
-DEFAULT_CONSTANTS = REPO_ROOT / "material-symbols/src/commonMain/kotlin/com/compose/desktop/native/icons/MaterialSymbols.kt"
+DEFAULT_CONSTANTS = REPO_ROOT / "material-symbols/src/commonMain/kotlin/com/compose/sdl/icons/MaterialSymbols.kt"
 DEFAULT_OUTPUT = REPO_ROOT / "build/icons/usage-codepoint.txt"
 
 

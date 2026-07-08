@@ -34,14 +34,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import com.compose.desktop.native.layout.x
-import com.compose.desktop.native.layout.y
+import com.compose.sdl.layout.x
+import com.compose.sdl.layout.y
 import androidx.compose.ui.platform.currentClipboard
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import com.compose.desktop.native.icons.MaterialSymbols
-import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.MaterialSymbols
+import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
 import kotlinx.coroutines.delay
 
 // ==================

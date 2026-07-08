@@ -1,6 +1,6 @@
 package utils
 
-import com.compose.desktop.native.GpuMode
+import com.compose.sdl.GpuMode
 
 // ==================
 // MARK: CLI args

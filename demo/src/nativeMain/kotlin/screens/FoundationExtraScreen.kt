@@ -33,13 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.icons.IconFontIcon
-import com.compose.desktop.native.icons.MaterialSymbols
-import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.desktop.native.scrollbar.HorizontalScrollbar
-import com.compose.desktop.native.scrollbar.VerticalScrollbar
-import com.compose.desktop.native.scrollbar.rememberScrollbarAdapter
-import com.compose.desktop.native.text.IconText
+import com.compose.sdl.icons.IconFontIcon
+import com.compose.sdl.icons.MaterialSymbols
+import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.scrollbar.HorizontalScrollbar
+import com.compose.sdl.scrollbar.VerticalScrollbar
+import com.compose.sdl.scrollbar.rememberScrollbarAdapter
+import com.compose.sdl.text.IconText
 
 // Foundation — AnimatedVisibility, BoxWithConstraints, desktop scrollbars.
 @Composable

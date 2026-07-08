@@ -34,7 +34,7 @@ One Gradle module per upstream artifact; the directory mirrors the upstream
 
 ```
 compose/
-├── ui/                              → :ui        — androidx.compose.ui.* + com.compose.desktop.native.*
+├── ui/                              → :ui        — androidx.compose.ui.* + com.compose.sdl.*
 │                                                   (cinterops + both renderer pipelines live here; still the
 │                                                    merged ui mega-module — not split into ui-text/ui-graphics/…)
 ├── animation/
@@ -116,7 +116,7 @@ Two categories of code live in each module:
 1. **`commonMain` should contain NO `androidx.compose.*` code you authored.**
    Anything under `androidx.compose.*` in `commonMain` MUST be a vendored
    copy. Hand-rolled `commonMain` is fine only when the package is
-   `com.compose.desktop.native.*` (project code).
+   `com.compose.sdl.*` (project code).
 
 2. **Vendor the `actual`s too whenever possible.** Upstream ships
    `skikoMain` and `native`-flavored actuals. If they compile against

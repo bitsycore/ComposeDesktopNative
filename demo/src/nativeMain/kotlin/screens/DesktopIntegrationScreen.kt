@@ -14,14 +14,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.appDataDir
-import com.compose.desktop.native.fileManagerName
-import com.compose.desktop.native.hasComposeResource
-import com.compose.desktop.native.loadComposeResourceBytes
-import com.compose.desktop.native.openUrl
-import com.compose.desktop.native.registerMemoryResource
-import com.compose.desktop.native.removeMemoryResource
-import com.compose.desktop.native.revealInFileManager
+import com.compose.sdl.appDataDir
+import com.compose.sdl.fileManagerName
+import com.compose.sdl.hasComposeResource
+import com.compose.sdl.loadComposeResourceBytes
+import com.compose.sdl.openUrl
+import com.compose.sdl.registerMemoryResource
+import com.compose.sdl.removeMemoryResource
+import com.compose.sdl.revealInFileManager
 
 // ==================
 // MARK: Desktop integration (SDL3 / platform)

@@ -36,7 +36,7 @@ rootProject.name = "ComposeNativeSDL3"
 
 // Library modules mirror upstream Compose Multiplatform's `compose/` tree — one
 // Gradle module per upstream artifact (dir = upstream path, gradle path kept short):
-//   :ui              (compose/ui)                     androidx.compose.ui.* + com.compose.desktop.native.*
+//   :ui              (compose/ui)                     androidx.compose.ui.* + com.compose.sdl.*
 //                                                     (cinterops + both renderer pipelines; still the merged
 //                                                     ui mega-module — not split further yet).
 //   :animation-core  (compose/animation/animation-core)      androidx.compose.animation.core.*

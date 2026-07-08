@@ -9,15 +9,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.widgets.HorizontalSplitPane
-import com.compose.desktop.native.widgets.VerticalSplitPane
+import com.compose.sdl.widgets.HorizontalSplitPane
+import com.compose.sdl.widgets.VerticalSplitPane
 
 @Composable
 internal fun DesktopWidgetsScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ScreenTitle(
             "Desktop widgets",
-            "SplitPane resizable panes (project-original, com.compose.desktop.native.widgets), plus segmented & toggle buttons.",
+            "SplitPane resizable panes (project-original, com.compose.sdl.widgets), plus segmented & toggle buttons.",
         )
 
         // SplitPane

@@ -13,9 +13,9 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.Window
-import com.compose.desktop.native.nativeComposeApp
-import com.compose.desktop.native.nativeComposeWindow
+import com.compose.sdl.Window
+import com.compose.sdl.nativeComposeApp
+import com.compose.sdl.nativeComposeWindow
 import demo.registry.allCategories
 import demo.shell.App
 import screens.*
@@ -196,7 +196,7 @@ fun main(args: Array<String>) {
 /* Content of the demo's extra windows — each has its own composition, focus,
    input routing, and render loop; the counter proves per-window state. */
 @Composable
-private fun com.compose.desktop.native.ComposeWindowScope.ExtraWindowContent(inId: Int) {
+private fun com.compose.sdl.ComposeWindowScope.ExtraWindowContent(inId: Int) {
     Box(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
@@ -235,18 +235,18 @@ private fun runBackTest() {
             when (frameIndex) {
                 // Phase 1: Escape with NOTHING focused.
                 20 -> {
-                    com.compose.desktop.native.injectKey(41, true)   // SDL_SCANCODE_ESCAPE
-                    com.compose.desktop.native.injectKey(41, false)
+                    com.compose.sdl.injectKey(41, true)   // SDL_SCANCODE_ESCAPE
+                    com.compose.sdl.injectKey(41, false)
                     true
                 }
                 // Phase 2: click the text field to focus it, then Escape —
                 // the user-facing SearchBar scenario (field focused while
                 // the back handler should collapse the bar).
-                30 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 100f); true }
-                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 100f); true }
+                30 -> { com.compose.sdl.injectMouseEvent(1, 200f, 100f); true }
+                32 -> { com.compose.sdl.injectMouseEvent(2, 200f, 100f); true }
                 44 -> {
-                    com.compose.desktop.native.injectKey(41, true)
-                    com.compose.desktop.native.injectKey(41, false)
+                    com.compose.sdl.injectKey(41, true)
+                    com.compose.sdl.injectKey(41, false)
                     true
                 }
                 70 -> {
@@ -391,7 +391,7 @@ private fun runMultiWindowTest() {
    (expands it), presses Escape, and writes esc_before.bmp / esc_after.bmp —
    the expanded overlay must be visible in `before` and gone in `after`. */
 private fun runSearchEscTest() {
-    fun snap(inBridge: com.compose.desktop.native.RenderBackend, inName: String) {
+    fun snap(inBridge: com.compose.sdl.RenderBackend, inName: String) {
         val vSnap = inBridge.snapshotBgra() ?: return
         val (vW, vH, vBgra) = vSnap
         writeFile(inName, encodeBmpBgra32(vW, vH, vBgra))
@@ -403,12 +403,12 @@ private fun runSearchEscTest() {
         height = 700,
         onFrame = { vBridge, vFrame ->
             when (vFrame) {
-                30 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 230f); true }
-                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 230f); true }
+                30 -> { com.compose.sdl.injectMouseEvent(1, 200f, 230f); true }
+                32 -> { com.compose.sdl.injectMouseEvent(2, 200f, 230f); true }
                 70 -> { snap(vBridge, "esc_before.bmp"); true }
                 80 -> {
-                    com.compose.desktop.native.injectKey(41, true)   // Escape
-                    com.compose.desktop.native.injectKey(41, false)
+                    com.compose.sdl.injectKey(41, true)   // Escape
+                    com.compose.sdl.injectKey(41, false)
                     true
                 }
                 130 -> { snap(vBridge, "esc_after.bmp"); false }
@@ -509,7 +509,7 @@ private fun runAnimVisTest() {
    dialog semi-transparent, slightly scaled-down and shifted down vs the settled shot,
    and exit_end must show no dialog at all — skiko-parity animation both ways. */
 private fun runDialogAnimTest() {
-    fun snap(inBridge: com.compose.desktop.native.RenderBackend, inName: String) {
+    fun snap(inBridge: com.compose.sdl.RenderBackend, inName: String) {
         val vSnap = inBridge.snapshotBgra() ?: return
         val (vW, vH, vBgra) = vSnap
         writeFile(inName, encodeBmpBgra32(vW, vH, vBgra))
@@ -521,14 +521,14 @@ private fun runDialogAnimTest() {
         height = 700,
         onFrame = { vBridge, vFrame ->
             when (vFrame) {
-                30 -> { com.compose.desktop.native.injectMouseEvent(1, 500f, 350f); true }
-                32 -> { com.compose.desktop.native.injectMouseEvent(2, 500f, 350f); true }
+                30 -> { com.compose.sdl.injectMouseEvent(1, 500f, 350f); true }
+                32 -> { com.compose.sdl.injectMouseEvent(2, 500f, 350f); true }
                 36 -> { snap(vBridge, "dialog_mid1.bmp"); true }
                 40 -> { snap(vBridge, "dialog_mid2.bmp"); true }
                 90 -> { snap(vBridge, "dialog_end.bmp"); true }
                 92 -> {
-                    com.compose.desktop.native.injectKey(41, true)   // Escape → dismiss
-                    com.compose.desktop.native.injectKey(41, false)
+                    com.compose.sdl.injectKey(41, true)   // Escape → dismiss
+                    com.compose.sdl.injectKey(41, false)
                     true
                 }
                 97 -> { snap(vBridge, "dialog_exit_mid.bmp"); true }
@@ -609,9 +609,9 @@ private fun runClickTest() {
         height = 300,
         onFrame = { _, frameIndex ->
             when (frameIndex) {
-                20 -> { com.compose.desktop.native.injectMouseEvent(0, 200f, 150f); true }
-                26 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 150f); true }
-                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 150f); true }
+                20 -> { com.compose.sdl.injectMouseEvent(0, 200f, 150f); true }
+                26 -> { com.compose.sdl.injectMouseEvent(1, 200f, 150f); true }
+                32 -> { com.compose.sdl.injectMouseEvent(2, 200f, 150f); true }
                 70 -> {
                     println(
                         if (vClicks > 0) "clicktest: PASS ($vClicks click(s) via upstream clickable)"
@@ -648,9 +648,9 @@ private fun runToggleTest() {
         height = 300,
         onFrame = { _, frameIndex ->
             when (frameIndex) {
-                20 -> { com.compose.desktop.native.injectMouseEvent(0, 200f, 150f); true }
-                26 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 150f); true }
-                32 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 150f); true }
+                20 -> { com.compose.sdl.injectMouseEvent(0, 200f, 150f); true }
+                26 -> { com.compose.sdl.injectMouseEvent(1, 200f, 150f); true }
+                32 -> { com.compose.sdl.injectMouseEvent(2, 200f, 150f); true }
                 70 -> {
                     println(
                         if (vChanges > 0 && vChecked) "toggletest: PASS (switch toggled to $vChecked via toggleable)"
@@ -685,11 +685,11 @@ private fun runKeyTest() {
         height = 200,
         onFrame = { _, frameIndex ->
             when (frameIndex) {
-                12 -> { com.compose.desktop.native.injectMouseEvent(1, 200f, 100f); true } // click field to focus
-                14 -> { com.compose.desktop.native.injectMouseEvent(2, 200f, 100f); true }
-                24 -> { com.compose.desktop.native.injectTextInput("A"); true }
-                28 -> { com.compose.desktop.native.injectTextInput("B"); true }
-                32 -> { com.compose.desktop.native.injectKey(42, true); com.compose.desktop.native.injectKey(42, false); true } // Backspace → "A"
+                12 -> { com.compose.sdl.injectMouseEvent(1, 200f, 100f); true } // click field to focus
+                14 -> { com.compose.sdl.injectMouseEvent(2, 200f, 100f); true }
+                24 -> { com.compose.sdl.injectTextInput("A"); true }
+                28 -> { com.compose.sdl.injectTextInput("B"); true }
+                32 -> { com.compose.sdl.injectKey(42, true); com.compose.sdl.injectKey(42, false); true } // Backspace → "A"
                 70 -> {
                     println("keytest: real BasicTextField value='${vText.value}'")
                     println(
@@ -727,7 +727,7 @@ private fun runScrollTest() {
         onFrame = { _, frameIndex ->
             when {
                 frameIndex in 20..40 && frameIndex % 2 == 0 -> {
-                    com.compose.desktop.native.injectWheel(200f, 150f, 0f, -3f) // wheel down
+                    com.compose.sdl.injectWheel(200f, 150f, 0f, -3f) // wheel down
                     true
                 }
                 frameIndex == 90 -> {

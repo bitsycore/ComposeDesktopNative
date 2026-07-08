@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 // MARK: Color helpers (pure common)
 // ==================
 
-/* The project ships blend / lighten / darken under com.compose.desktop.native
+/* The project ships blend / lighten / darken under com.compose.sdl
    .graphics, which a jvm target compiling against upstream Compose can't see.
    These are trivial pure-Color math, so the demo carries its own copy — keeping
    the shared shell + screens free of any project-only Color dependency. */

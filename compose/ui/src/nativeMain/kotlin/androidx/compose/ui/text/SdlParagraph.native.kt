@@ -1,6 +1,6 @@
 package androidx.compose.ui.text
 
-import com.compose.desktop.native.text.projectFontName
+import com.compose.sdl.text.projectFontName
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
@@ -18,13 +18,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.isUnspecified
-import com.compose.desktop.native.text.NativeTextCanvas
-import com.compose.desktop.native.text.currentTextMeasurer
-import com.compose.desktop.native.text.resolveRunPx
-import com.compose.desktop.native.text.runVariations
-import com.compose.desktop.native.text.spansAffectMetrics
-import com.compose.desktop.native.text.styledLineCellHeight
-import com.compose.desktop.native.text.styledSliceWidth
+import com.compose.sdl.text.NativeTextCanvas
+import com.compose.sdl.text.currentTextMeasurer
+import com.compose.sdl.text.resolveRunPx
+import com.compose.sdl.text.runVariations
+import com.compose.sdl.text.spansAffectMetrics
+import com.compose.sdl.text.styledLineCellHeight
+import com.compose.sdl.text.styledSliceWidth
 import kotlin.math.max
 
 // ==================
@@ -214,7 +214,7 @@ internal class SdlParagraph(
 			// Styled prefixes: full runs before the column at their own size/
 			// weight, the partial run measured at ITS style — matches the paint
 			// path's per-run advances so the cursor/selection track the glyphs.
-			val vRuns = com.compose.desktop.native.text.lineColorRuns(
+			val vRuns = com.compose.sdl.text.lineColorRuns(
 				vLineStr, lineStarts.getOrElse(inLine) { 0 }, spanStyles, Color.Unspecified,
 			)
 			var vBase = 0f

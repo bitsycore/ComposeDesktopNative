@@ -1,7 +1,7 @@
 package androidx.compose.ui.graphics
 
-import com.compose.desktop.native.graphics.ProjectPath
-import com.compose.desktop.native.graphics.ProjectPathIterator
+import com.compose.sdl.graphics.ProjectPath
+import com.compose.sdl.graphics.ProjectPathIterator
 
 // ==================
 // MARK: Path + PathIterator — SDL3 renderer actuals
@@ -11,7 +11,7 @@ import com.compose.desktop.native.graphics.ProjectPathIterator
  * SDL3 counterpart of upstream `SkiaBackedPath.skiko.kt`. Vendored Skia path
  * is backed by `org.jetbrains.skia.Path`; SDL3 has no native path type, so
  * the vendored `expect fun Path()` and `expect fun PathIterator(...)`
- * factories return project-side types from `com.compose.desktop.native.graphics`
+ * factories return project-side types from `com.compose.sdl.graphics`
  * (a PathCommand-list impl the SDL3 renderer walks).
  */
 actual fun Path(): Path = ProjectPath()

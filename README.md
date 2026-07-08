@@ -74,7 +74,7 @@ renderer everywhere.
 
 ```kotlin
 import androidx.compose.material3.Text
-import com.compose.desktop.native.nativeComposeWindow
+import com.compose.sdl.nativeComposeWindow
 
 fun main() = nativeComposeWindow(title = "Hello") {
     Text("Hello from ComposeNativeSDL3")

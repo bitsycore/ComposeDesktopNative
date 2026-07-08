@@ -38,7 +38,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
 
 // ==================
 // MARK: Small UI atoms (shared across panels / dialogs / sidebar)

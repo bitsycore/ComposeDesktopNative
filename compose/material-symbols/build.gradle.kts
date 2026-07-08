@@ -40,9 +40,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // The MaterialSymbols<Style> objects emit Icon(...) via
-            // com.compose.desktop.native.icons.IconFontIcon and reference
+            // com.compose.sdl.icons.IconFontIcon and reference
             // MaterialIconAxisDefaults / IconDefaults — those live in
-            // :foundation (com.compose.desktop.native.icons package), which
+            // :foundation (com.compose.sdl.icons package), which
             // itself already api-depends on :ui.
             api(project(":foundation"))
             // Default tint follows upstream material3 Icon:

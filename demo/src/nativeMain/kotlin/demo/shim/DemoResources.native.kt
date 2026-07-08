@@ -2,7 +2,7 @@ package demo.shim
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
-import com.compose.desktop.native.res.Res
+import com.compose.sdl.res.Res
 import composeresources.generated.compose_logo
 import composeresources.generated.heart
 import composeresources.generated.notice

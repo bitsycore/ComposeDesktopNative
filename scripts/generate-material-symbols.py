@@ -22,7 +22,7 @@ kCodepointsUrl = (
 
 kOutPath = (
     Path(__file__).resolve().parent.parent
-    / "material-symbols/src/commonMain/kotlin/com/compose/desktop/native/icons/MaterialSymbols.kt"
+    / "material-symbols/src/commonMain/kotlin/com/compose/sdl/icons/MaterialSymbols.kt"
 )
 
 # snake_case (or kebab) icon name -> PascalCase Kotlin identifier. A leading
@@ -64,7 +64,7 @@ def main():
 	vWidth = max(len(vId) for vId, _ in vEntries)
 
 	vSb = []
-	vSb.append("package com.compose.desktop.native.icons")
+	vSb.append("package com.compose.sdl.icons")
 	vSb.append("")
 	vSb.append("// ==================")
 	vSb.append("// MARK: MaterialSymbols (codepoints)")
@@ -79,8 +79,8 @@ def main():
 	vSb.append("")
 	vSb.append("   Usage:")
 	vSb.append("")
-	vSb.append("       import com.compose.desktop.native.icons.MaterialSymbols")
-	vSb.append("       import com.compose.desktop.native.icons.material.symbols.outlined.MaterialSymbolsOutlined")
+	vSb.append("       import com.compose.sdl.icons.MaterialSymbols")
+	vSb.append("       import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined")
 	vSb.append("")
 	vSb.append("       MaterialSymbolsOutlined.install()   // once at startup")
 	vSb.append("       Icon(codepoint = MaterialSymbols.Home, fontFamily = MaterialSymbolsOutlined.Family)")

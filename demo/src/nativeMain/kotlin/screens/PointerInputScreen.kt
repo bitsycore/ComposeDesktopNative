@@ -24,24 +24,24 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.graphics.a8
-import com.compose.desktop.native.graphics.b8
-import com.compose.desktop.native.graphics.blend
-import com.compose.desktop.native.graphics.darken
-import com.compose.desktop.native.graphics.g8
-import com.compose.desktop.native.graphics.lighten
-import com.compose.desktop.native.graphics.r8
-import com.compose.desktop.native.modifier.onDrag
-import com.compose.desktop.native.modifier.onMiddleClick
-import com.compose.desktop.native.modifier.onPressed
-import com.compose.desktop.native.modifier.onSecondaryClick
-import com.compose.desktop.native.modifier.onTextInput
+import com.compose.sdl.graphics.a8
+import com.compose.sdl.graphics.b8
+import com.compose.sdl.graphics.blend
+import com.compose.sdl.graphics.darken
+import com.compose.sdl.graphics.g8
+import com.compose.sdl.graphics.lighten
+import com.compose.sdl.graphics.r8
+import com.compose.sdl.modifier.onDrag
+import com.compose.sdl.modifier.onMiddleClick
+import com.compose.sdl.modifier.onPressed
+import com.compose.sdl.modifier.onSecondaryClick
+import com.compose.sdl.modifier.onTextInput
 
 // ==================
 // MARK: Pointer / input modifiers + Color helpers (project-only)
 // ==================
 
-/* The project's non-official Modifier extensions (com.compose.desktop.native
+/* The project's non-official Modifier extensions (com.compose.sdl
    .modifier) that wrap SDL pointer / text events with no upstream analog, plus
    the Color blend / lighten / darken / r8..a8 helpers. */
 @Composable

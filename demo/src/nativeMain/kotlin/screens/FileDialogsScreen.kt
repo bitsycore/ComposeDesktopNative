@@ -14,8 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.desktop.native.showOpenFileDialog
-import com.compose.desktop.native.showSaveFileDialog
+import com.compose.sdl.showOpenFileDialog
+import com.compose.sdl.showSaveFileDialog
 
 // ==================
 // MARK: File dialogs (SDL3 native)

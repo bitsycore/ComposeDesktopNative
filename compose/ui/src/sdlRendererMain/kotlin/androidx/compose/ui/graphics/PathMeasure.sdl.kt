@@ -1,8 +1,8 @@
 package androidx.compose.ui.graphics
 
 import androidx.compose.ui.geometry.Offset
-import com.compose.desktop.native.graphics.PathCommand
-import com.compose.desktop.native.graphics.ProjectPath
+import com.compose.sdl.graphics.PathCommand
+import com.compose.sdl.graphics.ProjectPath
 import kotlin.math.sqrt
 
 // ==================

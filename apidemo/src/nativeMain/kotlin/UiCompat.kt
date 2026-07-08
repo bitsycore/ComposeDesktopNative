@@ -37,11 +37,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import com.compose.desktop.native.layout.intOffset
-import com.compose.desktop.native.text.currentViewportHeight
-import com.compose.desktop.native.text.currentViewportWidth
-import com.compose.desktop.native.window.PopupOutsideDismiss
-import com.compose.desktop.native.window.PositionedPopup
+import com.compose.sdl.layout.intOffset
+import com.compose.sdl.text.currentViewportHeight
+import com.compose.sdl.text.currentViewportWidth
+import com.compose.sdl.window.PopupOutsideDismiss
+import com.compose.sdl.window.PositionedPopup
 import kotlinx.coroutines.delay
 
 // ==================
