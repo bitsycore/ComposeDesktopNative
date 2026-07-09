@@ -102,7 +102,7 @@ kotlin {
             kotlin.srcDir(composeResGenDir)
         }
         jvmMain {
-            resources.srcDir(rootProject.file("demo/src/nativeMain/composeResources"))
+            resources.srcDir(rootProject.file("demo/src/commonMain/composeResources"))
             dependencies {
                 implementation("org.jetbrains.compose.runtime:runtime:1.12.0-alpha03")
                 implementation("org.jetbrains.compose.foundation:foundation:1.12.0-alpha03")
@@ -136,6 +136,16 @@ compose.desktop {
     application {
         mainClass = "MainJvmKt"
     }
+}
+
+// The assets live at the OFFICIAL location (src/commonMain/composeResources) —
+// shared by the data.kres Zip task (native), the jvmMain resources srcDir and
+// the accessor generator — but the plugin's OWN resource pipeline must stay
+// off: it would auto-add the Maven components-resources dependency to
+// commonMain (unresolvable for mingwX64/linux — that's why the runtime is
+// vendored as :components-resources) and generate a colliding Res class.
+compose.resources {
+    generateResClass = never
 }
 
 // Variants × targets used by the bundling Copy tasks below. One Copy task per
@@ -230,7 +240,7 @@ tasks.matching { it.name.startsWith("compileKotlin") }.configureEach {
 // renderers then fall back to a system font. The generated Res accessors (see
 // generateComposeResAccessors above) only scan the demo's resources.
 
-val composeResourcesDir = layout.projectDirectory.dir("src/nativeMain/composeResources")
+val composeResourcesDir = layout.projectDirectory.dir("src/commonMain/composeResources")
 // :core downloads the variable Noto Sans default font into its build/fonts.
 // Reference it by layout (a lazy provider, no evaluation of :core needed) and
 // depend on the download task by path so ordering doesn't rely on :core being
