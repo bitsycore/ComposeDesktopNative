@@ -1,63 +1,26 @@
 package apidemo
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.draw.clip
-
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.currentClipboard
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.revealInFileManager
-import com.compose.sdl.showOpenFileDialog
-import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 // ==================
 // MARK: Options menu (theme + pack-file actions)
@@ -80,7 +43,7 @@ internal fun OptionsMenu(
             DropdownMenuItem(onClick = { if (inDark) inOnToggleTheme(); vOpen = false }) {
                 Text("Light mode", color = if (!inDark) c.accent else c.text, fontSize = 13.sp)
             }
-            Divider(color = c.border)
+            HorizontalDivider(color = c.border)
             DropdownMenuItem(onClick = { vOpen = false; openSettingsFolder() }) {
                 MenuRow(MaterialSymbols.Folder, "Open settings folder")
             }

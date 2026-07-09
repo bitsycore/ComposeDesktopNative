@@ -1,60 +1,25 @@
 package apidemo
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.draw.clip
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.currentClipboard
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
+import com.compose.sdl.TextLayoutConfig
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.revealInFileManager
 import com.compose.sdl.showOpenFileDialog
-import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 // ==================
 // MARK: Panel 3 — request builder (Query / Headers / Body)
@@ -90,7 +55,11 @@ internal fun RequestBuilder(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 15.dp)
-                Text("Undefined: ${inUnresolved.joinToString(", ") { "{{$it}}" }}", color = kWarnColor, fontSize = 11.sp)
+                Text(
+                    "Undefined: ${inUnresolved.joinToString(", ") { "{{$it}}" }}",
+                    color = kWarnColor,
+                    fontSize = 11.sp
+                )
             }
         }
 
@@ -101,7 +70,13 @@ internal fun RequestBuilder(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TabBar(
-                listOf("Query (${inReq.params.size})", "Var (${inReq.variables.size})", "Headers (${inReq.headers.size})", "Body", "Cert"),
+                listOf(
+                    "Query (${inReq.params.size})",
+                    "Var (${inReq.variables.size})",
+                    "Headers (${inReq.headers.size})",
+                    "Body",
+                    "Cert"
+                ),
                 inRs.reqTab,
                 inDots = buildSet { if (vBodySet) add(3); if (inReq.hasClientCert) add(4) },
             ) { inRs.reqTab = it }
@@ -122,16 +97,18 @@ internal fun RequestBuilder(
                 inModifier = Modifier.offset(y = (-2).dp),
             )
         }
-        Divider(color = c.border)
+        HorizontalDivider(color = c.border)
 
         // Tab content — scrolls, except a Text body which fills the whole panel
         // (so it stays one editable surface you can click anywhere in). Greyed when
         // read-only (a linked-copy request).
         val vScroll = rememberScrollState()
         val vFillBody = inRs.reqTab == 3 && inReq.bodyType == BodyType.TEXT
-        Box(modifier = Modifier.fillMaxWidth().weight(1f)
-            .then(if (vFillBody) Modifier else Modifier.verticalScroll(vScroll))
-            .padding(16.dp).alpha(if (inReadOnly) 0.55f else 1f)) {
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(1f)
+                .then(if (vFillBody) Modifier else Modifier.verticalScroll(vScroll))
+                .padding(16.dp).alpha(if (inReadOnly) 0.55f else 1f)
+        ) {
             when (inRs.reqTab) {
                 0 -> QueryTab(inReq, inInheritedParams, inReadOnly, inEdit)
                 1 -> VarTab(inReq, inInheritedVars, inReadOnly, inEdit)
@@ -145,7 +122,7 @@ internal fun RequestBuilder(
         // Text body the format/type picker sits beside it; that type drives both the
         // syntax colours and the sent Content-Type.
         if (inRs.reqTab == 3) {
-            Divider(color = c.border)
+            HorizontalDivider(color = c.border)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -153,7 +130,10 @@ internal fun RequestBuilder(
             ) {
                 BodyTypeMenu(inReq.bodyType, true) { vT -> inEdit { it.copy(bodyType = vT) } }
                 if (inReq.bodyType == BodyType.TEXT) {
-                    BodyFormatSelector(inSelected = inReq.bodyFormat, inBordered = true, inOnChange = { vF -> inEdit { it.copy(bodyFormat = vF) } })
+                    BodyFormatSelector(
+                        inSelected = inReq.bodyFormat,
+                        inBordered = true,
+                        inOnChange = { vF -> inEdit { it.copy(bodyFormat = vF) } })
                     // Magic-wand auto-format, pushed to the right edge of the bar.
                     if (inReq.bodyFormat == BodyFormat.JSON || inReq.bodyFormat == BodyFormat.XML) {
                         Spacer(Modifier.weight(1f))

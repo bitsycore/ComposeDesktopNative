@@ -1,61 +1,26 @@
 package apidemo
-import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.draw.clip
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.currentClipboard
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
+import com.compose.sdl.*
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.revealInFileManager
-import com.compose.sdl.showOpenFileDialog
-import com.compose.sdl.showSaveFileDialog
 import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -789,13 +754,20 @@ private fun App() {
                             modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 SessionMenu(
                                     inPath = vSessionPath,
                                     inRecent = vRecent,
                                     inOnSave = { saveSession() },
                                     inOnSaveAs = { saveSessionAs() },
-                                    inOnRename = { vSessionPath?.let { vRenameSession = true; vRenameText = fileLeaf(it) } },
+                                    inOnRename = {
+                                        vSessionPath?.let {
+                                            vRenameSession = true; vRenameText = fileLeaf(it)
+                                        }
+                                    },
                                     inOnReveal = { vSessionPath?.let { revealInFileManager(it) } },
                                     inOnSettings = { openSessionTab() },
                                     inOnDefault = { requestSwitch { loadDefaultSession() } },
@@ -813,13 +785,16 @@ private fun App() {
                             // left slot so it doesn't shift the centring.
                             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                                    AddPackMenu(inOnNewRequest = { newLooseRequest() }, inOnNew = { newPack() }, inOnImport = { openPackFile() })
+                                    AddPackMenu(
+                                        inOnNewRequest = { newLooseRequest() },
+                                        inOnNew = { newPack() },
+                                        inOnImport = { openPackFile() })
                                 }
                                 TabBar(listOf("Requests", "History"), vSideTab) { vSideTab = it }
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
-                        Divider(color = c.border)
+                        HorizontalDivider(color = c.border)
 
                         // Scrollable list area below the pinned header.
                         Column(
@@ -842,33 +817,72 @@ private fun App() {
                                             inResolvePackDrop = {},
                                             inOnReqDropEnd = { reqDropEnd() },
                                             inOnPackDropEnd = {},
-                                            inOnSelect = {}, inOnToggle = {},
+                                            inOnSelect = {},
+                                            inOnToggle = {},
                                             inOnOpenRequest = { vRs -> open(vRs, vRoot) },
                                             inOnNewRequest = { newLooseRequest() },
-                                            inOnRenameRequest = { vRs -> selectPack(vRoot); vRenameTarget = vRs; vRenameText = vRs.req.name },
+                                            inOnRenameRequest = { vRs ->
+                                                selectPack(vRoot); vRenameTarget = vRs; vRenameText = vRs.req.name
+                                            },
                                             inOnDuplicateRequest = { vRs -> selectPack(vRoot); duplicate(vRs) },
                                             inOnCopyCurl = { vRs ->
-                                                currentClipboard.setText(AnnotatedString(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vRoot), params = effectiveParams(vRs.req, vRoot)), effectiveReqVars(vRs.req, vRoot)))))
+                                                currentClipboard.setText(
+                                                    AnnotatedString(
+                                                        toCurl(
+                                                            resolveVars(
+                                                                vRs.req.copy(
+                                                                    headers = effectiveHeaders(vRs.req, vRoot),
+                                                                    params = effectiveParams(vRs.req, vRoot)
+                                                                ), effectiveReqVars(vRs.req, vRoot)
+                                                            )
+                                                        )
+                                                    )
+                                                )
                                                 vReqMsg = "Copied cURL."
                                             },
                                             inOnDeleteRequest = { vRs -> selectPack(vRoot); vDeleteTarget = vRs },
-                                            inOnRenamePack = {}, inOnDuplicatePack = {}, inOnNewSubPack = {}, inOnLinkedCopy = {},
-                                            inOnSavePack = {}, inOnSaveAsPack = {}, inOnRemovePack = {}, inOnSetColor = {},
+                                            inOnRenamePack = {},
+                                            inOnDuplicatePack = {},
+                                            inOnNewSubPack = {},
+                                            inOnLinkedCopy = {},
+                                            inOnSavePack = {},
+                                            inOnSaveAsPack = {},
+                                            inOnRemovePack = {},
+                                            inOnSetColor = {},
                                         )
-                                        if (vPacks.isNotEmpty()) Divider(color = c.border)
+                                        if (vPacks.isNotEmpty()) {
+                                            HorizontalDivider(color = c.border)
+                                        }
                                     }
                                     if (vPacks.isEmpty() && vRoot.requests.isEmpty()) {
-                                        Text("Nothing here yet — use Add (+) for a request or pack, or Open above.", color = c.dim, fontSize = 12.sp)
+                                        Text(
+                                            "Nothing here yet — use Add (+) for a request or pack, or Open above.",
+                                            color = c.dim,
+                                            fontSize = 12.sp
+                                        )
                                     } else {
                                         val vOps = PackOps(
                                             onEnv = { openEnv(it) },
                                             onToggle = { it.expanded = !it.expanded },
                                             onOpenReq = { vQ, vRs -> open(vRs, vQ) },
                                             onNewReq = { selectPack(it); newRequest() },
-                                            onRenameReq = { vQ, vRs -> selectPack(vQ); vRenameTarget = vRs; vRenameText = vRs.req.name },
+                                            onRenameReq = { vQ, vRs ->
+                                                selectPack(vQ); vRenameTarget = vRs; vRenameText = vRs.req.name
+                                            },
                                             onDupReq = { vQ, vRs -> selectPack(vQ); duplicate(vRs) },
                                             onCopyCurl = { vQ, vRs ->
-                                                currentClipboard.setText(AnnotatedString(toCurl(resolveVars(vRs.req.copy(headers = effectiveHeaders(vRs.req, vQ), params = effectiveParams(vRs.req, vQ)), effectiveReqVars(vRs.req, vQ)))))
+                                                currentClipboard.setText(
+                                                    AnnotatedString(
+                                                        toCurl(
+                                                            resolveVars(
+                                                                vRs.req.copy(
+                                                                    headers = effectiveHeaders(vRs.req, vQ),
+                                                                    params = effectiveParams(vRs.req, vQ)
+                                                                ), effectiveReqVars(vRs.req, vQ)
+                                                            )
+                                                        )
+                                                    )
+                                                )
                                                 vReqMsg = "Copied cURL."
                                             },
                                             onDelReq = { vQ, vRs -> selectPack(vQ); vDeleteTarget = vRs },
@@ -890,19 +904,26 @@ private fun App() {
                                         vPacks.forEach { vPack -> PackTree(vPack, vPacks, 0, vOps, vHi, vEnvActive) }
                                         // Drop bar after the last top-level pack (append-to-root target).
                                         if (vTreeDrag.draggingPack && vTreeDrag.engaged && vTreeDrag.dropInto == null &&
-                                            vTreeDrag.dropParent == null && vTreeDrag.dropSibIndex == vPacks.size)
+                                            vTreeDrag.dropParent == null && vTreeDrag.dropSibIndex == vPacks.size
+                                        )
                                             RowDropBar()
                                     }
                                 }
+
                                 1 -> {
-                                    if (vHistory.isEmpty()) Text("No requests sent yet.", color = c.dim, fontSize = 12.sp)
+                                    if (vHistory.isEmpty()) Text(
+                                        "No requests sent yet.",
+                                        color = c.dim,
+                                        fontSize = 12.sp
+                                    )
                                     vHistory.forEachIndexed { vI, vH ->
                                         Row(
                                             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
                                                 .clickable {
                                                     val vTarget = activePack() ?: return@clickable
                                                     val vRs = ReqState(vH.request.copy())
-                                                    vTarget.requests.add(vRs); vTarget.openTabs.add(vRs); vTarget.active = vRs
+                                                    vTarget.requests.add(vRs); vTarget.openTabs.add(vRs); vTarget.active =
+                                                    vRs
                                                     vTarget.dirty = true; vSideTab = 0; vReqMsg = null
                                                 }
                                                 .padding(horizontal = 8.dp, vertical = 5.dp),
@@ -911,13 +932,27 @@ private fun App() {
                                         ) {
                                             MethodTag(vH.method)
                                             Column(modifier = Modifier.weight(1f)) {
-                                                Text(vH.url, color = c.text, fontSize = 11.sp, modifier = Modifier.fillMaxWidth())
-                                                Text("#${vHistory.size - vI} · ${vH.timeMs} ms", color = c.dim, fontSize = 10.sp)
+                                                Text(
+                                                    vH.url,
+                                                    color = c.text,
+                                                    fontSize = 11.sp,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                                Text(
+                                                    "#${vHistory.size - vI} · ${vH.timeMs} ms",
+                                                    color = c.dim,
+                                                    fontSize = 10.sp
+                                                )
                                             }
-                                            Text(if (vH.status > 0) "${vH.status}" else "ERR", color = statusColor(vH.status), fontSize = 12.sp)
+                                            Text(
+                                                if (vH.status > 0) "${vH.status}" else "ERR",
+                                                color = statusColor(vH.status),
+                                                fontSize = 12.sp
+                                            )
                                         }
                                     }
                                 }
+
                                 else -> {}
                             }
                         }
@@ -947,52 +982,98 @@ private fun App() {
                             // Panel 1 — unified tab strip (session + pack-settings + request tabs).
                             RequestTabStrip(
                                 inTabs = vTabs,
-                                inActiveKey = when { vSessionActive -> kSessionTabKey; vEnvShown && vP != null -> TabKey(vP, null); vReqActive != null && vP != null -> TabKey(vP, vReqActive); else -> null },
-                                inOnSelect = { vT -> when { vT.isSession -> openSessionTab(); vT.req != null && vT.pack != null -> open(vT.req, vT.pack); vT.pack != null -> openEnv(vT.pack); else -> {} } },
-                                inOnClose = { vT -> when { vT.isSession -> closeSessionTab(); vT.req != null && vT.pack != null -> closeTab(vT.req, vT.pack); vT.pack != null -> closeEnv(vT.pack); else -> {} } },
+                                inActiveKey = when {
+                                    vSessionActive -> kSessionTabKey; vEnvShown && vP != null -> TabKey(
+                                        vP,
+                                        null
+                                    ); vReqActive != null && vP != null -> TabKey(vP, vReqActive); else -> null
+                                },
+                                inOnSelect = { vT ->
+                                    when {
+                                        vT.isSession -> openSessionTab(); vT.req != null && vT.pack != null -> open(
+                                        vT.req,
+                                        vT.pack
+                                    ); vT.pack != null -> openEnv(vT.pack); else -> {}
+                                    }
+                                },
+                                inOnClose = { vT ->
+                                    when {
+                                        vT.isSession -> closeSessionTab(); vT.req != null && vT.pack != null -> closeTab(
+                                        vT.req,
+                                        vT.pack
+                                    ); vT.pack != null -> closeEnv(vT.pack); else -> {}
+                                    }
+                                },
                                 inOnCloseOthers = { vT -> closeOthers(vT) },
                                 inOnCloseAll = { closeAllTabs() },
                                 inOnReorder = { vFrom, vTo -> reorderTabs(vFrom, vTo) },
                             )
-                            Divider(color = c.border)
+                            HorizontalDivider(color = c.border)
 
                             when {
                                 vSessionActive -> {
                                     ScopeSettings(
-                                        inTab = vSettingsTab, inOnTab = { vSettingsTab = it },
+                                        inTab = vSettingsTab,
+                                        inOnTab = { vSettingsTab = it },
                                         inHeader = {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = c.accent, size = 18.dp)
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                MaterialSymbolsOutlined(
+                                                    MaterialSymbols.Tune,
+                                                    tint = c.accent,
+                                                    size = 18.dp
+                                                )
                                                 Text("Session", color = c.text, fontSize = 19.sp)
                                             }
                                         },
-                                        inVars = vGlobalEnv, inOnVars = { vGlobalEnv.clear(); vGlobalEnv.addAll(it); persist() },
+                                        inVars = vGlobalEnv,
+                                        inOnVars = { vGlobalEnv.clear(); vGlobalEnv.addAll(it); persist() },
                                         inVarHelp = "Shared across every pack; override a pack's own vars. Used as {{name}}.",
-                                        inParams = vSessionParams, inOnParams = { vSessionParams.clear(); vSessionParams.addAll(it); persist() },
+                                        inParams = vSessionParams,
+                                        inOnParams = { vSessionParams.clear(); vSessionParams.addAll(it); persist() },
                                         inParamHelp = "Query params added to every request in the session. Packs and requests can override by key.",
-                                        inHeaders = vSessionHeaders, inOnHeaders = { vSessionHeaders.clear(); vSessionHeaders.addAll(it); persist() },
+                                        inHeaders = vSessionHeaders,
+                                        inOnHeaders = { vSessionHeaders.clear(); vSessionHeaders.addAll(it); persist() },
                                         inHeaderHelp = "Sent with every request in the session. Packs and requests can override by key.",
-                                        inCert = vSessionCert, inOnCert = { vSessionCert = it; persist() },
+                                        inCert = vSessionCert,
+                                        inOnCert = { vSessionCert = it; persist() },
                                         inCertHelp = "Fallback client cert for every request, unless a pack or request sets its own.",
                                         inCertHeading = "Session client certificate",
                                     )
                                 }
+
                                 vEnvShown && vP != null -> {
                                     ScopeSettings(
-                                        inTab = vSettingsTab, inOnTab = { vSettingsTab = it },
+                                        inTab = vSettingsTab,
+                                        inOnTab = { vSettingsTab = it },
                                         inHeader = {
-                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
                                                 ColorDot(vP.color)
                                                 Text(vP.name, color = c.text, fontSize = 19.sp)
                                             }
                                         },
-                                        inVars = vP.variables, inOnVars = { vP.variables.clear(); vP.variables.addAll(it); vP.dirty = true; persist() },
+                                        inVars = vP.variables,
+                                        inOnVars = {
+                                            vP.variables.clear(); vP.variables.addAll(it); vP.dirty = true; persist()
+                                        },
                                         inVarHelp = "Used by every request in this pack as {{name}}. Session Var overrides these.",
-                                        inParams = vP.params, inOnParams = { vP.params.clear(); vP.params.addAll(it); vP.dirty = true; persist() },
+                                        inParams = vP.params,
+                                        inOnParams = {
+                                            vP.params.clear(); vP.params.addAll(it); vP.dirty = true; persist()
+                                        },
                                         inParamHelp = "Query params added to every request in this pack. A request can override one by the same key.",
-                                        inHeaders = vP.headers, inOnHeaders = { vP.headers.clear(); vP.headers.addAll(it); vP.dirty = true; persist() },
+                                        inHeaders = vP.headers,
+                                        inOnHeaders = {
+                                            vP.headers.clear(); vP.headers.addAll(it); vP.dirty = true; persist()
+                                        },
                                         inHeaderHelp = "Sent with every request in this pack. A request can override a header by the same key.",
-                                        inCert = vP.cert, inOnCert = { vP.cert = it; vP.dirty = true; persist() },
+                                        inCert = vP.cert,
+                                        inOnCert = { vP.cert = it; vP.dirty = true; persist() },
                                         inCertHelp = "Used by every request in this pack unless the request sets its own. Overrides the session cert.",
                                         inCertHeading = "Pack client certificate",
                                         // What this pack inherits from above (session + ancestor packs — itself excluded).
@@ -1002,15 +1083,26 @@ private fun App() {
                                         inInheritedCert = sourcedCert(scopeChain(vP.parent)),
                                     )
                                 }
+
                                 vReqActive != null && vP != null -> {
                                     val vReq = vReqActive.req
                                     if (vP.isLinked) {
                                         Row(
-                                            modifier = Modifier.fillMaxWidth().background(c.accent.copy(alpha = 0.12f)).padding(horizontal = 12.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.fillMaxWidth().background(c.accent.copy(alpha = 0.12f))
+                                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
-                                            MaterialSymbolsOutlined(MaterialSymbols.Share, tint = c.accent, size = 14.dp)
-                                            Text("Linked copy — read-only. Runs with this pack's Var/Header/Cert; edit the request in “${vP.linkedSource?.name ?: "source"}”.", color = c.dim, fontSize = 11.sp)
+                                            MaterialSymbolsOutlined(
+                                                MaterialSymbols.Share,
+                                                tint = c.accent,
+                                                size = 14.dp
+                                            )
+                                            Text(
+                                                "Linked copy — read-only. Runs with this pack's Var/Header/Cert; edit the request in “${vP.linkedSource?.name ?: "source"}”.",
+                                                color = c.dim,
+                                                fontSize = 11.sp
+                                            )
                                         }
                                     }
                                     // Panel 2 — unified method · url · send.
@@ -1025,8 +1117,11 @@ private fun App() {
                                         inOnInspectChain = { inspectChain(vReqActive) },
                                         inReadOnly = vP.isLinked,
                                     )
-                                    if (vReqActive.showChain) TlsChainDialog(vReqActive.tlsChain, vReqActive.chainUrl) { vReqActive.showChain = false }
-                                    Divider(color = c.border)
+                                    if (vReqActive.showChain) TlsChainDialog(
+                                        vReqActive.tlsChain,
+                                        vReqActive.chainUrl
+                                    ) { vReqActive.showChain = false }
+                                    HorizontalDivider(color = c.border)
                                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                                         HorizontalSplitPane(
                                             initialFirstSize = 460.dp,
@@ -1051,13 +1146,24 @@ private fun App() {
                                             second = {
                                                 ViewerPanel(
                                                     inRs = vReqActive,
-                                                    inResolved = resolveVars(vReq.copy(headers = effectiveHeaders(vReq, vP), params = effectiveParams(vReq, vP)), effectiveReqVars(vReq, vP)),
+                                                    inResolved = resolveVars(
+                                                        vReq.copy(
+                                                            headers = effectiveHeaders(
+                                                                vReq,
+                                                                vP
+                                                            ), params = effectiveParams(vReq, vP)
+                                                        ), effectiveReqVars(vReq, vP)
+                                                    ),
                                                 )
                                             },
                                         )
                                     }
                                 }
-                                else -> Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+
+                                else -> Box(
+                                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Text("Pick a tab above.", color = c.dim)
                                 }
                             }

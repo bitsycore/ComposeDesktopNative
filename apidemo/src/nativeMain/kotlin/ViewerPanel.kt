@@ -1,60 +1,40 @@
 package apidemo
-import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.draw.clip
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import com.compose.sdl.scrollbar.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.currentClipboard
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
 import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.revealInFileManager
-import com.compose.sdl.showOpenFileDialog
+import com.compose.sdl.res.ResourceKind
+import com.compose.sdl.res.painterResource
+import com.compose.sdl.scrollbar.ScrollbarStyle
+import com.compose.sdl.scrollbar.VerticalScrollbar
+import com.compose.sdl.scrollbar.rememberScrollbarAdapter
 import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.compose.sdl.text.currentTextMeasurer
 
 // ==================
 // MARK: Response
@@ -195,7 +175,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
         val vReqHasContent = vShowRequest && vReqShown != null
         val vRespHasContent = !vShowRequest && vResp != null
         if (vReqHasContent || vRespHasContent) {
-            Divider(color = c.border)
+            HorizontalDivider(color = c.border)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -230,7 +210,11 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            MaterialSymbolsOutlined(MaterialSymbols.WrapText, tint = if (vWrapOn) c.accent else c.dim, size = 14.dp)
+                            MaterialSymbolsOutlined(
+                                MaterialSymbols.WrapText,
+                                tint = if (vWrapOn) c.accent else c.dim,
+                                size = 14.dp
+                            )
                             Text("Wrap", color = if (vWrapOn) c.accent else c.dim, fontSize = 11.sp)
                         }
                     }
@@ -322,10 +306,14 @@ internal fun HttpFlowView(
             HeaderTable(inHeaders, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
         }
         if (inBody != null || inIsImage) {
-            Divider(color = c.border, modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = c.border)
             if (inIsImage && inImagePainter != null) {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Image(painter = inImagePainter, contentDescription = "Response image", contentScale = ContentScale.Fit)
+                    Image(
+                        painter = inImagePainter,
+                        contentDescription = "Response image",
+                        contentScale = ContentScale.Fit
+                    )
                 }
             } else if (inBody != null) {
                 BodyView(
@@ -781,16 +769,18 @@ internal fun ViewerOverflowMenu(
             if (inIsImage && !inIsRequestTab) {
                 val vBytes = inResponse?.bytes ?: ByteArray(0)
                 showSaveFileDialog(imageFileName(inResponse?.contentType)) { vPath ->
-                    if (vPath != null) inOnMessage(writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" } ?: "Saved.")
+                    if (vPath != null) inOnMessage(writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" }
+                        ?: "Saved.")
                 }
             } else {
                 showSaveFileDialog(if (inIsRequestTab) "request.txt" else "response.json") { vPath ->
-                    if (vPath != null) inOnMessage(writeTextFile(vPath, vBodyText)?.let { "Save failed: $it" } ?: "Saved.")
+                    if (vPath != null) inOnMessage(writeTextFile(vPath, vBodyText)?.let { "Save failed: $it" }
+                        ?: "Saved.")
                 }
             }
             vOpen = false
         }) { Text("Save body") }
-        Divider(color = c.border, modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = c.border)
         DropdownMenuItem(onClick = { inOnClear(); vOpen = false }) {
             Text("Clear", color = Color(0xFFFF5630))
         }

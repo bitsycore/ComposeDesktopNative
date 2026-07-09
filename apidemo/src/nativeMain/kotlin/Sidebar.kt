@@ -1,61 +1,35 @@
 package apidemo
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import com.compose.sdl.layout.y
-import androidx.compose.ui.draw.clip
-
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.currentClipboard
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
+import androidx.compose.ui.zIndex
+import com.compose.sdl.fileManagerName
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
+import com.compose.sdl.layout.y
+import com.compose.sdl.modifier.onDrag
+import com.compose.sdl.modifier.onSecondaryClick
 import com.compose.sdl.revealInFileManager
-import com.compose.sdl.showOpenFileDialog
-import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 // ==================
 // MARK: Pack colour (palette dot + picker)
@@ -110,10 +84,20 @@ internal fun AddPackMenu(inOnNewRequest: () -> Unit, inOnNew: () -> Unit, inOnIm
     Box {
         IconBtn(MaterialSymbols.Add, "Add", inModifier = Modifier.menuAnchor(vAnchor), inSize = 18.dp) { vOpen = true }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 200.dp) {
-            DropdownMenuItem(onClick = { vOpen = false; inOnNewRequest() }) { MenuRow(MaterialSymbols.Send, "New request (loose)") }
-            Divider(color = c.border)
+            DropdownMenuItem(onClick = { vOpen = false; inOnNewRequest() }) {
+                MenuRow(
+                    MaterialSymbols.Send,
+                    "New request (loose)"
+                )
+            }
+            HorizontalDivider(color = c.border)
             DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New pack") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnImport() }) { MenuRow(MaterialSymbols.Download, "Import pack…") }
+            DropdownMenuItem(onClick = { vOpen = false; inOnImport() }) {
+                MenuRow(
+                    MaterialSymbols.Download,
+                    "Import pack…"
+                )
+            }
         }
     }
 }
@@ -182,18 +166,54 @@ internal fun SessionMenu(
             if (!vSaved) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 248.dp) {
-            DropdownMenuItem(onClick = { vOpen = false; inOnSettings() }) { MenuRow(MaterialSymbols.Tune, "Session settings (Var / Header / Cert)") }
-            Divider(color = c.border)
+            DropdownMenuItem(onClick = { vOpen = false; inOnSettings() }) {
+                MenuRow(
+                    MaterialSymbols.Tune,
+                    "Session settings (Var / Header / Cert)"
+                )
+            }
+            HorizontalDivider(color = c.border)
             DropdownMenuItem(onClick = { vOpen = false; inOnSave() }) { MenuRow(MaterialSymbols.Save, "Save session") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnSaveAs() }) { MenuRow(MaterialSymbols.Download, "Save session as…") }
-            DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename session…", if (vSaved) c.text else vDisabled) }
-            DropdownMenuItem(enabled = vSaved, onClick = { vOpen = false; inOnReveal() }) { MenuRow(MaterialSymbols.Folder, "Reveal in ${fileManagerName()}", if (vSaved) c.text else vDisabled) }
-            Divider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; inOnDefault() }) { MenuRow(MaterialSymbols.Refresh, "Default session") }
+            DropdownMenuItem(onClick = { vOpen = false; inOnSaveAs() }) {
+                MenuRow(
+                    MaterialSymbols.Download,
+                    "Save session as…"
+                )
+            }
+            DropdownMenuItem(
+                enabled = vSaved,
+                onClick = { vOpen = false; inOnRename() }) {
+                MenuRow(
+                    MaterialSymbols.Edit,
+                    "Rename session…",
+                    if (vSaved) c.text else vDisabled
+                )
+            }
+            DropdownMenuItem(
+                enabled = vSaved,
+                onClick = { vOpen = false; inOnReveal() }) {
+                MenuRow(
+                    MaterialSymbols.Folder,
+                    "Reveal in ${fileManagerName()}",
+                    if (vSaved) c.text else vDisabled
+                )
+            }
+            HorizontalDivider(color = c.border)
+            DropdownMenuItem(onClick = { vOpen = false; inOnDefault() }) {
+                MenuRow(
+                    MaterialSymbols.Refresh,
+                    "Default session"
+                )
+            }
             DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New session") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) { MenuRow(MaterialSymbols.Folder, "Open session…") }
+            DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) {
+                MenuRow(
+                    MaterialSymbols.Folder,
+                    "Open session…"
+                )
+            }
             if (inRecent.isNotEmpty()) {
-                Divider(color = c.border)
+                HorizontalDivider(color = c.border)
                 // Aligned to the icon column (the DropdownMenuItem's 16dp pad), so
                 // it lines up with the recent items' file icon. Padding goes on a
                 // wrapping Box — a leaf Text's own start padding isn't applied to its
@@ -206,9 +226,16 @@ internal fun SessionMenu(
                         val vRevealHoverSrc = remember { MutableInteractionSource() }
                         val vRevealHover by vRevealHoverSrc.collectIsHoveredAsState()
                         DropdownMenuItem(onClick = { vOpen = false; inOnOpenRecent(vPath) }) {
-                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 MaterialSymbolsOutlined(MaterialSymbols.InsertDriveFile, tint = c.dim, size = 16.dp)
-                                Column(modifier = Modifier.weight(1f).padding(vertical = 3.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(vertical = 3.dp),
+                                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                                ) {
                                     Text(fileLeaf(vPath), color = c.text, fontSize = 12.sp)
                                     Text(ellipsizeMiddle(vPath, 32), color = c.dim, fontSize = 10.sp, softWrap = false)
                                 }
@@ -217,12 +244,20 @@ internal fun SessionMenu(
                                 TooltipBox(text = "Reveal in ${fileManagerName()}") {
                                     Box(
                                         modifier = Modifier.clip(RoundedCornerShape(6.dp))
-                                            .background(if (vRevealHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(6.dp))
+                                            .background(
+                                                if (vRevealHover) c.accent.copy(alpha = 0.18f) else Color.Transparent,
+                                                RoundedCornerShape(6.dp)
+                                            )
                                             .hoverable(vRevealHoverSrc)
                                             .clickable { vOpen = false; revealInFileManager(vPath) }
                                             .padding(5.dp),
                                     ) {
-                                        MaterialSymbolsOutlined(MaterialSymbols.Folder, contentDescription = "Reveal", tint = if (vRevealHover) c.accent else c.dim, size = 15.dp)
+                                        MaterialSymbolsOutlined(
+                                            MaterialSymbols.Folder,
+                                            contentDescription = "Reveal",
+                                            tint = if (vRevealHover) c.accent else c.dim,
+                                            size = 15.dp
+                                        )
                                     }
                                 }
                             }
@@ -435,9 +470,9 @@ internal fun PackSection(
                         DropdownMenuItem(onClick = { vMenu = false; inOnLinkedCopy() }) { MenuRow(MaterialSymbols.Share, "Linked copy") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnSavePack() }) { MenuRow(MaterialSymbols.Save, "Export pack") }
                         DropdownMenuItem(onClick = { vMenu = false; inOnSaveAsPack() }) { MenuRow(MaterialSymbols.Folder, "Export pack as…") }
-                        Divider(color = c.border)
+                        HorizontalDivider(color = c.border)
                         PackColorPicker(inPack.color) { inOnSetColor(it) }
-                        Divider(color = c.border)
+                        HorizontalDivider(color = c.border)
                         DropdownMenuItem(onClick = { vMenu = false; inOnRemovePack() }) { MenuRow(MaterialSymbols.Delete, "Remove pack", methodColor(ReqMethod.DELETE)) }
                     }
                 }
