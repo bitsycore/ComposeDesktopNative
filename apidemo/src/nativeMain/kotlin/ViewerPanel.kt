@@ -1,22 +1,34 @@
 package apidemo
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.text.selection.rememberSelectionState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.isShiftPressed
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -49,6 +61,7 @@ import com.compose.sdl.scrollbar.ScrollbarStyle
 import com.compose.sdl.scrollbar.VerticalScrollbar
 import com.compose.sdl.scrollbar.rememberScrollbarAdapter
 import com.compose.sdl.showSaveFileDialog
+import kotlinx.coroutines.launch
 import com.compose.sdl.text.currentTextMeasurer
 
 // ==================
@@ -285,10 +298,22 @@ internal fun HttpFlowView(
 ) {
     val c = LocalAppColors.current
     val vState = rememberLazyListState()
-    // Selection state so a viewer-level Ctrl/Cmd+A can call selectAll() (see the
-    // Box.onKeyEvent below). With a LazyList, selectAll() only covers the currently
-    // COMPOSED blocks (upstream limitation) — the Copy button still grabs the whole body.
-    val vSelState = rememberSelectionState()
+    // Editor-style selection state — anchor + caret in absolute character offsets
+    // into inBody. Resets when the body changes so a stale range never highlights
+    // a shorter/different response. Lives outside any SelectionContainer so it
+    // survives scroll and spans off-screen chunks (see the BodySel comment).
+    var vSel: BodySel? by remember(inBody) { mutableStateOf(null) }
+    // Selection background from the app theme — same colour that
+    // LocalTextSelectionColors publishes to Compose text selection elsewhere.
+    val vSelColor = LocalTextSelectionColors.current.backgroundColor
+    val vFocus = remember { FocusRequester() }
+    val density = LocalDensity.current
+    val vScope = rememberCoroutineScope()
+    // Latest pointer position while dragging (in the outer Box's local px frame),
+    // null when not dragging. Driven by the pointerInput below and read by an
+    // auto-scroll effect that scrolls the LazyColumn while the pointer sits in
+    // the top / bottom edge zone.
+    var vDragPos: Offset? by remember { mutableStateOf(null) }
     // The body is highlighted ONCE, then sliced into BLOCKS of lines — one BasicText
     // per block, NOT one per line. Far fewer nodes / selectables / paragraph set-ups
     // churn through the viewport while scrolling (the smoothness win), and the
@@ -304,6 +329,11 @@ internal fun HttpFlowView(
             buildBodyChunks(inBody, vAnn, kLinesPerChunk)
         }
     }
+    // Per-visible-chunk TextLayoutResult, keyed by chunk index. Populated as each
+    // BodyChunkRow's BasicText lays out, dropped implicitly when the chunks list
+    // changes (new response) via the remember key. Off-screen chunks aren't in
+    // this map — we can't hit-test them via mouse either since they're not painted.
+    val vChunkLayouts = remember(vChunks) { mutableStateMapOf<Int, TextLayoutResult>() }
     val vTotalLines = remember(inBody) { if (inBody == null) 0 else inBody.count { it == '\n' } + 1 }
     // No-wrap mode pans horizontally; every block shares this one scroll state so the
     // whole body pans together (the gutter stays pinned — not scrolled).
@@ -318,102 +348,298 @@ internal fun HttpFlowView(
         TextStyle(color = c.dim.copy(alpha = 0.45f), fontSize = 12.sp, fontFamily = monoFontFamily, textAlign = TextAlign.End)
     }
 
+    // Body-relative x offset (px) of the block's BasicText inside the outer Box.
+    // Mirrors BodyChunkRow's layout: 4dp Row start padding + gutter width + 6dp spacer.
+    val vTextStartPx = with(density) { (4.dp + vGutterWidth + 6.dp).toPx() }
+    // LazyColumn item index of chunk index 0 — status row + optional header
+    // table + divider. Used to scroll a specific chunk into view when the caret
+    // moves off-screen via keyboard. Only stable while we're on the "have body"
+    // branch, but that's the only branch that renders chunks in the first place.
+    val vChunkItemOffset = 1 +
+        (if (!inHeadersCollapsed && inHeaders.isNotEmpty()) 1 else 0) +
+        (if (inBody != null || inIsImage) 1 else 0)
+
+    // After a keyboard action that moves the caret, if the caret's chunk is not
+    // in the visible items list scroll it in. Instant (no anim) so rapid
+    // Shift+Down keeps up. No-op when already visible so the chunk doesn't jump.
+    val vScrollCaretIntoView: () -> Unit = scr@{
+        val vSel0 = vSel ?: return@scr
+        val vCi = chunkContaining(vChunks, vSel0.caret) ?: return@scr
+        val vKey = "chunk_$vCi"
+        val vVisible = vState.layoutInfo.visibleItemsInfo.any { it.key == vKey }
+        if (!vVisible) vScope.launch { vState.scrollToItem(vChunkItemOffset + vCi) }
+    }
+
+    // Right-edge exclusion band for the overlaid VerticalScrollbar (8dp thick +
+    // hover pad). The scrollbar dispatches through the project's legacy pointer
+    // path (ComposeRootHost.onPointer → OnDragNode), which is INDEPENDENT of the
+    // Compose PointerInputEventProcessor my pointerInput listens on. Neither
+    // side sets isConsumed on the other's events, so a click on the scrollbar
+    // handle would otherwise sneak into my selection logic. Excluding this band
+    // in the hit-test is the reliable fix.
+    val vScrollbarBandPx = with(density) { 14.dp.toPx() }
+
+    // Hit-test — turns a pointer position (outer Box local frame) into a global
+    // character offset into inBody, or null if the pointer isn't over any chunk.
+    // Clamps past-viewport pointers to the nearest visible chunk boundary so a
+    // drag that overshoots still keeps extending toward that end.
+    val vHitTest: (Offset) -> Int? = hit@{ inPos ->
+        val vBody = inBody ?: return@hit null
+        val vVpW = vState.layoutInfo.viewportSize.width
+        if (vVpW > 0 && inPos.x > vVpW - vScrollbarBandPx) return@hit null
+        val vInfos = vState.layoutInfo.visibleItemsInfo
+            .filter { (it.key as? String)?.startsWith("chunk_") == true }
+            .sortedBy { it.offset }
+        if (vInfos.isEmpty()) return@hit null
+        val vInfo = vInfos.firstOrNull { inPos.y >= it.offset && inPos.y < it.offset + it.size }
+            ?: if (inPos.y < vInfos.first().offset) vInfos.first() else vInfos.last()
+        val vCi = (vInfo.key as String).removePrefix("chunk_").toIntOrNull() ?: return@hit null
+        val vChunk = vChunks.getOrNull(vCi) ?: return@hit null
+        // If we clamped y past the top / bottom, snap the caret to that chunk end so
+        // the range degrades gracefully without auto-scroll.
+        if (inPos.y < vInfo.offset) return@hit vChunk.startCharOffset
+        if (inPos.y >= vInfo.offset + vInfo.size) return@hit vChunk.startCharOffset + vChunk.body.length
+        val vLayout = vChunkLayouts[vCi] ?: return@hit null
+        val vHScrollPx = if (!inSoftWrap) vHScroll.value.toFloat() else 0f
+        val vLocalX = (inPos.x - vTextStartPx + vHScrollPx).coerceAtLeast(0f)
+        val vLocalY = (inPos.y - vInfo.offset).coerceIn(0f, vInfo.size.toFloat() - 1f)
+        val vLocal = vLayout.getOffsetForPosition(Offset(vLocalX, vLocalY))
+        (vChunk.startCharOffset + vLocal).coerceIn(0, vBody.length)
+    }
+
+    // Drag auto-scroll: while a drag is in progress (vDragPos != null), tick
+    // every frame and scroll the LazyColumn when the pointer sits in a 40dp
+    // edge zone at the top / bottom. Speed ramps linearly with depth into the
+    // zone up to 24dp per frame — roughly a page per second at 60fps at max
+    // depth. After each scroll we re-hit-test the current pointer position so
+    // the selection keeps extending onto the newly revealed chunks.
+    val vEdgePx = with(density) { 40.dp.toPx() }
+    val vMaxScrollPx = with(density) { 24.dp.toPx() }
+    LaunchedEffect(Unit) {
+        while (true) {
+            androidx.compose.runtime.withFrameNanos { }
+            val vPos = vDragPos ?: continue
+            val vVpH = vState.layoutInfo.viewportSize.height.toFloat()
+            val vDelta = when {
+                vPos.y < vEdgePx -> -((vEdgePx - vPos.y) / vEdgePx * vMaxScrollPx)
+                vPos.y > vVpH - vEdgePx -> (vPos.y - (vVpH - vEdgePx)) / vEdgePx * vMaxScrollPx
+                else -> 0f
+            }
+            if (vDelta != 0f) {
+                vState.scrollBy(vDelta)
+                val vHit = vHitTest(vPos)
+                if (vHit != null) vSel = vSel?.copy(caret = vHit)
+            }
+        }
+    }
+
     // contentAlignment pins the narrow scrollbar to the right edge; the
     // fillMaxSize content fills the rest (this project's Box has no BoxScope, so
     // there's no Modifier.align — alignment is via contentAlignment).
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // Ctrl/Cmd+A -> select all. The body must be focused first (click/drag in
-            // it); the key event bubbles from the SelectionContainer's focus target up
-            // to here. Only composed blocks are selected (LazyList limitation) — the
-            // Copy button copies the whole body regardless.
+            .focusRequester(vFocus)
+            .focusable()
+            // Mouse: press starts a selection, drag extends it, Shift+press extends
+            // from the existing anchor. We drive this by hand instead of going
+            // through SelectionContainer because SC only sees composed selectables
+            // (visible chunks) — Ctrl+A and Shift+Arrow can't reach off-screen text
+            // through it. Header items above the chunks stay non-selectable, which
+            // matches the previous DisableSelection wrappers.
+            .pointerInput(vChunks) {
+                // Track click count for double/triple-click. A press within
+                // 400ms and 5px of the previous one counts as a repeat, so
+                // press #2 selects the word under the caret, press #3 selects
+                // the whole line. Anything past 3 wraps back to 1.
+                var vLastPressUptime = 0L
+                var vLastPressPos = Offset.Zero
+                var vPressCount = 0
+                awaitPointerEventScope {
+                    while (true) {
+                        val vDown = awaitPointerEvent()
+                        if (vDown.type != PointerEventType.Press) continue
+                        val vChange = vDown.changes.firstOrNull() ?: continue
+                        // Skip presses a child already handled — most importantly the
+                        // VerticalScrollbar sibling in this Box. Without this, dragging
+                        // the scrollbar would also start (and continuously extend) a
+                        // body selection because my hit-test still finds a chunk under
+                        // the scrollbar-anchored pointer position.
+                        if (vChange.isConsumed) continue
+                        if (vDown.buttons.isPrimaryPressed.not()) continue
+                        val vOffset = vHitTest(vChange.position) ?: continue
+                        val vBody = inBody ?: continue
+                        vFocus.requestFocus()
+                        val vShift = vDown.keyboardModifiers.isShiftPressed
+
+                        val vNow = vChange.uptimeMillis
+                        val vDx = vChange.position.x - vLastPressPos.x
+                        val vDy = vChange.position.y - vLastPressPos.y
+                        val vNear = (vDx * vDx + vDy * vDy) < 25f    // 5px * 5px
+                        vPressCount = if (!vShift && vNear && vNow - vLastPressUptime < 400L)
+                            (vPressCount + 1).coerceAtMost(3) else 1
+                        vLastPressUptime = vNow
+                        vLastPressPos = vChange.position
+
+                        val vExisting = vSel
+                        vSel = when {
+                            vShift && vExisting != null -> vExisting.copy(caret = vOffset)
+                            vPressCount == 2 -> {
+                                val vR = wordRangeAt(vBody, vOffset)
+                                BodySel(anchor = vR.first, caret = vR.last)
+                            }
+                            vPressCount >= 3 -> BodySel(
+                                anchor = lineStartAt(vBody, vOffset),
+                                caret = lineEndAt(vBody, vOffset),
+                            )
+                            else -> BodySel(anchor = vOffset, caret = vOffset)
+                        }
+                        vChange.consume()
+
+                        // Drag loop: keep updating the caret end on Move until Release.
+                        // Break only on Release so scroll-wheel / other stray events
+                        // during the drag don't abort it. vDragPos drives the edge
+                        // auto-scroll effect above.
+                        vDragPos = vChange.position
+                        while (true) {
+                            val vEv = awaitPointerEvent()
+                            if (vEv.type == PointerEventType.Release) break
+                            if (vEv.type != PointerEventType.Move) continue
+                            val vCh = vEv.changes.firstOrNull() ?: continue
+                            vDragPos = vCh.position
+                            val vHit = vHitTest(vCh.position)
+                            if (vHit != null) vSel = vSel?.copy(caret = vHit)
+                            vCh.consume()
+                        }
+                        vDragPos = null
+                    }
+                }
+            }
+            // Ctrl/Cmd+A: select the whole body. Ctrl/Cmd+C: copy the current
+            // selection (falls through when empty so the toolbar Copy button and
+            // other handlers can still act). Shift+Arrow / Home / End: editor-style
+            // caret movement that extends the selection from the current anchor.
+            // Escape clears the selection.
             .onKeyEvent { ev ->
-                if (ev.type == KeyEventType.KeyDown && ev.key == Key.A &&
-                    (ev.isCtrlPressed || ev.isMetaPressed)
-                ) {
-                    vSelState.selectAll()
-                    true
-                } else {
-                    false
+                if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
+                val vBody = inBody ?: return@onKeyEvent false
+                val vMod = ev.isCtrlPressed || ev.isMetaPressed
+                val vShift = ev.isShiftPressed
+                when {
+                    vMod && ev.key == Key.A -> {
+                        vSel = BodySel(0, vBody.length); true
+                    }
+                    vMod && ev.key == Key.C -> {
+                        val vS = vSel
+                        if (vS != null && !vS.isEmpty) {
+                            currentClipboard.setText(AnnotatedString(vBody.substring(vS.start, vS.end)))
+                            true
+                        } else false
+                    }
+                    ev.key == Key.Escape -> {
+                        if (vSel != null) { vSel = null; true } else false
+                    }
+                    vShift && ev.key == Key.DirectionRight -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = (vCur.caret + 1).coerceAtMost(vBody.length))
+                        vScrollCaretIntoView(); true
+                    }
+                    vShift && ev.key == Key.DirectionLeft -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = (vCur.caret - 1).coerceAtLeast(0))
+                        vScrollCaretIntoView(); true
+                    }
+                    vShift && ev.key == Key.DirectionDown -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = moveDown(vBody, vCur.caret))
+                        vScrollCaretIntoView(); true
+                    }
+                    vShift && ev.key == Key.DirectionUp -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = moveUp(vBody, vCur.caret))
+                        vScrollCaretIntoView(); true
+                    }
+                    vShift && ev.key == Key.MoveHome -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = if (vMod) 0 else lineStartAt(vBody, vCur.caret))
+                        vScrollCaretIntoView(); true
+                    }
+                    vShift && ev.key == Key.MoveEnd -> {
+                        val vCur = vSel ?: BodySel(0, 0)
+                        vSel = vCur.copy(caret = if (vMod) vBody.length else lineEndAt(vBody, vCur.caret))
+                        vScrollCaretIntoView(); true
+                    }
+                    else -> false
                 }
             },
         contentAlignment = Alignment.CenterEnd,
     ) {
-        // One SelectionContainer around the list: drag-select + Ctrl/Cmd+C copy work
-        // across the VISIBLE lines. Off-screen lines aren't composed, so a full-
-        // document drag-select / select-all can't reach them — the "Copy" button
-        // copies the entire body regardless (see the toolbar copy action).
-        SelectionContainer(state = vSelState, modifier = Modifier.fillMaxSize()) {
-            LazyColumn(state = vState, modifier = Modifier.fillMaxSize()) {
-                // Status line: collapse arrow + optional lock + status text.
-                // DisableSelection opts the status + header rows out of the surrounding
-                // SelectionContainer, so Ctrl/Cmd+A and drag-select only touch the body.
-                item {
-                    DisableSelection {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { inOnToggleCollapse() }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            MaterialSymbolsOutlined(
-                                icon = if (inHeadersCollapsed) MaterialSymbols.ChevronRight else MaterialSymbols.ExpandMore,
-                                tint = c.dim,
-                                size = 16.dp,
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            if (inShowSecureLock) {
-                                MaterialSymbolsOutlined(
-                                    icon = MaterialSymbols.Lock,
-                                    tint = Color(0xFF36B37E),  // green — TLS verified by OS
-                                    size = 14.dp,
-                                )
-                                Spacer(Modifier.width(6.dp))
-                            }
-                            Text(inStatusLine, color = c.text, fontSize = 13.sp)
-                        }
+        LazyColumn(state = vState, modifier = Modifier.fillMaxSize()) {
+            // Status line: collapse arrow + optional lock + status text.
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { inOnToggleCollapse() }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MaterialSymbolsOutlined(
+                        icon = if (inHeadersCollapsed) MaterialSymbols.ChevronRight else MaterialSymbols.ExpandMore,
+                        tint = c.dim,
+                        size = 16.dp,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    if (inShowSecureLock) {
+                        MaterialSymbolsOutlined(
+                            icon = MaterialSymbols.Lock,
+                            tint = Color(0xFF36B37E),  // green — TLS verified by OS
+                            size = 14.dp,
+                        )
+                        Spacer(Modifier.width(6.dp))
                     }
+                    Text(inStatusLine, color = c.text, fontSize = 13.sp)
                 }
-                // Headers as a key/value table — only when not collapsed.
-                if (!inHeadersCollapsed && inHeaders.isNotEmpty()) {
-                    item {
-                        DisableSelection {
-                            HeaderTable(inHeaders, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-                        }
-                    }
-                }
-                if (inBody != null || inIsImage) {
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = c.border) }
-                    if (inIsImage && inImagePainter != null) {
-                        item {
-                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
-                                Image(
-                                    painter = inImagePainter,
-                                    contentDescription = "Response image",
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-                        }
-                    } else if (vChunks.isNotEmpty()) {
-                        // One BasicText per BLOCK of lines (not per line) — far fewer
-                        // nodes / selectables to churn while scrolling. contentType lets
-                        // LazyColumn recycle block slots.
-                        items(vChunks.size, contentType = { "chunk" }) { vCi ->
-                            BodyChunkRow(
-                                inChunk = vChunks[vCi],
-                                inSoftWrap = inSoftWrap,
-                                inGutterWidth = vGutterWidth,
-                                inHScroll = vHScroll,
-                                inBodyStyle = vBodyStyle,
-                                inNumStyle = vNumStyle,
-                            )
-                        }
-                    }
-                }
-                item { Spacer(Modifier.height(8.dp)) }
             }
+            // Headers as a key/value table — only when not collapsed.
+            if (!inHeadersCollapsed && inHeaders.isNotEmpty()) {
+                item {
+                    HeaderTable(inHeaders, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+                }
+            }
+            if (inBody != null || inIsImage) {
+                item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = c.border) }
+                if (inIsImage && inImagePainter != null) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Image(
+                                painter = inImagePainter,
+                                contentDescription = "Response image",
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    }
+                } else if (vChunks.isNotEmpty()) {
+                    // One BasicText per BLOCK of lines (not per line) — far fewer
+                    // nodes to churn while scrolling. Chunk key lets the pointer
+                    // hit-test map a visible item back to its chunk index.
+                    items(vChunks.size, key = { "chunk_$it" }, contentType = { "chunk" }) { vCi ->
+                        BodyChunkRow(
+                            inChunk = vChunks[vCi],
+                            inSoftWrap = inSoftWrap,
+                            inGutterWidth = vGutterWidth,
+                            inHScroll = vHScroll,
+                            inBodyStyle = vBodyStyle,
+                            inNumStyle = vNumStyle,
+                            inSel = vSel,
+                            inSelColor = vSelColor,
+                            inCaretColor = c.accent,
+                            inOnLayout = { vChunkLayouts[vCi] = it },
+                        )
+                    }
+                }
+            }
+            item { Spacer(Modifier.height(8.dp)) }
         }
         // Overlay scrollbar on the right, themed for the dark panel.
         VerticalScrollbar(
@@ -431,6 +657,97 @@ internal fun HttpFlowView(
     }
 }
 
+// ==================
+// MARK: Body selection (editor-style, spans virtualized chunks)
+// ==================
+
+/* A response body's selection is a pair of character offsets in the whole body
+   string: [anchor] is where the user pressed / started the selection, [caret] is
+   where they've moved to. When they differ, the selected range is [min..max].
+   When equal, it's a zero-width caret still useful as a starting point for
+   subsequent Shift+Arrow / Shift+Click extensions.
+
+   Note this lives OUTSIDE the SelectionContainer machinery — that machinery only
+   tracks selectables composed by the LazyColumn (visible chunks), which is why
+   Ctrl+A and drag-select cannot reach off-screen text through it. This state is
+   plain integer offsets so it survives scroll and covers the whole body. */
+private data class BodySel(val anchor: Int, val caret: Int) {
+    val start get() = minOf(anchor, caret)
+    val end   get() = maxOf(anchor, caret)
+    val isEmpty get() = anchor == caret
+}
+
+/* Character offset of the start of the line containing [inOffset]. */
+private fun lineStartAt(inText: String, inOffset: Int): Int {
+    if (inOffset <= 0) return 0
+    val vClamped = inOffset.coerceAtMost(inText.length)
+    val vPrev = inText.lastIndexOf('\n', vClamped - 1)
+    return if (vPrev < 0) 0 else vPrev + 1
+}
+
+/* Character offset of the end of the line containing [inOffset] — the position of
+   its '\n', or the length of [inText] if this is the last line. */
+private fun lineEndAt(inText: String, inOffset: Int): Int {
+    val vClamped = inOffset.coerceIn(0, inText.length)
+    val vNext = inText.indexOf('\n', vClamped)
+    return if (vNext < 0) inText.length else vNext
+}
+
+/* Move a caret one visual "row" down while trying to keep its column — i.e. the
+   number of chars past the current line's start. If the target line is shorter,
+   the caret snaps to its end. Off-by-one at EOF collapses to the body length. */
+private fun moveDown(inText: String, inOffset: Int): Int {
+    val vLineStart = lineStartAt(inText, inOffset)
+    val vCol = inOffset - vLineStart
+    val vNext = inText.indexOf('\n', inOffset)
+    if (vNext < 0) return inText.length
+    val vNextStart = vNext + 1
+    val vNextEnd = lineEndAt(inText, vNextStart)
+    return (vNextStart + vCol).coerceAtMost(vNextEnd)
+}
+
+/* The Up counterpart to [moveDown]. */
+private fun moveUp(inText: String, inOffset: Int): Int {
+    val vLineStart = lineStartAt(inText, inOffset)
+    if (vLineStart == 0) return 0
+    val vCol = inOffset - vLineStart
+    val vPrevEnd = vLineStart - 1                                   // the '\n' before this line
+    val vPrevStart = lineStartAt(inText, vPrevEnd)
+    return (vPrevStart + vCol).coerceAtMost(vPrevEnd)
+}
+
+/* Word boundary rule for double-click selection: contiguous run of "word chars"
+   (letters, digits, underscore) containing [inOffset], or an empty range at the
+   click point when it lands on non-word text (whitespace, punctuation). Matches
+   the boundary editors like VS Code / IntelliJ use for double-click select. */
+private fun wordRangeAt(inText: String, inOffset: Int): IntRange {
+    val vN = inText.length
+    if (vN == 0) return 0..0
+    val vClamped = inOffset.coerceIn(0, vN)
+    fun isWord(c: Char) = c.isLetterOrDigit() || c == '_'
+    // A click just after the last char of a word should still select that word.
+    val vProbe = if (vClamped < vN && isWord(inText[vClamped])) vClamped
+                 else if (vClamped > 0 && isWord(inText[vClamped - 1])) vClamped - 1
+                 else return vClamped..vClamped
+    var vStart = vProbe
+    while (vStart > 0 && isWord(inText[vStart - 1])) vStart--
+    var vEnd = vProbe
+    while (vEnd < vN && isWord(inText[vEnd])) vEnd++
+    return vStart..vEnd
+}
+
+/* The index of the chunk in [inChunks] whose character range contains
+   [inOffset], or null when the body is empty. Uses a linear scan — the chunk
+   count is O(body / kLinesPerChunk) which stays modest even for huge bodies. */
+private fun chunkContaining(inChunks: List<BodyChunk>, inOffset: Int): Int? {
+    if (inChunks.isEmpty()) return null
+    for (i in inChunks.indices) {
+        val vC = inChunks[i]
+        if (inOffset <= vC.startCharOffset + vC.body.length) return i
+    }
+    return inChunks.lastIndex
+}
+
 // How many source lines each body BasicText covers. A block is measured whole when
 // any of it is on screen, so keep it near a screenful; small enough to bound over-
 // measure at the viewport edges, large enough to slash node/selectable count.
@@ -439,14 +756,19 @@ private const val kLinesPerChunk = 48
 /* One BLOCK of a read-only body: a right-aligned column of line numbers in the
    gutter + the block's (syntax-coloured) text, each a single BasicText. Rendering
    blocks (not one-BasicText-per-line) keeps the node / selectable / paragraph-set-up
-   count low as blocks scroll through the viewport. DisableSelection keeps the gutter
-   digits out of drag-select / copy; the gutter is pinned outside the shared h-scroll.
+   count low as blocks scroll through the viewport. The gutter is pinned outside
+   the shared h-scroll and never joins the selection.
 
    Gutter alignment under soft-wrap: the gutter starts as plain 1:1 numbers, then the
    body's own onTextLayout tells us how many VISUAL rows each source line wrapped into,
    and we pad the gutter with that many blank rows so number N still sits on line N's
    first row. It reuses the body's layout (no extra measurement) and only recomputes on
-   (re)layout, not per frame. No-wrap mode is 1 row per line, so the plain gutter is exact. */
+   (re)layout, not per frame. No-wrap mode is 1 row per line, so the plain gutter is exact.
+
+   The block's body text carries the current selection as a background SpanStyle
+   intersected with [chunk.startCharOffset, +chunk.body.length). onTextLayout also
+   reports the layout back up to the viewer so hit-testing can convert pointer
+   positions into character offsets across the whole body. */
 @Composable
 private fun BodyChunkRow(
     inChunk: BodyChunk,
@@ -455,6 +777,10 @@ private fun BodyChunkRow(
     inHScroll: ScrollState,
     inBodyStyle: TextStyle,
     inNumStyle: TextStyle,
+    inSel: BodySel?,
+    inSelColor: Color,
+    inCaretColor: Color,
+    inOnLayout: (TextLayoutResult) -> Unit,
 ) {
     val vPlain = remember(inChunk) {
         buildString {
@@ -467,18 +793,59 @@ private fun BodyChunkRow(
     // Reset when the block OR the wrap mode changes (a stale padded gutter must not
     // survive a switch back to no-wrap).
     var vGutter by remember(inChunk, inSoftWrap) { mutableStateOf(vPlain) }
-    Row(modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp)) {
-        DisableSelection {
-            BasicText(text = vGutter, style = inNumStyle, softWrap = false, modifier = Modifier.width(inGutterWidth))
+    // Track the block's own TextLayoutResult locally so `drawWithContent` can
+    // read it for the highlight + caret paint. Also forwarded to the viewer via
+    // inOnLayout for its pointer hit-tests.
+    var vLayout: TextLayoutResult? by remember { mutableStateOf(null) }
+    // Precompute this block's slice of the selection in LOCAL offsets. `null`
+    // when the selection is empty or doesn't touch this block. Also computes the
+    // caret's local offset when the caret itself falls inside this block (drawn
+    // even when the range is empty — that's the read-only viewer's cursor).
+    val vChunkStart = inChunk.startCharOffset
+    val vChunkEnd = vChunkStart + inChunk.body.length
+    val vLocalRange: IntRange? = if (inSel == null || inSel.isEmpty) null else {
+        val vS = maxOf(inSel.start, vChunkStart)
+        val vE = minOf(inSel.end, vChunkEnd)
+        if (vS < vE) (vS - vChunkStart) until (vE - vChunkStart) else null
+    }
+    val vLocalCaret: Int? = if (inSel != null && inSel.caret in vChunkStart..vChunkEnd) {
+        inSel.caret - vChunkStart
+    } else null
+
+    // Draw the selection background BEHIND the text, then the text, then the
+    // caret on top. The port's SpanStyle(background = …) doesn't render across
+    // line breaks (no upstream text-background pass in the SDL/Skia paragraph
+    // draws), so we paint the highlight ourselves via
+    // TextLayoutResult.getPathForRange, which returns per-visual-line rects.
+    fun Modifier.selectionOverlay() = drawWithContent {
+        val vLay = vLayout
+        if (vLay != null && vLocalRange != null) {
+            val vPath = vLay.getPathForRange(vLocalRange.first, vLocalRange.last + 1)
+            drawPath(vPath, color = inSelColor)
         }
+        drawContent()
+        if (vLay != null && vLocalCaret != null) {
+            val vRect = vLay.getCursorRect(vLocalCaret)
+            drawRect(
+                color = inCaretColor,
+                topLeft = Offset(vRect.left, vRect.top),
+                size = Size(1.5f, vRect.height),
+            )
+        }
+    }
+
+    Row(modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp)) {
+        BasicText(text = vGutter, style = inNumStyle, softWrap = false, modifier = Modifier.width(inGutterWidth))
         Spacer(Modifier.width(6.dp))
         if (inSoftWrap) {
             BasicText(
                 text = inChunk.body,
                 style = inBodyStyle,
                 softWrap = true,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).selectionOverlay(),
                 onTextLayout = { layout ->
+                    vLayout = layout
+                    inOnLayout(layout)
                     val vLen = inChunk.body.length
                     val vMaxOff = maxOf(0, vLen - 1)
                     val vSb = StringBuilder()
@@ -500,7 +867,13 @@ private fun BodyChunkRow(
         } else {
             // No-wrap: each source line is exactly one row, so the plain gutter is correct.
             Box(modifier = Modifier.weight(1f).horizontalScroll(inHScroll)) {
-                BasicText(text = inChunk.body, style = inBodyStyle, softWrap = false)
+                BasicText(
+                    text = inChunk.body,
+                    style = inBodyStyle,
+                    softWrap = false,
+                    modifier = Modifier.selectionOverlay(),
+                    onTextLayout = { layout -> vLayout = layout; inOnLayout(layout) },
+                )
             }
         }
     }
@@ -508,11 +881,14 @@ private fun BodyChunkRow(
 
 /* A block of consecutive source lines: 1-based number of the first line, the line
    count, each source line's start offset WITHIN the block text (to map a wrapped body
-   layout back to line numbers), and the highlighted block text. */
+   layout back to line numbers), the character offset of the block's first char in the
+   full body (used to map local text offsets to global ones for cross-chunk selection),
+   and the highlighted block text. */
 private class BodyChunk(
     val firstLine: Int,
     val lineCount: Int,
     val lineStartsInBlock: IntArray,
+    val startCharOffset: Int,
     val body: AnnotatedString,
 )
 
@@ -532,7 +908,7 @@ private fun buildBodyChunks(inText: String, inAnn: AnnotatedString, inLinesPerCh
             .coerceIn(vChunkStart, vLen)
         val vBody = inAnn.subSequence(vChunkStart, vChunkEnd)
         val vStartsInBlock = IntArray(vLast - vLine) { (vStarts[vLine + it] - vChunkStart).coerceAtLeast(0) }
-        vOut.add(BodyChunk(vLine + 1, vLast - vLine, vStartsInBlock, vBody))
+        vOut.add(BodyChunk(vLine + 1, vLast - vLine, vStartsInBlock, vChunkStart, vBody))
         vLine = vLast
     }
     return vOut

@@ -14,6 +14,8 @@ import androidx.compose.ui.SkikoComposeUiFlags
 import androidx.compose.ui.animation.easeOutTimingFunction
 import androidx.compose.ui.animation.withAnimationProgress
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -205,17 +207,34 @@ actual fun Dialog(
 		Layout(
 			content = {
 				// Inner wrapper so the animated layer applies to the dialog
-				// content only — the scrim must not scale/slide with it.
+				// content only — the scrim must not scale/slide with it. Also
+				// carries a pointer consumer so a press on the content area
+				// that lands OUTSIDE any interactive child (a Button etc. —
+				// those consume their press first) is still swallowed here
+				// and does NOT bubble to the outer scrim's consumer / trigger
+				// a dismiss. Descendants keep receiving their normal pointer
+				// events because we only touch changes that reach us
+				// UN-consumed on the Main pass, and even then we consume
+				// silently.
 				Layout(
 					content = content,
-					modifier = Modifier.graphicsLayer {
-						val vReversed = 1f - vProgress
-						alpha = dialogContentAlpha(vProgress)
-						val vScale = 1f - vReversed * kAnimatedLayerScale
-						scaleX = vScale
-						scaleY = vScale
-						translationY = kAnimatedLayerOffsetDp * vReversed * density
-					},
+					modifier = Modifier
+						.graphicsLayer {
+							val vReversed = 1f - vProgress
+							alpha = dialogContentAlpha(vProgress)
+							val vScale = 1f - vReversed * kAnimatedLayerScale
+							scaleX = vScale
+							scaleY = vScale
+							translationY = kAnimatedLayerOffsetDp * vReversed * density
+						}
+						.pointerInput(Unit) {
+							awaitPointerEventScope {
+								while (true) {
+									val vEv = awaitPointerEvent()
+									vEv.changes.forEach { if (!it.isConsumed) it.consume() }
+								}
+							}
+						},
 				) { measurables, constraints ->
 					val vChildren = measurables.map { it.measure(constraints) }
 					val vW = vChildren.maxOfOrNull { it.width } ?: 0
@@ -223,16 +242,40 @@ actual fun Dialog(
 					layout(vW, vH) { vChildren.forEach { it.place(0, 0) } }
 				}
 			},
-			modifier = Modifier.drawBehind {
-				val vSize = size
-				val vScrim = properties.scrimColor
-				drawContext.canvas.drawRect(
-					left = 0f, top = 0f, right = vSize.width, bottom = vSize.height,
-					paint = Paint().apply {
-						color = vScrim.copy(alpha = vScrim.alpha * dialogContentAlpha(vProgress))
-					},
-				)
-			},
+			modifier = Modifier
+				.drawBehind {
+					val vSize = size
+					val vScrim = properties.scrimColor
+					drawContext.canvas.drawRect(
+						left = 0f, top = 0f, right = vSize.width, bottom = vSize.height,
+						paint = Paint().apply {
+							color = vScrim.copy(alpha = vScrim.alpha * dialogContentAlpha(vProgress))
+						},
+					)
+				}
+				// Modal scrim consumer: consumes every un-consumed pointer
+				// event that reaches this outer Layout so events cannot
+				// bleed through to sibling subtrees (the main UI under the
+				// popup). Compose's PointerInputEventProcessor hits BOTH
+				// popup and main-content subtrees on every event — without
+				// this, a click on the scrim would silently fire clickables
+				// underneath. When dismissOnClickOutside is set, an un-
+				// consumed Press here (content descendants had first crack
+				// via the Main pass, so if we see un-consumed it wasn't on
+				// any child interactive) also triggers onDismissRequest.
+				.pointerInput(properties.dismissOnClickOutside, onDismissRequest) {
+					awaitPointerEventScope {
+						while (true) {
+							val vEv = awaitPointerEvent()
+							val vCh = vEv.changes.firstOrNull() ?: continue
+							if (vCh.isConsumed) continue
+							vCh.consume()
+							if (vEv.type == PointerEventType.Press && properties.dismissOnClickOutside) {
+								onDismissRequest()
+							}
+						}
+					}
+				},
 		) { measurables, constraints ->
 			val vChildConstraints = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
 			val vChildren = measurables.map { it.measure(vChildConstraints) }
