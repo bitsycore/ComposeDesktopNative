@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
@@ -92,7 +94,6 @@ internal fun RequestTabStrip(
     var vMenuY by remember { mutableStateOf(0) }
 
     var vListOpen by remember { mutableStateOf(false) }   // overflow list
-    val vListAnchor = rememberMenuAnchor()
 
     val vShowBar = vDragKey != null && vDragDx != 0f
     val vOthers = if (vShowBar) inTabs.filter { it.tabKey != vDragKey } else emptyList()
@@ -188,14 +189,11 @@ internal fun RequestTabStrip(
             DropdownMenu(
                 expanded = true,
                 onDismissRequest = { vMenu = false },
-                anchor = null,
-                offsetX = vMenuX.dp,
-                offsetY = vMenuY.dp,
-                minWidth = 188.dp,
+                modifier = Modifier.widthIn(min = 188.dp),
             ) {
-                DropdownMenuItem(onClick = { vMenu = false; inOnClose(vMTab) }) { MenuRow(MaterialSymbols.Close, "Close tab") }
-                DropdownMenuItem(onClick = { vMenu = false; inOnCloseOthers(vMTab) }) { MenuRow(MaterialSymbols.Clear, "Close other tabs") }
-                DropdownMenuItem(onClick = { vMenu = false; inOnCloseAll() }) { MenuRow(MaterialSymbols.Clear, "Close all tabs") }
+                DropdownMenuItem(text = { MenuRow(MaterialSymbols.Close, "Close tab") }, onClick = { vMenu = false; inOnClose(vMTab) })
+                DropdownMenuItem(text = { MenuRow(MaterialSymbols.Clear, "Close other tabs") }, onClick = { vMenu = false; inOnCloseOthers(vMTab) })
+                DropdownMenuItem(text = { MenuRow(MaterialSymbols.Clear, "Close all tabs") }, onClick = { vMenu = false; inOnCloseAll() })
             }
         }
       }
@@ -203,11 +201,11 @@ internal fun RequestTabStrip(
         // Overflow → chevron opens a scrollable list of every open tab.
         if (vScroll.maxValue > 0) {
             Box(modifier = Modifier.padding(end = 4.dp)) {
-                IconBtn(MaterialSymbols.ExpandMore, "All tabs", inModifier = Modifier.menuAnchor(vListAnchor)) { vListOpen = true }
-                DropdownMenu(expanded = vListOpen, onDismissRequest = { vListOpen = false }, anchor = vListAnchor, minWidth = 240.dp) {
+                IconBtn(MaterialSymbols.ExpandMore, "All tabs") { vListOpen = true }
+                DropdownMenu(expanded = vListOpen, onDismissRequest = { vListOpen = false }, modifier = Modifier.widthIn(min = 240.dp)) {
                     Column(modifier = Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
                         inTabs.forEach { vTab ->
-                            DropdownMenuItem(onClick = { vListOpen = false; inOnSelect(vTab) }) {
+                            DropdownMenuItem(text = {
                                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     val vSel = vTab.tabKey == inActiveKey
                                     val vRs = vTab.req
@@ -220,7 +218,7 @@ internal fun RequestTabStrip(
                                         if (vRs.loading) CircularProgressIndicator(modifier = Modifier.size(12.dp), color = c.accent, strokeWidth = 1.5.dp)
                                     }
                                 }
-                            }
+                            }, onClick = { vListOpen = false; inOnSelect(vTab) })
                         }
                     }
                 }

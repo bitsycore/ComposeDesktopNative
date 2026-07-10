@@ -9,7 +9,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.selection.rememberSelectionState
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -275,6 +285,10 @@ internal fun HttpFlowView(
 ) {
     val c = LocalAppColors.current
     val vState = rememberLazyListState()
+    // Selection state so a viewer-level Ctrl/Cmd+A can call selectAll() (see the
+    // Box.onKeyEvent below). With a LazyList, selectAll() only covers the currently
+    // COMPOSED blocks (upstream limitation) — the Copy button still grabs the whole body.
+    val vSelState = rememberSelectionState()
     // The body is highlighted ONCE, then sliced into BLOCKS of lines — one BasicText
     // per block, NOT one per line. Far fewer nodes / selectables / paragraph set-ups
     // churn through the viewport while scrolling (the smoothness win), and the
@@ -307,12 +321,30 @@ internal fun HttpFlowView(
     // contentAlignment pins the narrow scrollbar to the right edge; the
     // fillMaxSize content fills the rest (this project's Box has no BoxScope, so
     // there's no Modifier.align — alignment is via contentAlignment).
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
-        // One SelectionContainer around the list: drag-select + Ctrl/Cmd+C work
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Ctrl/Cmd+A -> select all. The body must be focused first (click/drag in
+            // it); the key event bubbles from the SelectionContainer's focus target up
+            // to here. Only composed blocks are selected (LazyList limitation) — the
+            // Copy button copies the whole body regardless.
+            .onKeyEvent { ev ->
+                if (ev.type == KeyEventType.KeyDown && ev.key == Key.A &&
+                    (ev.isCtrlPressed || ev.isMetaPressed)
+                ) {
+                    vSelState.selectAll()
+                    true
+                } else {
+                    false
+                }
+            },
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        // One SelectionContainer around the list: drag-select + Ctrl/Cmd+C copy work
         // across the VISIBLE lines. Off-screen lines aren't composed, so a full-
-        // document drag-select can't reach them — the "Copy" button copies the
-        // entire body regardless (see the toolbar copy action).
-        SelectionContainer(modifier = Modifier.fillMaxSize()) {
+        // document drag-select / select-all can't reach them — the "Copy" button
+        // copies the entire body regardless (see the toolbar copy action).
+        SelectionContainer(state = vSelState, modifier = Modifier.fillMaxSize()) {
             LazyColumn(state = vState, modifier = Modifier.fillMaxSize()) {
                 // Status line: collapse arrow + optional lock + status text.
                 item {
@@ -875,7 +907,6 @@ internal fun ViewerOverflowMenu(
 ) {
     val c = LocalAppColors.current
     var vOpen by remember { mutableStateOf(false) }
-    val vAnchor = rememberMenuAnchor()
 
     val vHeadersText = if (inIsRequestTab && inRequest != null) {
         val vRaw = inSentRequestHeaders ?: parseHeaderLines(requestHeadersText(inRequest))
@@ -907,51 +938,50 @@ internal fun ViewerOverflowMenu(
         }
     }.trimEnd()
 
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .clickable { vOpen = true }
-            .menuAnchor(vAnchor)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    ) {
-        MaterialSymbolsOutlined(icon = MaterialSymbols.MoreHoriz, tint = c.dim, size = 16.dp)
-    }
-    DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
-        DropdownMenuItem(onClick = {
-            currentClipboard.setText(AnnotatedString(copyAll()))
-            inOnMessage("Copied all.")
-            vOpen = false
-        }) { Text("Copy all") }
-        DropdownMenuItem(onClick = {
-            currentClipboard.setText(AnnotatedString(vHeadersText))
-            inOnMessage("Copied headers.")
-            vOpen = false
-        }) { Text("Copy headers") }
-        if (vCanCopyBody) {
-            DropdownMenuItem(onClick = {
-                currentClipboard.setText(AnnotatedString(vBodyText))
-                inOnMessage("Copied body.")
-                vOpen = false
-            }) { Text("Copy body") }
+    Box {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .clickable { vOpen = true }
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        ) {
+            MaterialSymbolsOutlined(icon = MaterialSymbols.MoreHoriz, tint = c.dim, size = 16.dp)
         }
-        DropdownMenuItem(onClick = {
-            if (inIsImage && !inIsRequestTab) {
-                val vBytes = inResponse?.bytes ?: ByteArray(0)
-                showSaveFileDialog(imageFileName(inResponse?.contentType)) { vPath ->
-                    if (vPath != null) inOnMessage(writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" }
-                        ?: "Saved.")
-                }
-            } else {
-                showSaveFileDialog(if (inIsRequestTab) "request.txt" else "response.json") { vPath ->
-                    if (vPath != null) inOnMessage(writeTextFile(vPath, vBodyText)?.let { "Save failed: $it" }
-                        ?: "Saved.")
-                }
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
+            DropdownMenuItem(text = { Text("Copy all") }, onClick = {
+                currentClipboard.setText(AnnotatedString(copyAll()))
+                inOnMessage("Copied all.")
+                vOpen = false
+            })
+            DropdownMenuItem(text = { Text("Copy headers") }, onClick = {
+                currentClipboard.setText(AnnotatedString(vHeadersText))
+                inOnMessage("Copied headers.")
+                vOpen = false
+            })
+            if (vCanCopyBody) {
+                DropdownMenuItem(text = { Text("Copy body") }, onClick = {
+                    currentClipboard.setText(AnnotatedString(vBodyText))
+                    inOnMessage("Copied body.")
+                    vOpen = false
+                })
             }
-            vOpen = false
-        }) { Text("Save body") }
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = c.border)
-        DropdownMenuItem(onClick = { inOnClear(); vOpen = false }) {
-            Text("Clear", color = Color(0xFFFF5630))
+            DropdownMenuItem(text = { Text("Save body") }, onClick = {
+                if (inIsImage && !inIsRequestTab) {
+                    val vBytes = inResponse?.bytes ?: ByteArray(0)
+                    showSaveFileDialog(imageFileName(inResponse?.contentType)) { vPath ->
+                        if (vPath != null) inOnMessage(writeBytesFile(vPath, vBytes)?.let { "Save failed: $it" }
+                            ?: "Saved.")
+                    }
+                } else {
+                    showSaveFileDialog(if (inIsRequestTab) "request.txt" else "response.json") { vPath ->
+                        if (vPath != null) inOnMessage(writeTextFile(vPath, vBodyText)?.let { "Save failed: $it" }
+                            ?: "Saved.")
+                    }
+                }
+                vOpen = false
+            })
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = c.border)
+            DropdownMenuItem(text = { Text("Clear", color = Color(0xFFFF5630)) }, onClick = { inOnClear(); vOpen = false })
         }
     }
 }
@@ -979,11 +1009,10 @@ internal fun BodyFormatSelector(
 ) {
     val c = LocalAppColors.current
     var vOpen by remember { mutableStateOf(false) }
-    val vAnchor = rememberMenuAnchor()
     val vLabel = if (inAutoLabel != null) "$inAutoLabel (auto)" else inSelected.label
     Box {
         Row(
-            modifier = Modifier.menuAnchor(vAnchor)
+            modifier = Modifier
                 .clip(RoundedCornerShape(if (inBordered) 6.dp else 4.dp))
                 .then(if (inBordered) Modifier.border(1.dp, c.border, RoundedCornerShape(6.dp)) else Modifier)
                 .clickable { vOpen = true }
@@ -994,11 +1023,10 @@ internal fun BodyFormatSelector(
             Text(vLabel, color = if (inBordered) c.text else c.dim, fontSize = if (inBordered) 13.sp else 11.sp)
             MaterialSymbolsOutlined(if (inBordered) MaterialSymbols.UnfoldMore else MaterialSymbols.ArrowDropDown, tint = c.dim, size = if (inBordered) 15.dp else 14.dp)
         }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
             for (vF in BodyFormat.values()) {
-                DropdownMenuItem(onClick = { inOnChange(vF); vOpen = false }) {
-                    Text(vF.label, color = if (vF == inSelected) c.accent else c.text)
-                }
+                DropdownMenuItem(text = { Text(vF.label, color = if (vF == inSelected) c.accent else c.text) },
+                    onClick = { inOnChange(vF); vOpen = false })
             }
         }
     }

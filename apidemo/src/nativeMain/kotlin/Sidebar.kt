@@ -8,6 +8,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -79,25 +81,24 @@ internal fun PackColorPicker(inSelected: Int, inOnPick: (Int) -> Unit) {
 @Composable
 internal fun AddPackMenu(inOnNewRequest: () -> Unit, inOnNew: () -> Unit, inOnImport: () -> Unit) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Box {
-        IconBtn(MaterialSymbols.Add, "Add", inModifier = Modifier.menuAnchor(vAnchor), inSize = 18.dp) { vOpen = true }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 200.dp) {
-            DropdownMenuItem(onClick = { vOpen = false; inOnNewRequest() }) {
+        IconBtn(MaterialSymbols.Add, "Add", inSize = 18.dp) { vOpen = true }
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, modifier = Modifier.widthIn(min = 200.dp)) {
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Send,
                     "New request (loose)"
                 )
-            }
+            }, onClick = { vOpen = false; inOnNewRequest() })
             HorizontalDivider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New pack") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnImport() }) {
+            DropdownMenuItem(text = { MenuRow(MaterialSymbols.Add, "New pack") }, onClick = { vOpen = false; inOnNew() })
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Download,
                     "Import pack…"
                 )
-            }
+            }, onClick = { vOpen = false; inOnImport() })
         }
     }
 }
@@ -140,7 +141,6 @@ internal fun SessionMenu(
     inModifier: Modifier = Modifier,
 ) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
@@ -150,7 +150,7 @@ internal fun SessionMenu(
     Box(modifier = inModifier) {
         // Highlight on hover and stay highlighted while the menu is open.
         Row(
-            modifier = Modifier.fillMaxWidth().menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
                 .background(if (vHover || vOpen) c.accent.copy(alpha = 0.16f) else Color.Transparent, RoundedCornerShape(6.dp))
                 .hoverable(vHoverSrc)
                 .clickable { vOpen = true }.padding(horizontal = 6.dp, vertical = 4.dp),
@@ -165,53 +165,55 @@ internal fun SessionMenu(
             // No file yet → a dot; once it has a file it auto-saves, so no dot.
             if (!vSaved) Box(Modifier.size(6.dp).background(c.accent, RoundedCornerShape(3.dp)))
         }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 248.dp) {
-            DropdownMenuItem(onClick = { vOpen = false; inOnSettings() }) {
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, modifier = Modifier.widthIn(min = 248.dp)) {
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Tune,
                     "Session settings (Var / Header / Cert)"
                 )
-            }
+            }, onClick = { vOpen = false; inOnSettings() })
             HorizontalDivider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; inOnSave() }) { MenuRow(MaterialSymbols.Save, "Save session") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnSaveAs() }) {
+            DropdownMenuItem(text = { MenuRow(MaterialSymbols.Save, "Save session") }, onClick = { vOpen = false; inOnSave() })
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Download,
                     "Save session as…"
                 )
-            }
+            }, onClick = { vOpen = false; inOnSaveAs() })
             DropdownMenuItem(
-                enabled = vSaved,
-                onClick = { vOpen = false; inOnRename() }) {
-                MenuRow(
-                    MaterialSymbols.Edit,
-                    "Rename session…",
-                    if (vSaved) c.text else vDisabled
-                )
-            }
+                text = {
+                    MenuRow(
+                        MaterialSymbols.Edit,
+                        "Rename session…",
+                        if (vSaved) c.text else vDisabled
+                    )
+                },
+                onClick = { vOpen = false; inOnRename() },
+                enabled = vSaved)
             DropdownMenuItem(
-                enabled = vSaved,
-                onClick = { vOpen = false; inOnReveal() }) {
-                MenuRow(
-                    MaterialSymbols.Folder,
-                    "Reveal in ${fileManagerName()}",
-                    if (vSaved) c.text else vDisabled
-                )
-            }
+                text = {
+                    MenuRow(
+                        MaterialSymbols.Folder,
+                        "Reveal in ${fileManagerName()}",
+                        if (vSaved) c.text else vDisabled
+                    )
+                },
+                onClick = { vOpen = false; inOnReveal() },
+                enabled = vSaved)
             HorizontalDivider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; inOnDefault() }) {
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Refresh,
                     "Default session"
                 )
-            }
-            DropdownMenuItem(onClick = { vOpen = false; inOnNew() }) { MenuRow(MaterialSymbols.Add, "New session") }
-            DropdownMenuItem(onClick = { vOpen = false; inOnOpen() }) {
+            }, onClick = { vOpen = false; inOnDefault() })
+            DropdownMenuItem(text = { MenuRow(MaterialSymbols.Add, "New session") }, onClick = { vOpen = false; inOnNew() })
+            DropdownMenuItem(text = {
                 MenuRow(
                     MaterialSymbols.Folder,
                     "Open session…"
                 )
-            }
+            }, onClick = { vOpen = false; inOnOpen() })
             if (inRecent.isNotEmpty()) {
                 HorizontalDivider(color = c.border)
                 // Aligned to the icon column (the DropdownMenuItem's 16dp pad), so
@@ -225,7 +227,7 @@ internal fun SessionMenu(
                     key(vPath) {
                         val vRevealHoverSrc = remember { MutableInteractionSource() }
                         val vRevealHover by vRevealHoverSrc.collectIsHoveredAsState()
-                        DropdownMenuItem(onClick = { vOpen = false; inOnOpenRecent(vPath) }) {
+                        DropdownMenuItem(text = {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -261,7 +263,7 @@ internal fun SessionMenu(
                                     }
                                 }
                             }
-                        }
+                        }, onClick = { vOpen = false; inOnOpenRecent(vPath) })
                     }
                 }
             }
@@ -386,7 +388,6 @@ internal fun PackSection(
     inOnSetColor: (Int) -> Unit,
 ) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vMenu by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
@@ -455,25 +456,22 @@ internal fun PackSection(
             Row(modifier = Modifier.alpha(if (vHover || vMenu) 1f else 0f), verticalAlignment = Alignment.CenterVertically) {
                 if (!inPack.isLinked) IconBtn(MaterialSymbols.Add, "New request", inSize = 16.dp, inPadding = 4.dp) { inOnNewRequest() }
                 Box {
-                    IconBtn(MaterialSymbols.MoreHoriz, "Pack menu", inModifier = Modifier.menuAnchor(vAnchor), inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
+                    IconBtn(MaterialSymbols.MoreHoriz, "Pack menu", inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
                     DropdownMenu(
                         expanded = vMenu,
                         onDismissRequest = { vMenu = false },
-                        anchor = if (vAtCursor) null else vAnchor,
-                        offsetX = if (vAtCursor) vMenuX.dp else 0.dp,
-                        offsetY = if (vAtCursor) vMenuY.dp else 0.dp,
-                        minWidth = 220.dp,
+                        modifier = Modifier.widthIn(min = 220.dp),
                     ) {
-                        DropdownMenuItem(onClick = { vMenu = false; inOnRenamePack() }) { MenuRow(MaterialSymbols.Edit, "Rename pack") }
-                        DropdownMenuItem(onClick = { vMenu = false; inOnDuplicatePack() }) { MenuRow(MaterialSymbols.FileCopy, "Duplicate pack") }
-                        DropdownMenuItem(onClick = { vMenu = false; inOnNewSubPack() }) { MenuRow(MaterialSymbols.Add, "New sub-pack") }
-                        DropdownMenuItem(onClick = { vMenu = false; inOnLinkedCopy() }) { MenuRow(MaterialSymbols.Share, "Linked copy") }
-                        DropdownMenuItem(onClick = { vMenu = false; inOnSavePack() }) { MenuRow(MaterialSymbols.Save, "Export pack") }
-                        DropdownMenuItem(onClick = { vMenu = false; inOnSaveAsPack() }) { MenuRow(MaterialSymbols.Folder, "Export pack as…") }
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Edit, "Rename pack") }, onClick = { vMenu = false; inOnRenamePack() })
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.FileCopy, "Duplicate pack") }, onClick = { vMenu = false; inOnDuplicatePack() })
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Add, "New sub-pack") }, onClick = { vMenu = false; inOnNewSubPack() })
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Share, "Linked copy") }, onClick = { vMenu = false; inOnLinkedCopy() })
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Save, "Export pack") }, onClick = { vMenu = false; inOnSavePack() })
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Folder, "Export pack as…") }, onClick = { vMenu = false; inOnSaveAsPack() })
                         HorizontalDivider(color = c.border)
                         PackColorPicker(inPack.color) { inOnSetColor(it) }
                         HorizontalDivider(color = c.border)
-                        DropdownMenuItem(onClick = { vMenu = false; inOnRemovePack() }) { MenuRow(MaterialSymbols.Delete, "Remove pack", methodColor(ReqMethod.DELETE)) }
+                        DropdownMenuItem(text = { MenuRow(MaterialSymbols.Delete, "Remove pack", methodColor(ReqMethod.DELETE)) }, onClick = { vMenu = false; inOnRemovePack() })
                     }
                 }
             }
@@ -568,7 +566,6 @@ internal fun RequestRow(
 ) {
     val c = LocalAppColors.current
     val vReq = inRs.req
-    val vAnchor = rememberMenuAnchor()
     var vMenu by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
@@ -599,19 +596,16 @@ internal fun RequestRow(
         // never changes; only its opacity toggles on hover / while open. Delete
         // lives inside this menu (no separate button on the row).
         Box(modifier = Modifier.alpha(if (vHover || vMenu) 1f else 0f)) {
-            IconBtn(MaterialSymbols.MoreVert, "Options", inModifier = Modifier.menuAnchor(vAnchor), inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
+            IconBtn(MaterialSymbols.MoreVert, "Options", inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
             DropdownMenu(
                 expanded = vMenu,
                 onDismissRequest = { vMenu = false },
-                anchor = if (vAtCursor) null else vAnchor,
-                offsetX = if (vAtCursor) vMenuX.dp else 0.dp,
-                offsetY = if (vAtCursor) vMenuY.dp else 0.dp,
-                minWidth = 168.dp,
+                modifier = Modifier.widthIn(min = 168.dp),
             ) {
-                if (!inReadOnly) DropdownMenuItem(onClick = { vMenu = false; inOnRename() }) { MenuRow(MaterialSymbols.Edit, "Rename") }
-                if (!inReadOnly) DropdownMenuItem(onClick = { vMenu = false; inOnDuplicate() }) { MenuRow(MaterialSymbols.FileCopy, "Duplicate") }
-                DropdownMenuItem(onClick = { vMenu = false; inOnCopyCurl() }) { MenuRow(MaterialSymbols.Terminal, "Copy as cURL") }
-                if (!inReadOnly) DropdownMenuItem(onClick = { vMenu = false; inOnDelete() }) { MenuRow(MaterialSymbols.Delete, "Delete", methodColor(ReqMethod.DELETE)) }
+                if (!inReadOnly) DropdownMenuItem(text = { MenuRow(MaterialSymbols.Edit, "Rename") }, onClick = { vMenu = false; inOnRename() })
+                if (!inReadOnly) DropdownMenuItem(text = { MenuRow(MaterialSymbols.FileCopy, "Duplicate") }, onClick = { vMenu = false; inOnDuplicate() })
+                DropdownMenuItem(text = { MenuRow(MaterialSymbols.Terminal, "Copy as cURL") }, onClick = { vMenu = false; inOnCopyCurl() })
+                if (!inReadOnly) DropdownMenuItem(text = { MenuRow(MaterialSymbols.Delete, "Delete", methodColor(ReqMethod.DELETE)) }, onClick = { vMenu = false; inOnDelete() })
             }
         }
     }

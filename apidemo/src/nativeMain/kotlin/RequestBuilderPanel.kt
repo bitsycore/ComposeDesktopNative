@@ -5,6 +5,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -214,12 +216,11 @@ internal fun TabSizeSelector() {
     var vOpen by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
-    val vAnchor = rememberMenuAnchor()
     val vSize = TextLayoutConfig.tabWidth
     TooltipBox(text = "Editor tab size") {
         Box {
             Row(
-                modifier = Modifier.menuAnchor(vAnchor)
+                modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
                     .background(if (vHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(6.dp))
                     .hoverable(vHoverSrc)
@@ -231,11 +232,11 @@ internal fun TabSizeSelector() {
                 Text("Tab $vSize", color = if (vHover) c.accent else c.dim, fontSize = 12.sp)
                 MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = if (vHover) c.accent else c.dim, size = 14.dp)
             }
-            DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, offsetY = (-4).dp) {
+            DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
                 for (vN in listOf(2, 4, 8)) {
-                    DropdownMenuItem(onClick = { TextLayoutConfig.tabWidth = vN; vOpen = false }) {
+                    DropdownMenuItem(text = {
                         Text("$vN spaces", color = if (vN == vSize) c.accent else c.text)
-                    }
+                    }, onClick = { TextLayoutConfig.tabWidth = vN; vOpen = false })
                 }
             }
         }
@@ -412,11 +413,10 @@ internal fun ScopeSettings(
 @Composable
 internal fun CertFormatMenu(inFormat: CertFormat, inOnPick: (CertFormat) -> Unit) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Box {
         Row(
-            modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+            modifier = Modifier.clip(RoundedCornerShape(6.dp))
                 .border(1.dp, c.border, RoundedCornerShape(6.dp))
                 .clickable { vOpen = true }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -426,11 +426,11 @@ internal fun CertFormatMenu(inFormat: CertFormat, inOnPick: (CertFormat) -> Unit
             Text(inFormat.label, color = c.text, fontSize = 13.sp)
             MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = c.dim, size = 15.dp)
         }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
             CertFormat.entries.forEach { vF ->
-                DropdownMenuItem(onClick = { inOnPick(vF); vOpen = false }) {
+                DropdownMenuItem(text = {
                     Text(vF.label, color = if (vF == inFormat) c.accent else c.text, fontSize = 13.sp)
-                }
+                }, onClick = { inOnPick(vF); vOpen = false })
             }
         }
     }

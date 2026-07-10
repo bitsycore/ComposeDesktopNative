@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,21 +34,20 @@ internal fun OptionsMenu(
     inOnToggleTheme: () -> Unit,
 ) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Box {
-        IconBtn(MaterialSymbols.Settings, "Options", inModifier = Modifier.menuAnchor(vAnchor)) { vOpen = true }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor, minWidth = 200.dp) {
-            DropdownMenuItem(onClick = { if (!inDark) inOnToggleTheme(); vOpen = false }) {
+        IconBtn(MaterialSymbols.Settings, "Options") { vOpen = true }
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, modifier = Modifier.widthIn(min = 200.dp)) {
+            DropdownMenuItem(text = {
                 Text("Dark mode", color = if (inDark) c.accent else c.text, fontSize = 13.sp)
-            }
-            DropdownMenuItem(onClick = { if (inDark) inOnToggleTheme(); vOpen = false }) {
+            }, onClick = { if (!inDark) inOnToggleTheme(); vOpen = false })
+            DropdownMenuItem(text = {
                 Text("Light mode", color = if (!inDark) c.accent else c.text, fontSize = 13.sp)
-            }
+            }, onClick = { if (inDark) inOnToggleTheme(); vOpen = false })
             HorizontalDivider(color = c.border)
-            DropdownMenuItem(onClick = { vOpen = false; openSettingsFolder() }) {
+            DropdownMenuItem(text = {
                 MenuRow(MaterialSymbols.Folder, "Open settings folder")
-            }
+            }, onClick = { vOpen = false; openSettingsFolder() })
         }
     }
 }
@@ -70,7 +71,6 @@ internal fun UrlBar(
     inReadOnly: Boolean = false,
 ) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier.fillMaxWidth().background(c.panel).padding(horizontal = 12.dp, vertical = 8.dp),
@@ -79,7 +79,7 @@ internal fun UrlBar(
     ) {
         Box(modifier = Modifier.alpha(if (inReadOnly) 0.55f else 1f)) {
             Row(
-                modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+                modifier = Modifier.clip(RoundedCornerShape(6.dp))
                     .clickable { vOpen = true }.padding(horizontal = 6.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -87,11 +87,11 @@ internal fun UrlBar(
                 Text(inReq.method.name, color = methodColor(inReq.method), fontSize = 14.sp)
                 MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = methodColor(inReq.method), size = 16.dp)
             }
-            DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
+            DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
                 ReqMethod.entries.forEach { vM ->
-                    DropdownMenuItem(onClick = { inOnMethod(vM); vOpen = false }) {
+                    DropdownMenuItem(text = {
                         Text(vM.name, color = methodColor(vM), fontSize = 13.sp)
-                    }
+                    }, onClick = { inOnMethod(vM); vOpen = false })
                 }
             }
         }
@@ -157,11 +157,10 @@ internal fun UrlBar(
 @Composable
 internal fun BodyTypeMenu(inType: BodyType, inEnabled: Boolean, inOnPick: (BodyType) -> Unit) {
     val c = LocalAppColors.current
-    val vAnchor = rememberMenuAnchor()
     var vOpen by remember { mutableStateOf(false) }
     Box {
         Row(
-            modifier = Modifier.menuAnchor(vAnchor).clip(RoundedCornerShape(6.dp))
+            modifier = Modifier.clip(RoundedCornerShape(6.dp))
                 .border(1.dp, c.border, RoundedCornerShape(6.dp))
                 .clickable { if (inEnabled) vOpen = true }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -172,11 +171,11 @@ internal fun BodyTypeMenu(inType: BodyType, inEnabled: Boolean, inOnPick: (BodyT
             Text(inType.label, color = if (inEnabled) c.text else c.dim, fontSize = 13.sp)
             MaterialSymbolsOutlined(MaterialSymbols.UnfoldMore, tint = c.dim, size = 15.dp)
         }
-        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }, anchor = vAnchor) {
+        DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
             BodyType.entries.forEach { vT ->
-                DropdownMenuItem(onClick = { inOnPick(vT); vOpen = false }) {
+                DropdownMenuItem(text = {
                     Text(vT.label, color = if (vT == inType) c.accent else c.text, fontSize = 13.sp)
-                }
+                }, onClick = { inOnPick(vT); vOpen = false })
             }
         }
     }
