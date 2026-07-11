@@ -12,7 +12,8 @@
 #
 # Static archives don't bundle their dependencies, so we copy every vendored
 # *.a out of the build tree next to libSDL3_image.a; the app's linker line
-# lists them. Override with SDL_IMAGE_REF=release-3.4.4 (default).
+# lists them. URL + ref come from scripts/build-sdl/build-sdl.properties
+# (SDL_IMAGE_URL / SDL_IMAGE_REF); a same-named env var overrides for one-offs.
 #
 # Run build-sdl3.sh FIRST (SDL3_image links against libs/SDL3).
 set -euo pipefail
@@ -24,8 +25,8 @@ source "$TOOLS/_lib.sh"
 BUILD_SDL_HOST="$(detect_host)"
 setup_toolchain
 
-SDL_IMAGE_REF="${SDL_IMAGE_REF:-release-3.4.4}"
-SDL_IMAGE_URL="${SDL_IMAGE_URL:-https://github.com/libsdl-org/SDL_image.git}"
+SDL_IMAGE_URL="$(require_manifest SDL_IMAGE_URL)"
+SDL_IMAGE_REF="$(require_manifest SDL_IMAGE_REF)"
 REPO="$(cd "$TOOLS/../.." && pwd)"
 LIBS="$REPO/libs"
 BUILD="$LIBS/.build/sdl3imgsrc"
@@ -38,10 +39,14 @@ mkdir -p "$BUILD"
 
 NINJA="$(find_ninja "$BUILD")"
 
-if [ ! -f "$SRC/CMakeLists.txt" ]; then
+# Re-clone whenever URL / ref changes so switching versions is clean.
+MARKER="$BUILD/.source"
+WANT="$SDL_IMAGE_URL $SDL_IMAGE_REF"
+if [ ! -f "$SRC/CMakeLists.txt" ] || [ "$(cat "$MARKER" 2>/dev/null)" != "$WANT" ]; then
 	echo ">> cloning SDL_image $SDL_IMAGE_REF"
 	rm -rf "$SRC"
 	git clone --depth 1 -b "$SDL_IMAGE_REF" "$SDL_IMAGE_URL" "$SRC"
+	echo "$WANT" > "$MARKER"
 fi
 
 echo ">> fetching vendored codec submodules (zlib, libpng, libwebp)"

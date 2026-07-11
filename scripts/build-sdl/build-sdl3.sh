@@ -9,8 +9,9 @@
 #
 # The set of system libraries SDL3 needs when static is recorded in
 # libs/SDL3/lib/pkgconfig/sdl3-static.pc (Libs.private) after this runs; the
-# app's linker line has to include those. Override with SDL_REF=release-3.4.12
-# (default) or SDL_URL=... — swapping either re-clones automatically.
+# app's linker line has to include those. URL + ref come from
+# scripts/build-sdl/build-sdl.properties (SDL_URL / SDL_REF); a same-named env
+# var overrides for one-offs. Swapping either value re-clones automatically.
 #
 # On Windows SDL >= 3.4 needs a working C++ compiler (GameInput backend). See
 # _lib.sh's setup_toolchain: system g++ is captured for CXX because K/N's
@@ -27,8 +28,8 @@ source "$TOOLS/_lib.sh"
 BUILD_SDL_HOST="$(detect_host)"
 setup_toolchain
 
-SDL_REF="${SDL_REF:-release-3.4.12}"
-SDL_URL="${SDL_URL:-https://github.com/libsdl-org/SDL.git}"
+SDL_URL="$(require_manifest SDL_URL)"
+SDL_REF="$(require_manifest SDL_REF)"
 REPO="$(cd "$TOOLS/../.." && pwd)"
 LIBS="$REPO/libs"
 BUILD="$LIBS/.build/sdl3src"

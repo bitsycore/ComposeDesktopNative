@@ -117,6 +117,54 @@ setup_toolchain() {
 	esac
 }
 
+# ==================
+# MARK: Manifest — build-sdl.properties
+# ==================
+# One file at scripts/build-sdl/build-sdl.properties defines the URL + ref for
+# every static library the build scripts pull. Format is `KEY=value`, with
+# `KEY_<host>=value` per-host overrides (host = macos / linux / windows).
+#
+# manifest_value <KEY>  — echo the winning value, honoring:
+#     1. Environment variable of that name  (highest priority)
+#     2. KEY_<host>   in build-sdl.properties  (only when host matches)
+#     3. KEY          in build-sdl.properties  (base)
+# Prints nothing if none set — pair with require_manifest to make the key
+# mandatory. MANIFEST_FILE can be pointed at a different file for testing.
+
+MANIFEST_FILE="${MANIFEST_FILE:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/build-sdl.properties}"
+
+manifest_value() {
+	local vKey="$1"
+	local vEnv
+	eval "vEnv=\${$vKey:-}"
+	if [ -n "$vEnv" ]; then
+		printf '%s\n' "$vEnv"
+		return
+	fi
+	[ -f "$MANIFEST_FILE" ] || return 0
+	local vHost="${BUILD_SDL_HOST:-$(detect_host)}"
+	local vHostVal
+	vHostVal="$(sed -n "s/^${vKey}_${vHost}=//p" "$MANIFEST_FILE" | head -1)"
+	if [ -n "$vHostVal" ]; then
+		printf '%s\n' "$vHostVal"
+		return
+	fi
+	sed -n "s/^${vKey}=//p" "$MANIFEST_FILE" | head -1
+}
+
+# require_manifest <KEY> — echo manifest_value, or fail with a clear error if
+# the key resolves to an empty string (no env var, no override, no base).
+require_manifest() {
+	local vKey="$1"
+	local vVal
+	vVal="$(manifest_value "$vKey")"
+	if [ -z "$vVal" ]; then
+		echo "ERROR: $vKey not defined — add it to $MANIFEST_FILE or export it as an env var" >&2
+		exit 1
+	fi
+	printf '%s\n' "$vVal"
+}
+
 # extra_cmake_args — echo host-specific extra CMake arguments (e.g. macOS
 # arch pin). Meant to be interpolated unquoted into a cmake command line.
 extra_cmake_args() {

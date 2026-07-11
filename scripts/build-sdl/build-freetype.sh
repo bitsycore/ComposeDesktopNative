@@ -8,7 +8,8 @@
 #
 # The result is a static libfreetype.a with NO external DLLs / dylibs that
 # links straight into the Kotlin/Native binary (the freetype.def does
-# `-lfreetype`). Override the version with FREETYPE_TAG=VER-2-13-3 (default).
+# `-lfreetype`). URL + ref come from scripts/build-sdl/build-sdl.properties
+# (FREETYPE_URL / FREETYPE_TAG); a same-named env var overrides for one-offs.
 set -euo pipefail
 
 TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,7 +19,8 @@ source "$TOOLS/_lib.sh"
 BUILD_SDL_HOST="$(detect_host)"
 setup_toolchain
 
-FT_TAG="${FREETYPE_TAG:-VER-2-13-3}"
+FT_URL="$(require_manifest FREETYPE_URL)"
+FT_TAG="$(require_manifest FREETYPE_TAG)"
 REPO="$(cd "$TOOLS/../.." && pwd)"
 LIBS="$REPO/libs"
 BUILD="$LIBS/.build/freetype"
@@ -26,11 +28,14 @@ mkdir -p "$BUILD"
 
 NINJA="$(find_ninja "$BUILD")"
 
-# Shallow clone of the requested tag; re-fetch only when missing.
-if [ ! -f "$BUILD/src/CMakeLists.txt" ]; then
+# Re-clone whenever URL / tag changes so switching versions is clean.
+MARKER="$BUILD/.source"
+WANT="$FT_URL $FT_TAG"
+if [ ! -f "$BUILD/src/CMakeLists.txt" ] || [ "$(cat "$MARKER" 2>/dev/null)" != "$WANT" ]; then
 	echo ">> cloning FreeType $FT_TAG"
 	rm -rf "$BUILD/src"
-	git clone --depth 1 -b "$FT_TAG" https://github.com/freetype/freetype.git "$BUILD/src"
+	git clone --depth 1 -b "$FT_TAG" "$FT_URL" "$BUILD/src"
+	echo "$WANT" > "$MARKER"
 fi
 
 echo ">> configuring (static, optional deps off)"

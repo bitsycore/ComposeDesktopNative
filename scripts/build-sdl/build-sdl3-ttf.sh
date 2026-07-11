@@ -2,7 +2,8 @@
 # Build a static SDL3_ttf and install it into <repo>/libs/SDL3_ttf. Runs on
 # macOS, Linux, and Windows (Git Bash) — see _lib.sh for host handling.
 #
-# By default builds the variable-font axis API fork:
+# Defaults (from scripts/build-sdl/build-sdl.properties) point at the in-house
+# fork:
 #
 #   https://github.com/bitsycore/SDL_ttf   (branch: variable-font-axes)
 #
@@ -11,10 +12,11 @@
 # can drive axes through TTF_SetFontAxisValue() instead of bypassing SDL_ttf
 # and talking to FreeType directly.
 #
-# Set SDL_TTF_URL / SDL_TTF_REF to point at a different SDL_ttf; changing
-# either re-clones automatically. Examples:
-#   SDL_TTF_URL=https://github.com/libsdl-org/SDL_ttf.git SDL_TTF_REF=main
-#   SDL_TTF_URL=https://github.com/libsdl-org/SDL_ttf.git SDL_TTF_REF=release-3.2.2
+# URL + ref come from scripts/build-sdl/build-sdl.properties (SDL_TTF_URL /
+# SDL_TTF_REF); a same-named env var overrides for one-offs. Swapping either
+# value re-clones automatically. Examples:
+#   SDL_TTF_URL=https://github.com/libsdl-org/SDL_ttf.git SDL_TTF_REF=main ./build-sdl3-ttf.sh
+#   SDL_TTF_REF=release-3.2.2 ./build-sdl3-ttf.sh
 #
 # Static: produces libSDL3_ttf.a (no shared lib). A static archive doesn't
 # bundle its dependencies, so the app's final link pulls in libs/FreeType
@@ -30,8 +32,8 @@ source "$TOOLS/_lib.sh"
 BUILD_SDL_HOST="$(detect_host)"
 setup_toolchain
 
-SDL_TTF_URL="${SDL_TTF_URL:-https://github.com/bitsycore/SDL_ttf.git}"
-SDL_TTF_REF="${SDL_TTF_REF:-variable-font-axes}"
+SDL_TTF_URL="$(require_manifest SDL_TTF_URL)"
+SDL_TTF_REF="$(require_manifest SDL_TTF_REF)"
 REPO="$(cd "$TOOLS/../.." && pwd)"
 LIBS="$REPO/libs"
 BUILD="$LIBS/.build/sdl3_ttf"

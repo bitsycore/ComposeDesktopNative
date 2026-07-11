@@ -16,9 +16,10 @@
 # Requires on every host: git, cmake. Ninja is fetched into libs/.build/ninja-bin
 # when absent. Windows also needs Python + curl (Git Bash defaults) plus a
 # mingw-w64 g++ on PATH (for SDL3's GameInput backend; K/N's bundled mingw is
-# C-only). Per-step options — SDL_REF / SDL_IMAGE_REF / SDL_TTF_REF /
-# FREETYPE_TAG — are read from the environment by the individual scripts;
-# export them before running this.
+# C-only). URLs + refs for each library come from build-sdl.properties; edit
+# it to change versions or repos, or set the corresponding env vars (SDL_URL /
+# SDL_REF / SDL_IMAGE_URL / SDL_IMAGE_REF / SDL_TTF_URL / SDL_TTF_REF /
+# FREETYPE_URL / FREETYPE_TAG) for a one-off override.
 set -euo pipefail
 
 TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
