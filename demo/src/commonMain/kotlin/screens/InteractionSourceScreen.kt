@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.HoverInteraction
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -21,9 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.shape.RoundedCornerShape
-import demo.shim.demoPressable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -62,18 +59,15 @@ internal fun InteractionSourceScreen() {
 				else   -> vSurface
 			})
 
-			val vPressKey = remember { PressInteraction.Press(Offset.Zero) }
-			val vHoverKey = remember { HoverInteraction.Enter() }
 			Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 				Box(
 					modifier = Modifier
 						.size(120.dp, 48.dp)
 						.background(vBg, RoundedCornerShape(8.dp))
 						.hoverable(vInter)
-						.demoPressable { vIn ->
-							vInter.tryEmit(if (vIn) vPressKey else PressInteraction.Release(vPressKey))
-						}
-						.clickable {},
+						// clickable(interactionSource, indication) feeds Press/Release
+						// straight into the source — no need for a project-side helper.
+						.clickable(interactionSource = vInter, indication = null, onClick = {}),
 				) {
 					Box(modifier = Modifier.padding(12.dp)) {
 						Text("Hover/press me", color = vOnSurface, fontSize = 14.sp)

@@ -52,12 +52,16 @@ nativeMain/kotlin/ -> src/vendor/native/kotlin/
 skikoMain/kotlin/org/jetbrains/compose/resources/ImageDecoders.skiko.kt -> src/vendor/native/kotlin/org/jetbrains/compose/resources/ImageDecoders.skiko.kt
 skikoMain/kotlin/org/jetbrains/compose/resources/ResourceReader.skiko.kt -> src/vendor/native/kotlin/org/jetbrains/compose/resources/ResourceReader.skiko.kt
 
-# Skia-bound pieces — only attached when the Skia renderer is active (macOS/Linux
-# default; never on mingwX64). COMPILE-UNVERIFIED on Windows hosts.
-skikoMain/kotlin/org/jetbrains/compose/resources/ImageResources.skiko.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/ImageResources.skiko.kt
-skikoMain/kotlin/org/jetbrains/compose/resources/FontResources.skiko.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/FontResources.skiko.kt
-skikoMain/kotlin/org/jetbrains/compose/resources/SvgPainter.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/SvgPainter.kt
-skikoMain/kotlin/org/jetbrains/compose/resources/DrawCache.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/DrawCache.kt
+# Skia-bound pieces — upstream's skikoMain actuals rely on Compose-Desktop Skia
+# extensions (SystemFont / toComposeImageBitmap / nativeCanvas) this port's :ui
+# doesn't expose. Since the sdlRenderer actuals (src/sdlRendererMain/kotlin/) use
+# pure project APIs (IconFont / NamedFont / decodeEncodedImageBitmap) that work
+# on either renderer, the module's build shares those with skikoRendererMain
+# instead of vendoring the upstream files. Opt them out of the sync.
+!skikoMain/kotlin/org/jetbrains/compose/resources/ImageResources.skiko.kt
+!skikoMain/kotlin/org/jetbrains/compose/resources/FontResources.skiko.kt
+!skikoMain/kotlin/org/jetbrains/compose/resources/SvgPainter.kt
+!skikoMain/kotlin/org/jetbrains/compose/resources/DrawCache.kt
 
 # >>> ---- DIAGNOSTIC GAPS ---- <<<<
 #   androidMain (5)

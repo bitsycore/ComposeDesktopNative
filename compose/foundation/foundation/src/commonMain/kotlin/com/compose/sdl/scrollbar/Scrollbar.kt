@@ -29,8 +29,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.unit.dp
-import com.compose.sdl.modifier.onDrag
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -254,27 +255,30 @@ private fun Scrollbar(
         Box(
             modifier = Modifier
                 .matchTrackSize(isVertical, with(vDensity) { vTrackPx.toDp() }, style.thickness)
-                .onDrag(
-                    onStart = { rx, ry ->
-                        val vPress = if (isVertical) ry else rx
-                        if (vPress in vThumbPos..(vThumbPos + vThumbLen)) {
-                            vDraggingThumb = true
-                            vGrab = vPress - vThumbPos
-                        } else {
-                            // Page toward the click by one viewport.
-                            vDraggingThumb = false
-                            val vDir = if (vPress < vThumbPos) -1.0 else 1.0
-                            vScope.launch { adapter.scrollTo(vOffset + vDir * vViewport) }
-                        }
-                    },
-                    onDrag = { rx, ry ->
-                        if (vDraggingThumb) {
-                            val vCur = if (isVertical) ry else rx
-                            scrollToTrackPos(vCur - vGrab)
-                        }
-                    },
-                    onEnd = { vDraggingThumb = false },
-                )
+                .pointerInput(isVertical, adapter, vTrackPx) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val vPress = (if (isVertical) offset.y else offset.x).toInt()
+                            if (vPress in vThumbPos..(vThumbPos + vThumbLen)) {
+                                vDraggingThumb = true
+                                vGrab = vPress - vThumbPos
+                            } else {
+                                // Page toward the click by one viewport.
+                                vDraggingThumb = false
+                                val vDir = if (vPress < vThumbPos) -1.0 else 1.0
+                                vScope.launch { adapter.scrollTo(vOffset + vDir * vViewport) }
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (vDraggingThumb) {
+                                val vCur = (if (isVertical) change.position.y else change.position.x).toInt()
+                                scrollToTrackPos(vCur - vGrab)
+                            }
+                        },
+                        onDragEnd = { vDraggingThumb = false },
+                        onDragCancel = { vDraggingThumb = false },
+                    )
+                }
         )
     }
 }

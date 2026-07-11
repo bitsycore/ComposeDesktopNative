@@ -21,18 +21,6 @@ val Color.g8: Int get() = (green * 255f).toInt().coerceIn(0, 255)
 val Color.b8: Int get() = (blue * 255f).toInt().coerceIn(0, 255)
 val Color.a8: Int get() = (alpha * 255f).toInt().coerceIn(0, 255)
 
-/* Linear blend toward white. amount=0 returns this; amount=1 returns white. */
-fun Color.lighten(amount: Float): Color {
-	val a = amount.fastCoerceIn(0f, 1f)
-	return Color(red + (1f - red) * a, green + (1f - green) * a, blue + (1f - blue) * a, alpha)
-}
-
-/* Linear blend toward black. */
-fun Color.darken(amount: Float): Color {
-	val a = amount.fastCoerceIn(0f, 1f)
-	return Color(red * (1f - a), green * (1f - a), blue * (1f - a), alpha)
-}
-
 /* Linear blend toward an arbitrary color. amount=0 returns this; amount=1
    returns the other color. Non-official — used for Material state-layer
    overlays; official code uses lerp(...) / compositeOver(...). */

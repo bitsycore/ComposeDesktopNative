@@ -24,11 +24,9 @@ actual fun getPlatformCategories(): List<DemoCategory> = listOf(
     )),
     DemoCategory("native", "Native", listOf(
         DemoScreen("Window") { WindowScreen() },
-        DemoScreen("Clipboard") { ClipboardScreen() },
         DemoScreen("Dispatchers") { DispatchersScreen() },
         DemoScreen("FileDialogs") { FileDialogsScreen() },
         DemoScreen("Desktop integration") { DesktopIntegrationScreen() },
-        DemoScreen("PointerInput") { PointerInputScreen() },
         DemoScreen("Desktop widgets") { DesktopWidgetsScreen() },
     )),
 )

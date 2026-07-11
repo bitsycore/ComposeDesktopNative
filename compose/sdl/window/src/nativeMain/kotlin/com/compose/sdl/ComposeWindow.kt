@@ -476,9 +476,9 @@ internal class WindowInstance(
 				androidx.compose.ui.platform.LocalTextInputService provides host.textInputService,
 				@Suppress("DEPRECATION")
 				androidx.compose.ui.platform.LocalClipboardManager provides
-					androidx.compose.ui.platform.defaultClipboardManager,
+					androidx.compose.ui.platform.platformClipboardManager(),
 				androidx.compose.ui.platform.LocalClipboard provides
-					androidx.compose.ui.platform.defaultClipboard,
+					androidx.compose.ui.platform.platformClipboard(),
 				androidx.compose.ui.platform.LocalFontFamilyResolver provides
 					com.compose.sdl.text.font.projectFontFamilyResolver,
 				androidx.compose.ui.platform.LocalUriHandler provides vUriHandler,
@@ -576,7 +576,6 @@ internal class WindowInstance(
 		if (inEvent.event.type == PointerEventType.Press) {
 			popupHost?.notifyOutsidePress(vPx.toInt(), vPy.toInt())
 		}
-		host.onPointer(vPx, vPy, vType, vBtn)
 		host.onPointerRaw(vPx, vPy, vType, vBtn, SDL_GetTicks().toLong())
 		lastMouseX = vPx
 		lastMouseY = vPy
@@ -602,12 +601,12 @@ internal class WindowInstance(
 	fun onTextInputEvent(inEvent: AppEvent.TextInput) {
 		needsFrame = true
 		installGlobals()
-		// Project onTextInput fields take the raw string; otherwise synthesise
-		// typed KeyEvents so the vendored text stacks commit SDL's committed
-		// (shift/layout/numpad-correct) text.
-		if (!host.dispatchTextInput(inEvent.text)) {
-			dispatchTypedText(host, inEvent.text)
-		}
+		// SDL's committed text is the only layout-correct source of characters —
+		// SDL key events carry UNSHIFTED keycodes (no uppercase, no numpad digits,
+		// no dead keys). Synthesise typed KeyEvents so the vendored text stacks
+		// (CoreTextField's isTypedEvent path and the state-based field's key
+		// handler) commit it.
+		dispatchTypedText(host, inEvent.text)
 	}
 
 	fun onResizedEvent() {

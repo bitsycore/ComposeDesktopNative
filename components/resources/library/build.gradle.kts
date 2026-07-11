@@ -66,9 +66,18 @@ kotlin {
 			linuxX64Main.dependsOn(sdlRendererLinuxMain)
 			linuxArm64Main.dependsOn(sdlRendererLinuxMain)
 		} else {
+			// The Font/Image actuals for this module are pure project code
+			// (:ui's IconFont / NamedFont / decodeEncodedImageBitmap in nativeMain)
+			// so they work identically under either renderer. Only one renderer
+			// source set is attached to a given target, so pointing skikoRenderer
+			// at sdlRendererMain's srcDir doesn't cause duplicate actuals.
+			// Upstream's skikoMain vendored files here referenced Compose-Desktop
+			// Skia extensions (SystemFont / toComposeImageBitmap / nativeCanvas)
+			// that this port's :ui doesn't expose — sharing the SDL actuals sidesteps
+			// that gap entirely.
 			val skikoRendererMain = create("skikoRendererMain") {
 				dependsOn(nativeMain.get())
-				kotlin.srcDir("src/vendor/skikoRenderer/kotlin")
+				kotlin.srcDir("src/sdlRendererMain/kotlin")
 				dependencies {
 					implementation(libs.skiko)
 				}

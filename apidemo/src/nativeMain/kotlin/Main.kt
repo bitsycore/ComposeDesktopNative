@@ -12,7 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.currentClipboard
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +45,7 @@ private fun App() {
 
     val vRunner = remember { HttpRunner() }
     val vScope = rememberCoroutineScope()
+    val vClipboard = LocalClipboard.current
     val vWindow = LocalComposeNativeWindow.current
 
     // First launch (or empty saved state) → boot from the default session (an
@@ -827,18 +829,15 @@ private fun App() {
                                             },
                                             inOnDuplicateRequest = { vRs -> selectPack(vRoot); duplicate(vRs) },
                                             inOnCopyCurl = { vRs ->
-                                                currentClipboard.setText(
-                                                    AnnotatedString(
-                                                        toCurl(
-                                                            resolveVars(
-                                                                vRs.req.copy(
-                                                                    headers = effectiveHeaders(vRs.req, vRoot),
-                                                                    params = effectiveParams(vRs.req, vRoot)
-                                                                ), effectiveReqVars(vRs.req, vRoot)
-                                                            )
-                                                        )
+                                                val vText = toCurl(
+                                                    resolveVars(
+                                                        vRs.req.copy(
+                                                            headers = effectiveHeaders(vRs.req, vRoot),
+                                                            params = effectiveParams(vRs.req, vRoot)
+                                                        ), effectiveReqVars(vRs.req, vRoot)
                                                     )
                                                 )
+                                                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vText)) }
                                                 vReqMsg = "Copied cURL."
                                             },
                                             inOnDeleteRequest = { vRs -> selectPack(vRoot); vDeleteTarget = vRs },
@@ -872,18 +871,15 @@ private fun App() {
                                             },
                                             onDupReq = { vQ, vRs -> selectPack(vQ); duplicate(vRs) },
                                             onCopyCurl = { vQ, vRs ->
-                                                currentClipboard.setText(
-                                                    AnnotatedString(
-                                                        toCurl(
-                                                            resolveVars(
-                                                                vRs.req.copy(
-                                                                    headers = effectiveHeaders(vRs.req, vQ),
-                                                                    params = effectiveParams(vRs.req, vQ)
-                                                                ), effectiveReqVars(vRs.req, vQ)
-                                                            )
-                                                        )
+                                                val vText = toCurl(
+                                                    resolveVars(
+                                                        vRs.req.copy(
+                                                            headers = effectiveHeaders(vRs.req, vQ),
+                                                            params = effectiveParams(vRs.req, vQ)
+                                                        ), effectiveReqVars(vRs.req, vQ)
                                                     )
                                                 )
+                                                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vText)) }
                                                 vReqMsg = "Copied cURL."
                                             },
                                             onDelReq = { vQ, vRs -> selectPack(vQ); vDeleteTarget = vRs },

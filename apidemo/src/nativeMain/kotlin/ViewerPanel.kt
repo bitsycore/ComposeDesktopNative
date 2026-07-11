@@ -43,7 +43,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.currentClipboard
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -309,6 +310,7 @@ internal fun HttpFlowView(
     val vFocus = remember { FocusRequester() }
     val density = LocalDensity.current
     val vScope = rememberCoroutineScope()
+    val vClipboard = LocalClipboard.current
     // Latest pointer position while dragging (in the outer Box's local px frame),
     // null when not dragging. Driven by the pointerInput below and read by an
     // auto-scroll effect that scrolls the LazyColumn while the pointer sits in
@@ -532,7 +534,8 @@ internal fun HttpFlowView(
                     vMod && ev.key == Key.C -> {
                         val vS = vSel
                         if (vS != null && !vS.isEmpty) {
-                            currentClipboard.setText(AnnotatedString(vBody.substring(vS.start, vS.end)))
+                            val vText = vBody.substring(vS.start, vS.end)
+                            vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vText)) }
                             true
                         } else false
                     }
@@ -1289,6 +1292,8 @@ internal fun ViewerOverflowMenu(
 ) {
     val c = LocalAppColors.current
     var vOpen by remember { mutableStateOf(false) }
+    val vClipboard = LocalClipboard.current
+    val vScope = rememberCoroutineScope()
 
     val vHeadersText = if (inIsRequestTab && inRequest != null) {
         val vRaw = inSentRequestHeaders ?: parseHeaderLines(requestHeadersText(inRequest))
@@ -1331,18 +1336,18 @@ internal fun ViewerOverflowMenu(
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
             DropdownMenuItem(text = { Text("Copy all") }, onClick = {
-                currentClipboard.setText(AnnotatedString(copyAll()))
+                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(copyAll())) }
                 inOnMessage("Copied all.")
                 vOpen = false
             })
             DropdownMenuItem(text = { Text("Copy headers") }, onClick = {
-                currentClipboard.setText(AnnotatedString(vHeadersText))
+                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vHeadersText)) }
                 inOnMessage("Copied headers.")
                 vOpen = false
             })
             if (vCanCopyBody) {
                 DropdownMenuItem(text = { Text("Copy body") }, onClick = {
-                    currentClipboard.setText(AnnotatedString(vBodyText))
+                    vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vBodyText)) }
                     inOnMessage("Copied body.")
                     vOpen = false
                 })

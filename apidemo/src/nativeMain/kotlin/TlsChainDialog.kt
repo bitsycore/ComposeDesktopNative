@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +37,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import com.compose.sdl.layout.x
 import com.compose.sdl.layout.y
-import androidx.compose.ui.platform.currentClipboard
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -44,6 +46,7 @@ import androidx.compose.ui.window.Popup
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // ==================
 // MARK: TLS certificate-chain dialog + cert cards
@@ -147,6 +150,8 @@ internal fun CopyButton(inText: String, inLabel: String? = null) {
     var vX by remember { mutableStateOf(0) }
     var vY by remember { mutableStateOf(0) }
     var vHeight by remember { mutableStateOf(0) }
+    val vClipboard = LocalClipboard.current
+    val vScope = rememberCoroutineScope()
     LaunchedEffect(vCopied) { if (vCopied) { delay(2000); vCopied = false } }
     Row(
         modifier = Modifier
@@ -155,7 +160,10 @@ internal fun CopyButton(inText: String, inLabel: String? = null) {
             .clip(RoundedCornerShape(7.dp))
             .background(if (vHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(7.dp))
             .hoverable(vHoverSrc)
-            .clickable { currentClipboard.setText(AnnotatedString(inText)); vCopied = true }
+            .clickable {
+                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(inText)) }
+                vCopied = true
+            }
             .padding(horizontal = if (inLabel != null) 10.dp else 5.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),

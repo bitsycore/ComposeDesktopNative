@@ -11,72 +11,13 @@ import androidx.compose.ui.node.ModifierNodeElement
 // Small set of project-only modifier elements — each pairs a
 // `ModifierNodeElement<XxxNode>` with a `XxxNode : Modifier.Node`. Upstream
 // LayoutNode reads them through the chain (ModifierNodeElement IS-A
-// Modifier.Element). Nothing that has a full upstream equivalent lives here
-// anymore — Modifier.background / border / drawBehind / focusable / weight
-// / alpha are all vendored. What's left:
-//   * SecondaryClick / MiddleClick — non-upstream (upstream Clickable is
-//     primary-only).
-//   * Pressable / OnTextInput / OnPressed / OnDrag — the project's cheap
-//     pointer surface used by ComposeRootHost.onPointer (B6a).
-//   * ClipModifier — GraphicsLayer.kt lowers `clip = true` to it (project
-//     GraphicsLayerModifier still owns the transform pipeline).
-
-class SecondaryClickModifier(val onClick: (x: Int, y: Int) -> Unit) : ModifierNodeElement<SecondaryClickNode>() {
-    override fun create() = SecondaryClickNode(onClick)
-    override fun update(node: SecondaryClickNode) { node.onClick = onClick }
-    override fun hashCode(): Int = onClick.hashCode()
-    override fun equals(other: Any?): Boolean = other is SecondaryClickModifier && other.onClick === onClick
-}
-class SecondaryClickNode(var onClick: (x: Int, y: Int) -> Unit) : Modifier.Node()
-
-class MiddleClickModifier(val onClick: () -> Unit) : ModifierNodeElement<MiddleClickNode>() {
-    override fun create() = MiddleClickNode(onClick)
-    override fun update(node: MiddleClickNode) { node.onClick = onClick }
-    override fun hashCode(): Int = onClick.hashCode()
-    override fun equals(other: Any?): Boolean = other is MiddleClickModifier && other.onClick === onClick
-}
-class MiddleClickNode(var onClick: () -> Unit) : Modifier.Node()
-
-class PressableModifier(val onChange: (Boolean) -> Unit) : ModifierNodeElement<PressableNode>() {
-    override fun create() = PressableNode(onChange)
-    override fun update(node: PressableNode) { node.onChange = onChange }
-    override fun hashCode(): Int = onChange.hashCode()
-    override fun equals(other: Any?): Boolean = other is PressableModifier && other.onChange === onChange
-}
-class PressableNode(var onChange: (Boolean) -> Unit) : Modifier.Node()
-
-class OnTextInputModifier(val handler: (String) -> Unit) : ModifierNodeElement<OnTextInputNode>() {
-    override fun create() = OnTextInputNode(handler)
-    override fun update(node: OnTextInputNode) { node.handler = handler }
-    override fun hashCode(): Int = handler.hashCode()
-    override fun equals(other: Any?): Boolean = other is OnTextInputModifier && other.handler === handler
-}
-class OnTextInputNode(var handler: (String) -> Unit) : Modifier.Node()
-
-class OnPressedModifier(val handler: (relX: Int, relY: Int) -> Unit) : ModifierNodeElement<OnPressedNode>() {
-    override fun create() = OnPressedNode(handler)
-    override fun update(node: OnPressedNode) { node.handler = handler }
-    override fun hashCode(): Int = handler.hashCode()
-    override fun equals(other: Any?): Boolean = other is OnPressedModifier && other.handler === handler
-}
-class OnPressedNode(var handler: (relX: Int, relY: Int) -> Unit) : Modifier.Node()
-
-class OnDragModifier(
-    val onStart: (relX: Int, relY: Int) -> Unit,
-    val onDrag: (relX: Int, relY: Int) -> Unit,
-    val onEnd: () -> Unit,
-) : ModifierNodeElement<OnDragNode>() {
-    override fun create() = OnDragNode(onStart, onDrag, onEnd)
-    override fun update(node: OnDragNode) { node.onStart = onStart; node.onDrag = onDrag; node.onEnd = onEnd }
-    override fun hashCode(): Int = (onStart.hashCode() * 31 + onDrag.hashCode()) * 31 + onEnd.hashCode()
-    override fun equals(other: Any?): Boolean =
-        other is OnDragModifier && other.onStart === onStart && other.onDrag === onDrag && other.onEnd === onEnd
-}
-class OnDragNode(
-    var onStart: (relX: Int, relY: Int) -> Unit,
-    var onDrag: (relX: Int, relY: Int) -> Unit,
-    var onEnd: () -> Unit,
-) : Modifier.Node()
+// Modifier.Element). Everything gesture-related has been removed — pointer
+// input, text input, right/middle click, drag: all go through the standard
+// `Modifier.pointerInput` + `detectTapGestures` / `detectDragGestures` /
+// `awaitPointerEventScope` APIs upstream now supplies. What's left is the
+// two elements the renderer still owns directly:
+//   * ClipModifier — GraphicsLayer.kt lowers `clip = true` to it.
+//   * GraphicsLayerModifier — the transform / alpha / cache pipeline.
 
 class ClipModifier(val shape: Shape) : ModifierNodeElement<ClipNode>() {
     override fun create() = ClipNode(shape)

@@ -1,10 +1,14 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.ui.ExperimentalComposeUiApi::class,
+)
 
 package apidemo
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -26,6 +30,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Dp
@@ -36,8 +43,6 @@ import com.compose.sdl.fileManagerName
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
 import com.compose.sdl.layout.y
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onSecondaryClick
 import com.compose.sdl.revealInFileManager
 
 // ==================
@@ -402,9 +407,6 @@ internal fun PackSection(
     var vMenu by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
-    var vAtCursor by remember { mutableStateOf(false) }
-    var vMenuX by remember { mutableStateOf(0) }
-    var vMenuY by remember { mutableStateOf(0) }
     val vMoving = inDrag.engaged   // a press becomes a real drag only past the slop
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -433,17 +435,38 @@ internal fun PackSection(
         if (vIntoHi) vHeadMod = vHeadMod.border(1.dp, c.accent, RoundedCornerShape(6.dp))
         vHeadMod = vHeadMod
             .hoverable(vHoverSrc)
-            .onSecondaryClick { x, y -> vMenuX = x; vMenuY = y; vAtCursor = true; vMenu = true }
-            .onDrag(
-                onStart = { _, vRelY -> inDrag.clear(); inDrag.dragPack = inPack; inDrag.pressRel = vRelY; inDrag.dy = 0f },
-                onDrag = { _, vRelY ->
-                    if (inDrag.dragPack !== inPack) return@onDrag
-                    inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
-                    if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
-                    if (inDrag.engaged) inResolvePackDrop((inDrag.headTop[inPack] ?: 0) + vRelY)
-                },
-                onEnd = { inOnPackDropEnd() },
-            )
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val vEv = awaitPointerEvent()
+                        if (vEv.type == PointerEventType.Press && vEv.button == PointerButton.Secondary) {
+                            vEv.changes.firstOrNull()?.consume()
+                            vMenu = true
+                        }
+                    }
+                }
+            }
+            .pointerInput(inPack) {
+                // Accumulate per-frame dragAmount instead of reading change.position:
+                // the row wears a graphicsLayer(translationY = inDrag.dy) while
+                // dragging, which transforms the modifier's pointer frame and would
+                // make position.y feed back through the translation each move.
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        inDrag.clear(); inDrag.dragPack = inPack
+                        inDrag.pressRel = offset.y.toInt(); inDrag.dy = 0f
+                    },
+                    onDrag = { _, dragAmount ->
+                        if (inDrag.dragPack !== inPack) return@detectDragGestures
+                        inDrag.dy += dragAmount.y
+                        val vRelY = inDrag.pressRel + inDrag.dy.toInt()
+                        if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
+                        if (inDrag.engaged) inResolvePackDrop((inDrag.headTop[inPack] ?: 0) + vRelY)
+                    },
+                    onDragEnd = { inOnPackDropEnd() },
+                    onDragCancel = { inOnPackDropEnd() },
+                )
+            }
             .padding(end = 2.dp)
         if (!inHeaderless) Row(
             modifier = vHeadMod,
@@ -467,7 +490,7 @@ internal fun PackSection(
             Row(modifier = Modifier.alpha(if (vHover || vMenu) 1f else 0f), verticalAlignment = Alignment.CenterVertically) {
                 if (!inPack.isLinked) IconBtn(MaterialSymbols.Add, "New request", inSize = 16.dp, inPadding = 4.dp) { inOnNewRequest() }
                 Box {
-                    IconBtn(MaterialSymbols.MoreHoriz, "Pack menu", inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
+                    IconBtn(MaterialSymbols.MoreHoriz, "Pack menu", inSize = 16.dp, inPadding = 4.dp) { vMenu = true }
                     DropdownMenu(
                         expanded = vMenu,
                         onDismissRequest = { vMenu = false },
@@ -525,21 +548,27 @@ internal fun PackSection(
                         // translate is draw-only (doesn't shift absoluteY), so the
                         // cursor offset below stays correct while dragging.
                         if (vDragged) vMod = vMod.zIndex(1f).graphicsLayer(alpha = 0.65f, translationX = 0f, translationY = inDrag.dy)
-                        if (!inPack.isLinked) vMod = vMod.onDrag(
-                                onStart = { _, vRelY ->
-                                    inDrag.clear()
-                                    inDrag.dragReq = vRs; inDrag.dragReqOwner = inPack
-                                    inDrag.pressRel = vRelY; inDrag.dy = 0f
-                                    inDrag.dropPack = inPack; inDrag.dropIndex = vReqs.indexOf(vRs)
-                                },
-                                onDrag = { _, vRelY ->
-                                    val vd = inDrag.dragReq ?: return@onDrag
-                                    inDrag.dy = (vRelY - inDrag.pressRel).toFloat()
-                                    if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
-                                    if (inDrag.engaged) inResolveReqDrop((inDrag.rowTop[vd] ?: 0) + vRelY)
-                                },
-                                onEnd = { inOnReqDropEnd() },
-                            )
+                        if (!inPack.isLinked) vMod = vMod.pointerInput(vRs) {
+                                // Same graphicsLayer feedback concern as the pack drag —
+                                // accumulate dragAmount instead of reading change.position.
+                                detectDragGestures(
+                                    onDragStart = { offset ->
+                                        inDrag.clear()
+                                        inDrag.dragReq = vRs; inDrag.dragReqOwner = inPack
+                                        inDrag.pressRel = offset.y.toInt(); inDrag.dy = 0f
+                                        inDrag.dropPack = inPack; inDrag.dropIndex = vReqs.indexOf(vRs)
+                                    },
+                                    onDrag = { _, dragAmount ->
+                                        val vd = inDrag.dragReq ?: return@detectDragGestures
+                                        inDrag.dy += dragAmount.y
+                                        val vRelY = inDrag.pressRel + inDrag.dy.toInt()
+                                        if (!inDrag.engaged && kotlin.math.abs(inDrag.dy) >= kDragSlop) inDrag.engaged = true
+                                        if (inDrag.engaged) inResolveReqDrop((inDrag.rowTop[vd] ?: 0) + vRelY)
+                                    },
+                                    onDragEnd = { inOnReqDropEnd() },
+                                    onDragCancel = { inOnReqDropEnd() },
+                                )
+                            }
                         Box(modifier = vMod) {
                             RequestRow(
                                 inRs = vRs,
@@ -580,10 +609,6 @@ internal fun RequestRow(
     var vMenu by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
-    // Right-click opens the menu at the cursor; the ⋮ button anchors it to itself.
-    var vAtCursor by remember { mutableStateOf(false) }
-    var vMenuX by remember { mutableStateOf(0) }
-    var vMenuY by remember { mutableStateOf(0) }
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
             .background(
@@ -596,7 +621,17 @@ internal fun RequestRow(
             )
             .hoverable(vHoverSrc)
             .clickable { inOnOpen() }
-            .onSecondaryClick { x, y -> vMenuX = x; vMenuY = y; vAtCursor = true; vMenu = true }
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val vEv = awaitPointerEvent()
+                        if (vEv.type == PointerEventType.Press && vEv.button == PointerButton.Secondary) {
+                            vEv.changes.firstOrNull()?.consume()
+                            vMenu = true
+                        }
+                    }
+                }
+            }
             .padding(start = 8.dp, top = 1.dp, bottom = 1.dp, end = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -607,7 +642,7 @@ internal fun RequestRow(
         // never changes; only its opacity toggles on hover / while open. Delete
         // lives inside this menu (no separate button on the row).
         Box(modifier = Modifier.alpha(if (vHover || vMenu) 1f else 0f)) {
-            IconBtn(MaterialSymbols.MoreVert, "Options", inSize = 16.dp, inPadding = 4.dp) { vAtCursor = false; vMenu = true }
+            IconBtn(MaterialSymbols.MoreVert, "Options", inSize = 16.dp, inPadding = 4.dp) { vMenu = true }
             DropdownMenu(
                 expanded = vMenu,
                 onDismissRequest = { vMenu = false },

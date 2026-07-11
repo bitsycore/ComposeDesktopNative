@@ -21,9 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.compose.sdl.modifier.onDrag
 
 // ==================
 // MARK: SplitPane
@@ -67,11 +68,6 @@ fun HorizontalSplitPane(
 	val vDividerSource = remember { MutableInteractionSource() }
 	val vDividerHover by vDividerSource.collectIsHoveredAsState()
 	var vDragging by remember { mutableStateOf(false) }
-	// Divider width at press start — the drag callback delivers (relX, relY) from the
-	// receiver's press-time anchor (see `ComposeRootHost.fDragAnchorX/Y`), so we add
-	// the delta to *this* captured value, not vFirstWidthPx re-read every move (which
-	// would accumulate: vFirstWidth += delta → divergent slide).
-	var vPressStartFirstPx by remember { mutableStateOf(0) }
 
 	Row(
 		modifier = modifier
@@ -96,22 +92,17 @@ fun HorizontalSplitPane(
 				.fillMaxHeight()
 				.background(if (vActive) dividerHoverColor else dividerColor)
 				.hoverable(vDividerSource)
-				.onDrag(
-					onStart = { _, _ ->
-						vDragging = true
-						// Snapshot the divider's width so onDrag's press-relative delta
-						// resolves cleanly (see `vPressStartFirstPx`).
-						vPressStartFirstPx = vFirstWidthPx
-					},
-					onEnd = { vDragging = false },
-					onDrag = { x, _ ->
-						// `x` is a PIXEL delta relative to the divider's PRESS-time top-left
-						// (ComposeRootHost holds the anchor across the whole drag session).
-						// Add it to the width the divider had at press start.
-						val vMax = (vTotalWidthPx - vDividerPx - vMinSecondPx).coerceAtLeast(vMinFirstPx)
-						vFirstWidthPx = (vPressStartFirstPx + x).coerceIn(vMinFirstPx, vMax)
-					}
-				),
+				.pointerInput(Unit) {
+					detectDragGestures(
+						onDragStart = { vDragging = true },
+						onDragEnd = { vDragging = false },
+						onDragCancel = { vDragging = false },
+						onDrag = { _, delta ->
+							val vMax = (vTotalWidthPx - vDividerPx - vMinSecondPx).coerceAtLeast(vMinFirstPx)
+							vFirstWidthPx = (vFirstWidthPx + delta.x.toInt()).coerceIn(vMinFirstPx, vMax)
+						},
+					)
+				},
 		)
 
 		Box(modifier = Modifier.width(with(vDensity) { vSecondWidthPx.toDp() }).fillMaxHeight()) { second() }
@@ -163,17 +154,17 @@ fun VerticalSplitPane(
 				.fillMaxWidth()
 				.background(if (vActive) dividerHoverColor else dividerColor)
 				.hoverable(vDividerSource)
-				.onDrag(
-					onStart = { _, _ ->
-						vDragging = true
-						vPressStartFirstPx = vFirstHeightPx
-					},
-					onEnd = { vDragging = false },
-					onDrag = { _, y ->
-						val vMax = (vTotalHeightPx - vDividerPx - vMinSecondPx).coerceAtLeast(vMinFirstPx)
-						vFirstHeightPx = (vPressStartFirstPx + y).coerceIn(vMinFirstPx, vMax)
-					}
-				),
+				.pointerInput(Unit) {
+					detectDragGestures(
+						onDragStart = { vDragging = true },
+						onDragEnd = { vDragging = false },
+						onDragCancel = { vDragging = false },
+						onDrag = { _, delta ->
+							val vMax = (vTotalHeightPx - vDividerPx - vMinSecondPx).coerceAtLeast(vMinFirstPx)
+							vFirstHeightPx = (vFirstHeightPx + delta.y.toInt()).coerceIn(vMinFirstPx, vMax)
+						},
+					)
+				},
 		)
 
 		Box(modifier = Modifier.height(with(vDensity) { vSecondHeightPx.toDp() }).fillMaxWidth()) { second() }

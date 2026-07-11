@@ -1,15 +1,18 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package apidemo
 import androidx.compose.ui.graphics.graphicsLayer
-import com.compose.sdl.modifier.onDrag
-import com.compose.sdl.modifier.onMiddleClick
-import com.compose.sdl.modifier.onSecondaryClick
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import com.compose.sdl.layout.x
 import androidx.compose.ui.draw.clip
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -27,7 +30,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.currentClipboard
 import com.compose.sdl.res.ResourceKind
 import com.compose.sdl.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -87,11 +89,10 @@ internal fun RequestTabStrip(
     var vDragDx by remember { mutableStateOf(0f) }
     var vDragTarget by remember { mutableStateOf(-1) }
 
-    // One shared context menu, opened at the cursor over the right-clicked tab.
+    // One shared context menu, anchored to the tab that opened it (m3 DropdownMenu
+    // is parent-anchored, not cursor-anchored — the old x/y capture is gone).
     var vMenu by remember { mutableStateOf(false) }
     var vMenuTab by remember { mutableStateOf<StripTab?>(null) }
-    var vMenuX by remember { mutableStateOf(0) }
-    var vMenuY by remember { mutableStateOf(0) }
 
     var vListOpen by remember { mutableStateOf(false) }   // overflow list
 
@@ -131,34 +132,66 @@ internal fun RequestTabStrip(
                     .clip(RoundedCornerShape(7.dp))
                     .background(if (vSel) c.accent.copy(alpha = 0.20f) else c.field, RoundedCornerShape(7.dp))
                     .border(1.dp, if (vSel || vDragged) c.accent else c.border, RoundedCornerShape(7.dp))
-                    .onDrag(
-                        onStart = { vRelX, _ ->
-                            vDragKey = vKey; vPressRelX = vRelX; vDragDx = 0f; vDragTarget = inTabs.indexOfFirst { it.tabKey == vKey }
-                        },
-                        onDrag = { vRelX, _ ->
-                            val vd = vDragKey ?: return@onDrag
-                            vDragDx = (vRelX - vPressRelX).toFloat()
-                            val vCursorX = (vLeft[vd] ?: 0) + vRelX
-                            var vCount = 0
-                            inTabs.forEach { vT ->
-                                if (vT.tabKey != vd) {
-                                    val vCenter = (vLeft[vT.tabKey] ?: 0) + (vWidth[vT.tabKey] ?: 0) / 2
-                                    if (vCursorX > vCenter) vCount++
+                    .pointerInput(vKey) {
+                        // Accumulate the per-frame delta rather than reading change.position.
+                        // The tab wears a graphicsLayer(translationX = vDragDx) while dragging,
+                        // which transforms the modifier's local pointer frame — so position.x
+                        // would compensate for the translation each frame and the tab would
+                        // trail the mouse by roughly half its offset. dragAmount is the
+                        // root-frame delta and doesn't feed back through the layer transform.
+                        detectDragGestures(
+                            onDragStart = { offset ->
+                                vDragKey = vKey
+                                vPressRelX = offset.x.toInt()
+                                vDragDx = 0f
+                                vDragTarget = inTabs.indexOfFirst { it.tabKey == vKey }
+                            },
+                            onDrag = { _, dragAmount ->
+                                val vd = vDragKey ?: return@detectDragGestures
+                                vDragDx += dragAmount.x
+                                val vRelX = vPressRelX + vDragDx.toInt()
+                                val vCursorX = (vLeft[vd] ?: 0) + vRelX
+                                var vCount = 0
+                                inTabs.forEach { vT ->
+                                    if (vT.tabKey != vd) {
+                                        val vCenter = (vLeft[vT.tabKey] ?: 0) + (vWidth[vT.tabKey] ?: 0) / 2
+                                        if (vCursorX > vCenter) vCount++
+                                    }
+                                }
+                                vDragTarget = vCount
+                            },
+                            onDragEnd = {
+                                val vd = vDragKey
+                                if (vd != null) {
+                                    val vFrom = inTabs.indexOfFirst { it.tabKey == vd }
+                                    if (vFrom >= 0 && vDragTarget >= 0 && vDragTarget != vFrom) inOnReorder(vFrom, vDragTarget)
+                                }
+                                vDragKey = null; vDragDx = 0f; vDragTarget = -1
+                            },
+                            onDragCancel = { vDragKey = null; vDragDx = 0f; vDragTarget = -1 },
+                        )
+                    }
+                    // Middle-click closes the tab; right-click opens the tab menu. Compose
+                    // has no first-class match for either — inline pointerInput checks the
+                    // pressed PointerButton at each Press.
+                    .pointerInput(vTab) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val vEv = awaitPointerEvent()
+                                if (vEv.type != PointerEventType.Press) continue
+                                when (vEv.button) {
+                                    PointerButton.Tertiary -> {
+                                        vEv.changes.firstOrNull()?.consume()
+                                        inOnClose(vTab)
+                                    }
+                                    PointerButton.Secondary -> {
+                                        vEv.changes.firstOrNull()?.consume()
+                                        vMenuTab = vTab; vMenu = true
+                                    }
                                 }
                             }
-                            vDragTarget = vCount
-                        },
-                        onEnd = {
-                            val vd = vDragKey
-                            if (vd != null) {
-                                val vFrom = inTabs.indexOfFirst { it.tabKey == vd }
-                                if (vFrom >= 0 && vDragTarget >= 0 && vDragTarget != vFrom) inOnReorder(vFrom, vDragTarget)
-                            }
-                            vDragKey = null; vDragDx = 0f; vDragTarget = -1
-                        },
-                    )
-                    .onMiddleClick { inOnClose(vTab) }
-                    .onSecondaryClick { x, y -> vMenuTab = vTab; vMenuX = x; vMenuY = y; vMenu = true }
+                        }
+                    }
                     .clickable { inOnSelect(vTab) }
                     .padding(start = 9.dp, top = 6.dp, bottom = 6.dp, end = 3.dp)
 

@@ -45,6 +45,8 @@ val CoreScreens: List<DemoScreen> = listOf(
     DemoScreen("GridsExtra") { GridsExtraScreen() },
     DemoScreen("Pager") { PagerScreen() },
     DemoScreen("Gestures") { GestureScreen() },
+    DemoScreen("PointerInput") { PointerInputScreen() },
+    DemoScreen("Clipboard") { ClipboardScreen() },
     DemoScreen("Interaction") { InteractionScreen() },
     DemoScreen("InteractionSource") { InteractionSourceScreen() },
     DemoScreen("FocusRequester") { FocusRequesterScreen() },
