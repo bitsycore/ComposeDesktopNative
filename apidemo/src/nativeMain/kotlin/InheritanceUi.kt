@@ -7,15 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 
 // ==================
 // MARK: Headers tab (inherited read-only + own editable)
@@ -119,7 +111,12 @@ internal fun OverrideMark(inKey: String, inPath: String) {
         tooltip = { PlainTooltip { Text("Overrides “$inKey” from $inPath") } },
         state = rememberTooltipState(),
     ) {
-        MaterialSymbolsOutlined(MaterialSymbols.ArrowUpward, contentDescription = "Overrides $inPath", tint = c.accent, size = 13.dp)
+        MaterialSymbolsOutlined(
+            MaterialSymbols.ArrowUpward,
+            contentDescription = "Overrides $inPath",
+            tint = c.accent,
+            size = 13.dp
+        )
     }
 }
 

@@ -90,6 +90,11 @@ skikoMain/kotlin/org/jetbrains/compose/resources/ResourceReader.skiko.kt -> src/
 #   macosMain (2)
 #     | macosMain/kotlin/org/jetbrains/compose/resources/ResourceEnvironment.macos.kt -> src/vendor/native/kotlin/org/jetbrains/compose/resources/ResourceEnvironment.macos.kt
 #     | macosMain/kotlin/org/jetbrains/compose/resources/ResourceReader.macos.kt -> src/vendor/native/kotlin/org/jetbrains/compose/resources/ResourceReader.macos.kt
+#   skikoMain (4)
+#     | skikoMain/kotlin/org/jetbrains/compose/resources/DrawCache.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/DrawCache.kt
+#     | skikoMain/kotlin/org/jetbrains/compose/resources/FontResources.skiko.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/FontResources.skiko.kt
+#     | skikoMain/kotlin/org/jetbrains/compose/resources/ImageResources.skiko.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/ImageResources.skiko.kt
+#     | skikoMain/kotlin/org/jetbrains/compose/resources/SvgPainter.kt -> src/vendor/skikoRenderer/kotlin/org/jetbrains/compose/resources/SvgPainter.kt
 #   wasmJsMain (6)
 #     | wasmJsMain/kotlin/org/jetbrains/compose/resources/ImageResources.wasmJs.kt -> src/vendor/wasmJs/kotlin/org/jetbrains/compose/resources/ImageResources.wasmJs.kt
 #     | wasmJsMain/kotlin/org/jetbrains/compose/resources/ResourceEnvironment.wasmJs.kt -> src/vendor/wasmJs/kotlin/org/jetbrains/compose/resources/ResourceEnvironment.wasmJs.kt

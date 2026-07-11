@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.unit.Dp
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 
 // Native actual: resolve the token to a Material Symbols codepoint and draw it
 // through the Outlined variable font (SDL3_ttf / FreeType or Skia).

@@ -7,21 +7,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.appDataDir
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.hasComposeResource
-import com.compose.sdl.loadComposeResourceBytes
-import com.compose.sdl.openUrl
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.revealInFileManager
+import com.compose.sdl.*
 
 // ==================
 // MARK: Desktop integration (SDL3 / platform)
@@ -37,7 +26,7 @@ internal fun DesktopIntegrationScreen() {
 		ScreenTitle("Desktop integration", "openUrl · revealInFileManager · appDataDir · in-memory resources.")
 
 		Section("openUrl", "Hands a URL / file:// URI to the OS default handler (browser, …)") {
-			Button(onClick = { openUrl("https://github.com/bitsycore/ComposeDesktopNative") }) {
+			Button(onClick = { openUrl("https://github.com/bitsycore/compose-desktop-native") }) {
 				Text("Open project page")
 			}
 		}

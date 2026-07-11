@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +22,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 
 // ==================
 // MARK: Options menu (theme + pack-file actions)

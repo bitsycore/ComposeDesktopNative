@@ -14,13 +14,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.compose.sdl.*
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 import com.compose.sdl.widgets.HorizontalSplitPane
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -4,23 +4,14 @@ package com.compose.sdl.icons
 // MARK: MaterialSymbols (codepoints)
 // ==================
 
-/* GENERATED — do not edit by hand. Regenerate with
-   scripts/generate-material-symbols.py (downloads Google's .codepoints
-   file for the Material Symbols variable font and emits every glyph as a
-   const). The codepoints are identical across the outlined / rounded /
-   sharp styles, so these constants resolve against whichever style module
-   (:material-symbols:{outlined,rounded,sharp}) is installed.
+/** GENERATED — do not edit by hand. Regenerate with
+scripts/generate-material-symbols.py (downloads Google's .codepoints
+file for the Material Symbols variable font and emits every glyph as a
+const). The codepoints are identical across the outlined / rounded /
+sharp styles.
 
-   Usage:
-
-       import com.compose.sdl.icons.MaterialSymbols
-       import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-
-       MaterialSymbolsOutlined.install()   // once at startup
-       Icon(codepoint = MaterialSymbols.Home, fontFamily = MaterialSymbolsOutlined.Family)
-
-   Shipping all names is free: with -PsubsetIcons=true each app's font is
-   hb-subset down to only the glyphs it references. 4262 icons. */
+Shipping all names is free: with -PsubsetIcons=true each app's font is
+hb-subset down to only the glyphs it references. 4262 icons. **/
 object MaterialSymbols {
 	const val _10k                                  = 0xe951
 	const val _10mp                                 = 0xe952

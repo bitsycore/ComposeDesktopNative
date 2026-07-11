@@ -17,7 +17,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ComposeSDL"
+rootProject.name = "ComposeDesktopNative"
 
 // Library modules mirror upstream Compose Multiplatform's `compose/` tree — one
 // Gradle module per upstream artifact (dir = upstream path, gradle path kept short):

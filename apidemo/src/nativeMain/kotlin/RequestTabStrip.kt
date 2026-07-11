@@ -1,63 +1,31 @@
 @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package apidemo
+
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import com.compose.sdl.layout.x
-import androidx.compose.ui.draw.clip
-
-import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.*
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.*
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.layout.ContentScale
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import com.compose.sdl.text.currentTextMeasurer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.LocalComposeNativeWindow
+import androidx.compose.ui.zIndex
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.nativeComposeWindow
-import com.compose.sdl.TextLayoutConfig
-import com.compose.sdl.registerMemoryResource
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.fileManagerName
-import com.compose.sdl.revealInFileManager
-import com.compose.sdl.showOpenFileDialog
-import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.widgets.HorizontalSplitPane
-import androidx.compose.ui.window.Popup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
+import com.compose.sdl.layout.x
 
 // ==================
 // MARK: Request tab strip (open requests; drag a tab to reorder)
@@ -242,7 +210,11 @@ internal fun RequestTabStrip(
                                     val vSel = vTab.tabKey == inActiveKey
                                     val vRs = vTab.req
                                     if (vRs == null) {
-                                        MaterialSymbolsOutlined(MaterialSymbols.Tune, tint = if (vSel) c.accent else c.dim, size = 13.dp)
+                                        MaterialSymbolsOutlined(
+                                            MaterialSymbols.Tune,
+                                            tint = if (vSel) c.accent else c.dim,
+                                            size = 13.dp
+                                        )
                                         Text(if (vTab.isSession) "Session" else "${vTab.pack?.name} · var", color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
                                     } else {
                                         Box(modifier = Modifier.size(7.dp).background(methodColor(vRs.req.method), RoundedCornerShape(4.dp)))

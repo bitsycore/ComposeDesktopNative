@@ -13,11 +13,8 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
-// In-repo (gitignored) native deps; see scripts/. Driven off rootDir for portability.
 val vLibs = "${rootDir.invariantSeparatorsPath}/libs"
-
-// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
-val vHostSupportsMingw: Boolean by rootProject.extra
+val vHostSupportsMingw = rootProject.extra["vHostSupportsMingw"] as Boolean
 
 kotlin {
     linuxArm64()

@@ -47,48 +47,6 @@ fun IconFontIcon(
 	}
 }
 
-// ==================
-// MARK: MaterialIconAxes
-// ==================
-
-/* Convenience builder for Material Symbols variable-font axes.
-
-   - fill        : 0..1   — FILL (0 = outlined, 1 = filled)
-   - weight      : 100..700 — wght
-   - grade       : -25..200 — GRAD (subtle weight nudge without footprint change)
-   - opticalSize : 20..48 — opsz (glyph design size)
-
-   Defaults match the variable font's default position, so `MaterialIconAxes()`
-   returns an empty list and the renderer skips the typeface-clone path — only
-   icons that request a non-default axis pay the clone cost. */
-fun MaterialIconAxes(
-	fill: Float = MaterialIconAxisDefaults.Fill,
-	weight: Int = MaterialIconAxisDefaults.Weight,
-	grade: Int = MaterialIconAxisDefaults.Grade,
-	opticalSize: Int = MaterialIconAxisDefaults.OpticalSize,
-): List<FontVariation.Setting> {
-	if (fill == MaterialIconAxisDefaults.Fill &&
-		weight == MaterialIconAxisDefaults.Weight &&
-		grade == MaterialIconAxisDefaults.Grade &&
-		opticalSize == MaterialIconAxisDefaults.OpticalSize
-	) return emptyList()
-	return listOf(
-		FontVariation.Setting("FILL", fill),
-		FontVariation.Setting("wght", weight.toFloat()),
-		FontVariation.Setting("GRAD", grade.toFloat()),
-		FontVariation.Setting("opsz", opticalSize.toFloat()),
-	)
-}
-
-/* Default-position values for the four Material Symbols axes — same as the
-   variable font ships at. */
-object MaterialIconAxisDefaults {
-	const val Fill: Float = 0f
-	const val Weight: Int = 400
-	const val Grade: Int = 0
-	const val OpticalSize: Int = 24
-}
-
 object IconDefaults {
 	val DefaultIconSize: Dp = 24.dp
 	/* STATIC fallback tint for direct IconFontIcon use — :foundation cannot

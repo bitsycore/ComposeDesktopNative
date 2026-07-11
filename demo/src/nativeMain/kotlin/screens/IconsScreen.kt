@@ -1,10 +1,6 @@
 package screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,9 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.sdl.icons.MaterialSymbols
-import com.compose.sdl.icons.material.symbols.outlined.MaterialSymbolsOutlined
-import com.compose.sdl.icons.material.symbols.rounded.MaterialSymbolsRounded
-import com.compose.sdl.icons.material.symbols.sharp.MaterialSymbolsSharp
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsRounded
+import com.compose.sdl.icons.material.symbols.MaterialSymbolsSharp
 import demo.generated.resources.Res
 import demo.generated.resources.heart
 import org.jetbrains.compose.resources.painterResource
