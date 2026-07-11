@@ -47,6 +47,7 @@ val CoreScreens: List<DemoScreen> = listOf(
     DemoScreen("Gestures") { GestureScreen() },
     DemoScreen("PointerInput") { PointerInputScreen() },
     DemoScreen("Clipboard") { ClipboardScreen() },
+    DemoScreen("DragAndDrop") { DragAndDropScreen() },
     DemoScreen("Interaction") { InteractionScreen() },
     DemoScreen("InteractionSource") { InteractionSourceScreen() },
     DemoScreen("FocusRequester") { FocusRequesterScreen() },
