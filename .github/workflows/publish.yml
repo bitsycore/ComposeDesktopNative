@@ -89,26 +89,11 @@ jobs:
             libdbus-1-dev libibus-1.0-dev \
             libfontconfig-dev
 
-      # SDL3 >= 3.4 has a C++ GameInput backend; K/N's bundled mingw is C-only,
-      # so we need a system g++ on PATH. MSYS2's mingw-w64-x86_64-gcc is
-      # MSVCRT-based (matches K/N's target ABI); Chocolatey's mingw is
-      # UCRT-based and emits __intrinsic_setjmpex references that K/N's LLD
-      # can't resolve at final app link.
-      - name: Set up MSYS2 (MSVCRT-based mingw-w64)
-        if: matrix.host == 'windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: false
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-
-      - name: Add MSYS2 mingw to PATH
-        if: matrix.host == 'windows'
-        shell: pwsh
-        run: Add-Content $env:GITHUB_PATH "C:\msys64\mingw64\bin"
+      # windows-2022 runners pre-install Chocolatey's mingw-w64 at C:\mingw64.
+      # SDL3 >= 3.4 needs a C++ compiler for its GameInput backend (K/N's
+      # bundled mingw is C-only) — this pre-install covers that. The setjmp
+      # intrinsic K/N's LLD can't resolve is aliased to msvcrt's _setjmpex at
+      # link time via --defsym in sdl3.def.
 
       # Build static SDL3 / SDL3_ttf / SDL3_image / FreeType from
       # scripts/build-sdl/build-sdl.properties. Cached against the manifest +
