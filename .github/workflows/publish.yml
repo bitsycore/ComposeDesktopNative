@@ -86,7 +86,8 @@ jobs:
             libwayland-dev wayland-protocols \
             libgl1-mesa-dev libegl1-mesa-dev \
             libasound2-dev libpulse-dev libudev-dev \
-            libdbus-1-dev libibus-1.0-dev
+            libdbus-1-dev libibus-1.0-dev \
+            libfontconfig-dev
 
       # SDL3 >= 3.4 has a C++ GameInput backend; K/N's bundled mingw is C-only,
       # so we need a system g++ on PATH. Chocolatey's mingw ships gcc+g++.

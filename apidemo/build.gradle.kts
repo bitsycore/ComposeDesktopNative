@@ -55,7 +55,11 @@ kotlin {
                 "-Wl,--subsystem,windows", "-Wl,-e,mainCRTStartup",
             )
             // Skia (default renderer) references the system graphics stack.
+            // K/N's LLD sysroot on linuxX64 doesn't include the host's multi-arch
+            // dir, so add the -L for both x86_64 and aarch64 (harmless if either
+            // is absent — LLD skips missing dirs).
             if (isLinux) linkerOpts(
+                "-L/usr/lib/x86_64-linux-gnu", "-L/usr/lib/aarch64-linux-gnu",
                 "-lfontconfig", "-lGL", "-lX11",
             )
         }
