@@ -44,6 +44,15 @@ val vHostFtInclude: String    = "$vLibs/FreeType/include/freetype2"
 val vHostTtfInclude: String   = "$vLibs/SDL3_ttf/include"
 val vHostImageInclude: String = "$vLibs/SDL3_image/include"
 
+// Static-archive dirs for cinterop's `staticLibraries = …` directive. Same
+// paths on every host — cinterop only reads the one for the target being
+// built, so cross-target indexing on a host that hasn't built libs/ for a
+// foreign target is fine (cinterop skips the archive lookup).
+val vSdlLibDir: String   = "$vLibs/SDL3/lib"
+val vFtLibDir: String    = "$vLibs/FreeType/lib"
+val vTtfLibDir: String   = "$vLibs/SDL3_ttf/lib"
+val vImageLibDir: String = "$vLibs/SDL3_image/lib"
+
 // Renderer assignment per target. mingwX64 is always SDL3; macOS / Linux
 // default to Skia, switch to SDL3 under -Prenderer=sdl3.
 fun isSkiaTarget(targetName: String): Boolean = when (targetName) {
@@ -92,6 +101,7 @@ kotlin {
                 defFile(project.file("src/nativeInterop/cinterop/sdl3.def"))
                 packageName("sdl3")
                 extraOpts("-compiler-options", "-I$vHostSdlInclude")
+                extraOpts("-libraryPath", vSdlLibDir)
             }
             if (vSdlRenderer) {
                create("sdl3_ttf") {
@@ -100,6 +110,7 @@ kotlin {
                     extraOpts("-library", vSdl3Klib)
                     extraOpts("-compiler-options", "-I$vHostSdlInclude")
                     extraOpts("-compiler-options", "-I$vHostTtfInclude")
+                    extraOpts("-libraryPath", vTtfLibDir)
                 }
                 create("sdl3_image") {
                     defFile(project.file("src/nativeInterop/cinterop/sdl3_image.def"))
@@ -107,6 +118,7 @@ kotlin {
                     extraOpts("-library", vSdl3Klib)
                     extraOpts("-compiler-options", "-I$vHostSdlInclude")
                     extraOpts("-compiler-options", "-I$vHostImageInclude")
+                    extraOpts("-libraryPath", vImageLibDir)
                 }
                 // FreeType powers variable-font axis rendering (FILL / wght /
                 // GRAD / opsz) on Material Symbols icons in the SDL3 path.
@@ -114,6 +126,7 @@ kotlin {
                     defFile(project.file("src/nativeInterop/cinterop/freetype.def"))
                     packageName("freetype")
                     extraOpts("-compiler-options", "-I$vHostFtInclude")
+                    extraOpts("-libraryPath", vFtLibDir)
                 }
             }
         }

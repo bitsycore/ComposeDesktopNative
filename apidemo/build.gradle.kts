@@ -13,8 +13,8 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
 }
 
-val vLibs = "${rootDir.invariantSeparatorsPath}/libs"
-val vHostSupportsMingw = rootProject.extra["vHostSupportsMingw"] as Boolean
+// Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
+val vHostSupportsMingw: Boolean by rootProject.extra
 
 kotlin {
     linuxArm64()
@@ -24,7 +24,6 @@ kotlin {
 
     targets.withType<KotlinNativeTarget>().all {
         val isMingw = name == "mingwX64"
-        val isMacos = name.startsWith("macos")
         val isLinux = name.startsWith("linux")
         val isApple = name.startsWith("macos") || name.startsWith("ios")
         binaries.executable {
@@ -38,24 +37,12 @@ kotlin {
             }
 
             entryPoint = "apidemo.main"
-            // Every target links SDL3 / SDL3_ttf / SDL3_image / FreeType + image
-            // codecs STATICALLY (clean app + data.kres). Ktor's Curl engine
-            // brings its own bundled libcurl + TLS stack inside the klib.
+            // SDL3 + SDL3_ttf + SDL3_image + FreeType + image codecs come from
+            // :ui's cinterop klibs (staticLibraries directive in each .def); the
+            // system libs they need are in sdl3.def's linkerOpts.<target>. Only
+            // shell-level flags and app-specific extras (crypt32 for mTLS) live
+            // here. Ktor's Curl engine bundles its own libcurl + TLS stack.
             if (isMingw) linkerOpts(
-                "-L$vLibs/SDL3/lib",
-                "-L$vLibs/SDL3_ttf/lib",
-                "-L$vLibs/SDL3_image/lib",
-                "-L$vLibs/FreeType/lib",
-                // --start-group resolves the circular static deps
-                // (ttf<->freetype<->SDL3, image<->png/webp/zlib).
-                "-Wl,--start-group",
-                "-lSDL3_ttf", "-lSDL3_image", "-lSDL3", "-lfreetype",
-                "-lpng16", "-lzlibstatic", "-lwebp", "-lwebpdemux", "-lwebpmux", "-lsharpyuv",
-                "-Wl,--end-group",
-                // Windows system libraries SDL3 pulls in when static.
-                "-lm", "-lkernel32", "-luser32", "-lgdi32", "-lwinmm", "-limm32",
-                "-lole32", "-loleaut32", "-lversion", "-luuid", "-ladvapi32",
-                "-lsetupapi", "-lshell32", "-ldinput8",
                 // crypt32: client-cert (mTLS) import into the Windows cert store
                 // (CertOpenStore / PFXImportCertStore / CertAddCertificateContextToStore…).
                 "-lcrypt32",
@@ -67,41 +54,8 @@ kotlin {
                 // fail to link, since Kotlin/Native emits `main`.
                 "-Wl,--subsystem,windows", "-Wl,-e,mainCRTStartup",
             )
-            if (isMacos) linkerOpts(
-                "-L$vLibs/SDL3/lib",
-                "-L$vLibs/SDL3_ttf/lib",
-                "-L$vLibs/SDL3_image/lib",
-                "-L$vLibs/FreeType/lib",
-                "-lSDL3_ttf", "-lSDL3_image", "-lSDL3", "-lfreetype",
-                "-lpng16", "-lz", "-lwebp", "-lwebpdemux", "-lwebpmux", "-lsharpyuv",
-                "-framework", "CoreMedia",
-                "-framework", "CoreVideo",
-                "-framework", "Cocoa",
-                "-weak_framework", "UniformTypeIdentifiers",
-                "-framework", "IOKit",
-                "-framework", "ForceFeedback",
-                "-framework", "Carbon",
-                "-framework", "CoreAudio",
-                "-framework", "AudioToolbox",
-                "-framework", "AVFoundation",
-                "-framework", "Foundation",
-                "-framework", "GameController",
-                "-framework", "Metal",
-                "-framework", "QuartzCore",
-                "-weak_framework", "CoreHaptics",
-                "-lpthread", "-lm",
-            )
+            // Skia (default renderer) references the system graphics stack.
             if (isLinux) linkerOpts(
-                "-L$vLibs/SDL3/lib",
-                "-L$vLibs/SDL3_ttf/lib",
-                "-L$vLibs/SDL3_image/lib",
-                "-L$vLibs/FreeType/lib",
-                "-Wl,--start-group",
-                "-lSDL3_ttf", "-lSDL3_image", "-lSDL3", "-lfreetype",
-                "-lpng16", "-lz", "-lwebp", "-lwebpdemux", "-lwebpmux", "-lsharpyuv",
-                "-Wl,--end-group",
-                "-lpthread", "-ldl", "-lm", "-lrt",
-                // Skia (default renderer) references the system graphics stack.
                 "-lfontconfig", "-lGL", "-lX11",
             )
         }

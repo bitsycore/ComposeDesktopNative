@@ -86,6 +86,13 @@ find "$PREFIX/lib" -name 'libSDL3_image*.a' -exec cp {} "$LIBS/SDL3_image/lib/" 
 find "$OUT" -name '*.a' ! -name 'libSDL3_image.a' -exec cp -f {} "$LIBS/SDL3_image/lib/" \;
 # libpng installs both libpng.a and an identical libpng16.a — keep one.
 rm -f "$LIBS/SDL3_image/lib/libpng.a"
+# Normalize zlib archive name across platforms: on Windows CMake produces
+# libzlibstatic.a, elsewhere libz.a. The cinterop staticLibraries directive
+# lists a single filename per platform, so drop a libz.a alias if only the
+# libzlibstatic.a form exists.
+if [ -f "$LIBS/SDL3_image/lib/libzlibstatic.a" ] && [ ! -f "$LIBS/SDL3_image/lib/libz.a" ]; then
+	cp "$LIBS/SDL3_image/lib/libzlibstatic.a" "$LIBS/SDL3_image/lib/libz.a"
+fi
 
 echo ">> done: $LIBS/SDL3_image"
 echo ">> static archives present:"

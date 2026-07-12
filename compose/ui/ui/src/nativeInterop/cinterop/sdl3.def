@@ -1,7 +1,29 @@
 headers = SDL3/SDL.h
 headerFilter = SDL3/**
 
-# Include paths + linker flags are injected from :ui build.gradle.kts using the
-# absolute path to <repo>/libs/SDL3 (populated by scripts/build-sdl/build-sdl3.sh).
-# The static libSDL3.a is linked into the app executable — see the demo /
-# apidemo build.gradle.kts linkerOpts blocks. Same pattern on every target.
+# libSDL3.a is baked into the cinterop klib — apps get SDL3 auto-linked
+# just by depending on :ui, with no per-app -L/-l plumbing. The static
+# archive location comes from :ui build.gradle.kts (-libraryPath) because
+# .def files can't reference $rootDir. The linker options below list the
+# system frameworks / libs SDL3's static build depends on (see the Libs
+# line in libs/SDL3/lib/pkgconfig/sdl3.pc after build-sdl3.sh runs) —
+# cinterop propagates them through the klib to the final app link.
+
+staticLibraries = libSDL3.a
+
+linkerOpts.osx = \
+	-framework CoreMedia -framework CoreVideo -framework Cocoa \
+	-weak_framework UniformTypeIdentifiers \
+	-framework IOKit -framework ForceFeedback -framework Carbon \
+	-framework CoreAudio -framework AudioToolbox -framework AVFoundation \
+	-framework Foundation -framework GameController -framework Metal \
+	-framework QuartzCore -weak_framework CoreHaptics \
+	-lpthread -lm
+
+linkerOpts.linux_x64 = -lpthread -ldl -lm -lrt
+linkerOpts.linux_arm64 = -lpthread -ldl -lm -lrt
+
+linkerOpts.mingw_x64 = \
+	-lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 \
+	-lole32 -loleaut32 -lversion -luuid -ladvapi32 \
+	-lsetupapi -lshell32 -ldinput8
