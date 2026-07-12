@@ -21,12 +21,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import demo.shim.demoDecodeImage
+import demo.shim.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.readResourceBytes
@@ -43,9 +42,10 @@ private const val kLogoResourcePath = "composeResources/demo.generated.resources
 // ==================
 
 /* Round-trips text AND PNG images through the OS clipboard via LocalClipboard
-   (suspend, ClipEntry-typed) over SDL3's SDL_[GS]etClipboardText and
-   SDL_[GS]etClipboardData("image/png"). Text and images share one Compose
-   ClipEntry: getPlainText() vs getImage() surface whichever is present.
+   (suspend, ClipEntry-typed) — on native over SDL3's SDL_[GS]etClipboardText /
+   SDL_[GS]etClipboardData("image/png"), on JVM over the AWT clipboard.
+   ClipEntry construction/reading has NO common upstream API (each platform
+   actual differs), so this screen goes through demo.shim.DemoClipboard.
    Non-composable callers reach it by capturing LocalClipboard.current +
    rememberCoroutineScope() in composition and passing both into the callback. */
 @Composable
@@ -68,8 +68,9 @@ internal fun ClipboardScreen() {
         )
 
         // ============
-        //  Text copy — ClipEntry.withPlainText / getPlainText.
-        Section("Copy text", "scope.launch { clipboard.setClipEntry(ClipEntry.withPlainText(...)) }") {
+        //  Text copy — demoClipEntryOfText (ClipEntry.withPlainText on native,
+        //  AWT StringSelection on JVM).
+        Section("Copy text", "scope.launch { clipboard.setClipEntry(demoClipEntryOfText(...)) }") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = draft,
@@ -78,7 +79,7 @@ internal fun ClipboardScreen() {
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Button(onClick = {
-                    scope.launch { clipboard.setClipEntry(ClipEntry.withPlainText(draft)) }
+                    scope.launch { clipboard.setClipEntry(demoClipEntryOfText(draft)) }
                     note = "Copied ${draft.length} char(s) to the system clipboard."
                 }) {
                     Text("Copy text", color = MaterialTheme.colorScheme.onPrimary)
@@ -92,7 +93,7 @@ internal fun ClipboardScreen() {
         //  image-aware app (Preview / Paint / a browser tab) to verify.
         Section(
             "Copy image",
-            "readResourceBytes(\"drawable/compose_logo.png\") → ClipEntry.withImage(pngBytes). " +
+            "readResourceBytes(\"drawable/compose_logo.png\") → demoClipEntryOfPng(pngBytes). " +
                 "Paste into another app to verify.",
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -115,7 +116,7 @@ internal fun ClipboardScreen() {
                         scope.launch {
                             val vBytes = runCatching { readResourceBytes(kLogoResourcePath) }.getOrNull()
                             if (vBytes != null) {
-                                clipboard.setClipEntry(ClipEntry.withImage(vBytes))
+                                clipboard.setClipEntry(demoClipEntryOfPng(vBytes))
                                 note = "Copied ${vBytes.size} byte(s) of PNG to the system clipboard."
                             } else {
                                 note = "Failed to load the source image."
@@ -130,15 +131,15 @@ internal fun ClipboardScreen() {
 
         // ============
         //  Paste — surfaces whatever's on the clipboard: text OR image.
-        Section("Paste", "clipboard.getClipEntry()?.getPlainText() / .getImage()") {
+        Section("Paste", "clipboard.getClipEntry()?.demoPlainText() / .demoPngImage()") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         pastedText = null; pastedImage = null; pastedNote = null
                         scope.launch {
                             val vEntry = clipboard.getClipEntry()
-                            val vImage = vEntry?.getImage()
-                            val vText = vEntry?.getPlainText()
+                            val vImage = vEntry?.demoPngImage()
+                            val vText = vEntry?.demoPlainText()
                             when {
                                 vImage != null -> {
                                     pastedImage = demoDecodeImage(vImage)
@@ -212,6 +213,6 @@ internal fun ClipboardScreen() {
    modern Clipboard is intentionally suspend-only. */
 private fun copyFromPlainFunction(scope: CoroutineScope, clipboard: Clipboard) {
     scope.launch {
-        clipboard.setClipEntry(ClipEntry.withPlainText("Set from a plain, non-@Composable function."))
+        clipboard.setClipEntry(demoClipEntryOfText("Set from a plain, non-@Composable function."))
     }
 }

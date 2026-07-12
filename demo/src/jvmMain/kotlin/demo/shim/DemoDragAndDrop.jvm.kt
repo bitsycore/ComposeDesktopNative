@@ -1,15 +1,19 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 package demo.shim
 
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.awtTransferable
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 
-/* JVM (Compose Desktop) actual: DragAndDropEvent wraps an AWT
- * java.awt.dnd.DropTargetDropEvent whose transferable exposes the payload
- * through the standard AWT flavor system. */
+/* JVM (Compose Desktop) actual: DragAndDropEvent exposes the payload through
+ * the AWT flavor system via the awtTransferable extension (throws when the
+ * event carries no transferable — hence the runCatching). */
 
 actual fun DragAndDropEvent.demoReadFilePaths(): List<String> {
-    val transferable = runCatching { nativeEvent.transferable }.getOrNull() ?: return emptyList()
+    val transferable = runCatching { awtTransferable }.getOrNull() ?: return emptyList()
     if (!transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) return emptyList()
     @Suppress("UNCHECKED_CAST")
     val files = transferable.getTransferData(DataFlavor.javaFileListFlavor) as? List<File> ?: return emptyList()
@@ -17,7 +21,7 @@ actual fun DragAndDropEvent.demoReadFilePaths(): List<String> {
 }
 
 actual fun DragAndDropEvent.demoReadText(): String? {
-    val transferable = runCatching { nativeEvent.transferable }.getOrNull() ?: return null
+    val transferable = runCatching { awtTransferable }.getOrNull() ?: return null
     if (!transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) return null
     return runCatching { transferable.getTransferData(DataFlavor.stringFlavor) as? String }.getOrNull()
 }

@@ -20,10 +20,12 @@ Inputs
                ../cmp-ref-<name>   any other repo                        ($CMP_REF_<NAME>)
 
 Usage
-  python3 scripts/compose-coverage.py              # per-module table + fidelity summary
-  python3 scripts/compose-coverage.py --packages   # per-package breakdown
-  python3 scripts/compose-coverage.py --extras     # list every divergent decl
-  python3 scripts/compose-coverage.py --all        # with --packages: include packages upstream lacks
+  python3 scripts/compose-coverage.py                    # per-module table + fidelity summary
+  python3 scripts/compose-coverage.py --missing          # list upstream decls we DON'T cover
+  python3 scripts/compose-coverage.py --missing ui-util  # ...for one module only
+  python3 scripts/compose-coverage.py --packages         # per-package breakdown
+  python3 scripts/compose-coverage.py --extras           # list every divergent decl
+  python3 scripts/compose-coverage.py --all              # with --packages: include packages upstream lacks
 
 Output is informational, not a hard gate (exit 0 unless inputs are missing) —
 review divergences against CLAUDE.md's vendoring/fidelity rules. Known quirks
@@ -85,6 +87,13 @@ kMirroredPrefixes = (
 	"org.jetbrains.compose.resources",
 )
 
+# The K/N targets this port builds. Upstream dumps are merged across THEIR
+# targets (ios / js / macos / wasm) with `// Targets: [...]` sections gating
+# target-specific decls; anything gated to targets outside this set (e.g.
+# ios-only enableTraceOSLog) can never exist here and is excluded from the
+# comparison, so the tables reflect the COMMON surface we can actually mirror.
+kOurTargets = {"linuxX64", "linuxArm64", "macosArm64", "mingwX64"}
+
 # ==================
 # MARK: klib.api parsing
 # ==================
@@ -94,28 +103,71 @@ kMirroredPrefixes = (
 kAccessorRe = re.compile(r"\.<(get|set)-[^>]+>$")
 kCtorRe = re.compile(r"\.<init>.*$")
 
+# Merged-dump structure markers: the first `// Targets:` line is the file
+# header (every target the dump covers); later ones gate the next declaration
+# (and its whole block, for classes) to a subset. `// Alias:` names groups.
+kTargetSectionRe = re.compile(r"^// Targets: \[([^\]]*)\]")
+kAliasRe = re.compile(r"^// Alias: (\w+) => \[([^\]]*)\]")
+
+
+def parseTargetList(inText, inAliases):
+	"""'ios, macosArm64' -> the expanded set of concrete target names."""
+	vSet = set()
+	for vName in (vPart.strip() for vPart in inText.split(",")):
+		if vName:
+			vSet |= inAliases.get(vName, {vName})
+	return vSet
+
 
 def declIds(inPath):
-	"""Extract the set of normalised public decl-ids from a BCV .klib.api dump.
-	A decl line ends in `// <decl-id>|<mangle>`; header comments have no `|`
-	and no `<pkg>/<name>` shape, so requiring both filters them out."""
+	"""Extract the normalised public decl-ids from a BCV .klib.api dump as
+	(ids, skippedIds). A decl line ends in `// <decl-id>|<mangle>`; header
+	comments have no `|` and no `<pkg>/<name>` shape, so requiring both filters
+	them out. Declarations gated by a `// Targets: [...]` section that shares
+	no target with kOurTargets (ios / js / wasm-only API) can never exist on
+	this port: they land in skippedIds — out of the coverage denominator but
+	still known-upstream for the fidelity check."""
 	vIds = set()
+	vSkipped = set()
+	vAliases = {}
+	vAllTargets = None   # the file header's full target list; None until seen
+	vScopes = []         # target set in force for each currently open block
+	vPending = None      # targets a section comment set for the NEXT decl
 	for vLine in inPath.read_text(encoding="utf-8", errors="ignore").splitlines():
+		vStripped = vLine.strip()
+		vAlias = kAliasRe.match(vStripped)
+		if vAlias:
+			vAliases[vAlias.group(1)] = parseTargetList(vAlias.group(2), vAliases)
+			continue
+		vSection = kTargetSectionRe.match(vStripped)
+		if vSection:
+			vTargets = parseTargetList(vSection.group(1), vAliases)
+			if vAllTargets is None:
+				vAllTargets = vTargets
+			else:
+				vPending = vTargets
+			continue
 		vIdx = vLine.find("// ")
-		if vIdx < 0:
-			continue
-		vComment = vLine[vIdx + 3:]
-		if "|" not in vComment:
-			continue
-		vId = vComment.split("|", 1)[0].strip()
-		if "/" not in vId:
-			continue
-		if "$stable" in vId:   # Compose-compiler stability props — not real API
-			continue
-		vId = kAccessorRe.sub("", vId)
-		vId = kCtorRe.sub("", vId)
-		vIds.add(vId)
-	return vIds
+		vCode = vLine[:vIdx] if vIdx >= 0 else vLine
+		vComment = vLine[vIdx + 3:] if vIdx >= 0 else ""
+		vEffective = vPending if vPending is not None else (vScopes[-1] if vScopes else vAllTargets)
+		if "|" in vComment:
+			vId = vComment.split("|", 1)[0].strip()
+			if "/" in vId and "$stable" not in vId:   # skip headers + stability props
+				vId = kCtorRe.sub("", kAccessorRe.sub("", vId))
+				if vEffective is not None and not (vEffective & kOurTargets):
+					vSkipped.add(vId)
+				else:
+					vIds.add(vId)
+		# Track blocks on the code part only — mangle comments contain `{}`.
+		for _ in range(vCode.count("{")):
+			vScopes.append(vEffective)
+		for _ in range(vCode.count("}")):
+			if vScopes:
+				vScopes.pop()
+		if vCode.strip() or "|" in vComment:
+			vPending = None   # a section comment only scopes the decl right after it
+	return vIds, vSkipped
 
 
 def packageOf(inId):
@@ -176,7 +228,7 @@ def loadOurDumps():
 		vRel = vFile.relative_to(kRoot)
 		if vFile.parent.name != "api" or {"build", "libs", ".git"} & set(vRel.parts):
 			continue
-		vDumps[vFile.parent.parent.relative_to(kRoot).as_posix()] = declIds(vFile)
+		vDumps[vFile.parent.parent.relative_to(kRoot).as_posix()] = declIds(vFile)[0]
 	return vDumps
 
 # ==================
@@ -193,6 +245,8 @@ def main():
 	"""Load both ABI universes, print the per-module coverage table, then the
 	optional per-package table and divergent-decl listing."""
 	vParser = argparse.ArgumentParser(description="Compose API coverage + fidelity vs upstream klib dumps.")
+	vParser.add_argument("--missing", nargs="?", const="", metavar="MODULE",
+		help="list upstream decls we don't cover, grouped by package (optionally one module label, e.g. ui-util)")
 	vParser.add_argument("--packages", action="store_true", help="per-package breakdown table")
 	vParser.add_argument("--extras", action="store_true", help="list every divergent decl (old fidelity-check output)")
 	vParser.add_argument("--all", action="store_true", help="with --packages: include our packages upstream lacks")
@@ -203,13 +257,15 @@ def main():
 	vUpstreamByTarget = {}   # {target-label: {decl-ids}}
 	vOursDirByTarget = {}    # {target-label: our module dir}
 	vMissingRefs = []
+	vSkippedUnion = set()
 	for vRepo, vModule, vOursDir in kTargets:
 		vLabel = targetLabel(vModule)
 		vFile = upstreamApiFile(vRepo, vModule)
 		if vFile is None:
 			vMissingRefs.append((vRepo, vModule))
 			continue
-		vUpstreamByTarget[vLabel] = declIds(vFile)
+		vUpstreamByTarget[vLabel], vSkipped = declIds(vFile)
+		vSkippedUnion |= vSkipped
 		vOursDirByTarget[vLabel] = vOursDir
 	if not vUpstreamByTarget:
 		print("!! No upstream klib.api dumps found -- run scripts/compose-fork/sync.sh first "
@@ -225,7 +281,9 @@ def main():
 		return 1
 	vOurs = set().union(*vOurDumps.values())
 	vOursMirrored = {vId for vId in vOurs if vId.startswith(kMirroredPrefixes)}
-	vDivergent = vOursMirrored - vAllUpstream
+	# Fidelity baseline includes target-gated upstream decls: implementing one
+	# of those is coverage beyond our targets, not invented API.
+	vDivergent = vOursMirrored - vAllUpstream - vSkippedUnion
 
 	# ============
 	#  Warnings — a target whose module has no local dump reports fake 0%
@@ -240,7 +298,8 @@ def main():
 
 	vRepoNotes = ", ".join(f"{vRepo} @ {refHead(refCloneDir(vRepo))}"
 		for vRepo in dict.fromkeys(vT[0] for vT in kTargets))
-	print(f"Upstream: {len(vUpstreamByTarget)} modules, {len(vAllUpstream)} decls  ({vRepoNotes})")
+	print(f"Upstream: {len(vUpstreamByTarget)} modules, {len(vAllUpstream)} decls"
+		+ f" ({len(vSkippedUnion)} decls for targets we don't build excluded)  ({vRepoNotes})")
 	print(f"Ours:     {len(vOurDumps)} dumps, {len(vOurs)} decls ({len(vOursMirrored)} under mirrored prefixes)")
 	print()
 
@@ -287,6 +346,30 @@ def main():
 	vOverall = 100.0 * vTotalCov / vTotalUp if vTotalUp else 0.0
 	print(vFmt.format("TOTAL", "", vTotalCov, vTotalUp, f"{vOverall:.0f}%", bar(vOverall), len(vDivergent)))
 	print()
+
+	# ============
+	#  Missing decl listing (--missing [MODULE])
+	if vArgs.missing is not None:
+		if vArgs.missing and vArgs.missing not in vUpstreamByTarget:
+			print(f"!! unknown module label '{vArgs.missing}' -- valid: "
+				+ " ".join(vUpstreamByTarget), file=sys.stderr)
+			return 1
+		for vRepo, vModule, vOursDir in kTargets:
+			vLabel = targetLabel(vModule)
+			if vLabel not in vUpstreamByTarget or (vArgs.missing and vLabel != vArgs.missing):
+				continue
+			vMissing = sorted(vUpstreamByTarget[vLabel] - vOurs)
+			if not vMissing:
+				continue
+			print(f"Missing from {vLabel} -- upstream has, we don't ({len(vMissing)} decls):")
+			vByPkg = {}
+			for vId in vMissing:
+				vByPkg.setdefault(packageOf(vId), []).append(vId)
+			for vPkg in sorted(vByPkg):
+				print(f"  [{vPkg}]  ({len(vByPkg[vPkg])})")
+				for vId in vByPkg[vPkg]:
+					print(f"      {vId.split('/', 1)[1]}")
+			print()
 
 	# ============
 	#  Per-package table (--packages)
