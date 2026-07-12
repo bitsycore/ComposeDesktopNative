@@ -31,9 +31,13 @@ jobs:
             host: macos
             target: MacosArm64
             exe_ext: kexe
+            # jvm publication: only :material-symbols declares a jvm() target
+            # (its common API renders via upstream Compose on JVM) — publish
+            # its host-independent jar from the same host as the metadata.
             tasks: >-
               publishKotlinMultiplatformPublicationToGitHubPackagesRepository
               publishMacosArm64PublicationToGitHubPackagesRepository
+              publishJvmPublicationToGitHubPackagesRepository
           - runner: ubuntu-22.04
             host: linux
             target: LinuxX64

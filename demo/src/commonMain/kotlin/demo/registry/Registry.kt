@@ -60,6 +60,7 @@ val CoreScreens: List<DemoScreen> = listOf(
 val Material3Screens: List<DemoScreen> = listOf(
     // Ordered by family: typography, buttons, inputs, containers, navigation, overlays.
     DemoScreen("Text") { TextScreen() },
+    DemoScreen("Icons") { IconsScreen() },
     DemoScreen("Buttons") { ButtonsScreen() },
     DemoScreen("ButtonsExtra") { M3ButtonsExtraScreen() },
     DemoScreen("Fab") { FabScreen() },
@@ -86,10 +87,17 @@ val Navigation3Screens: List<DemoScreen> = listOf(
     DemoScreen("Navigation3") { Navigation3Screen() },
 )
 
+// Screens that aren't a Compose-artifact showcase: project utility modules
+// (Material Symbols engine, ...).
+val OthersScreens: List<DemoScreen> = listOf(
+    DemoScreen("MaterialSymbols") { MaterialSymbolsScreen() },
+)
+
 val commonCategories: List<DemoCategory> = listOf(
     DemoCategory("core", "Core", CoreScreens),
     DemoCategory("material3", "Material3", Material3Screens),
     DemoCategory("navigation3", "Navigation3", Navigation3Screens),
+    DemoCategory("others", "Others", OthersScreens),
 )
 
 /* Platform extras that fill the dropdown dynamically: screens that can't be

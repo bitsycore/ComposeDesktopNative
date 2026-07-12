@@ -60,8 +60,18 @@ compose/
 
 utils/
 └── material-symbols/                → :material-symbols — codepoints + all three style objects
-                                                    (Outlined / Rounded / Sharp). Apps get one dep;
-                                                    the consumer Zip task bundles only the fonts used.
+                                                    (Outlined / Rounded / Sharp). COMMON API (usable from
+                                                    shared app code) + per-stack actuals: native renders
+                                                    via :foundation IconFontIcon (IconFont handles the
+                                                    SDL3/Skia split), jvm() via Skiko directly
+                                                    (Typeface.makeClone per axes — upstream's FontCache
+                                                    drops variationSettings from its key). Its commonMain
+                                                    declares official Maven compose coords — the root
+                                                    build's FULL-COMMONIZATION BRIDGE substitutes ui /
+                                                    foundation / material3 to project modules on native
+                                                    configs. Apps get one dep; the consumer Zip task
+                                                    bundles only the fonts used (native) and
+                                                    jvmProcessResources stages the same fonts (jvm).
 
 components/
 └── resources/library/               → :components-resources — the OFFICIAL Compose resources

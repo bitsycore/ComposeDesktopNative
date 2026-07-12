@@ -1,15 +1,27 @@
 // :material-symbols — codepoint constants + all three Material Symbols style
-// composables (Outlined / Rounded / Sharp) in one module.
+// composables (Outlined / Rounded / Sharp) in one module, for BOTH stacks:
 //
-// Previously each style lived in its own :material-symbols:outlined /
-// :rounded / :sharp sub-module and apps opted in by listing the style
-// dependencies they wanted. The three styles are 100% pure Kotlin
-// (`object MaterialSymbolsOutlined { … }`) — no cinterops, no per-target
-// actuals, no reason to be separate modules. Consolidated so apps just
-// `implementation(project(":material-symbols"))` once and get all three;
-// the app's data.kres Zip task decides which style FONT to actually
-// bundle by scanning the app's Kotlin sources for MaterialSymbols<Style>
-// call sites (see :apidemo / :demo build files).
+//   commonMain  — the MaterialSymbols codepoints + the PUBLIC API
+//                 (MaterialSymbols<Style> objects, axis defaults) so
+//                 consumers' shared code and IDE analysis resolve it.
+//   nativeMain  — actual renderer over the port's IconFont pipeline
+//                 (:foundation IconFontIcon; IconFont itself handles the
+//                 SDL3 / Skia renderer split — this module never sees it).
+//   jvmMain     — actual renderer over Skiko directly (Typeface.makeClone
+//                 per axes combination + TextLine on the native canvas);
+//                 the upstream Font(variationSettings) route is unusable —
+//                 its FontCache drops the settings from the cache key.
+//
+// commonMain compiles against the OFFICIAL Maven Compose artifacts (metadata
+// + jvm resolve them); the NATIVE target configurations substitute ui /
+// material3 for the port's project modules — the FULL-COMMONIZATION BRIDGE
+// declared once in the root build (the Maven artifacts ship no mingw/linux
+// klibs). The runtime is the official klib everywhere, never substituted.
+//
+// The app owns the font files: the data.kres Zip task bundles the styles an
+// app's sources actually reference (native), and the app's
+// jvmProcessResources stages the same fonts onto the JVM classpath at
+// font/<file>.ttf (see :demo's build file).
 //
 // Publication artifactId (when set up): compose-desktop-material-symbols.
 
@@ -28,7 +40,34 @@ plugins {
 // Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
 val vHostSupportsMingw = rootProject.extra["vHostSupportsMingw"] as Boolean
 
+// JVM stack version — the dev build matching the pinned COMPOSE_CORE_REF
+// (scripts/compose-fork/compose.properties): byte-exact parity with the
+// vendored sources, and (unlike published beta01) its desktop loadTypeface
+// applies Font.variationSettings — required for the icon axes on JVM.
+// material3 rides its own release train (same +dev build, different base).
+// Gradle orders "+dev" BELOW the plain version, so force the core-repo
+// groups on jvm configurations (mirrors :demo's forcing).
+val vComposeJvmVersion = "1.12.0-beta01+dev4324"
+val vComposeM3JvmVersion = "1.12.0-alpha03+dev4324"
+val vComposeJvmForced = mapOf(
+    "org.jetbrains.compose.runtime" to vComposeJvmVersion,
+    "org.jetbrains.compose.ui" to vComposeJvmVersion,
+    "org.jetbrains.compose.foundation" to vComposeJvmVersion,
+    "org.jetbrains.compose.animation" to vComposeJvmVersion,
+    "org.jetbrains.compose.material" to vComposeJvmVersion,
+    "org.jetbrains.compose.material3" to vComposeM3JvmVersion,
+)
+configurations.configureEach {
+    if (name.startsWith("jvm")) {
+        resolutionStrategy.eachDependency {
+            vComposeJvmForced[requested.group]?.let { useVersion(it) }
+        }
+    }
+}
+
 kotlin {
+    jvm()
+
     linuxArm64()
     linuxX64()
     macosArm64()
@@ -38,16 +77,25 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // The MaterialSymbols<Style> objects emit Icon(...) via
-            // com.compose.sdl.icons.IconFontIcon and reference
-            // MaterialIconAxisDefaults / IconDefaults — those live in
-            // :foundation (com.compose.sdl.icons package), which
-            // itself already api-depends on :ui.
+            // The official runtime klibs — the SAME artifact/version the port
+            // itself uses (:ui pins it); resolves for metadata, jvm AND native.
+            api("org.jetbrains.compose.runtime:runtime:1.11.1")
+            // Official Maven coordinates for the API surface (Modifier / Color
+            // / Dp / material3's LocalContentColor). Metadata + jvm resolve
+            // them from Maven; NATIVE configurations substitute them for
+            // project(":ui") / project(":material3") (root build bridge).
+            api("org.jetbrains.compose.ui:ui:$vComposeJvmVersion")
+            api("org.jetbrains.compose.material3:material3:$vComposeM3JvmVersion")
+        }
+        nativeMain.dependencies {
+            // The native actual draws via com.compose.sdl.icons.IconFontIcon —
+            // project code in :foundation (which api-depends on :ui).
             api(project(":foundation"))
-            // Default tint follows upstream material3 Icon:
-            // `tint: Color = LocalContentColor.current` — needs material3's
-            // LocalContentColor (provided by Surface / button content / …).
-            api(project(":material3"))
+        }
+        jvmMain.dependencies {
+            // BasicText for the JVM actual — same version as :demo's jvm
+            // parity target.
+            api("org.jetbrains.compose.foundation:foundation:$vComposeJvmVersion")
         }
     }
 }

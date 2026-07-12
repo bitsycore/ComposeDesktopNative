@@ -13,6 +13,31 @@ plugins {
 // Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
 val vHostSupportsMingw = rootProject.extra["vHostSupportsMingw"] as Boolean
 
+// JVM parity target's Compose version — the dev build matching the pinned
+// COMPOSE_CORE_REF (see scripts/compose-fork/compose.properties). material3
+// rides its OWN release train: same +dev build number, different base
+// version. Gradle orders "+dev" qualifiers BELOW the plain version, so
+// currentOs's beta01 would win conflict resolution — force the core-repo
+// groups on every jvm configuration. Umbrella-repo groups (desktop,
+// components) are NOT forced: their dev numbering differs.
+val vComposeJvmVersion = "1.12.0-beta01+dev4324"
+val vComposeM3JvmVersion = "1.12.0-alpha03+dev4324"
+val vComposeJvmForced = mapOf(
+    "org.jetbrains.compose.runtime" to vComposeJvmVersion,
+    "org.jetbrains.compose.ui" to vComposeJvmVersion,
+    "org.jetbrains.compose.foundation" to vComposeJvmVersion,
+    "org.jetbrains.compose.animation" to vComposeJvmVersion,
+    "org.jetbrains.compose.material" to vComposeJvmVersion,
+    "org.jetbrains.compose.material3" to vComposeM3JvmVersion,
+)
+configurations.configureEach {
+    if (name.startsWith("jvm")) {
+        resolutionStrategy.eachDependency {
+            vComposeJvmForced[requested.group]?.let { useVersion(it) }
+        }
+    }
+}
+
 kotlin {
     jvm()
 
@@ -72,30 +97,36 @@ kotlin {
                 // substitute it for the vendored :components-resources below
                 // (the Maven artifact ships no mingwX64/linux klibs).
                 implementation(compose.components.resources)
+                // Common API on both stacks (its native/jvm actuals pick the
+                // right rendering pipeline) — usable from shared screens.
+                implementation(project(":material-symbols"))
             }
         }
         nativeMain {
             dependencies {
                 implementation(project(":window"))
                 implementation(project(":material3"))
-                implementation(project(":material-symbols"))
                 implementation(project(":navigation3-ui"))
                 implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
             }
         }
         jvmMain {
             dependencies {
-                implementation("org.jetbrains.compose.runtime:runtime:1.12.0-alpha03")
-                implementation("org.jetbrains.compose.foundation:foundation:1.12.0-alpha03")
-                implementation("org.jetbrains.compose.animation:animation:1.12.0-alpha03")
-                implementation("org.jetbrains.compose.material3:material3:1.12.0-alpha03")
-                implementation("org.jetbrains.compose.ui:ui:1.12.0-alpha03")
+                // The +dev build matching scripts/compose-fork's pinned
+                // COMPOSE_CORE_REF — byte-exact parity with the vendored
+                // sources, and (unlike the published beta01) its desktop
+                // loadTypeface applies Font.variationSettings, so the
+                // Material Symbols variable-font axes work on JVM.
+                implementation("org.jetbrains.compose.runtime:runtime:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.foundation:foundation:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.animation:animation:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.material3:material3:$vComposeM3JvmVersion")
+                implementation("org.jetbrains.compose.ui:ui:$vComposeJvmVersion")
 
                 implementation("androidx.navigation3:navigation3-runtime:1.2.0-alpha05")
                 implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.2.0-alpha02")
                 implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
                 implementation(compose.desktop.currentOs)
-                implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             }
         }
     }
@@ -236,5 +267,22 @@ for (variant in variants) {
                 dependsOn(copyTask)
             }
         }
+    }
+}
+
+// ==================
+// MARK: Stage Material Symbols fonts onto the JVM classpath
+// ==================
+// The :material-symbols JVM actual loads each style's font from the classpath
+// at font/<Style>.ttf — the JVM analog of the data.kres font/ entries above.
+// Same style detection: only the fonts the sources actually reference.
+tasks.named<ProcessResources>("jvmProcessResources") {
+    val vSymbolsProject = rootProject.project(":material-symbols")
+    for (vStyle in vUsedStyles) {
+        @Suppress("UNCHECKED_CAST")
+        val vFontFile = vSymbolsProject.extra["iconFontFile$vStyle"] as Provider<RegularFile>
+        val vDownloadTask = vSymbolsProject.extra["iconFontDownloadTask$vStyle"] as TaskProvider<*>
+        from(vFontFile) { into("font") }
+        dependsOn(vDownloadTask)
     }
 }

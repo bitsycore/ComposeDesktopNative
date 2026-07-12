@@ -108,6 +108,26 @@ subprojects {
     }
 }
 
+// FULL-COMMONIZATION BRIDGE (repo-wide): a module may declare the OFFICIAL
+// Maven Compose artifacts in its commonMain so metadata + jvm resolve them
+// (e.g. :material-symbols' common API); every NATIVE target configuration
+// swaps those modules for the port's project equivalents — the Maven
+// artifacts ship no mingwX64/linux klibs. org.jetbrains.compose.runtime is
+// deliberately NOT here: the port uses the official runtime klibs everywhere.
+// (:demo carries the same pattern locally for components-resources.)
+val vNativeTargetTokens = listOf("mingwX64", "linuxX64", "linuxArm64", "macosArm64")
+allprojects {
+    configurations.configureEach {
+        if (vNativeTargetTokens.any { name.contains(it, ignoreCase = true) }) {
+            resolutionStrategy.dependencySubstitution {
+                substitute(module("org.jetbrains.compose.ui:ui")).using(project(":ui"))
+                substitute(module("org.jetbrains.compose.foundation:foundation")).using(project(":foundation"))
+                substitute(module("org.jetbrains.compose.material3:material3")).using(project(":material3"))
+            }
+        }
+    }
+}
+
 // Whether the current host can build the mingwX64 target. Kotlin/Native can
 // only cross-compile mingwX64 cinterops from a Windows host — the sdl3_ttf /
 // sdl3_image cinterops need Windows SDL3 headers under libs/ (produced by

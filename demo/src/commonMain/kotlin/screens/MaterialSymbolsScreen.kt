@@ -1,11 +1,14 @@
 package screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,22 +17,29 @@ import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsRounded
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsSharp
-import demo.generated.resources.Res
-import demo.generated.resources.heart
-import org.jetbrains.compose.resources.painterResource
 
+// ==================
+// MARK: Material Symbols screen — variable-font icon engine showcase
+// ==================
+
+/* The :material-symbols engine demos: the four variable-font axes (FILL /
+   wght / GRAD / opsz), the animated fill transition, and the three style
+   families. Runs the SAME shared code on native (IconFont over SDL3_ttf-fork
+   / Skia) and JVM (Skiko direct) — differences between the builds = port
+   bugs. */
 @Composable
-internal fun IconsScreen() {
+internal fun MaterialSymbolsScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ScreenTitle(
-            "Icons",
-            "MaterialSymbolsOutlined / Rounded / Sharp — drop the dependency, call the composable, font auto-installs.",
+            "Material Symbols",
+            "MaterialSymbolsOutlined / Rounded / Sharp — drop the dependency, call the composable, " +
+                "font auto-installs. Four variable-font axes as direct parameters.",
         )
 
         // ============
-        //  Variable-font axes — the priority demo. The four axes are direct
-        //  parameters on the icon composable, so each row pins everything
-        //  except one. Skia honours every axis; SDL3_ttf 3.2 ignores them.
+        //  Variable-font axes — each row pins everything except one axis.
+        //  Skia, the SDL3_ttf fork (TTF_SetFontAxisValue) and the JVM build
+        //  (Skiko Typeface.makeClone) all honour the axes.
 
         Section(
             "Weight (wght 100..700)",
@@ -72,6 +82,24 @@ internal fun IconsScreen() {
                              color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
+            }
+        }
+
+        // ============
+        //  Animated fill — the modern M3 selected-state icon transition:
+        //  the FILL axis (and tint) animate on click instead of swapping
+        //  between two static icons.
+        Section(
+            "Animated fill",
+            "Click an icon: animateFloatAsState drives the FILL axis (plus tint) — " +
+                "the Material 3 selected-state transition, morphing the glyph instead of swapping it.",
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                AnimatedFillIcon(MaterialSymbols.Favorite, "Favorite")
+                AnimatedFillIcon(MaterialSymbols.Star, "Star")
+                AnimatedFillIcon(MaterialSymbols.Bookmark, "Bookmark")
+                AnimatedFillIcon(MaterialSymbols.Notifications, "Notifications")
             }
         }
 
@@ -157,15 +185,7 @@ internal fun IconsScreen() {
         }
 
         // ============
-        //  Style families + drawable icons.
-
-        Section("Painter-based Icon", "Reads from composeResources/drawable/*.xml (Android vector) or *.svg.") {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Icon(painter = painterResource(Res.drawable.heart), contentDescription = "Heart")
-                Text("painterResource(Res.drawable.heart)", fontSize = 13.sp)
-            }
-        }
+        //  Style families.
 
         val vNames = listOf(
             "Home" to MaterialSymbols.Home,
@@ -246,22 +266,31 @@ internal fun IconsScreen() {
                 }
             }
         }
+    }
+}
 
-        Section("IconButton", "40dp clickable circle. Hover overlay matches Material 1.") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                IconButton(onClick = {}) {
-                    MaterialSymbolsOutlined(MaterialSymbols.Favorite,
-                        tint = MaterialTheme.colorScheme.primary, fill = 1f, weight = 600)
-                }
-                IconButton(onClick = {}) {
-                    MaterialSymbolsRounded(MaterialSymbols.Share,
-                        tint = MaterialTheme.colorScheme.onSurface)
-                }
-                IconButton(onClick = {}) {
-                    MaterialSymbolsSharp(MaterialSymbols.MoreVert,
-                        tint = MaterialTheme.colorScheme.onSurface)
-                }
-            }
+/* One click-toggled icon: FILL 0↔1 and tint animate together — swap-free
+   selected-state feedback, the Material 3 expressive icon pattern. */
+@Composable
+private fun AnimatedFillIcon(codepoint: Int, label: String) {
+    var vSelected by remember { mutableStateOf(false) }
+    val vFill by animateFloatAsState(
+        targetValue = if (vSelected) 1f else 0f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        label = "fill",
+    )
+    val vTint by animateColorAsState(
+        targetValue = if (vSelected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 300),
+        label = "tint",
+    )
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+           verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        IconButton(onClick = { vSelected = !vSelected }) {
+            MaterialSymbolsOutlined(codepoint, size = 28.dp, tint = vTint, fill = vFill)
         }
+        Text(label, fontSize = 11.sp,
+             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
     }
 }

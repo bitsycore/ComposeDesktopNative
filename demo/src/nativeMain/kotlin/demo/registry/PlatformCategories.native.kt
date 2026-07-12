@@ -17,11 +17,6 @@ actual fun getPlatformCategories(): List<DemoCategory> = listOf(
         // IconFontIcon / IconText glyph engine + desktop scrollbars — no upstream analog.
         DemoScreen("FoundationExtra") { FoundationExtraScreen() },
     )),
-    DemoCategory("material3", "Material3", listOf(
-        // Icons demos the variable-font axes + Outlined/Rounded/Sharp families — project-only,
-        // no upstream analog, so it can't be common.
-        DemoScreen("Icons") { IconsScreen() },
-    )),
     DemoCategory("native", "Native", listOf(
         DemoScreen("Window") { WindowScreen() },
         DemoScreen("Dispatchers") { DispatchersScreen() },
