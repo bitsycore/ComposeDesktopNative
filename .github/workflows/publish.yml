@@ -90,21 +90,38 @@ jobs:
             libfontconfig-dev
 
       # SDL3 >= 3.4 has a C++ GameInput backend; K/N's bundled mingw is C-only,
-      # so we need a system g++ on PATH. Chocolatey's mingw ships gcc+g++.
-      - name: Install Windows mingw-w64 (system g++ for SDL3's GameInput backend)
+      # so we need a system g++ on PATH. MSYS2's mingw-w64-x86_64-gcc is
+      # MSVCRT-based (matches K/N's target ABI); Chocolatey's mingw is
+      # UCRT-based and emits __intrinsic_setjmpex references that K/N's LLD
+      # can't resolve at final app link.
+      - name: Set up MSYS2 (MSVCRT-based mingw-w64)
+        if: matrix.host == 'windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+
+      - name: Add MSYS2 mingw to PATH
         if: matrix.host == 'windows'
         shell: pwsh
-        run: choco install mingw -y --no-progress
+        run: Add-Content $env:GITHUB_PATH "C:\msys64\mingw64\bin"
 
       # Build static SDL3 / SDL3_ttf / SDL3_image / FreeType from
       # scripts/build-sdl/build-sdl.properties. Cached against the manifest +
       # scripts so version bumps invalidate cleanly.
+      # `cache_version` is a manual bump for when the toolchain (runner OS,
+      # compiler flavour, K/N sysroot expectations) changes without any
+      # scripts/build-sdl/ file changing. Increment to force a rebuild.
       - name: Cache libs/
         id: cache-libs
         uses: actions/cache@v4
         with:
           path: libs
-          key: sdl-libs-${{ matrix.host }}-${{ hashFiles('scripts/build-sdl/**') }}
+          key: sdl-libs-v2-${{ matrix.host }}-${{ hashFiles('scripts/build-sdl/**') }}
 
       - name: Build static SDL / TTF / image / FreeType
         if: steps.cache-libs.outputs.cache-hit != 'true'
