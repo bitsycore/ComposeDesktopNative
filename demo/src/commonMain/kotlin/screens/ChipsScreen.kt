@@ -3,19 +3,8 @@ package screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.ElevatedAssistChip
-import androidx.compose.material3.ElevatedFilterChip
-import androidx.compose.material3.ElevatedSuggestionChip
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 

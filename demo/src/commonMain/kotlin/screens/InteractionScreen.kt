@@ -1,10 +1,13 @@
 package screens
 
-import androidx.compose.runtime.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.*
-import androidx.compose.ui.*
-import androidx.compose.ui.unit.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 // ==================
 // MARK: Interaction (hover / press / focus) screen
