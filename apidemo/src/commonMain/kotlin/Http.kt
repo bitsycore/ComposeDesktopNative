@@ -1,7 +1,6 @@
 package apidemo
 
 import io.ktor.client.*
-import io.ktor.client.engine.curl.Curl
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -23,7 +22,7 @@ import kotlin.time.TimeSource
    run() is a suspend fun — call it off the UI dispatcher. */
 class HttpRunner {
 
-    private val fClient = HttpClient(Curl)
+    private val fClient = createApiHttpClient()
 
     init {
         // Clear any temporary client certs a prior crash left in the Windows
@@ -140,7 +139,7 @@ private fun isGzip(inEncoding: String?, inBytes: ByteArray): Boolean =
 
 /* Read a file's raw bytes (used for a FILE request body). */
 internal fun readFileBytes(inPath: String): ByteArray =
-    FileSystem.SYSTEM.read(inPath.trim().toPath()) { readByteArray() }
+    systemFileSystem.read(inPath.trim().toPath()) { readByteArray() }
 
 /* Inflate a gzip stream to its original bytes via okio's GzipSource. */
 private fun gunzip(inBytes: ByteArray): ByteArray {

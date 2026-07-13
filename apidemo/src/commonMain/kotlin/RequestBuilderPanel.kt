@@ -17,10 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.compose.sdl.TextLayoutConfig
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
-import com.compose.sdl.showOpenFileDialog
 
 // ==================
 // MARK: Panel 3 — request builder (Query / Headers / Body)
@@ -219,7 +217,7 @@ internal fun TabSizeSelector() {
     var vOpen by remember { mutableStateOf(false) }
     val vHoverSrc = remember { MutableInteractionSource() }
     val vHover by vHoverSrc.collectIsHoveredAsState()
-    val vSize = TextLayoutConfig.tabWidth
+    val vSize = editorTabWidth
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = { PlainTooltip { Text("Editor tab size") } },
@@ -243,7 +241,7 @@ internal fun TabSizeSelector() {
                 for (vN in listOf(2, 4, 8)) {
                     DropdownMenuItem(text = {
                         Text("$vN spaces", color = if (vN == vSize) c.accent else c.text)
-                    }, onClick = { TextLayoutConfig.tabWidth = vN; vOpen = false })
+                    }, onClick = { editorTabWidth = vN; vOpen = false })
                 }
             }
         }

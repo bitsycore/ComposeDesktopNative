@@ -39,14 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
-import com.compose.sdl.removeMemoryResource
-import com.compose.sdl.res.ResourceKind
-import com.compose.sdl.res.painterResource
-import com.compose.sdl.scrollbar.ScrollbarStyle
-import com.compose.sdl.scrollbar.VerticalScrollbar
-import com.compose.sdl.scrollbar.rememberScrollbarAdapter
-import com.compose.sdl.showSaveFileDialog
-import com.compose.sdl.text.currentTextMeasurer
 import kotlinx.coroutines.launch
 
 // ==================
@@ -169,8 +161,8 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                         inBody = if (vRespImage) null else vBody,
                         inIsImage = vRespImage && !vLoading,
                         inImagePainter = if (vRespImage && !vLoading) {
-                            val vKind = if (vResp?.contentType?.contains("svg", ignoreCase = true) == true) ResourceKind.Svg else ResourceKind.Raster
-                            painterResource(inRs.imageKey!!, vKind)
+                            val vSvg = vResp?.contentType?.contains("svg", ignoreCase = true) == true
+                            memoryImagePainter(inRs.imageKey!!, vSvg)
                         } else null,
                         inHeadersCollapsed = vHeadersCollapsed,
                         inOnToggleCollapse = { vHeadersCollapsed = !vHeadersCollapsed },
@@ -247,7 +239,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                     inResponseBody = vRespBody,
                     inOnMessage = { vMsg = it },
                     inOnClear = {
-                        inRs.imageKey?.let { removeMemoryResource(it) }
+                        inRs.imageKey?.let { removeMemoryImage(it) }
                         inRs.imageKey = null
                         inRs.response = null
                         inRs.sentReq = null
@@ -508,7 +500,7 @@ internal fun HttpFlowView(
                         val vS = vSel
                         if (vS != null && !vS.isEmpty) {
                             val vText = vBody.substring(vS.start, vS.end)
-                            vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vText)) }
+                            vScope.launch { vClipboard.setClipEntry(clipEntryOfText(vText)) }
                             true
                         } else false
                     }
@@ -974,18 +966,18 @@ internal fun BodyView(
         // also use it for the first frame, before the body reports its width).
         val vNumColor = c.dim.copy(alpha = 0.45f)
         val vNumbers = remember(inText, vBodyWidthPx, inSoftWrap, vFontPx) {
-            val vM = if (inSoftWrap && vBodyWidthPx > 0) currentTextMeasurer else null
+            val vWrapRows = inSoftWrap && vBodyWidthPx > 0
             buildString {
                 for ((vIdx, vSrc) in vLines.withIndex()) {
                     if (vIdx > 0) append('\n')
                     append(vIdx + 1)
-                    if (vM != null) {
+                    if (vWrapRows) {
                         // Pass the density-scaled font size so this wrap matches the body's
                         // actual glyph pixel widths — passing 12 (sp) here counted each
                         // char as half its rendered size, so long lines that visually
                         // wrapped into 3 rows in the body were estimated as 1 or 2 rows
                         // here and the gutter numbers drifted upward.
-                        val vRows = vM.wrap(vSrc, vFontPx, vBodyWidthPx, monoFontFamilyName).lines.size.coerceAtLeast(1)
+                        val vRows = wrappedRowCount(vSrc, vFontPx, vBodyWidthPx, monoFontFamilyName).coerceAtLeast(1)
                         repeat(vRows - 1) { append('\n') }
                     }
                 }
@@ -1309,18 +1301,18 @@ internal fun ViewerOverflowMenu(
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
             DropdownMenuItem(text = { Text("Copy all") }, onClick = {
-                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(copyAll())) }
+                vScope.launch { vClipboard.setClipEntry(clipEntryOfText(copyAll())) }
                 inOnMessage("Copied all.")
                 vOpen = false
             })
             DropdownMenuItem(text = { Text("Copy headers") }, onClick = {
-                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vHeadersText)) }
+                vScope.launch { vClipboard.setClipEntry(clipEntryOfText(vHeadersText)) }
                 inOnMessage("Copied headers.")
                 vOpen = false
             })
             if (vCanCopyBody) {
                 DropdownMenuItem(text = { Text("Copy body") }, onClick = {
-                    vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(vBodyText)) }
+                    vScope.launch { vClipboard.setClipEntry(clipEntryOfText(vBodyText)) }
                     inOnMessage("Copied body.")
                     vOpen = false
                 })

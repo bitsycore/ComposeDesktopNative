@@ -23,8 +23,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.Popup
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
-import com.compose.sdl.layout.x
-import com.compose.sdl.layout.y
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -141,7 +139,7 @@ internal fun CopyButton(inText: String, inLabel: String? = null) {
             .background(if (vHover) c.accent.copy(alpha = 0.18f) else Color.Transparent, RoundedCornerShape(7.dp))
             .hoverable(vHoverSrc)
             .clickable {
-                vScope.launch { vClipboard.setClipEntry(ClipEntry.withPlainText(inText)) }
+                vScope.launch { vClipboard.setClipEntry(clipEntryOfText(inText)) }
                 vCopied = true
             }
             .padding(horizontal = if (inLabel != null) 10.dp else 5.dp, vertical = 5.dp),

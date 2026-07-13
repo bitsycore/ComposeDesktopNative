@@ -31,11 +31,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.compose.sdl.fileManagerName
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
-import com.compose.sdl.layout.y
-import com.compose.sdl.revealInFileManager
 
 // ==================
 // MARK: Pack colour (palette dot + picker)

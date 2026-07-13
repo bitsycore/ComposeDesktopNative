@@ -39,21 +39,10 @@ class PreparedCert(
    Throws with a user-facing message if the cert/key can't be loaded. */
 expect fun prepareClientCert(inReq: ApiRequest): PreparedCert
 
-/* Remove any temporary client certs (and their key containers) a previous run
-   left behind in the Windows store after a crash — identified by our prefix, so
-   the user's own certificates are never touched. No-op off Windows. Call once
-   at startup. */
-expect fun sweepTempClientCerts()
-
-/* One certificate in the chain: its CURLINFO_CERTINFO-style fields (Subject /
-   Issuer / the PEM under "Cert" / dates …) and whether the server actually
-   presented it. Derived certs — an issuer resolved from the OS store, or a
-   name-only placeholder — have fromServer = false and are drawn dotted. */
-class ChainCert(val fields: List<Pair<String, String>>, val fromServer: Boolean)
-
-/* The server's TLS certificate chain. error is set instead when it couldn't be
-   fetched; fields vary by TLS backend. */
-class TlsChain(val certs: List<ChainCert>, val error: String?)
+// ChainCert / TlsChain and the sweepTempClientCerts / inspectTlsChain /
+// curlSendWithClientCert expects live in commonMain (TlsCommon.kt) — the UI
+// consumes them from shared code; the per-OS ClientCert*.kt actuals below the
+// native tree actualize sweepTempClientCerts directly.
 
 /* Continue a server-presented chain with its issuer(s). Where possible the
    issuer is resolved from the OS certificate store with full info; otherwise the
@@ -120,7 +109,7 @@ private fun onCurlDiscard(inBuffer: CPointer<ByteVar>, inSize: size_t, inCount: 
    request's client certificate if it has one (so mTLS endpoints work too).
    inReq is already var-resolved. */
 @OptIn(ExperimentalForeignApi::class)
-fun inspectTlsChain(inReq: ApiRequest): TlsChain
+actual fun inspectTlsChain(inReq: ApiRequest): TlsChain
 	{
 	val vCert = try { if (inReq.hasClientCert) prepareClientCert(inReq) else null }
 		catch (e: Throwable) { return TlsChain(emptyList(), e.message ?: "Client certificate error") }
@@ -185,7 +174,7 @@ private fun readCertInfo(inCurl: COpaquePointer): List<List<Pair<String, String>
 /* Send a client-certificate request through libcurl and adapt the result into
    the same ApiResponse the Ktor path produces. inReq is already var-resolved. */
 @OptIn(ExperimentalForeignApi::class)
-fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse
+actual fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse
 	{
 	val vMark = TimeSource.Monotonic.markNow()
 	val vCert = try { prepareClientCert(inReq) }

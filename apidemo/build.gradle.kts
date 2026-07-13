@@ -16,11 +16,37 @@ plugins {
 // Skip mingwX64 on non-Windows hosts; see root build.gradle.kts.
 val vHostSupportsMingw: Boolean by rootProject.extra
 
+// JVM parity target's Compose version — the dev build matching the pinned
+// COMPOSE_CORE_REF (see scripts/compose-fork/compose.properties); mirrors
+// :demo's forcing (Gradle orders "+dev" BELOW the plain version, so the
+// plugin's beta01 would win conflict resolution without it).
+val vComposeJvmVersion = "1.12.0-beta01+dev4324"
+val vComposeM3JvmVersion = "1.12.0-alpha03+dev4324"
+val vComposeJvmForced = mapOf(
+    "org.jetbrains.compose.runtime" to vComposeJvmVersion,
+    "org.jetbrains.compose.ui" to vComposeJvmVersion,
+    "org.jetbrains.compose.foundation" to vComposeJvmVersion,
+    "org.jetbrains.compose.animation" to vComposeJvmVersion,
+    "org.jetbrains.compose.material" to vComposeJvmVersion,
+    "org.jetbrains.compose.material3" to vComposeM3JvmVersion,
+)
+configurations.configureEach {
+    if (name.startsWith("jvm")) {
+        resolutionStrategy.eachDependency {
+            vComposeJvmForced[requested.group]?.let { useVersion(it) }
+        }
+    }
+}
+
 kotlin {
+    jvm()
+
     linuxArm64()
     linuxX64()
     macosArm64()
     if (vHostSupportsMingw) mingwX64()
+
+    applyDefaultHierarchyTemplate()
 
     targets.withType<KotlinNativeTarget>().all {
         val isMingw = name == "mingwX64"
@@ -68,9 +94,31 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":window"))
-                implementation(project(":material3"))
+                // Common API on both stacks — usable from shared code.
                 implementation(project(":material-symbols"))
+
+                // Official Maven coords for everything the shared UI touches,
+                // so commonMain metadata (and the IDE's common analysis)
+                // resolve. Metadata + jvm resolve them from Maven; the NATIVE
+                // configurations substitute each for its port module (root
+                // build's FULL-COMMONIZATION BRIDGE). Every artifact must be
+                // declared DIRECTLY: transitives of a substituted module are
+                // invisible to the granular-metadata visibility check. The
+                // runtime is the official klib everywhere, never substituted
+                // (jvm configs force the +dev build above).
+                implementation("org.jetbrains.compose.runtime:runtime:1.11.1")
+                implementation("org.jetbrains.compose.ui:ui:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.ui:ui-graphics:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.ui:ui-text:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.ui:ui-unit:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.ui:ui-geometry:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.ui:ui-util:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.foundation:foundation:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.foundation:foundation-layout:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.animation:animation:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.animation:animation-core:$vComposeJvmVersion")
+                implementation("org.jetbrains.compose.material3:material3:$vComposeM3JvmVersion")
+
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
@@ -80,22 +128,43 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
             }
         }
-        // Single HTTP engine on every desktop target: Ktor's Curl engine. It
-        // bundles a static libcurl per target (Schannel on Windows, OpenSSL on
-        // macOS/Linux) embedded in its cinterop klib — no runtime DLL, one copy.
-        // We use Curl everywhere (not WinHttp/Darwin) so that an upcoming
-        // client-certificate (mTLS) path — which calls the same bundled libcurl
-        // directly, since Ktor's engines expose no client-cert API — shares the
-        // exact same TLS stack as ordinary requests.
-        if (vHostSupportsMingw) getByName("mingwX64Main").dependencies { implementation(libs.ktor.client.curl) }
-        getByName("macosArm64Main").dependencies { implementation(libs.ktor.client.curl) }
-        getByName("linuxX64Main").dependencies { implementation(libs.ktor.client.curl) }
-        getByName("linuxArm64Main").dependencies { implementation(libs.ktor.client.curl) }
+        nativeMain {
+            dependencies {
+                // The SDL window shell + main loop (native-only).
+                implementation(project(":window"))
+                // Single HTTP engine on every native target: Ktor's Curl
+                // engine. It bundles a static libcurl per target (Schannel on
+                // Windows, OpenSSL on macOS/Linux) embedded in its cinterop
+                // klib — no runtime DLL, one copy. Curl everywhere (not
+                // WinHttp/Darwin) so the client-certificate (mTLS) path —
+                // which calls the same bundled libcurl directly, since Ktor's
+                // engines expose no client-cert API — shares the exact same
+                // TLS stack as ordinary requests.
+                implementation(libs.ktor.client.curl)
+            }
+        }
+        jvmMain {
+            dependencies {
+                // Upstream Compose Desktop — the parity stack.
+                implementation(compose.desktop.currentOs)
+                // Coroutine-based engine on JVM; native targets keep Curl.
+                implementation(libs.ktor.client.cio)
+                // Dispatchers.Main provider on desktop JVM (must match
+                // kotlinx-coroutines-core's version — the catalog pins both).
+                implementation(libs.kotlinx.coroutines.swing)
+            }
+        }
     }
 
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
         freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "apidemo.MainJvmKt"
     }
 }
 
@@ -275,5 +344,24 @@ for (variant in variants) {
         listOf("link${variantCap}Executable${targetCap}", "run${variantCap}Executable${targetCap}").forEach { taskName ->
             tasks.matching { it.name == taskName }.configureEach { dependsOn(copyTask) }
         }
+    }
+}
+
+// ==================
+// MARK: Stage fonts onto the JVM classpath
+// ==================
+// The JVM analog of the data.kres font/ entries: :material-symbols' JVM actual
+// loads each style's font from the classpath at font/<Style>.ttf, and the
+// jvm Fonts actual loads the mono body font at font/NotoSansMono.ttf.
+tasks.named<ProcessResources>("jvmProcessResources") {
+    from(notoMonoFile) { into("font") }
+    dependsOn(":ui:downloadNotoFonts")
+    val vSymbolsProject = rootProject.project(":material-symbols")
+    for (vStyle in vUsedStyles) {
+        @Suppress("UNCHECKED_CAST")
+        val vFontFile = vSymbolsProject.extra["iconFontFile$vStyle"] as org.gradle.api.provider.Provider<org.gradle.api.file.RegularFile>
+        val vDownloadTask = vSymbolsProject.extra["iconFontDownloadTask$vStyle"] as TaskProvider<*>
+        from(vFontFile) { into("font") }
+        dependsOn(vDownloadTask)
     }
 }
