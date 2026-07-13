@@ -121,6 +121,10 @@ allprojects {
         if (vNativeTargetTokens.any { name.contains(it, ignoreCase = true) }) {
             resolutionStrategy.dependencySubstitution {
                 substitute(module("org.jetbrains.compose.ui:ui")).using(project(":ui"))
+                // ui's split artifacts: ui-graphics is merged INTO :ui in the
+                // port; ui-unit has its own module.
+                substitute(module("org.jetbrains.compose.ui:ui-graphics")).using(project(":ui"))
+                substitute(module("org.jetbrains.compose.ui:ui-unit")).using(project(":ui-unit"))
                 substitute(module("org.jetbrains.compose.foundation:foundation")).using(project(":foundation"))
                 substitute(module("org.jetbrains.compose.material3:material3")).using(project(":material3"))
             }

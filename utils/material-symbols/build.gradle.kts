@@ -85,6 +85,12 @@ kotlin {
             // them from Maven; NATIVE configurations substitute them for
             // project(":ui") / project(":material3") (root build bridge).
             api("org.jetbrains.compose.ui:ui:$vComposeJvmVersion")
+            // ui's transitives, declared EXPLICITLY: the native substitution
+            // (ui → project(":ui")) hides them from the granular-metadata
+            // visibility check, so compileCommonMainKotlinMetadata loses
+            // Color / Dp without a direct declaration (+ bridge rules).
+            api("org.jetbrains.compose.ui:ui-graphics:$vComposeJvmVersion")
+            api("org.jetbrains.compose.ui:ui-unit:$vComposeJvmVersion")
             api("org.jetbrains.compose.material3:material3:$vComposeM3JvmVersion")
         }
         nativeMain.dependencies {
