@@ -146,6 +146,8 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 
 		// ============
 		//  Main loop
+		var vGcLastTicks = SDL_GetTicks()
+		var vRenderedSinceGc = false
 		while (!runtime.exitRequested) {
 			Snapshot.sendApplyNotifications()
 
@@ -224,6 +226,23 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 				SDL_WaitEventTimeout(null, 10)
 				for (vW in runtime.windows) vW.resetFpsWindow()
 			}
+
+			// ============
+			//  Native-memory nudge. Renderer resources (Skia surfaces / images /
+			//  fonts, SDL textures) are freed by Cleaners that only run when the
+			//  Kotlin/Native GC collects — and a Compose app's Kotlin heap is
+			//  small enough that the allocation-driven scheduler can starve them
+			//  for minutes while the NATIVE heap balloons (issue #2: memory
+			//  "never released" while navigating). Collect periodically, only
+			//  after rendering activity, between frames; costs ~ms at these
+			//  heap sizes and keeps RSS tracking real usage.
+			if (vAnyRendered) vRenderedSinceGc = true
+			val vNowTicks = SDL_GetTicks()
+			if (vRenderedSinceGc && vNowTicks - vGcLastTicks >= 10_000uL) {
+				vGcLastTicks = vNowTicks
+				vRenderedSinceGc = false
+				collectNativeGarbage()
+			}
 		}
 
 		// ============
@@ -242,6 +261,11 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 
 	SDL_Quit()
 }
+
+/* Trigger a Kotlin/Native GC so Cleaner-managed renderer resources release
+   their native memory (see the main loop's native-memory nudge). */
+@OptIn(kotlin.native.runtime.NativeRuntimeApi::class)
+private fun collectNativeGarbage() = kotlin.native.runtime.GC.collect()
 
 /* Single-window compatibility wrapper — the pre-multi-window entry point.
    Closing the window exits the app, exactly as before. */
