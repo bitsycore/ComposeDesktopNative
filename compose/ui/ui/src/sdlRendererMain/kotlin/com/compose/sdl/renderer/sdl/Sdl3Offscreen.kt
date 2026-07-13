@@ -31,28 +31,46 @@ internal var currentMainCanvas: Sdl3Canvas? = null
 // blits it back — with the Icon tint applied through SDL_SetTextureColorMod.
 @OptIn(ExperimentalForeignApi::class)
 internal class SdlImageBitmap(
-	inRenderer: COpaquePointer,
+	private val fRenderer: COpaquePointer,
 	override val width: Int,
 	override val height: Int,
 	override val config: ImageBitmapConfig,
 	override val hasAlpha: Boolean,
 	override val colorSpace: ColorSpace,
-	// A pre-made texture (the encoded-image decode path — see
-	// Sdl3EncodedImageDecoder); null → create a render TARGET for the
-	// vector-rasterisation path below.
-	inDecodedTexture: COpaquePointer? = null,
+	// A surface decoded OFF the main thread (the encoded-image path — see
+	// Sdl3EncodedImageDecoder); converted to a texture on the first draw.
+	// null → create a render TARGET for the vector-rasterisation path below
+	// (that path always constructs on the main thread).
+	private var fDecodedSurface: CPointer<SDL_Surface>? = null,
 ) : ImageBitmap {
 
 	// RGBA render-target texture, premultiplied blend for compositing back (content
 	// is drawn over a transparent clear with ordinary BLEND, leaving premultiplied
 	// colours — see Sdl3ClipTargets for the same reasoning).
-	val texture: COpaquePointer? = inDecodedTexture ?: SDL_CreateTexture(
-		inRenderer.reinterpret(),
+	private var fTexture: COpaquePointer? = if (fDecodedSurface != null) null else SDL_CreateTexture(
+		fRenderer.reinterpret(),
 		SDL_PIXELFORMAT_RGBA32,
 		SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
 		maxOf(1, width),
 		maxOf(1, height),
 	)?.also { SDL_SetTextureBlendMode(it.reinterpret(), SDL_BLENDMODE_BLEND_PREMULTIPLIED) }
+
+	// SDL renderer calls are NOT thread-safe, and the resources pipeline
+	// decodes on Dispatchers.Default workers — so the decode path hands over a
+	// plain SDL_Surface and the texture is created here, lazily, on the first
+	// access (createCanvas / the draw paths — main thread only). Decoded
+	// surfaces carry STRAIGHT alpha → ordinary BLEND, unlike the premultiplied
+	// render-target path above.
+	val texture: COpaquePointer?
+		get() {
+			fDecodedSurface?.let { vSurface ->
+				fTexture = SDL_CreateTextureFromSurface(fRenderer.reinterpret(), vSurface)
+					?.also { SDL_SetTextureBlendMode(it.reinterpret(), SDL_BLENDMODE_BLEND) }
+				SDL_DestroySurface(vSurface)
+				fDecodedSurface = null
+			}
+			return fTexture
+		}
 
 	override fun readPixels(
 		buffer: IntArray,
@@ -116,24 +134,22 @@ internal class Sdl3EncodedImageDecoder(
 
 	override fun decode(inBytes: ByteArray): ImageBitmap? {
 		if (inBytes.isEmpty()) return null
+		// Pure decode only — IMG_Load_IO touches no renderer state, so it is
+		// safe on the resources pipeline's Dispatchers.Default workers. The
+		// texture is created from this surface on the first MAIN-THREAD draw
+		// (SdlImageBitmap.texture) — SDL renderer calls are not thread-safe.
 		val vSurface = inBytes.usePinned { vPinned ->
 			val vIo = SDL_IOFromConstMem(vPinned.addressOf(0), inBytes.size.convert())
 				?: return@usePinned null
 			sdl3_image.IMG_Load_IO(vIo.reinterpret(), true)
 		} ?: return null
 		val vSdlSurface = vSurface.reinterpret<SDL_Surface>()
-		val vW = vSdlSurface.pointed.w
-		val vH = vSdlSurface.pointed.h
-		val vTex = SDL_CreateTextureFromSurface(fRenderer.reinterpret(), vSdlSurface)
-		SDL_DestroySurface(vSdlSurface)
-		if (vTex == null) return null
-		SDL_SetTextureBlendMode(vTex.reinterpret(), SDL_BLENDMODE_BLEND)
 		return SdlImageBitmap(
-			fRenderer, vW, vH,
+			fRenderer, vSdlSurface.pointed.w, vSdlSurface.pointed.h,
 			config = ImageBitmapConfig.Argb8888,
 			hasAlpha = true,
 			colorSpace = androidx.compose.ui.graphics.colorspace.ColorSpaces.Srgb,
-			inDecodedTexture = vTex,
+			fDecodedSurface = vSdlSurface,
 		)
 	}
 }
