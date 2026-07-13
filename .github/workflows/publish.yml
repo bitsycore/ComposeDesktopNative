@@ -34,10 +34,13 @@ jobs:
             # jvm publication: only :material-symbols declares a jvm() target
             # (its common API renders via upstream Compose on JVM) — publish
             # its host-independent jar from the same host as the metadata.
+            # :compose-desktop-native-bridge (the consumer-side bridge Gradle plugin +
+            # its plugin marker) is host-independent too — same job.
             tasks: >-
               publishKotlinMultiplatformPublicationToGitHubPackagesRepository
               publishMacosArm64PublicationToGitHubPackagesRepository
               publishJvmPublicationToGitHubPackagesRepository
+              :compose-desktop-native-bridge:publishAllPublicationsToGitHubPackagesRepository
           - runner: ubuntu-22.04
             host: linux
             target: LinuxX64

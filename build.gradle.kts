@@ -5,6 +5,7 @@
 // apply the multiplatform plugin. Each subproject still applies the ones it needs.
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.plugin.compose) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.compose.multiplatform) apply false
@@ -17,7 +18,8 @@ plugins {
 // surface worth tracking, so skip them.
 apiValidation {
     klib { enabled = true }
-    ignoredProjects.addAll(listOf("demo", "apidemo"))
+    // compose-desktop-native-bridge is a plain JVM Gradle plugin — no klib ABI to track.
+    ignoredProjects.addAll(listOf("demo", "apidemo", "compose-desktop-native-bridge"))
 }
 
 // Project coordinates. `group` is baked into every module's Kotlin/Native klib
