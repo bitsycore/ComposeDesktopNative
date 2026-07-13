@@ -1,5 +1,6 @@
 package com.compose.sdl.renderer.sdl
 
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
@@ -26,6 +27,7 @@ import com.compose.sdl.icons.IconFont
 import kotlinx.cinterop.*
 import sdl3.*
 import kotlin.math.PI
+import kotlin.math.sqrt
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
@@ -330,11 +332,19 @@ internal class Sdl3Canvas(
 	//  arbitrary paths keep the clipPath bbox fallback.
 
 	override fun clipRoundRect(inRoundRect: RoundRect) {
+		// The mask is cut in DEVICE space (the bbox below goes through the
+		// affine), but the corner radii arrive in LOCAL user space — scale
+		// them by the affine too, or a graphicsLayer-scaled circle clip cuts
+		// with oversized corners and degenerates toward a lozenge (seen as
+		// diamond-shaped "popped" bubbles under scale 0.55). Column norms
+		// approximate per-axis scale; rotation already degrades to AABBs here.
+		val vScaleX = sqrt(fMa * fMa + fMb * fMb)
+		val vScaleY = sqrt(fMc * fMc + fMd * fMd)
 		val vMaxRadius = maxOf(
-			inRoundRect.topLeftCornerRadius.x, inRoundRect.topLeftCornerRadius.y,
-			inRoundRect.topRightCornerRadius.x, inRoundRect.topRightCornerRadius.y,
-			inRoundRect.bottomRightCornerRadius.x, inRoundRect.bottomRightCornerRadius.y,
-			inRoundRect.bottomLeftCornerRadius.x, inRoundRect.bottomLeftCornerRadius.y,
+			inRoundRect.topLeftCornerRadius.x * vScaleX, inRoundRect.topLeftCornerRadius.y * vScaleY,
+			inRoundRect.topRightCornerRadius.x * vScaleX, inRoundRect.topRightCornerRadius.y * vScaleY,
+			inRoundRect.bottomRightCornerRadius.x * vScaleX, inRoundRect.bottomRightCornerRadius.y * vScaleY,
+			inRoundRect.bottomLeftCornerRadius.x * vScaleX, inRoundRect.bottomLeftCornerRadius.y * vScaleY,
 		)
 		// Effectively-square corners or no offscreen pool → plain rectangular clip.
 		if (vMaxRadius < 0.5f || fClipTargets == null || fSize.width < 1f || fSize.height < 1f) {
@@ -343,6 +353,13 @@ internal class Sdl3Canvas(
 		}
 		fScope.flush()
 		val vBbox = mapRectAABB(inRoundRect.left, inRoundRect.top, inRoundRect.right, inRoundRect.bottom)
+		val vDeviceRound = RoundRect(
+			vBbox[0].toFloat(), vBbox[1].toFloat(), vBbox[2].toFloat(), vBbox[3].toFloat(),
+			topLeftCornerRadius = CornerRadius(inRoundRect.topLeftCornerRadius.x * vScaleX, inRoundRect.topLeftCornerRadius.y * vScaleY),
+			topRightCornerRadius = CornerRadius(inRoundRect.topRightCornerRadius.x * vScaleX, inRoundRect.topRightCornerRadius.y * vScaleY),
+			bottomRightCornerRadius = CornerRadius(inRoundRect.bottomRightCornerRadius.x * vScaleX, inRoundRect.bottomRightCornerRadius.y * vScaleY),
+			bottomLeftCornerRadius = CornerRadius(inRoundRect.bottomLeftCornerRadius.x * vScaleX, inRoundRect.bottomLeftCornerRadius.y * vScaleY),
+		)
 		val vRegion = intersect(fClip, vBbox)
 		// Nothing visible: keep behaviour of a normal clip (cull) without an
 		// offscreen pass. The enclosing save/restore restores the clip afterwards.
@@ -364,7 +381,7 @@ internal class Sdl3Canvas(
 		fClip = vRegion
 		applyClip()
 		clearRegion(vRegion)
-		fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPrevClip, vRegion, vBbox, inRoundRect))
+		fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPrevClip, vRegion, vBbox, vDeviceRound))
 	}
 
 	// Pops the top offscreen clip: flush its subtree, cut the rounded corners out
