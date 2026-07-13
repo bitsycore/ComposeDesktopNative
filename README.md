@@ -32,7 +32,9 @@ compose/
 │   ├── ui-util/          → :ui-util
 │   ├── ui-geometry/      → :ui-geometry
 │   ├── ui-unit/          → :ui-unit
-│   └── ui-backhandler/   → :ui-backhandler
+│   ├── ui-backhandler/   → :ui-backhandler
+│   └── ui-tooling-preview/ → :ui-tooling-preview (common @Preview + PreviewParameterProvider —
+│                                             IDE-only metadata; previews render via the apps' jvm targets)
 ├── animation/
 │   ├── animation-core/   → :animation-core
 │   ├── animation/        → :animation
@@ -62,9 +64,13 @@ navigation3/
 └── navigation3-ui/       → :navigation3-ui  (vendored NavDisplay + scene machinery — the one
                                               Navigation 3 layer without a K/N desktop artifact)
 
+gradle-plugin/
+└── compose-desktop-native-bridge/ → :compose-desktop-native-bridge (the consumer-side bridge, published
+                                              as a Gradle plugin — see "Using it from your own build")
+
 demo/     → :demo     (showcase + CLI probe suite; multiplatform — the same screens
                        also build for stock JVM Compose Desktop as a parity reference)
-apidemo/  → :apidemo  (Postman-style REST client)
+apidemo/  → :apidemo  (Postman-style REST client; multiplatform — same UI on JVM too)
 ```
 
 ## demo — widget & feature showcase
@@ -106,7 +112,12 @@ file-based sessions.
 ./gradlew :apidemo:runDebugExecutableMacosArm64
 ./gradlew :apidemo:runDebugExecutableLinuxX64
 gradlew.bat :apidemo:runDebugExecutableMingwX64
+./gradlew :apidemo:run                            # stock JVM Compose Desktop (parity reference)
 ```
+
+Like the demo, the whole UI lives in `commonMain` and also runs on upstream
+Compose Desktop (JVM); only the mTLS / TLS-chain features are native-only —
+they drive the bundled libcurl directly.
 
 Add `-Prenderer=sdl3` on macOS/Linux to drop Skiko and use the pure-SDL3
 renderer everywhere.
@@ -134,6 +145,33 @@ implementation(project(":window"))            // window + main loop
 implementation(project(":material3"))         // Material 3 widgets
 implementation(project(":material-symbols"))  // icon-font composables (optional)
 ```
+
+## Using it from your own build — the bridge plugin
+
+The klibs publish to GitHub Packages under `com.bitsycore.compose.sdl:*`, and
+a companion Gradle plugin ships the "redirect trick" this repo uses
+internally: apply **`com.bitsycore.compose-desktop-native.bridge`** once in
+`settings.gradle.kts` and declare the **official Compose Multiplatform
+coordinates** in `commonMain` — the plugin substitutes the port's klibs on
+every native desktop configuration (mingwX64 / linuxX64 / linuxArm64 /
+macosArm64), while android / jvm / iOS / wasm keep resolving the official
+artifacts. One dependency list, all CMP platforms + the port's new ones.
+
+```kotlin
+// settings.gradle.kts
+plugins { id("com.bitsycore.compose-desktop-native.bridge") version "<release>" }
+
+// build.gradle.kts — official coords, everywhere
+commonMain.dependencies {
+    implementation("org.jetbrains.compose.runtime:runtime:<runtime-version>")
+    implementation("org.jetbrains.compose.ui:ui:<cmp-version>")
+    implementation("org.jetbrains.compose.foundation:foundation:<cmp-version>")
+    implementation("org.jetbrains.compose.material3:material3:<cmp-m3-version>")
+}
+```
+
+Setup details (repositories, credentials, version pinning):
+[gradle-plugin/compose-desktop-native-bridge/README.md](gradle-plugin/compose-desktop-native-bridge/README.md).
 
 ## Building
 

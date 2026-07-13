@@ -42,7 +42,12 @@ compose/
 │   ├── ui-util/                     → :ui-util       — androidx.compose.ui.util.* (+ Experimental/InternalComposeUiApi)
 │   ├── ui-geometry/                 → :ui-geometry   — androidx.compose.ui.geometry.*
 │   ├── ui-unit/                     → :ui-unit       — androidx.compose.ui.unit.*
-│   └── ui-backhandler/              → :ui-backhandler — androidx.compose.ui.backhandler.*
+│   ├── ui-backhandler/              → :ui-backhandler — androidx.compose.ui.backhandler.*
+│   └── ui-tooling-preview/          → :ui-tooling-preview — androidx.compose.ui.tooling.preview.*
+│                                                     (the common @Preview + PreviewParameterProvider,
+│                                                     vendored verbatim; the Maven artifact ships no
+│                                                     mingwX64/linux klibs). IDE-only metadata — previews
+│                                                     render through the apps' jvm parity targets.
 ├── animation/
 │   ├── animation-core/              → :animation-core     — androidx.compose.animation.core.*
 │   ├── animation/                   → :animation          — androidx.compose.animation.* (non-core)
@@ -67,9 +72,12 @@ utils/
                                                     (Typeface.makeClone per axes — upstream's FontCache
                                                     drops variationSettings from its key). Its commonMain
                                                     declares official Maven compose coords — the root
-                                                    build's FULL-COMMONIZATION BRIDGE substitutes ui /
-                                                    foundation / material3 to project modules on native
-                                                    configs. Apps get one dep; the consumer Zip task
+                                                    build's FULL-COMMONIZATION BRIDGE substitutes the
+                                                    whole ui / foundation / animation / material3 /
+                                                    nav3-ui family to project modules on native configs
+                                                    (:demo and :apidemo commonMains rely on the same
+                                                    bridge; :compose-desktop-native-bridge ships it to
+                                                    consumers). Apps get one dep; the consumer Zip task
                                                     bundles only the fonts used (native) and
                                                     jvmProcessResources stages the same fonts (jvm).
 
@@ -103,7 +111,22 @@ demo/                → :demo      — flagship showcase app (30+ screens) + th
                                     MULTIPLATFORM: also has a jvm() target running the SAME shared
                                     screens on stock JVM Compose Desktop (`./gradlew :demo:run`,
                                     MainJvmKt) — the parity reference; differences vs native = port bugs
-apidemo/             → :apidemo   — Postman-style REST API manager
+apidemo/             → :apidemo   — Postman-style REST API manager. MULTIPLATFORM like :demo
+                                    (`./gradlew :apidemo:run`): the whole UI lives in commonMain
+                                    against the official Maven coords; SDL-backed APIs go through
+                                    expect/actual seams (compat/Compat.kt — native actuals delegate
+                                    to com.compose.sdl, jvm actuals use AWT + upstream desktop).
+                                    mTLS / TLS-chain inspection stays native-only (bundled libcurl).
+gradle-plugin/
+└── compose-desktop-native-bridge/ → :compose-desktop-native-bridge — the CONSUMER-side bridge as a
+                                    published Gradle plugin (id com.bitsycore.compose-desktop-native
+                                    .bridge, applies to Settings or Project): substitution rules
+                                    can't ship inside Maven artifacts, so third-party apps apply the
+                                    plugin, declare OFFICIAL CMP coords in commonMain, and native
+                                    configurations swap in the published com.bitsycore.compose.sdl
+                                    klibs. Substituted version defaults to the plugin's own
+                                    (override: composeDesktopNative.version property). Published by
+                                    the macOS publish job.
 scripts/             → vendor-sync + python helper scripts (compose-coverage = API
                       coverage/fidelity vs upstream, material-symbols generate/subset)
                       + compose-fork/;
@@ -318,8 +341,9 @@ gradlew.bat :apidemo:runDebugExecutableMingwX64
 ./gradlew :demo:runDebugExecutableMacosArm64 -Prenderer=sdl3
 
 # Stock JVM Compose Desktop (any host) — the parity reference: the SAME shared
-# demo screens on upstream Compose; differences vs the native build = port bugs.
+# screens on upstream Compose; differences vs the native build = port bugs.
 ./gradlew :demo:run
+./gradlew :apidemo:run
 ```
 
 ### System dependencies
@@ -481,6 +505,15 @@ that should surface in tooling.
   toggling the renderer property may not invalidate it. Delete
   `.gradle/configuration-cache/` between switches if you see weird
   "couldn't find sdl3_ttf" errors.
+- **Substituted Maven modules hide their transitives from common metadata** —
+  when the bridge swaps an official coord for a project module on native
+  configs, KGP's granular-metadata visibility check drops that Maven module's
+  TRANSITIVES from the commonMain classpath (symptom: `Unresolved reference
+  'Color'` / `Cannot access class ...` in `compileCommonMainKotlinMetadata`,
+  while per-target compilation is fine). Declare EVERY artifact the common
+  code touches DIRECTLY (ui-graphics, ui-text, ui-unit, …) and give each its
+  own bridge rule. Note only the macOS publish job compiles common metadata —
+  test with `gradlew :<module>:compileCommonMainKotlinMetadata` before tagging.
 - **`Path()` in commonMain returns different actuals per renderer** —
   the Skia renderer produces a `SkiaBackedPath` (wraps
   `org.jetbrains.skia.Path`), the SDL renderer produces a project
