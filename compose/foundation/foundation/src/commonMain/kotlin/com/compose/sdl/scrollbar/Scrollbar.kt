@@ -30,9 +30,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 // ==================
@@ -141,6 +144,19 @@ private class LazyListScrollbarAdapter(private val state: LazyListState) : Scrol
         get() = (state.layoutInfo.viewportEndOffset - state.layoutInfo.viewportStartOffset).toDouble()
 
     override suspend fun scrollTo(scrollOffset: Double) {
+        val vDistance = scrollOffset - this.scrollOffset
+        // Within a viewport, scroll by EXACT pixels so a drag stays smooth. A lazy
+        // list's pixel geometry is only ESTIMATED (average visible item size), and
+        // that estimate drifts as differently-sized items scroll through the
+        // viewport — so index-snapping every frame makes the thumb jump. scrollBy
+        // sidesteps the estimate entirely. This is what Compose Desktop's own
+        // LazyListScrollbarAdapter does, and for the same reason.
+        if (abs(vDistance) <= viewportSize) {
+            state.scrollBy(vDistance.toFloat())
+            return
+        }
+        // Far jump (track-click paging past a viewport): no exact geometry to lean
+        // on, so estimate an index/offset from the average and snap to it.
         val vAvg = averageItemSize()
         if (vAvg <= 0.0) return
         val vTarget = scrollOffset.coerceAtLeast(0.0)
@@ -193,7 +209,6 @@ private fun Scrollbar(
     val vHoverSource = remember { MutableInteractionSource() }
     val vHovered by vHoverSource.collectIsHoveredAsState()
     var vDraggingThumb by remember { mutableStateOf(false) }
-    var vGrab by remember { mutableStateOf(0) }
     // onSizeChanged reports PHYSICAL pixels (Option-B density flow), so every
     // int/px carried through here — vTrackPx, vThumbLen, vThumbPos — is in
     // physical pixels. Passing them into `.dp` doubles again through
@@ -230,15 +245,6 @@ private fun Scrollbar(
         val vRawPos = if (vTravel <= 0) 0 else (vTravel * (vOffset / vMaxScroll)).roundToInt()
         val vThumbPos = (if (reverseLayout) vTravel - vRawPos else vRawPos).coerceIn(0, vTravel)
 
-        // ============
-        //  Map a track-relative position to a scroll offset and apply it.
-        fun scrollToTrackPos(inThumbTop: Int) {
-            if (vTravel <= 0) return
-            val vPos = inThumbTop.coerceIn(0, vTravel)
-            val vFrac = (if (reverseLayout) vTravel - vPos else vPos).toDouble() / vTravel
-            vScope.launch { adapter.scrollTo(vFrac * vMaxScroll) }
-        }
-
         val vThumbLenDp = with(vDensity) { vThumbLen.toDp() }
         val vThumbMod = (
             if (isVertical) Modifier.offset { IntOffset(0, vThumbPos) }.width(style.thickness).height(vThumbLenDp)
@@ -251,33 +257,78 @@ private fun Scrollbar(
 
         // ============
         //  Drag the thumb / page on track click — handled on the track so the
-        //  coordinates have a stable (non-moving) origin.
+        //  coordinates have a stable (non-moving) origin. The press is CONSUMED:
+        //  a scrollbar owns the pointer input it handles, so content sharing this
+        //  region (the scrollable beneath, or a parent that also reads pointer
+        //  input) never reacts to the same press. Geometry is read LIVE from the
+        //  adapter at press time — not from the captured render metrics above,
+        //  which go stale between pointerInput relaunches — so a grab after a
+        //  wheel-scroll still hit-tests against the thumb's current position.
         Box(
             modifier = Modifier
                 .matchTrackSize(isVertical, with(vDensity) { vTrackPx.toDp() }, style.thickness)
-                .pointerInput(isVertical, adapter, vTrackPx) {
-                    detectDragGestures(
-                        onDragStart = { offset ->
-                            val vPress = (if (isVertical) offset.y else offset.x).toInt()
-                            if (vPress in vThumbPos..(vThumbPos + vThumbLen)) {
-                                vDraggingThumb = true
-                                vGrab = vPress - vThumbPos
-                            } else {
-                                // Page toward the click by one viewport.
-                                vDraggingThumb = false
-                                val vDir = if (vPress < vThumbPos) -1.0 else 1.0
-                                vScope.launch { adapter.scrollTo(vOffset + vDir * vViewport) }
-                            }
-                        },
-                        onDrag = { change, _ ->
+                .pointerInput(isVertical, adapter, vTrackPx, reverseLayout) {
+                    awaitEachGesture {
+                        val vDown = awaitFirstDown(requireUnconsumed = false)
+                        vDown.consume()
+
+                        // Live geometry — stable for the drag's duration (content /
+                        // viewport / track sizes don't change mid-drag).
+                        val vContentPx = adapter.contentSize
+                        val vViewportPx = adapter.viewportSize
+                        val vMaxScrollPx = vContentPx - vViewportPx
+                        if (vMaxScrollPx <= 0.0 || vTrackPx <= 0) return@awaitEachGesture
+                        val vMinLen = style.minimalHeight.value.toInt()
+                        val vLen = (vTrackPx * (vViewportPx / vContentPx)).roundToInt()
+                            .coerceIn(vMinLen.coerceAtMost(vTrackPx), vTrackPx)
+                        val vTravelPx = vTrackPx - vLen
+                        val vRaw = if (vTravelPx <= 0) 0
+                                   else (vTravelPx * (adapter.scrollOffset / vMaxScrollPx)).roundToInt()
+                        val vPos = (if (reverseLayout) vTravelPx - vRaw else vRaw).coerceIn(0, vTravelPx)
+
+                        // Map a track-relative thumb-top to a scroll offset. The
+                        // target uses the LIVE max scroll (read fresh each move),
+                        // not the press-time value — the adapter compares it against
+                        // its live scrollOffset, and mixing a stale scale with a live
+                        // one makes the delta run away (grab at the bottom, drag up,
+                        // and the list overshoots to the middle).
+                        fun scrollToTrackPos(inThumbTop: Int) {
+                            if (vTravelPx <= 0) return
+                            val vLiveMax = adapter.contentSize - adapter.viewportSize
+                            if (vLiveMax <= 0.0) return
+                            val vClamped = inThumbTop.coerceIn(0, vTravelPx)
+                            val vFrac = (if (reverseLayout) vTravelPx - vClamped else vClamped).toDouble() / vTravelPx
+                            vScope.launch { adapter.scrollTo(vFrac * vLiveMax) }
+                        }
+
+                        val vPress = (if (isVertical) vDown.position.y else vDown.position.x).toInt()
+                        val vGrab: Int
+                        if (vPress in vPos..(vPos + vLen)) {
+                            vDraggingThumb = true
+                            vGrab = vPress - vPos
+                        } else {
+                            // Page toward the click by one viewport.
+                            vDraggingThumb = false
+                            vGrab = 0
+                            val vDir = if (vPress < vPos) -1.0 else 1.0
+                            vScope.launch { adapter.scrollTo(adapter.scrollOffset + vDir * vViewportPx) }
+                        }
+
+                        // Follow the pressed pointer to release, consuming every
+                        // change so the interaction can't leak. Only a thumb grab
+                        // drags-to-scroll; a track press just consumes.
+                        do {
+                            val vEvent = awaitPointerEvent()
+                            val vChange = vEvent.changes.firstOrNull { it.id == vDown.id } ?: break
                             if (vDraggingThumb) {
-                                val vCur = (if (isVertical) change.position.y else change.position.x).toInt()
+                                val vCur = (if (isVertical) vChange.position.y else vChange.position.x).toInt()
                                 scrollToTrackPos(vCur - vGrab)
                             }
-                        },
-                        onDragEnd = { vDraggingThumb = false },
-                        onDragCancel = { vDraggingThumb = false },
-                    )
+                            vChange.consume()
+                        } while (vEvent.changes.any { it.id == vDown.id && it.pressed })
+
+                        vDraggingThumb = false
+                    }
                 }
         )
     }
