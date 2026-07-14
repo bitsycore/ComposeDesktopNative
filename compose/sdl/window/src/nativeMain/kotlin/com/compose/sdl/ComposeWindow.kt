@@ -490,8 +490,9 @@ internal class WindowInstance(
 	private var hasMousePos = false
 
 	private var frameIndex = 0
-	private var fpsFrames = 0
-	private var fpsLastMs = SDL_GetTicks()
+	private var fpsEma = 0.0
+	private var fpsLastFrameMs = SDL_GetTicks()
+	private var fpsLastTitleMs = 0uL
 
 	// Escape → back (upstream desktop's BackNavigationEventInput): unconsumed
 	// Escape completes a back navigation on THIS window's dispatcher.
@@ -784,22 +785,35 @@ internal class WindowInstance(
 		FrameProfiler.phase("  present")
 		frameIndex++
 
-		// FPS — refreshed ~once a second, per window.
-		fpsFrames++
+		// FPS — instantaneous inter-frame rate, EMA-smoothed, title refreshed
+		// ~4x/sec. This shows within ~2 rendered frames of ANY activity rather
+		// than waiting for a full second of unbroken rendering to accumulate
+		// (the old fixed-window counter never got its first update: bursty
+		// interaction kept idling before 1s elapsed, and the idle-skip reset the
+		// window each time — so FPS only appeared during a long enough page
+		// transition). A dt outside 1..100ms is the first frame or a resume from
+		// idle (the gap isn't a real frame interval), so it's not sampled — the
+		// title just holds the last active rate while idle.
 		val vNowMs = SDL_GetTicks()
-		val vElapsed = (vNowMs - fpsLastMs).toInt()
-		if (vElapsed >= 1000) {
-			val vFps = fpsFrames * 1000 / vElapsed
-			facade.updateFps(vFps)
-			SDL_SetWindowTitle(backend.window?.reinterpret(), "${facade.title} · $vFps FPS")
-			fpsFrames = 0
-			fpsLastMs = vNowMs
+		val vDt = (vNowMs - fpsLastFrameMs).toInt()
+		fpsLastFrameMs = vNowMs
+		if (vDt in 1..100) {
+			val vInst = 1000.0 / vDt
+			fpsEma = if (fpsEma <= 0.0) vInst else fpsEma * 0.9 + vInst * 0.1
+			if ((vNowMs - fpsLastTitleMs).toInt() >= 250) {
+				val vFps = (fpsEma + 0.5).toInt()
+				facade.updateFps(vFps)
+				SDL_SetWindowTitle(backend.window?.reinterpret(), "${facade.title} · $vFps FPS")
+				fpsLastTitleMs = vNowMs
+			}
 		}
 	}
 
+	// Idle-skip calls this: drop the frame timer so the resume-from-idle frame's
+	// dt (the whole idle gap) isn't sampled as a real interval. The EMA is left
+	// intact so the title keeps showing the last active rate while idle.
 	fun resetFpsWindow() {
-		fpsFrames = 0
-		fpsLastMs = SDL_GetTicks()
+		fpsLastFrameMs = SDL_GetTicks()
 	}
 
 	fun destroy() {
