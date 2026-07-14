@@ -228,15 +228,27 @@ internal class Sdl3Canvas(
 		}
 	}
 
-	/* Convert pending clips into real offscreen mask layers (outermost first). */
+	/* Convert pending clips into real offscreen mask layers (outermost first).
+
+	   Each clip realizes with its OWN push-time region (pending.region =
+	   enclosing-clip-at-push ∩ bbox), NOT the current fClip: a lazily-realized
+	   clip may fire arbitrarily deep inside descendants whose own clips have
+	   since narrowed fClip. Re-intersecting with that narrow clip shrank an
+	   outer clip's offscreen to the innermost descendant's rect, so its
+	   composite blitted back only that sliver and every sibling drawn into the
+	   same offscreen was discarded (the TLS-chain regression: only the first
+	   card + nothing below it, until a scroll shifted which card triggered
+	   realization). The real (already-narrowed) drawing clip is preserved
+	   across the loop and restored at the end, so subsequent draws into the
+	   innermost target stay correctly clipped. */
 	private fun realizePendingClips() {
 		if (fPendingClips.isEmpty()) return
 		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
+		val vDrawClip = fClip
 		while (fPendingClips.isNotEmpty()) {
 			val vPending = fPendingClips.removeFirst()
 			fScope.flush()
-			// A clipRect after the push may have narrowed the visible area.
-			val vRegion = intersect(fClip, vPending.region)
+			val vRegion = vPending.region
 			val vTarget = fClipTargets?.target(fClipLayers.size, fSize.width.toInt(), fSize.height.toInt())
 			if (vTarget == null || vRegion[2] <= vRegion[0] || vRegion[3] <= vRegion[1]) {
 				// Degrade to the rect clip that is already active.
@@ -258,6 +270,10 @@ internal class Sdl3Canvas(
 				}
 			}
 		}
+		// Restore the real drawing clip (already narrowed by inner clipRects /
+		// scroll bounds) for draws into the now-active innermost target.
+		fClip = vDrawClip
+		applyClip()
 	}
 
 	// Flushes any pending batched geometry to SDL, then frees the scope's
