@@ -62,15 +62,18 @@ RSS; expect a plateau without GC sawtooth).
 
 ## 4. Correctness / parity gaps (future bug reports waiting)
 
-Ordered by likelihood of a user hitting them:
+Ordered by likelihood of a user hitting them. NOTE: this list predates several
+fixes — verify a claim against the parity heatmaps before acting (gradients and
+rotation both turned out already-working). In a parity `_diff.png`: a solid
+bright block = real gap; ghosted text = font drift.
 
 - [x] **Gradient brushes on SDL** — samplers were already implemented; the real
   bug was UNDER-SAMPLING: fills sampled only corners, so radial/sweep on a
   rect/round-rect rendered FLAT (a square's corners are equidistant from centre
   → identical t). Gradient fills now grid-mesh the interior (emitRectMesh);
   radial/sweep match upstream. (Solid fills unchanged — one quad.)
-- [ ] **Layer rotation** — rotationZ repositions but content doesn't rotate
-  (hit-testing too).
+- [x] **Layer rotation** — verified WORKING (demo GraphicsLayer "Rotation
+  (live)" + "Combined" rotate correctly); stale claim removed.
 - [ ] **Real `saveLayer` alpha on SDL** — overlapping content composites at
   paint level; needs an offscreen (the clip-target pool can serve it).
 - [ ] **`clipPath` generic shapes** — bbox fallback clips square.
