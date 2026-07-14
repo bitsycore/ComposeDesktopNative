@@ -126,7 +126,7 @@ def main():
             native_shot(name, OUT, gpu)
             src = OUT / f"{name}.png"
             if src.exists():
-                src.rename(OUT / f"{name}.native.png")
+                src.replace(OUT / f"{name}.native.png")
         native_png = OUT / f"{name}.native.png"
         if not native_png.exists():
             results.append((name, None))
