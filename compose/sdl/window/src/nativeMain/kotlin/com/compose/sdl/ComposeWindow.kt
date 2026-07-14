@@ -34,6 +34,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.cinterop.reinterpret
 import sdl3.SDL_Delay
+import sdl3.SDL_GetPerformanceCounter
+import sdl3.SDL_GetPerformanceFrequency
 import sdl3.SDL_GetTicks
 import sdl3.SDL_Quit
 import sdl3.SDL_SetWindowTitle
@@ -148,7 +150,9 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 		//  Main loop
 		var vGcLastTicks = SDL_GetTicks()
 		var vRenderedSinceGc = false
+		val vProfiler = if (platform.posix.getenv("CDN_PROFILE") != null) FrameProfiler() else null
 		while (!runtime.exitRequested) {
+			vProfiler?.mark()
 			Snapshot.sendApplyNotifications()
 
 			// ============
@@ -176,6 +180,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 			}
 
 			mainDispatcher.drainPending()
+			vProfiler?.phase(0)
 
 			// ============
 			//  App composition pump — Window()s may appear / disappear here.
@@ -195,6 +200,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 			// Exit when the last window is gone (after at least one existed).
 			if (runtime.hadWindow && runtime.windows.isEmpty()) runtime.exitRequested = true
 			if (runtime.exitRequested) break
+			vProfiler?.phase(1)
 
 			// ============
 			//  Per-window pump + render.
@@ -208,13 +214,16 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 				Snapshot.sendApplyNotifications()
 				vW.frameClock.sendFrame()
 				yield()
+				vProfiler?.phase(2)
 				if (vW.shouldRender()) {
 					vW.renderFrame()
 					vAnyRendered = true
 					if (!vW.backend.vsyncEnabled) vAllVsync = false
 				}
+				vProfiler?.phase(3)
 			}
 			runtime.reapDestroyed()
+			vProfiler?.frameDone(vAnyRendered)
 
 			// ============
 			//  Pace / idle-skip.
@@ -260,6 +269,47 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 	Dispatchers.resetMain()
 
 	SDL_Quit()
+}
+
+/* CDN_PROFILE=1 — per-phase main-loop timings, printed every ~2s of rendered
+   frames. Phases: events (poll+dispatch), app (app-composition pump), pump
+   (per-window clocks/dispatch), render (layout+draw+present). Measure first,
+   optimize second — see ROADMAP.md. */
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+internal class FrameProfiler {
+	private val fFreq = SDL_GetPerformanceFrequency().toDouble()
+	private val fSum = DoubleArray(4)
+	private val fMax = DoubleArray(4)
+	private var fFrames = 0
+	private var fLastPrintMs = SDL_GetTicks()
+	private var fMark = 0uL
+
+	fun mark() { fMark = SDL_GetPerformanceCounter() }
+
+	fun phase(inIndex: Int) {
+		val vNow = SDL_GetPerformanceCounter()
+		val vMs = (vNow - fMark).toDouble() * 1000.0 / fFreq
+		fSum[inIndex] += vMs
+		if (vMs > fMax[inIndex]) fMax[inIndex] = vMs
+		fMark = vNow
+	}
+
+	fun frameDone(inRendered: Boolean) {
+		if (inRendered) fFrames++
+		val vNowMs = SDL_GetTicks()
+		if (vNowMs - fLastPrintMs >= 2000u && fFrames > 0) {
+			val vNames = listOf("events", "app", "pump", "render")
+			val vParts = vNames.mapIndexed { vI, vName ->
+				val vAvg = fSum[vI] / fFrames
+				"$vName=${(vAvg * 100).toInt() / 100.0}/${(fMax[vI] * 100).toInt() / 100.0}ms"
+			}
+			val vTotal = fSum.sum() / fFrames
+			println("[profile] frames=$fFrames avg/max " + vParts.joinToString(" ") + " total=${(vTotal * 100).toInt() / 100.0}ms")
+			for (vI in fSum.indices) { fSum[vI] = 0.0; fMax[vI] = 0.0 }
+			fFrames = 0
+			fLastPrintMs = vNowMs
+		}
+	}
 }
 
 /* Trigger a Kotlin/Native GC so Cleaner-managed renderer resources release
