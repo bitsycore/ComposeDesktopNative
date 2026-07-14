@@ -78,8 +78,9 @@ Ordered by likelihood of a user hitting them:
   JVM from the same commonMain composables, pixel-diffs, ranks by %differ,
   emits per-screen diff heatmaps + side-by-side compares (pct in filename).
   build/parity/ (gitignored). See scripts/parity/README.md.
-- [ ] Promote the press/hover automation rig (window-handle-relative input +
-  screenshot) into `scripts/`.
+- [x] Promote the press/hover automation rig into `scripts/probe/`:
+  window-CLIENT-relative input (click/hover/hold, fractional coords, process-
+  addressed) + PrintWindow capture (works occluded). See scripts/probe/README.md.
 
 ## 6. Long-term
 
