@@ -128,7 +128,7 @@ internal class Sdl3Canvas(
 	// offscreen clip opened inside this save frame (see fClipLayers below).
 	private data class State(
 		val a: Float, val b: Float, val c: Float, val d: Float, val e: Float, val f: Float,
-		val clip: IntArray?, val alpha: Float, val clipLayers: Int,
+		val clip: IntArray?, val alpha: Float, val clipLayers: Int, val pendingClips: Int,
 	)
 	private val fStack = ArrayDeque<State>()
 
@@ -148,9 +148,106 @@ internal class Sdl3Canvas(
 	)
 	private val fClipLayers = ArrayDeque<OffscreenClip>()
 
+	// ============
+	//  Lazy rounded clips. Opening an offscreen mask per clip is the SINGLE
+	//  most expensive thing this canvas does (two render-target switches +
+	//  clear + corner cut + feather + composite) - and the dominant Compose
+	//  idiom `Modifier.clip(CircleShape).background(...)` never needs one:
+	//  the background is a full-cover rect drawable AS the rounded shape, and
+	//  content wholly inside the rounded region needs no mask at all. So
+	//  clipRoundRect only RECORDS the clip; each draw either proves itself
+	//  safe (containment / cover) or realizes the offscreen on demand.
+
+	private class PendingRoundClip(
+		val deviceRound: RoundRect,   // device-space outline (clamped radii)
+		val localRound: RoundRect,    // as passed in (for cover -> shape-fill emission)
+		val region: IntArray,         // fClip intersect bbox at push time
+		val bbox: IntArray,           // device bbox of the outline
+		val prevClip: IntArray?,      // fClip before this clip was pushed
+		// Affine snapshot at push - cover -> fill re-emits in LOCAL space and
+		// must bail if the transform moved since.
+		val ma: Float, val mb: Float, val mc: Float, val md: Float, val me: Float, val mf: Float,
+	)
+	private val fPendingClips = ArrayDeque<PendingRoundClip>()
+
+	/* Point-in-round-rect (device space) - inside the rect and, within a
+	   corner cut square, inside its ellipse. */
+	private fun roundRectContains(inRR: RoundRect, inX: Float, inY: Float): Boolean {
+		if (inX < inRR.left || inX > inRR.right || inY < inRR.top || inY > inRR.bottom) return false
+		fun corner(inRx: Float, inRy: Float, inDx: Float, inDy: Float): Boolean {
+			if (inRx <= 0f || inRy <= 0f) return true
+			val vNx = inDx / inRx; val vNy = inDy / inRy
+			return vNx * vNx + vNy * vNy <= 1f
+		}
+		val vTl = inRR.topLeftCornerRadius; val vTr = inRR.topRightCornerRadius
+		val vBr = inRR.bottomRightCornerRadius; val vBl = inRR.bottomLeftCornerRadius
+		if (inX < inRR.left + vTl.x && inY < inRR.top + vTl.y)
+			return corner(vTl.x, vTl.y, inX - (inRR.left + vTl.x), inY - (inRR.top + vTl.y))
+		if (inX > inRR.right - vTr.x && inY < inRR.top + vTr.y)
+			return corner(vTr.x, vTr.y, inX - (inRR.right - vTr.x), inY - (inRR.top + vTr.y))
+		if (inX > inRR.right - vBr.x && inY > inRR.bottom - vBr.y)
+			return corner(vBr.x, vBr.y, inX - (inRR.right - vBr.x), inY - (inRR.bottom - vBr.y))
+		if (inX < inRR.left + vBl.x && inY > inRR.bottom - vBl.y)
+			return corner(vBl.x, vBl.y, inX - (inRR.left + vBl.x), inY - (inRR.bottom - vBl.y))
+		return true
+	}
+
+	/* A device-space aabb is inside the round rect iff its four corners are. */
+	private fun roundRectContainsAabb(inRR: RoundRect, inL: Float, inT: Float, inR: Float, inB: Float): Boolean =
+		roundRectContains(inRR, inL, inT) && roundRectContains(inRR, inR, inT) &&
+			roundRectContains(inRR, inR, inB) && roundRectContains(inRR, inL, inB)
+
+	/* Device aabb of a LOCAL rect under the current affine. */
+	private fun deviceAabb(inL: Float, inT: Float, inR: Float, inB: Float): FloatArray {
+		val vX0 = mapX(inL, inT); val vX1 = mapX(inR, inT); val vX2 = mapX(inR, inB); val vX3 = mapX(inL, inB)
+		val vY0 = mapY(inL, inT); val vY1 = mapY(inR, inT); val vY2 = mapY(inR, inB); val vY3 = mapY(inL, inB)
+		return floatArrayOf(
+			minOf(vX0, vX1, vX2, vX3), minOf(vY0, vY1, vY2, vY3),
+			maxOf(vX0, vX1, vX2, vX3), maxOf(vY0, vY1, vY2, vY3),
+		)
+	}
+
+	/* If the LOCAL-space aabb stays inside every pending rounded clip, drawing
+	   it under the already-active rect clip is correct - no mask needed.
+	   Otherwise realize the pending masks before the draw proceeds. */
+	private fun admitDraw(inL: Float, inT: Float, inR: Float, inB: Float) {
+		if (fPendingClips.isEmpty()) return
+		val vBox = deviceAabb(inL, inT, inR, inB)
+		for (vPending in fPendingClips) {
+			if (!roundRectContainsAabb(vPending.deviceRound, vBox[0], vBox[1], vBox[2], vBox[3])) {
+				realizePendingClips()
+				return
+			}
+		}
+	}
+
+	/* Convert pending clips into real offscreen mask layers (outermost first). */
+	private fun realizePendingClips() {
+		if (fPendingClips.isEmpty()) return
+		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
+		while (fPendingClips.isNotEmpty()) {
+			val vPending = fPendingClips.removeFirst()
+			fScope.flush()
+			// A clipRect after the push may have narrowed the visible area.
+			val vRegion = intersect(fClip, vPending.region)
+			val vTarget = fClipTargets?.target(fClipLayers.size, fSize.width.toInt(), fSize.height.toInt())
+			if (vTarget == null || vRegion[2] <= vRegion[0] || vRegion[3] <= vRegion[1]) {
+				// Degrade to the rect clip that is already active.
+				continue
+			}
+			val vPrevTarget = SDL_GetRenderTarget(vRenderer)
+			SDL_SetRenderTarget(vRenderer, vTarget.reinterpret())
+			fClip = vRegion
+			applyClip()
+			clearRegion(vRegion)
+			fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPending.prevClip, vRegion, vPending.bbox, vPending.deviceRound))
+		}
+	}
+
 	// Flushes any pending batched geometry to SDL, then frees the scope's
 	// native buffer + clears the SDL clip. Call once per frame after the draw.
 	fun finish() {
+		fPendingClips.clear()
 		fScope.release()
 		// Safety: an unbalanced save/restore must never leave the renderer pointed
 		// at a scratch target when the frame is presented.
@@ -168,11 +265,14 @@ internal class Sdl3Canvas(
 		// Offscreen canvas: the outermost save (CanvasDrawScope brackets its draw with
 		// save/restore) switches the SDL render target to the ImageBitmap's texture.
 		if (fOffscreenTexture != null && fStack.isEmpty()) beginOffscreen()
-		fStack.addLast(State(fMa, fMb, fMc, fMd, fMe, fMf, fClip, fAlpha, fClipLayers.size))
+		fStack.addLast(State(fMa, fMb, fMc, fMd, fMe, fMf, fClip, fAlpha, fClipLayers.size, fPendingClips.size))
 	}
 
 	override fun restore() {
 		val vPrev = fStack.removeLastOrNull() ?: return
+		// Pending (never-realized) rounded clips opened inside this save frame:
+		// nothing was drawn through an offscreen for them - just drop them.
+		while (fPendingClips.size > vPrev.pendingClips) fPendingClips.removeLast()
 		// Composite + pop any offscreen rounded clips opened inside this save frame
 		// before restoring the plain state (each composite restores render target
 		// and SDL clip to what it was when the clip was opened).
@@ -269,6 +369,7 @@ internal class Sdl3Canvas(
 	// treating Difference as intersect clipped the border TO the notch instead
 	// (a floating line under the label, no outline anywhere else).
 	private fun clipRectDifference(inL: Float, inT: Float, inR: Float, inB: Float) {
+		realizePendingClips()
 		val vDiff = mapRectAABB(inL, inT, inR, inB)
 		val vRegion = fClip ?: intArrayOf(0, 0, fSize.width.toInt(), fSize.height.toInt())
 		if (fClipTargets == null || fSize.width < 1f || fSize.height < 1f ||
@@ -375,20 +476,17 @@ internal class Sdl3Canvas(
 			applyClip()
 			return
 		}
-		val vTarget = fClipTargets.target(fClipLayers.size, fSize.width.toInt(), fSize.height.toInt())
-		if (vTarget == null) {
-			// Couldn't allocate a scratch target — degrade to a rectangular clip.
-			clipRect(inRoundRect.left, inRoundRect.top, inRoundRect.right, inRoundRect.bottom)
-			return
-		}
-		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
-		val vPrevTarget = SDL_GetRenderTarget(vRenderer)
+		// LAZY: record only — the rect part of the clip applies immediately,
+		// the offscreen mask is opened by the first draw that actually needs
+		// it (admitDraw / realizePendingClips). The common clip+background
+		// idiom never does.
 		val vPrevClip = fClip
-		SDL_SetRenderTarget(vRenderer, vTarget.reinterpret())
 		fClip = vRegion
 		applyClip()
-		clearRegion(vRegion)
-		fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPrevClip, vRegion, vBbox, vDeviceRound))
+		fPendingClips.addLast(PendingRoundClip(
+			vDeviceRound, inRoundRect, vRegion, vBbox, vPrevClip,
+			fMa, fMb, fMc, fMd, fMe, fMf,
+		))
 	}
 
 	// Pops the top offscreen clip: flush its subtree, cut the rounded corners out
@@ -573,6 +671,7 @@ internal class Sdl3Canvas(
 		inAmbientColor: androidx.compose.ui.graphics.Color,
 		inSpotColor: androidx.compose.ui.graphics.Color,
 	) {
+		realizePendingClips()
 		if (inElevationPx <= 0f) return
 
 		// Generic paths (CutCornerShape, GenericShape) don't 9-slice — blur the
@@ -707,6 +806,7 @@ internal class Sdl3Canvas(
 		// before re-rasterising a vector). Write transparent directly instead of the
 		// paint colour.
 		if (paint.blendMode == BlendMode.Clear) {
+			realizePendingClips()
 			fScope.flush()
 			clearRegion(intArrayOf(
 				mapX(left, top).toInt(), mapY(left, top).toInt(),
@@ -714,21 +814,75 @@ internal class Sdl3Canvas(
 			))
 			return
 		}
+		if (fPendingClips.isNotEmpty() && tryDrawRectUnderPendingClips(left, top, right, bottom, paint)) return
 		prep().rectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
+	}
+
+	/* The `clip(shape).background(color)` idiom: a FILL rect that fully covers
+	   the innermost pending clip becomes a direct rounded-shape fill (with the
+	   scope's fringe AA — no offscreen mask at all). A rect fully INSIDE every
+	   pending clip draws as-is. Returns true when the draw has been emitted. */
+	private fun tryDrawRectUnderPendingClips(inL: Float, inT: Float, inR: Float, inB: Float, inPaint: Paint): Boolean {
+		val vBox = deviceAabb(inL, inT, inR, inB)
+		val vInner = fPendingClips.last()
+		// Cover case: fill paint, no stroke, rect covers the whole clip outline,
+		// affine unchanged since the clip was pushed (local-space re-emission),
+		// uniform corner radii (the scope's roundRectCore takes one radius), and
+		// the clip outline itself contained in every OUTER pending clip.
+		val vLr = vInner.localRound
+		val vUniform = vLr.topLeftCornerRadius.x == vLr.topLeftCornerRadius.y &&
+			vLr.topLeftCornerRadius == vLr.topRightCornerRadius &&
+			vLr.topLeftCornerRadius == vLr.bottomRightCornerRadius &&
+			vLr.topLeftCornerRadius == vLr.bottomLeftCornerRadius
+		val vAffineUnchanged = vInner.ma == fMa && vInner.mb == fMb && vInner.mc == fMc &&
+			vInner.md == fMd && vInner.me == fMe && vInner.mf == fMf
+		if (inPaint.style == PaintingStyle.Fill && inPaint.blendMode == BlendMode.SrcOver &&
+			vUniform && vAffineUnchanged &&
+			vBox[0] <= vInner.bbox[0] && vBox[1] <= vInner.bbox[1] &&
+			vBox[2] >= vInner.bbox[2] && vBox[3] >= vInner.bbox[3]
+		) {
+			var vOutersContain = true
+			for (vPending in fPendingClips) {
+				if (vPending === vInner) continue
+				if (!roundRectContainsAabb(vPending.deviceRound, vInner.deviceRound.left, vInner.deviceRound.top, vInner.deviceRound.right, vInner.deviceRound.bottom)) {
+					vOutersContain = false; break
+				}
+			}
+			if (vOutersContain) {
+				prep().roundRectCore(
+					brushFor(inPaint),
+					Offset(vLr.left, vLr.top), Size(vLr.width, vLr.height),
+					vLr.topLeftCornerRadius.x,
+					(inPaint.alpha * fAlpha), Fill,
+				)
+				return true
+			}
+		}
+		// Containment: inside every pending outline → the active rect clip is enough.
+		for (vPending in fPendingClips) {
+			if (!roundRectContainsAabb(vPending.deviceRound, vBox[0], vBox[1], vBox[2], vBox[3])) {
+				realizePendingClips()
+				return false
+			}
+		}
+		return false
 	}
 
 	override fun drawRoundRect(
 		left: Float, top: Float, right: Float, bottom: Float,
 		radiusX: Float, radiusY: Float, paint: Paint,
 	) {
+		admitDraw(left, top, right, bottom)
 		prep().roundRectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), radiusX, (paint.alpha * fAlpha), styleFor(paint))
 	}
 
 	override fun drawOval(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
+		admitDraw(left, top, right, bottom)
 		prep().ovalCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
 	}
 
 	override fun drawCircle(center: Offset, radius: Float, paint: Paint) {
+		admitDraw(center.x - radius, center.y - radius, center.x + radius, center.y + radius)
 		prep().circleCore(brushFor(paint), radius, center, (paint.alpha * fAlpha), styleFor(paint))
 	}
 
@@ -736,14 +890,17 @@ internal class Sdl3Canvas(
 		left: Float, top: Float, right: Float, bottom: Float,
 		startAngle: Float, sweepAngle: Float, useCenter: Boolean, paint: Paint,
 	) {
+		realizePendingClips()
 		prep().arcCore(brushFor(paint), startAngle, sweepAngle, useCenter, Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
 	}
 
 	override fun drawLine(p1: Offset, p2: Offset, paint: Paint) {
+		realizePendingClips()
 		prep().lineCore(brushFor(paint), p1, p2, paint.strokeWidth, paint.strokeCap, (paint.alpha * fAlpha))
 	}
 
 	override fun drawPath(path: ComposePath, paint: Paint) {
+		realizePendingClips()
 		prep().pathCore(path, brushFor(paint), (paint.alpha * fAlpha), styleFor(paint))
 	}
 
@@ -768,6 +925,7 @@ internal class Sdl3Canvas(
 		inBaseItalic: Boolean,
 		inTextDecoration: androidx.compose.ui.text.style.TextDecoration?,
 	) {
+		realizePendingClips()
 		fScope.flush()
 		// Paragraph-level decoration bits forwarded to every wrapped line.
 		val vUnderline = inTextDecoration?.contains(androidx.compose.ui.text.style.TextDecoration.Underline) == true
@@ -876,6 +1034,7 @@ internal class Sdl3Canvas(
 		inContentScale: androidx.compose.ui.layout.ContentScale,
 		inAlpha: Float,
 	) {
+		admitDraw(inX, inY, inX + inWidth, inY + inHeight)
 		fScope.flush()
 		// Map the origin through the affine and scale the size by the matrix's axis
 		// magnitudes (rotation contributes 1, so it only repositions the blit — the
@@ -894,6 +1053,7 @@ internal class Sdl3Canvas(
 
 	override fun drawImage(image: ImageBitmap, topLeftOffset: Offset, paint: Paint) {
 		val vBmp = image as? SdlImageBitmap ?: return
+		admitDraw(topLeftOffset.x, topLeftOffset.y, topLeftOffset.x + vBmp.width, topLeftOffset.y + vBmp.height)
 		drawImageRect(
 			image,
 			androidx.compose.ui.unit.IntOffset.Zero,
@@ -916,6 +1076,7 @@ internal class Sdl3Canvas(
 		dstSize: androidx.compose.ui.unit.IntSize,
 		paint: Paint,
 	) {
+		realizePendingClips()
 		val vTex = (image as? SdlImageBitmap)?.texture ?: return
 		// Commit pending frame geometry and re-assert this canvas's target + clip
 		// (an offscreen render just borrowed the render target).
