@@ -1,5 +1,31 @@
 # Next session — renderer caching / retained layers
 
+## RESOLVED: the 70-vs-144 "gap" was two monitors, not a bug
+
+The user has a **75 Hz main screen + a 144 Hz second screen**. Each app's FPS is
+just the refresh of whichever monitor its window opened on (SDL locks vsync to
+the window's current display). demo happened to open on the 75 Hz screen,
+apidemo on the 144 Hz one. Move the demo to the 144 Hz screen and it hits ~144.
+
+Instrumentation confirmed there is NO performance problem: both apps have only
+~3.7 ms `draw` per frame (demo geo=40 masks=0; apidemo geo=146 masks=74 —
+apidemo does MORE and is fine), which fits both the 13.3 ms (75 Hz) and 6.7 ms
+(144 Hz) budgets with large headroom. Everything is present/vsync-bound.
+
+**Implication:** the retained-layers / dirty-region / cacheKey work is a
+SPECULATIVE optimization with NO demonstrated need right now — no app misses its
+frame budget. Don't spend the big content-redirect-primitive effort chasing a
+phantom. Revisit only if a real, animated, heavy screen is measured (with
+CDN_PROFILE, ON the target monitor) to exceed its budget.
+
+Still worth doing regardless of perf (correctness / cleanup, small):
+- Delete the dead `cacheKey` scaffolding (`GraphicsLayerModifier` /
+  `GraphicsLayerNode`, unread) OR wire it — and fix the demo's misleading
+  "(cached)" label (it uses a plain `graphicsLayer()`).
+
+--- Original investigation notes below (kept for context) ---
+
+
 Starting point after v0.1.19. Context for the perf work the profiling pointed at.
 
 ## The problem (measured)
