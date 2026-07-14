@@ -54,17 +54,24 @@ private val desktopTargets = mapOf(
 )
 
 private fun registerDataKresTasks(project: Project) {
-	val taskNames = project.tasks.names
-	val resPackage = project.resolveResourcePackage()
+	// The zips are PRE-REGISTERED lazily for every desktop target/variant and
+	// wired to their link task via matching{}.configureEach: executables may
+	// be declared after this afterEvaluate runs — notably by the bridge's OWN
+	// compose.desktop.native { entryPoint } DSL, which also materialises in
+	// afterEvaluate. (A name pre-scan raced that and silently packaged
+	// nothing — the "data.kres not found" crash; and Gradle forbids
+	// registering tasks from inside another task's configuration callback,
+	// so the zip cannot be created reactively either.) An unrealised
+	// registered task costs nothing: if the target has no executable, the
+	// link task never appears and the zip never runs. All content wiring
+	// happens in the zip's own configuration action, which only executes on
+	// realisation — by then the Compose plugin's prepare tasks and the final
+	// compose.resources config exist.
 	for ((target, sourceSets) in desktopTargets) {
 		for (variant in listOf("Debug", "Release")) {
 			val linkName = "link${variant}Executable$target"
-			if (linkName !in taskNames) continue
 			val zipName = "package${variant}ComposeResources$target"
-			if (zipName in taskNames) continue
-			val prepareNames = sourceSets
-				.map { "prepareComposeResourcesTaskFor" + it.replaceFirstChar { c -> c.uppercase() } }
-				.filter { it in taskNames }
+			if (zipName in project.tasks.names) continue
 			val zipTask = project.tasks.register(zipName, Zip::class.java) { task ->
 				task.description = "Bundles composeResources into data.kres next to the $target ${variant.lowercase()} executable."
 				task.archiveFileName.set("data.kres")
@@ -77,6 +84,10 @@ private fun registerDataKresTasks(project: Project) {
 				// decoders — an entry is one fseek+fread, never inflated.
 				task.entryCompression = ZipEntryCompression.STORED
 				task.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+				val resPackage = project.resolveResourcePackage()
+				val prepareNames = sourceSets
+					.map { "prepareComposeResourcesTaskFor" + it.replaceFirstChar { c -> c.uppercase() } }
+					.filter { it in project.tasks.names }
 				for (prepareName in prepareNames) {
 					val sourceSet = prepareName.removePrefix("prepareComposeResourcesTaskFor")
 						.replaceFirstChar { it.lowercase() }
@@ -87,7 +98,7 @@ private fun registerDataKresTasks(project: Project) {
 					task.dependsOn(project.tasks.named(prepareName))
 				}
 			}
-			project.tasks.named(linkName) { it.dependsOn(zipTask) }
+			project.tasks.matching { it.name == linkName }.configureEach { it.dependsOn(zipTask) }
 		}
 	}
 }
