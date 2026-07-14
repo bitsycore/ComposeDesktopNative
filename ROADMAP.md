@@ -42,16 +42,16 @@ RSS; expect a plateau without GC sawtooth).
 - [x] **Frame profiler** — `CDN_PROFILE=1` env flag prints per-phase timings
   (events / app pump / window pump / render / present) every ~2 s. Measure
   first, optimize second.
-- [ ] **Right-size clip scratch targets** — the pool allocates window-sized
-  textures per mask depth; allocate at the clip bbox (size-bucketed pool) to
-  cut fill-rate for the masks that remain after lazy clips.
-- [ ] **Dirty-region rendering** — the big structural item: accumulate damage
-  from invalidated layers, scissor redraw to it. One bubble's spring should
-  not re-tessellate 84. Most likely single item to reach 75 Hz.
+- [ ] **Dirty-region rendering** — NEXT, promoted by profiling: the app
+  re-tessellates the whole window on any invalidation. Accumulate damage from
+  invalidated layers and scissor the redraw. Biggest lever for heavy scenes.
+- [ ] **Retained layer textures** — cache a layer's rendered output keyed by
+  its draw content (RenderNode-style); static subtrees stop re-tessellating.
+- [ ] **Right-size clip scratch targets** (LOW — profiling showed masks aren't
+  a hot path after lazy clips): size scratch textures to the clip bbox.
+  Memory, not frame time.
 - [ ] **Glyph atlas** — text draws currently break geometry batches (z-order
   flush per run); an atlas texture lets glyphs ride the vertex batches.
-- [ ] **Retained layer textures** (later) — RenderNode-style caching of static
-  subtrees keyed by draw content.
 
 ## 3. Skia renderer
 

@@ -32,6 +32,7 @@ import com.compose.sdl.window.createPopupHostState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.cinterop.toKString
 import kotlinx.cinterop.reinterpret
 import sdl3.SDL_Delay
 import sdl3.SDL_GetPerformanceCounter
@@ -150,9 +151,8 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 		//  Main loop
 		var vGcLastTicks = SDL_GetTicks()
 		var vRenderedSinceGc = false
-		val vProfiler = if (platform.posix.getenv("CDN_PROFILE") != null) FrameProfiler() else null
 		while (!runtime.exitRequested) {
-			vProfiler?.mark()
+			FrameProfiler.mark()
 			Snapshot.sendApplyNotifications()
 
 			// ============
@@ -180,7 +180,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 			}
 
 			mainDispatcher.drainPending()
-			vProfiler?.phase(0)
+			FrameProfiler.phase("events")
 
 			// ============
 			//  App composition pump — Window()s may appear / disappear here.
@@ -200,7 +200,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 			// Exit when the last window is gone (after at least one existed).
 			if (runtime.hadWindow && runtime.windows.isEmpty()) runtime.exitRequested = true
 			if (runtime.exitRequested) break
-			vProfiler?.phase(1)
+			FrameProfiler.phase("app")
 
 			// ============
 			//  Per-window pump + render.
@@ -214,16 +214,16 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 				Snapshot.sendApplyNotifications()
 				vW.frameClock.sendFrame()
 				yield()
-				vProfiler?.phase(2)
+				FrameProfiler.phase("pump")
 				if (vW.shouldRender()) {
 					vW.renderFrame()
 					vAnyRendered = true
 					if (!vW.backend.vsyncEnabled) vAllVsync = false
 				}
-				vProfiler?.phase(3)
+				FrameProfiler.phase("render")
 			}
 			runtime.reapDestroyed()
-			vProfiler?.frameDone(vAnyRendered)
+			FrameProfiler.frameDone(vAnyRendered)
 
 			// ============
 			//  Drain deferred native-resource disposals on the MAIN thread —
@@ -280,41 +280,63 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 	SDL_Quit()
 }
 
-/* CDN_PROFILE=1 — per-phase main-loop timings, printed every ~2s of rendered
-   frames. Phases: events (poll+dispatch), app (app-composition pump), pump
-   (per-window clocks/dispatch), render (layout+draw+present). Measure first,
-   optimize second — see ROADMAP.md. */
+/* CDN_PROFILE=1 — per-phase timings, printed every ~2s of rendered frames.
+   A named-phase SINGLETON so both the main loop (events / app / pump / render)
+   AND renderFrame's sub-steps (render.layout / render.draw / render.present)
+   report into one line. `mark()` resets the stopwatch; `phase(name)` charges
+   the elapsed since the last mark/phase to that name. Measure first, optimize
+   second — see ROADMAP.md. */
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-internal class FrameProfiler {
+internal object FrameProfiler {
+	// null until first checked; then true/false for the run's lifetime.
+	private var fEnabled: Boolean? = null
+	// Output file — resolved once from CDN_PROFILE. Writing to a file (not
+	// stdout) lets GUI-subsystem apps (the demo links --subsystem,windows, so
+	// it has no console) be profiled too. CDN_PROFILE=1 → "cdn_profile.log" in
+	// the cwd; CDN_PROFILE=<path> → that path.
+	private var fPath: String = "cdn_profile.log"
+	val enabled: Boolean
+		get() = fEnabled ?: run {
+			val vEnv = platform.posix.getenv("CDN_PROFILE")?.toKString()
+			if (vEnv != null && vEnv != "1" && vEnv.isNotEmpty()) fPath = vEnv
+			(vEnv != null).also { fEnabled = it }
+		}
+
 	private val fFreq = SDL_GetPerformanceFrequency().toDouble()
-	private val fSum = DoubleArray(4)
-	private val fMax = DoubleArray(4)
+	// Insertion-ordered so the printed line follows the call order.
+	private val fSum = LinkedHashMap<String, Double>()
+	private val fMax = LinkedHashMap<String, Double>()
 	private var fFrames = 0
 	private var fLastPrintMs = SDL_GetTicks()
 	private var fMark = 0uL
 
-	fun mark() { fMark = SDL_GetPerformanceCounter() }
+	fun mark() { if (enabled) fMark = SDL_GetPerformanceCounter() }
 
-	fun phase(inIndex: Int) {
+	fun phase(inName: String) {
+		if (!enabled) return
 		val vNow = SDL_GetPerformanceCounter()
 		val vMs = (vNow - fMark).toDouble() * 1000.0 / fFreq
-		fSum[inIndex] += vMs
-		if (vMs > fMax[inIndex]) fMax[inIndex] = vMs
+		fSum[inName] = (fSum[inName] ?: 0.0) + vMs
+		if (vMs > (fMax[inName] ?: 0.0)) fMax[inName] = vMs
 		fMark = vNow
 	}
 
 	fun frameDone(inRendered: Boolean) {
+		if (!enabled) return
 		if (inRendered) fFrames++
 		val vNowMs = SDL_GetTicks()
 		if (vNowMs - fLastPrintMs >= 2000u && fFrames > 0) {
-			val vNames = listOf("events", "app", "pump", "render")
-			val vParts = vNames.mapIndexed { vI, vName ->
-				val vAvg = fSum[vI] / fFrames
-				"$vName=${(vAvg * 100).toInt() / 100.0}/${(fMax[vI] * 100).toInt() / 100.0}ms"
+			val vParts = fSum.keys.map { vName ->
+				val vAvg = (fSum[vName] ?: 0.0) / fFrames
+				"$vName=${(vAvg * 100).toInt() / 100.0}/${((fMax[vName] ?: 0.0) * 100).toInt() / 100.0}ms"
 			}
-			val vTotal = fSum.sum() / fFrames
-			println("[profile] frames=$fFrames avg/max " + vParts.joinToString(" ") + " total=${(vTotal * 100).toInt() / 100.0}ms")
-			for (vI in fSum.indices) { fSum[vI] = 0.0; fMax[vI] = 0.0 }
+			val vLine = "[profile] frames=$fFrames avg/max " + vParts.joinToString(" ") + "\n"
+			val vFile = platform.posix.fopen(fPath, "a")
+			if (vFile != null) {
+				platform.posix.fputs(vLine, vFile)
+				platform.posix.fclose(vFile)
+			}
+			fSum.clear(); fMax.clear()
 			fFrames = 0
 			fLastPrintMs = vNowMs
 		}
@@ -734,6 +756,7 @@ internal class WindowInstance(
 		vRender.ensureSize(backend.pixelWidth, backend.pixelHeight)
 		host.setConstraints(backend.pixelWidth, backend.pixelHeight)
 		host.measureAndLayout()
+		FrameProfiler.phase("  layout")
 
 		// Hover refresh after layout (upstream skiko: SyntheticEventSender).
 		if (hasMousePos) {
@@ -746,7 +769,9 @@ internal class WindowInstance(
 			// Probe consumers end the app when their scenario completes.
 			facade.close()
 		}
+		FrameProfiler.phase("  draw")
 		vRender.endFrame()
+		FrameProfiler.phase("  present")
 		frameIndex++
 
 		// FPS — refreshed ~once a second, per window.
