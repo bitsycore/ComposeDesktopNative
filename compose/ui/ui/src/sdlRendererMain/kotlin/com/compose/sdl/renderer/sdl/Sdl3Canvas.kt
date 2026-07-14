@@ -167,6 +167,13 @@ internal class Sdl3Canvas(
 		// Affine snapshot at push - cover -> fill re-emits in LOCAL space and
 		// must bail if the transform moved since.
 		val ma: Float, val mb: Float, val mc: Float, val md: Float, val me: Float, val mf: Float,
+		// fStack.size when the clip was pushed: a lazily-realized mask must be
+		// composited by the save-frame that OWNS the clip, not by whatever
+		// inner frame happened to trigger realization (a press draws the state
+		// layer and the ripple in separate inner clipRect{} frames - the first
+		// realize must not let the inner restore close the mask, or the second
+		// draw runs unmasked: the "square on click" artifact).
+		val saveDepth: Int,
 	)
 	private val fPendingClips = ArrayDeque<PendingRoundClip>()
 
@@ -241,6 +248,15 @@ internal class Sdl3Canvas(
 			applyClip()
 			clearRegion(vRegion)
 			fClipLayers.addLast(OffscreenClip(vTarget, vPrevTarget, vPending.prevClip, vRegion, vPending.bbox, vPending.deviceRound))
+			// Attribute the realized mask to the save-frame that pushed the
+			// clip: inner frames entered since must NOT composite it on their
+			// restore - bump their thresholds past the new layer.
+			for (vI in vPending.saveDepth until fStack.size) {
+				val vState = fStack[vI]
+				if (vState.clipLayers < fClipLayers.size) {
+					fStack[vI] = vState.copy(clipLayers = fClipLayers.size)
+				}
+			}
 		}
 	}
 
@@ -486,6 +502,7 @@ internal class Sdl3Canvas(
 		fPendingClips.addLast(PendingRoundClip(
 			vDeviceRound, inRoundRect, vRegion, vBbox, vPrevClip,
 			fMa, fMb, fMc, fMd, fMe, fMf,
+			fStack.size,
 		))
 	}
 
