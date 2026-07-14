@@ -29,6 +29,34 @@ internal var currentMainCanvas: Sdl3Canvas? = null
 // An ImageBitmap backed by an SDL render-target texture. The vector rasterises
 // into the texture (via a Canvas returned by the factory) and Sdl3Canvas.drawImageRect
 // blits it back — with the Icon tint applied through SDL_SetTextureColorMod.
+// Mutable native handles held BY REFERENCE so a Cleaner can free them without
+// capturing the (collectable) SdlImageBitmap. Both the explicit close() and the
+// GC Cleaner enqueue release of whatever is still here — the first to run nulls
+// the fields, so the other is a no-op (they can't overlap: close() only runs
+// while the bitmap is reachable, the Cleaner only after it isn't).
+@OptIn(ExperimentalForeignApi::class)
+private class SdlBitmapHandles(
+	var texture: COpaquePointer?,
+	var surface: CPointer<SDL_Surface>?,
+)
+
+/* Enqueue destruction of the handles' current contents on the main thread
+   (SDL calls aren't thread-safe; the Cleaner runs on a GC worker). Idempotent:
+   clears the fields so a second call frees nothing. Top-level so the Cleaner
+   block never captures the bitmap. */
+@OptIn(ExperimentalForeignApi::class)
+private fun enqueueRelease(inHandles: SdlBitmapHandles) {
+	val vTex = inHandles.texture
+	val vSurf = inHandles.surface
+	if (vTex == null && vSurf == null) return
+	inHandles.texture = null
+	inHandles.surface = null
+	com.compose.sdl.graphics.NativeReleaseQueue.enqueue {
+		if (vSurf != null) SDL_DestroySurface(vSurf)
+		if (vTex != null) SDL_DestroyTexture(vTex.reinterpret())
+	}
+}
+
 @OptIn(ExperimentalForeignApi::class)
 internal class SdlImageBitmap(
 	private val fRenderer: COpaquePointer,
@@ -41,19 +69,28 @@ internal class SdlImageBitmap(
 	// Sdl3EncodedImageDecoder); converted to a texture on the first draw.
 	// null → create a render TARGET for the vector-rasterisation path below
 	// (that path always constructs on the main thread).
-	private var fDecodedSurface: CPointer<SDL_Surface>? = null,
+	fDecodedSurface: CPointer<SDL_Surface>? = null,
 ) : ImageBitmap {
 
 	// RGBA render-target texture, premultiplied blend for compositing back (content
 	// is drawn over a transparent clear with ordinary BLEND, leaving premultiplied
 	// colours — see Sdl3ClipTargets for the same reasoning).
-	private var fTexture: COpaquePointer? = if (fDecodedSurface != null) null else SDL_CreateTexture(
-		fRenderer.reinterpret(),
-		SDL_PIXELFORMAT_RGBA32,
-		SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
-		maxOf(1, width),
-		maxOf(1, height),
-	)?.also { SDL_SetTextureBlendMode(it.reinterpret(), SDL_BLENDMODE_BLEND_PREMULTIPLIED) }
+	private val fHandles = SdlBitmapHandles(
+		texture = if (fDecodedSurface != null) null else SDL_CreateTexture(
+			fRenderer.reinterpret(),
+			SDL_PIXELFORMAT_RGBA32,
+			SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET,
+			maxOf(1, width),
+			maxOf(1, height),
+		)?.also { SDL_SetTextureBlendMode(it.reinterpret(), SDL_BLENDMODE_BLEND_PREMULTIPLIED) },
+		surface = fDecodedSurface,
+	)
+
+	// GC backstop: if nothing calls close(), free the native handles when the
+	// bitmap is collected (deferred to the main thread via the queue). Ownership
+	// via close() is the primary path; this catches leaks.
+	@OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+	private val fCleaner = kotlin.native.ref.createCleaner(fHandles) { enqueueRelease(it) }
 
 	// SDL renderer calls are NOT thread-safe, and the resources pipeline
 	// decodes on Dispatchers.Default workers — so the decode path hands over a
@@ -63,14 +100,19 @@ internal class SdlImageBitmap(
 	// render-target path above.
 	val texture: COpaquePointer?
 		get() {
-			fDecodedSurface?.let { vSurface ->
-				fTexture = SDL_CreateTextureFromSurface(fRenderer.reinterpret(), vSurface)
+			fHandles.surface?.let { vSurface ->
+				fHandles.texture = SDL_CreateTextureFromSurface(fRenderer.reinterpret(), vSurface)
 					?.also { SDL_SetTextureBlendMode(it.reinterpret(), SDL_BLENDMODE_BLEND) }
 				SDL_DestroySurface(vSurface)
-				fDecodedSurface = null
+				fHandles.surface = null
 			}
-			return fTexture
+			return fHandles.texture
 		}
+
+	/* Free the texture/surface now (deferred to the main thread). Call on
+	   cache eviction / removeMemoryResource so native memory releases promptly
+	   instead of waiting for a GC. The Cleaner remains as a backstop. */
+	fun close() = enqueueRelease(fHandles)
 
 	override fun readPixels(
 		buffer: IntArray,

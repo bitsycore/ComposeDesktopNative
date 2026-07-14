@@ -12,13 +12,19 @@ safeguard, not the mechanism.
 - [x] **`NativeReleaseQueue`** — SDL calls are main-thread-only, so nothing may
   destroy directly from a Cleaner or worker: release actions ENQUEUE, the main
   loop DRAINS between frames. Cleaners become safe from any thread because
-  they only enqueue.
+  they only enqueue. Verified end-to-end (direct enqueue + a real
+  Cleaner→enqueue→drain cycle).
 - [x] **`SdlImageBitmap` textures** — previously never destroyed (manual SDL
-  memory, invisible to the GC nudge). Cleaner now enqueues
+  memory, invisible to the GC nudge). A holder + Cleaner now enqueues
   `SDL_DestroyTexture` / `SDL_DestroySurface` for the texture, render target
-  and never-realized decoded surface.
-- [ ] **Cache-eviction closes** — every image/text cache closes what it evicts
-  (Sdl3ImageCache already does; sweep the rest, both renderers).
+  and never-realized decoded surface; explicit `close()` frees promptly.
+- [ ] **Wire `close()` into cache eviction** — the Cleaner is the current
+  release path for decoded/vector bitmaps (correct but GC-timed). Call
+  `SdlImageBitmap.close()` on image-cache eviction / `removeMemoryResource`
+  for prompt release (needs a cross-module hook — the caches hold the
+  `ImageBitmap` interface, not the concrete type).
+- [ ] **Cache-eviction closes (rest)** — every image/text cache closes what it
+  evicts (Sdl3ImageCache already does; sweep the rest, both renderers).
 - [ ] **Renderer `destroy()` chain** — window close synchronously frees every
   pool (clip targets already do; text caches, image caches, shadow cache,
   typefaces to follow).

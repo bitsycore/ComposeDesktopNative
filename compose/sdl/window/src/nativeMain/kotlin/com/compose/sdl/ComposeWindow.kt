@@ -226,6 +226,14 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 			vProfiler?.frameDone(vAnyRendered)
 
 			// ============
+			//  Drain deferred native-resource disposals on the MAIN thread —
+			//  textures/surfaces whose owner closed them or whose Cleaner fired
+			//  on a GC worker enqueue here (SDL calls aren't thread-safe). This
+			//  is the ownership path that makes the GC nudge below a mere
+			//  backstop (ROADMAP.md item 1).
+			com.compose.sdl.graphics.NativeReleaseQueue.drain()
+
+			// ============
 			//  Pace / idle-skip.
 			if (vAnyRendered) {
 				SDL_Delay(if (vAllVsync) 1u else 16u)
@@ -259,6 +267,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 		snapshotHandle.dispose()
 		for (vW in runtime.windows.toList()) runtime.scheduleDestroy(vW)
 		runtime.reapDestroyed()
+		com.compose.sdl.graphics.NativeReleaseQueue.drain()
 		appComposition.dispose()
 		appRecomposer.cancel()
 		appRecomposeJob.cancelAndJoin()
