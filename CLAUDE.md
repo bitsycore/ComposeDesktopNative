@@ -482,12 +482,23 @@ optimize second. See `ROADMAP.md` for the renderer work these support.
 
 ### Frame profiler — `CDN_PROFILE=1`
 
-Set the env var and run any native app; every ~2 s of rendered frames it prints
-avg/max ms per main-loop phase (`events` / `app` pump / `pump` per-window /
-`render`). Implemented in `ComposeWindow.kt` via SDL performance counters. Use
-it to confirm WHERE time goes before touching draw code — e.g. it showed
-`render` is ~32 ms of a 39 ms bubble-wrap frame, i.e. the renderer, not
-composition, is the bottleneck.
+Set the env var (`CDN_PROFILE=1`, or `=<path>` for a specific file) and run any
+native app; every ~2 s of rendered frames it writes avg/max ms per main-loop
+phase (`events` / `app` pump / `pump` per-window / `render`) to a FILE
+(`cdn_profile.log` by default — works for GUI-subsystem apps like the demo that
+have no console). The line also carries render SUB-phases (`layout` / `draw` /
+`present`) and per-frame DRAW COUNTERS from `DrawStats` (`geo` =
+SDL_RenderGeometry submits, `verts`, `masks` = rounded-clip offscreen passes,
+`text`, `img` blits) — so you can see WHAT `draw` is doing, not just that it's
+slow. `CDN_FORCERENDER=1` renders every frame (bypasses idle-skip) so
+steady-state timings can be read on otherwise-idle static screens.
+
+**Caveat learned the hard way:** `present` is vsync-blocking, so every timing is
+capped by the DISPLAY refresh of the machine running the app. A 75 Hz dev
+display makes every app look "75 fps, present-bound" no matter what — so profile
+on the TARGET refresh rate before concluding anything about a frame-rate gap
+(the demo-70 / apidemo-144 report could not be reproduced on a 75 Hz box, where
+both pinned at 75 fps and the demo's `draw` was actually the lighter of the two).
 
 ### Interaction probe — `scripts/probe/`
 
