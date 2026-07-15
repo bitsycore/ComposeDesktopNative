@@ -47,6 +47,23 @@ surface / windowing / event-loop glue** (`SkiaBridge`, `SkiaGLBridge`,
 `SkiaSurfaceBridge`, `GpuReadback`, and the SDL backend's surface plumbing) — those
 stay ours because there is no renderer-agnostic upstream to vendor for them.
 
+**Guiding rule — minimize divergence from "normal" upstream.** Scope also reaches
+the *top layer we treat as the renderer* — the owner's layer plumbing, the
+`GraphicsLayer` actual, the `OwnedLayer` — wherever **our version was edited more
+than SDL/windowing interop actually requires**. The divergence budget is exactly
+"what the SDL loop / windowing / no-upstream-exists forces, and no more"; anything
+past that gets re-aligned to upstream (re-vendor it, or trim the edit back). By
+this rule:
+- **Re-align (over-edited vs normal):** `ProjectOwnedLayer` + `ComposeOwner.createLayer`
+  (hand-rolled stand-in for `GraphicsLayerOwnerLayer` + `OwnedLayerManagerImpl`);
+  the lambda-replay body of `GraphicsLayer.native.kt` (vs `SkiaGraphicsLayer`); the
+  dead `cacheKey` scaffolding. These are the "too much edited" files.
+- **Diverged on purpose (within budget), keep:** `ComposeRootHost` / `ComposeOwner`'s
+  no-op subsystems and the SDL main-loop wiring in `:window`; the GL/surface glue —
+  the interop the preamble calls out.
+- **Zero divergence already, leave alone:** the verbatim-vendored `NodeCoordinator` /
+  `LayoutNode` / `MeasureAndLayoutDelegate` and the common draw DSL.
+
 This document supersedes `ROADMAP.md` and `NEXT-SESSION.md` (see
 [§12](#12-disposition-of-the-old-docs)).
 
