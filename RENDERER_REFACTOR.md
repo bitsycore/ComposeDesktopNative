@@ -32,6 +32,21 @@ immediate-mode stand-ins.** This buys us, in one move:
 - **Far fewer decisions on our side** — the layer semantics, invalidation, matrix
   math, compositing rules become vendored upstream code, not ours to design.
 
+**Scope — the whole per-renderer rendering stack, not just the retaining side.**
+The retained-layer engine is the organizing *spine*, but the effort covers
+**everything in the two renderer source sets** (`skikoRendererMain` +
+`sdlRendererMain`) and the shared graphics actuals in `nativeMain`: `Canvas`,
+`DrawScope`/paint-brush translation, `Path`/`PathEffect`/`PathMeasure`,
+`Shader`/gradients/`TileMode`, `ColorFilter`, `RenderEffect`, images/`ImageBitmap`,
+clip, shadow, offscreen, and the `GraphicsLayer`/RenderNode itself. Track V
+([§6](#6-phased-implementation-plan)) and the feature audit
+([§8](#8-feature-parity-audit-vs-skiko)) sweep all of it. **Held out of scope by
+design** (the "special SDL interoperability" of the preamble): **text** shaping/
+paint (`SkiaTextRenderer` / `SdlParagraph` — genuinely platform) and the **GL /
+surface / windowing / event-loop glue** (`SkiaBridge`, `SkiaGLBridge`,
+`SkiaSurfaceBridge`, `GpuReadback`, and the SDL backend's surface plumbing) — those
+stay ours because there is no renderer-agnostic upstream to vendor for them.
+
 This document supersedes `ROADMAP.md` and `NEXT-SESSION.md` (see
 [§12](#12-disposition-of-the-old-docs)).
 
