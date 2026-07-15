@@ -478,7 +478,7 @@ since they're newer.
 
 Whole-project renderer-touching change → run **parity** (broad net). Chasing
 one reported interaction → **probe** (targeted). Slow → **profiler** first,
-optimize second. See `ROADMAP.md` for the renderer work these support.
+optimize second. See `RENDERER_REFACTOR.md` for the renderer work these support.
 
 ### Frame profiler — `CDN_PROFILE=1`
 
