@@ -344,6 +344,14 @@ internal class Sdl3Canvas(
 		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
 		fSavedOffscreenTarget = SDL_GetRenderTarget(vRenderer)
 		SDL_SetRenderTarget(vRenderer, vTex.reinterpret())
+		// Clear to transparent. Render-target textures aren't auto-cleared, and a
+		// retained-layer texture (SdlRenderNode) is REUSED across re-records — without
+		// this, a re-record ghosts the previous content, which showed up as multi-frame
+		// instability on churny screens (Pickers). Fresh textures happen to be zeroed
+		// so static leaves were fine, but reuse needs an explicit clear. RenderClear
+		// fills with the draw colour ignoring blend, so (0,0,0,0) = transparent.
+		SDL_SetRenderDrawColor(vRenderer, 0u, 0u, 0u, 0u)
+		SDL_RenderClear(vRenderer)
 		fClip = null
 		SDL_SetRenderClipRect(vRenderer, null)
 	}
