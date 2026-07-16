@@ -514,14 +514,15 @@ skikoMain/kotlin/ -> src/vendor/skikoRenderer/kotlin/
 #     | skikoMain/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt -> src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/SkiaVertexMode.skiko.kt
 #     | skikoMain/kotlin/androidx/compose/ui/graphics/layer/SkiaGraphicsLayer.skiko.kt -> src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/layer/SkiaGraphicsLayer.skiko.kt
 #     | skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt -> src/vendor/skikoRenderer/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt
-!skikoMain/kotlin/androidx/compose/ui/graphics/ImageBitmap.skiko.kt
+# B6.1 (2026-07-16): un-refused — skiko leg adopts upstream graphics actuals.
+# SkiaBackedCanvas is then MANUAL-VENDORED (moved to src/skikoRendererMain, re-refused
+# below) to also implement the port Native* draw contracts. See RENDERER_TASKS.md B6.1.
 !skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.skiko.kt
-!skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedPaint.skiko.kt
 !skikoMain/kotlin/androidx/compose/ui/graphics/SkiaGraphicsContext.skiko.kt
-!skikoMain/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.skiko.kt
-!skikoMain/kotlin/androidx/compose/ui/graphics/SkiaShader.skiko.kt
 !skikoMain/kotlin/androidx/compose/ui/graphics/layer/SkiaGraphicsLayer.skiko.kt
 !skikoMain/kotlin/androidx/compose/ui/graphics/shadow/Blur.skiko.kt
+# B6.1: MANUAL-VENDORED (flattened toBitmap/putBytesInto expect-actuals — see the file).
+!skikoMain/kotlin/androidx/compose/ui/graphics/SkiaImageAsset.skiko.kt
 
 SET_FOLDER=compose/ui/ui-text/src
 
