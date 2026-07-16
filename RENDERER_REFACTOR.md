@@ -786,3 +786,29 @@ import + annotation to build the demo exe for verification. Worth a separate fix
 display list; replay cached) and make `GraphicsLayer` a façade over
 `NativeRenderNode` — Phase 2, where the "stop re-tessellating" perf win lands. Then
 the hit-testing probe pass, then Skia-leg Phase 1 verification on mac/CI.
+
+### 2026-07-16 — navigation crash found + fixed; flip verified end-to-end
+
+**Bug (caught by the probe pass, missed by screenshots):** the flip crashed with
+`IndexOutOfBoundsException: index 1, size 1` on ANY navigation (`--nav3test` exit 3;
+sidebar click killed the window). `--screen` screenshots never navigate, so they
+missed it. Cause: my hand-written `notifyLayerIsDirty` removed a layer from
+`dirtyLayers` unconditionally, but `renderRoot` iterates `0 until dirtyLayers.size`
+calling `updateDisplayList()` which sets `isDirty = false` → `notifyLayerIsDirty(false)`
+→ removed the layer mid-loop → next index ran off the end. A textbook case of the
+plan's own "minimize divergence" rule: I diverged from upstream's
+`OwnedLayerManagerImpl` and it bit me.
+
+**Fix (commit `49b14337`):** aligned `notifyLayerIsDirty` + `renderRoot` to upstream
+verbatim — while `isDrawingContent`, a clear is a no-op; the `dirtyLayers.clear()`
+after the loop drops them all, so the list can't shrink during iteration.
+
+**Verified end-to-end (SDL leg):** `--nav3test` PASS (was exit 3), `--backtest`
+PASS, and the sidebar click navigates to GraphicsLayer correctly — the click lands
+on the right row (hit-test through the new layer matrix works) AND the screen swaps
+(layer create/destroy/recycle churn, no crash). Combined with the earlier render
+checks, **the Phase 1 flip is now fully verified**: rendering, hit-testing, and the
+navigation layer-lifecycle all correct.
+
+**Next unchanged:** `SdlRenderNode` storage swap (the perf win), then Skia-leg
+verification on mac/CI.
