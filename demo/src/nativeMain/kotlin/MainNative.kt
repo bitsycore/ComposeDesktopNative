@@ -719,6 +719,10 @@ private fun runMetricsProbe() {
                             "oneM3=${vOneM3.height} threeM3=${vThreeM3.height} base1M3=${vOneM3.firstBaseline}"
                     )
                 }
+                for ((vS, vL) in listOf(24 to 24, 24 to 25, 32 to 24, 16 to 16)) {
+                    val vB = paragraph("Hg", vS, vL, true)
+                    println("metrics: boundary $vS/$vL m3=${vB.height} base=${vB.firstBaseline}")
+                }
                 val vBig = paragraph("42", 48, 24, false)
                 val vBigM3 = paragraph("42", 48, 24, true)
                 println("metrics: big48/lh24 raw=${vBig.height} base=${vBig.firstBaseline} m3=${vBigM3.height} baseM3=${vBigM3.firstBaseline}")

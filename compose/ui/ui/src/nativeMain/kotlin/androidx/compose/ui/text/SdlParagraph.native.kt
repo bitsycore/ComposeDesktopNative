@@ -85,10 +85,10 @@ internal class SdlParagraph(
 		style.lineHeight.type == TextUnitType.Sp -> style.lineHeight.value * density
 		style.lineHeight.type == TextUnitType.Em -> style.lineHeight.value * fontPx
 		else -> null
-		// Upstream ignores a lineHeight SMALLER than the font size (skia only applies the
-		// height multiplier when >= 1em) — e.g. Text(fontSize = 48.sp) under bodyLarge's
-		// 24sp lineHeight keeps the 48px font cell (probe: big48/lh24 -> 65, not 24).
-	}?.takeIf { it > 0f && it >= fontPx }
+		// Upstream ignores a lineHeight NOT STRICTLY GREATER than the font size (skia
+		// only applies height multipliers > 1em) — probe: 48sp/24lh -> the 65px cell,
+		// and 24sp/24lh (h = 1.0 exactly) -> the 33px cell, while 24sp/25lh -> 25.
+	}?.takeIf { it > fontPx }
 	// How the band applies depends on TextStyle.lineHeightStyle (probe-verified vs JVM):
 	// - unspecified (raw BasicText): COMPAT TRIM — the first line keeps the tight font
 	//   cell, lineHeight is the advance between baselines. n lines = cell + (n-1)*lh.

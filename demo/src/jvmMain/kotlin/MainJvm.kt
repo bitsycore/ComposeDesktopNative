@@ -190,6 +190,11 @@ private fun printParagraphMetrics() {
                     "oneM3=${oneM3.height} threeM3=${threeM3.height} base1M3=${oneM3.firstBaseline}"
             )
         }
+        // h-boundary cases: does upstream apply lineHeight at exactly 1em?
+        for ((s, l) in listOf(24 to 24, 24 to 25, 32 to 24, 16 to 16)) {
+            val b = paragraph("Hg", s, l, true)
+            println("metrics: boundary $s/$l m3=${b.height} base=${b.firstBaseline}")
+        }
         // The band-smaller-than-cell case (Counter's fontSize=48 under body lineHeight).
         val big = paragraph("42", 48, 24, false)
         val bigM3 = paragraph("42", 48, 24, true)
