@@ -34,9 +34,14 @@ Windows pixel-parity). See `RENDERER_CONVERGE.md` §0.5.
 - [x] **P0.1** Make `scripts/parity/parity.py` target-aware (`macosArm64` default + a
   `-Prenderer=sdl3` variant), not hardcoded to the mingw exe — so the Mac runs parity for
   BOTH legs. *Done:* one flag switches leg; both produce a ranked report. [CONVERGE §5/§8]
-- [ ] **P0.2** Add a one-command **MAC-VERIFY runbook** (`scripts/verify-mac.sh` or a
+- [~] **P0.2** Add a one-command **MAC-VERIFY runbook** (`scripts/verify-mac.sh` or a
   Makefile/Gradle task) chaining the MAC-VERIFY primitive; non-zero exit on any failure.
   *Done:* `verify-mac` builds both legs + runs self-tests + parity + perf spot-check. [§5]
+  *Status: script AUTHORED on Windows (`scripts/verify-mac.sh` — both legs: build → 5
+  probes → parity → CDN_PROFILE draw-ms gate vs a self-seeded `build/verify-mac/
+  perf-baseline.txt`, +20% margin); bash -n clean, parsing + awk gate unit-smoked. NOT yet
+  run end-to-end — needs the Mac. First Mac run seeds perf baselines + the parity
+  `macosArm64/{skia,sdl3}` baseline keys (P0.4 note).*
 - [x] **P0.3** Font-align the JVM parity leg — load the bundled `NotoSans` in `MainJvm.kt`'s
   `ScreenHost` (stage it into jvm resources; apply via M3 Typography + `LocalTextStyle`).
   *Done (impl + load-verified on Windows):* resource staged, font loads + applies (no
@@ -181,3 +186,9 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   are inert outside screenshot mode; full parity PASSed against the OLD frame-6 baselines
   (55/57 identical %, only Pickers 20.02→19.49 + Remember 14.72→14.71 moved), re-seeded,
   fresh full run PASS exit 0 with every screen exactly on baseline.
+- 2026-07-16 · **P0.2 (in progress)** · authored `scripts/verify-mac.sh` (host-target
+  detect, both legs: build → nav3/back/click/scroll/multiwin probes gated on PASS →
+  parity per leg → LazyColumn/Tabs draw-ms spot-check vs self-seeded baseline, +20% gate;
+  `--update-perf-baseline` reseeds) · verified on **Windows** only to the extent possible:
+  `bash -n` clean, profiler-line parse + regression awk unit-smoked. End-to-end run,
+  perf-baseline seed and parity mac keys all pending the first Mac session.
