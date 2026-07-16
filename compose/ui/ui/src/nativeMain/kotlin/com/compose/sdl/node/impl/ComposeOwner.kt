@@ -297,17 +297,12 @@ internal class ComposeOwner(
 			containsControls: Boolean,
 		): Long = originalTimeoutMillis
 	}
-	// GraphicsLayer here is the project record/replay actual (see
-	// GraphicsLayer.native.kt) — SharedTransitionLayout overlays and
-	// rememberGraphicsLayer() create layers through this context. The
-	// expect class hides its constructor/release from commonMain, hence
-	// the project factory hops.
-	override val graphicsContext: GraphicsContext = object : GraphicsContext {
-		override fun createGraphicsLayer(): GraphicsLayer =
-			com.compose.sdl.graphics.createProjectGraphicsLayer()
-		override fun releaseGraphicsLayer(layer: GraphicsLayer) =
-			com.compose.sdl.graphics.releaseProjectGraphicsLayer(layer)
-	}
+	// Created behind a per-renderer factory seam (B2 / P1.3): SDL uses the project
+	// record/replay GraphicsContext; the Skia leg swaps in upstream's SkiaGraphicsContext
+	// at P1.6. SharedTransitionLayout overlays and rememberGraphicsLayer() create layers
+	// through this context. See com/compose/sdl/graphics/GraphicsContextFactory.kt.
+	override val graphicsContext: GraphicsContext =
+		com.compose.sdl.graphics.createGraphicsContext()
 	override val textToolbar: TextToolbar = object : TextToolbar {
 		override val status: androidx.compose.ui.platform.TextToolbarStatus
 			get() = androidx.compose.ui.platform.TextToolbarStatus.Hidden
