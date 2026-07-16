@@ -924,3 +924,28 @@ fast-path restriction (transform/alpha/image/icon all cache).
 - **Risk:** intrudes on `Sdl3DrawScope`'s native vertex buffers + `Sdl3Canvas`'s
   clip/state machine. Verify against the current renderer with the parity harness
   (not spot screenshots) + profiler. Sizeable focused effort — do it on its own.
+
+### 2026-07-16 — #1 full sweep: DO NOT FLIP the default yet
+
+Ran the cached-vs-default diff across **all 57 demo screens** (`build/rr_sweep/`).
+A default-vs-default control was **0.000% on every outlier** (renders are
+deterministic), so the diffs below are real, not screenshot jitter.
+
+- **48 screens: ≤0.07%** (sub-perceptual — the texture-round-trip AA floor). Fine.
+- **Pickers: 13.1%**, **Carousel: 4.4%** — REAL caching bugs. Pickers' cached content
+  sits ~180px too high (the "TimePicker 14:30" header shows in cached but is scrolled
+  off in default) — a **positioning/scroll discrepancy**, not colour/AA. Almost
+  certainly caching a scrollable / larger-than-`size` / clipped-viewport container
+  into a `size`-clamped texture, so the blit shows the wrong slice / loses the scroll
+  offset. Carousel (auto-scrolling) is likely the same class.
+- **GraphicsLayer 0.18% / Drawers 0.14% / Shadows 0.14%** — small; these screens
+  animate, so most is animation-timing (cached vs default reach the screenshot frame
+  at slightly different clock states), not a rendering bug.
+
+**Decision: keep caching flag-gated (`CDN_LAYERCACHE=1`), default stays
+`DeferredRenderNode`.** The sweep caught a real regression (Pickers) before it could
+ship — exactly why the flag + sweep exist. **Before flipping the default:** fix the
+scroll/oversized-container positioning bug (a leaf whose content or clip exceeds its
+`size`, or a scroll layer, must not texture-cache — extend the record-time bail like
+the image/child checks), then re-sweep to confirm all screens ≤ the sub-perceptual
+floor. The common static case (the perf win) remains verified + available via the flag.
