@@ -1,14 +1,14 @@
 package com.compose.sdl.graphics
 
 // ==================
-// MARK: createNativeRenderNode — Skia renderer actual
+// MARK: createNativeRenderNode — Skia renderer (transient, pre-B2/P1.6)
 // ==================
 
-/* Returns the shared, renderer-agnostic DeferredRenderNode (replay-the-block).
-   Phase 2a will swap this for a node backed by skiko's
-   org.jetbrains.skiko.node.RenderNode (a real display list) so the Skia leg gets
-   record-once/replay caching + upstream shadow/clip fidelity — see
-   RENDERER_REFACTOR.md §4a. That swap is local to this actual; GraphicsLayer /
-   GraphicsLayerOwnerLayer don't change. */
-internal actual fun createNativeRenderNode(context: NativeRenderNodeContext): NativeRenderNode =
+/* Returns the port DeferredRenderNode (replay-the-block). This whole node cluster
+   (GraphicsLayer.native / NativeRenderNode / DeferredRenderNode) is a TRANSIENT copy
+   on the Skia leg: P1.2 relocated the shared port cluster into each renderer source
+   set so the Skia leg keeps the port GraphicsLayer while behaviour is unchanged; P1.6
+   replaces this side with upstream's SkiaGraphicsLayer + skiko RenderNode and deletes
+   this file. See RENDERER_TASKS.md P1.2/P1.6 + RENDERER_CONVERGE.md §4 (B2). */
+internal fun createNativeRenderNode(context: NativeRenderNodeContext): NativeRenderNode =
 	DeferredRenderNode()

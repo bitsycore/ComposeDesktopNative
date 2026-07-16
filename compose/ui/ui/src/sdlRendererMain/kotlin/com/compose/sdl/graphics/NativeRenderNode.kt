@@ -103,10 +103,3 @@ internal class NativeRenderNodeContext(
 	val measureDrawBounds: Boolean = false,
 )
 
-/**
- * Create a [NativeRenderNode] for the active renderer. One actual per renderer
- * source set (skikoRenderer / sdlRenderer); exactly one is attached per target, so
- * resolution is unambiguous — same pattern as [createRenderBackend]. Declared here
- * so shared nativeMain metadata is self-contained (CLAUDE.md source-set notes).
- */
-internal expect fun createNativeRenderNode(context: NativeRenderNodeContext): NativeRenderNode

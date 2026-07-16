@@ -29,7 +29,7 @@ private val layerCacheMode: String by lazy {
 	platform.posix.getenv("CDN_LAYERCACHE")?.toKString() ?: ""
 }
 
-internal actual fun createNativeRenderNode(context: NativeRenderNodeContext): NativeRenderNode =
+internal fun createNativeRenderNode(context: NativeRenderNodeContext): NativeRenderNode =
 	when (layerCacheMode) {
 		"off", "defer", "0" -> DeferredRenderNode()
 		"1", "texture" -> SdlRenderNode()
