@@ -37,9 +37,14 @@ Windows pixel-parity). See `RENDERER_CONVERGE.md` §0.5.
 - [ ] **P0.2** Add a one-command **MAC-VERIFY runbook** (`scripts/verify-mac.sh` or a
   Makefile/Gradle task) chaining the MAC-VERIFY primitive; non-zero exit on any failure.
   *Done:* `verify-mac` builds both legs + runs self-tests + parity + perf spot-check. [§5]
-- [ ] **P0.3** Font-align the JVM parity leg — load the bundled `NotoSans` in `MainJvm.kt`'s
-  `ScreenHost`. *Done:* a text-heavy screen's Skia-leg parity drops toward ~0% (kills the
-  font-drift noise; exposes any real layout-engine delta). [§8]  *blocked-by: P0.1*
+- [x] **P0.3** Font-align the JVM parity leg — load the bundled `NotoSans` in `MainJvm.kt`'s
+  `ScreenHost` (stage it into jvm resources; apply via M3 Typography + `LocalTextStyle`).
+  *Done (impl + load-verified on Windows):* resource staged, font loads + applies (no
+  "not aligned" warning). **Finding:** on the **SDL leg** parity is NOT dominated by typeface
+  but by an **accumulating vertical line-metric delta** (SDL3_ttf's NotoSans line height ≠
+  Skia's) → text ghosts down the page, so the SDL-leg % barely moves (Buttons 16.5→17.1).
+  The ~0% golden-master payoff is **Skia-leg (Mac) only** — pending a Mac run. Confirms the
+  §1 "layout-engine delta". [§8]  *blocked-by: P0.1*
 - [ ] **P0.4** `parity.py`: per-screen golden baselines + tolerances (in-repo JSON) and
   **exit non-zero** on breach or `NATIVE FAILED` (today it always exits 0). *Done:* a seeded
   regression fails the run. [§8]  *blocked-by: P0.1*
@@ -142,3 +147,8 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   headers on the 3 renderer manual-vendors) · verified on **Windows**: clean run exit 0
   (3 files match pin `1be9d64`), simulated stale ref exit 1; upstream clone auto-detected
   for the deeper base..pin diff.
+- 2026-07-16 · **P0.3** · font-align JVM parity leg (stage + load NotoSans; M3 Typography +
+  LocalTextStyle) · verified on **Windows**: staged to `demo/build/processedResources/jvm/
+  main/font/NotoSans.ttf`, loads + applies (no warning). SDL-leg % ~unchanged — text diff is
+  metric-dominated (accumulating vertical line-height drift SDL3_ttf-vs-Skia), NOT typeface;
+  ~0 golden-master is Skia-leg/Mac (pending). Finding logged in the task note.
