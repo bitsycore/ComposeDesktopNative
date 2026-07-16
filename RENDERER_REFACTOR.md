@@ -1166,3 +1166,34 @@ real-world case — scrolling a list of mostly-static rows — is exactly LazyCo
 apidemo has no headless-capture mode (opens a window, no auto-quit) so it couldn't be
 swept autonomously — worth a manual spot-check, though the change is draw-op level and
 verified across the 57 demo screens spanning the full primitive range.
+
+### 2026-07-16 — Spanned-text capture landed (commit `63b43087`) + residuals resolved
+
+Styled text now caches. `Sdl3TextRenderer.drawText`'s spanned branch records **one
+TextRun per styled run** (colour / weight / italic / size / decoration) into the
+display list instead of bailing the whole leaf — same coordinate handling as the plain
+path, replay re-looks-up each segment texture by params (eviction-safe). Only a run
+with a `SpanStyle.background` still defers (the background fill isn't a captured command
+yet; rare — highlight/selection). Full 57-screen sweep clean; styled screens 0.000%.
+**Tabs** now caches its styled labels — text draws 38 → 16, `draw` 4.29 → 2.65 ms (−38%).
+
+Screens whose text sits in ONE monolithic layer (Text / Lists) still defer — not for
+span reasons but because that leaf mixes in something uncapturable (a child graphicsLayer
+or an image). This is **layer granularity**, the same boundary upstream skiko caches at:
+the win is best when the UI decomposes into many small leaves (LazyColumn, Tabs), weaker
+for a monolithic layer that re-records wholesale. Next coverage step (image capture)
+would unblock the common **icon + text list-item** leaf.
+
+**All flip residuals now explained — none is a static render bug except one cosmetic
+fringe.** Measured geo-vs-geo (determinism) and geo-vs-default at settled frames:
+- **Pickers** — geo-vs-geo 0.000% (geo is deterministic); geo-vs-default swings 0 → ~15%
+  purely by which settle phase the fixed capture frame lands on (a slow layout settle;
+  content is byte-identical when phase-aligned — confirmed 0.000% at a matched frame).
+- **ModShortcuts** — 0.000% settled; its earlier 0.095% was entry-settle sub-pixel drift
+  on the rotated squares (axis-aligned siblings never drifted).
+- **GraphicsLayer** — geo-vs-geo 0.000%, geo-vs-default **0.054%** even settled: a genuine
+  but tiny DETERMINISTIC rotated-edge AA difference (geo rotates pre-tessellated
+  local-space fringe; block-replay tessellates in device space). Cosmetic, sub-perceptual.
+
+So the geo default is correct everywhere; the only deterministic pixel delta vs the old
+path is a <0.06% AA fringe on rotated shapes. Everything else was screenshot timing.
