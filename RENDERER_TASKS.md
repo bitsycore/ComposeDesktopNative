@@ -143,10 +143,13 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   ~2% noise floor. **Post-fix ranking (what's actually left):**
   1. Pickers 19.5 — TimeInput focus auto-scroll positioning differs between legs
      (bring-into-view final offset); interaction-layout, not rendering.
-  2. Images 16.6 — image-specific (decode/scale/filtering); needs its own diff read.
-  3. Text 9.2 / AnnotatedString 8.1 / Search 5.3 — residual text features (letter-spacing,
-     span metrics, alignment details).
-  4. Everything else ≤ ~4.3% — the flattened tail; JVM is the fidelity tier for it (§0.5.3).
+  2. Images 16.6 — NOT image rendering: the JVM leg soft-WRAPS the descriptions one word
+     earlier (glyph advances run slightly wider) → +1 line → content below shifts. A
+     per-glyph advance-width parity item (kerning/advance rounding), its own investigation.
+  3. AnnotatedString 8.1 — metric-span line heights (styled cells vs upstream span boxes).
+  4. Search 5.3 — unread; then Canvas 4.3 / CustomLayout 4.1 and the ~2% tail — JVM is
+     the fidelity tier for the rest (§0.5.3).
+  *(Text 9.2 was the h=1.0 lineHeight boundary — fixed, now 3.1.)*
 
 ## Ongoing — vendoring cadence
 
@@ -231,6 +234,11 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   agree on all configs (one raw quirk left: JVM's 18.5px advance at 12sp/18 raw) ·
   verified on **Windows**: full parity PASS all 57, 9/9 probes PASS, baselines re-seeded
   at the collapsed levels. skiko-side mirrors compile-pend the Mac run.
+- 2026-07-16 · **P3.1 fix #4** · lineHeight h=1.0 boundary: upstream applies the multiplier
+  only STRICTLY above 1em (probe: 24sp/24lh → 33px cell, 24sp/25lh → 25) — the `>=` gate
+  was off-by-cell on every `Text(fontSize == inherited lineHeight)` row · verified on
+  **Windows**: Text 9.19→3.08, all other screens byte-identical, parity PASS, probes PASS,
+  baselines re-seeded. Boundary cases added to both metrics probes.
 - 2026-07-16 · **P0.2 (in progress)** · authored `scripts/verify-mac.sh` (host-target
   detect, both legs: build → nav3/back/click/scroll/multiwin probes gated on PASS →
   parity per leg → LazyColumn/Tabs draw-ms spot-check vs self-seeded baseline, +20% gate;
