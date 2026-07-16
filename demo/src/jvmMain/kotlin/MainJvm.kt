@@ -61,24 +61,47 @@ fun main(args: Array<String>) {
 private fun Array<String>.intArg(name: String, default: Int): Int =
     firstOrNull { it.startsWith("$name=") }?.substringAfter('=')?.toIntOrNull() ?: default
 
+// P0.5 render-to-quiescence (mirrors the native leg): step a VIRTUAL 60fps clock and
+// re-render while the scene still has invalidations, so entrance animations settle
+// before capture. Infinite animations are CANCELLED via the upstream test
+// InfiniteAnimationPolicy (they freeze at their initial value), so looping screens
+// settle too. The cap only guards never-settling content the policy can't reach.
+private const val FRAME_NANOS = 16_666_667L
+private const val MAX_FRAMES = 300
+
+private object CancelInfiniteAnimations : androidx.compose.ui.platform.InfiniteAnimationPolicy {
+    override suspend fun <R> onInfiniteOperation(block: suspend () -> R): R =
+        throw kotlinx.coroutines.CancellationException("infinite animations disabled for parity screenshots")
+}
+
 /* Render each registered screen headlessly (density 1 to match the native
-   physical-pixel screenshots) and write a PNG per screen. */
+   physical-pixel screenshots) to quiescence and write a PNG per screen. */
 @OptIn(ExperimentalComposeUiApi::class)
 private fun screenshotAllScreens(outDir: File, width: Int, height: Int) {
     outDir.mkdirs()
     val screens = allCategories().flatMap { it.screens }.distinctBy { it.name }
     for (screen in screens) {
-        val scene = ImageComposeScene(width, height, density = Density(1f)) {
+        val scene = ImageComposeScene(
+            width, height, density = Density(1f),
+            coroutineContext = kotlinx.coroutines.Dispatchers.Unconfined + CancelInfiniteAnimations,
+        ) {
             ScreenHost { screen.content() }
         }
         try {
-            val image = scene.render()
+            var nanos = 0L
+            var frames = 0
+            var image = scene.render(nanos)
+            while (scene.hasInvalidations() && frames < MAX_FRAMES) {
+                nanos += FRAME_NANOS
+                image = scene.render(nanos)
+                frames++
+            }
             val png = image.encodeToData(EncodedImageFormat.PNG) ?: continue
             File(outDir, "${screen.name}.png").writeBytes(png.bytes)
+            println("jvm screenshot: ${screen.name} (settled after $frames frame(s))")
         } finally {
             scene.close()
         }
-        println("jvm screenshot: ${screen.name}")
     }
 }
 

@@ -125,6 +125,15 @@ fun main(args: Array<String>) {
         append(" [").append(vCli.gpu).append("]")
     }
 
+    // Screenshot runs freeze infinite animations (rememberInfiniteTransition & co. cancel
+    // at their initial value) so every screen can reach quiescence, and step the frame
+    // clocks on VIRTUAL time (16.6ms/frame, like the JVM leg's render(nanos)) so animation
+    // races resolve identically every run — both must be set before the first window composes.
+    if (vCli.screenshot != null) {
+        com.compose.sdl.disableInfiniteAnimations = true
+        com.compose.sdl.useVirtualFrameTime = true
+    }
+
     // Multi-window app shell: the showcase window plus any extra windows opened
     // from WindowScreen's "Multi-window" section (state-driven, Compose Desktop
     // style — the count IS the windows' lifetime).
@@ -136,14 +145,23 @@ fun main(args: Array<String>) {
         height = vCli.height,
         gpu = vCli.gpu,
         onFrame = if (vCli.screenshot != null) {
+            // P0.5 render-to-quiescence: capture once the window reports no pending
+            // invalidations for a few consecutive frames (entrance animations settled,
+            // async loads applied), or at the --frames cap as a safety net. Replaces
+            // the fixed frame-6 capture, whose mid-animation timing was run-dependent.
+            var vQuietFrames = 0
             { bridge, frameIndex ->
-                if (frameIndex == vCli.frames) {
+                vQuietFrames = if (com.compose.sdl.windowHasInvalidations()) 0 else vQuietFrames + 1
+                if (vQuietFrames >= 3 || frameIndex >= vCli.maxFrames) {
+                    if (frameIndex >= vCli.maxFrames) {
+                        println("Screenshot: quiescence not reached by frame $frameIndex - capturing anyway")
+                    }
                     val vSnap = bridge.snapshotBgra()
                     if (vSnap != null) {
                         val (vW, vH, vBgra) = vSnap
                         val vBmp = encodeBmpBgra32(vW, vH, vBgra)
                         writeFile(vCli.screenshot, vBmp)
-                        println("Wrote screenshot: ${vCli.screenshot} (${vW}x${vH})")
+                        println("Wrote screenshot: ${vCli.screenshot} (${vW}x${vH}, settled at frame $frameIndex)")
                     } else println("Screenshot snapshot was null")
                     false  // quit
                 } else true

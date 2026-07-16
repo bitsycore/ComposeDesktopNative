@@ -65,6 +65,11 @@ class ComposeRootHost(inDensity: Float = 1f) {
 		fOwner.animationFrameClock.sendFrame(inNanos)
 	}
 
+	// True while a node-level animation (scroll fling, node Animatable) awaits the next
+	// animation frame — the node half of the window's quiescence signal (render-to-quiescence
+	// screenshot capture asks the window whether ANY work is still pending).
+	fun hasAnimationAwaiters(): Boolean = fOwner.animationFrameClock.hasAwaiters
+
 	fun measureAndLayout() {
 		// Flush deferred end-of-apply work (focus invalidation etc.) before measuring, so
 		// requestFocus() from composition OR from a pointer event this frame takes effect —

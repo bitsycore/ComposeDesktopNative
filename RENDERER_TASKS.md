@@ -49,12 +49,21 @@ Windows pixel-parity). See `RENDERER_CONVERGE.md` §0.5.
   keyed `target/renderer`) + `--update-baselines` seeder + **exit non-zero** on breach
   (`> baseline + max(3pts, 25%)`) or `NATIVE FAILED`. *Done (Windows):* seeded 57 screens
   for `mingwX64/sdl3`; PASS exit 0, simulated regression exit 1 (`REGRESSION (+16.07)`),
-  restore clean; output made ASCII-only (cp1252 console). *Re-seed after P0.5 (quiescence
-  changes captures) and add a `macosArm64/skia` key on the Mac.* [§8]  *blocked-by: P0.1*
-- [ ] **P0.5** Render-to-quiescence capture on both legs (native `hasInvalidations()`; JVM
+  restore clean; output made ASCII-only (cp1252 console). *Re-seeded post-P0.5 (only
+  Pickers 20.02→19.49 and Remember moved — the rest were already settled at frame 6).
+  Still to add: a `macosArm64/skia` key on the Mac.* [§8]  *blocked-by: P0.1*
+- [x] **P0.5** Render-to-quiescence capture on both legs (native `hasInvalidations()`; JVM
   `render(nanos)`/`hasInvalidations`), retiring the fixed `--frames=6`; "disable animations"
   seed for never-settling screens. *Done:* Pickers native-vs-JVM stable across repeated
-  runs. [§8]
+  runs. **Implementation went further than planned:** quiescence alone didn't stabilise
+  Pickers (its TimeInput focus → bring-into-view scroll races real-time frames → final
+  offset varied ±10px per run), so the native leg also got **virtual frame time**
+  (`useVirtualFrameTime` — clocks step a fixed 16.6ms/frame, mirroring the JVM leg's
+  `render(nanos)`). The "disable animations" seed is `disableInfiniteAnimations`: a
+  cancelling `InfiniteAnimationPolicy` in each window's Recomposer context (upstream's
+  test mechanism), JVM via `ImageComposeScene(coroutineContext=…)`. Result: BOTH legs
+  byte-identical across repeated runs, all 57 screens. `--frames=N` is now a quiescence
+  CAP (default 300), not a fixed capture point. [§8]
 - [x] **P0.6** Manual-vendor **drift tripwire**: `// VENDOR-BASE: <upstream-path>@<ref>`
   headers + a script that flags when a manual vendor's recorded ref lags the current pin.
   *Done:* `scripts/compose-fork/check-vendor-drift.py` reports clean today (exit 0) and a
@@ -159,3 +168,16 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   --update-baselines, non-zero exit on >baseline+max(3pts,25%) or NATIVE FAILED) · verified
   on **Windows**: full 57-screen `mingwX64/sdl3` baseline seeded; PASS exit 0, simulated
   regression exit 1, restore clean; fixed cp1252 console crash (ASCII-only output).
+- 2026-07-16 · **P0.5** · render-to-quiescence on both legs + deterministic screenshot mode
+  (native: `windowHasInvalidations()` [needsFrame + recomposer.hasPendingWork + both
+  BroadcastFrameClocks' hasAwaiters], `disableInfiniteAnimations` [cancelling
+  InfiniteAnimationPolicy in the window Recomposer context], `useVirtualFrameTime` [clocks
+  step 16.6ms/frame]; JVM: `render(nanos)` virtual-clock loop until `hasInvalidations()`
+  clears + the same policy in ImageComposeScene's context; `--frames` repurposed as cap,
+  default 300) · verified on **Windows**: Pickers/Animation/Buttons byte-identical across
+  3 native runs (Pickers settles at exactly frame 12 every run; was drifting ±10px scroll
+  offset from its TimeInput bring-into-view race) and all 57 JVM screens byte-identical
+  across 2 sweeps; 5 interaction probes (click/scroll/back/multiwin/nav3) PASS — the flags
+  are inert outside screenshot mode; full parity PASSed against the OLD frame-6 baselines
+  (55/57 identical %, only Pickers 20.02→19.49 + Remember 14.72→14.71 moved), re-seeded,
+  fresh full run PASS exit 0 with every screen exactly on baseline.
