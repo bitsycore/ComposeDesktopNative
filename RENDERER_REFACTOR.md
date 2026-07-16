@@ -1124,3 +1124,45 @@ Remaining on the SDL leg: extend capture to **image** and **rounded-clip** leave
 they cache too (both defer correctly today — correctness is not at stake, only extra
 fast-path coverage); shrink the rotated-edge AA delta if it's ever worth it. #4 the
 Skia leg (skiko `RenderNode`) is still mac/CI-only — can't build on Windows.
+
+### 2026-07-16 — Perf characterization of the flip (no regression; win ∝ static content)
+
+Profiled geo(default) vs `=off`(Deferred) with `CDN_FORCERENDER=1` (renders every
+frame, so steady-state `draw` is comparable) across static + animated screens:
+
+| screen        | geo draw | off draw | note |
+|---------------|----------|----------|------|
+| LazyColumn    | 1.52 ms  | 3.55 ms  | −57% — plain rows cache (text 6 vs 22, masks 0 vs 2) |
+| Animation     | 1.75 ms  | 1.95 ms  | faster even while animating (see below) |
+| Recomposition | 0.84 ms  | 0.88 ms  | |
+| Counter/Text/Lists/Shapes/Icons/Widgets | ≈ off | ≈ off | within noise |
+
+**Two takeaways:**
+1. **Geo is never slower than Deferred** — equal within noise everywhere, faster where
+   content caches. A deferred leaf (rounded-clip / spanned text / image / alpha) runs
+   the *same* block-replay as the Deferred node, so geo ≤ off by construction.
+2. **The win is proportional to how much PLAIN geometry + PLAIN text a screen has.**
+   `SdlParagraph` passes `inSpans = spanStyles.takeIf { isNotEmpty() }`, so plain
+   `Text` captures (null spans) and only genuinely-spanned/decorated/icon text defers.
+   That's why LazyColumn (plain rows) wins big while the Text/Lists *showcases* (styled
+   samples) sit at parity — correct behaviour, not a miss.
+
+**Why geo beats Deferred even on Animation:** most Compose animations drive a
+graphicsLayer TRANSFORM (translationX / alpha / scale), which changes a node PROPERTY,
+not its recorded content — so the display list is NOT re-recorded, it's replayed under
+the new transform. Cached content + a moving transform is the geo node's best case (the
+same reason skiko replays a RenderNode's Picture under an updated matrix). The killer
+real-world case — scrolling a list of mostly-static rows — is exactly LazyColumn's −57%.
+
+**Future coverage increments (correctness not at stake — all defer correctly today):**
+- **Spanned-run capture** — capture each styled run (seg/px/vars/style/color/background/x)
+  like the plain path; widens the win to styled-text-heavy screens. Delicate (baselines,
+  mixed sizes, backgrounds) — do it supervised.
+- **deferMode recovery** — `SdlDisplayListRenderNode.deferMode` is sticky; a leaf that
+  once saw a child / unsupported op never re-caches. Resetting it per `record()` (children
+  are re-detected via `sawChild` each pass anyway) would let it recover. Perf-only.
+- **image + rounded-clip leaves** — cache the blit / defer-realized mask.
+
+apidemo has no headless-capture mode (opens a window, no auto-quit) so it couldn't be
+swept autonomously — worth a manual spot-check, though the change is draw-op level and
+verified across the 57 demo screens spanning the full primitive range.
