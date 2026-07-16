@@ -186,12 +186,30 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 		// Layer-level alpha / blend / colorFilter / renderEffect aren't in the captured
 		// geometry (they're applied at replay); until geo replay folds them in, defer
 		// those to the crisp block-replay.
+		//
+		// A ROUNDED / PATH content clip also forces the block-replay: the fast path
+		// re-emits raw geometry via SDL_RenderGeometry, which the SDL canvas clips only
+		// to a RECT (SDL_SetRenderClipRect). Its rounded-corner mask is an offscreen
+		// realized lazily from drawRect/admitDraw — a path replayBatch bypasses — so a
+		// rounded layer clip would go UNCUT on the fast path. That was the Carousel
+		// diff: each item's morphing rounded mask was ignored, so the coloured card
+		// overflowed its silhouette (wrong shape + apparent horizontal shift). The
+		// block-replay re-runs the block through drawRect, which realizes the mask
+		// correctly (== DeferredRenderNode). A plain RECTANGLE clip is honoured by
+		// SDL_RenderGeometry directly, so it stays on the fast path.
+		val outline = clipOutline
+		val hasShapeClip = clip && (outline is Outline.Rounded || outline is Outline.Generic)
 		val needsCompositing = alpha < 1f || blendMode != BlendMode.SrcOver ||
-			colorFilter != null || renderEffect != null
+			colorFilter != null || renderEffect != null || hasShapeClip
 
 		if (list != null && !needsCompositing && canvas is Sdl3Canvas && w > 0f && h > 0f) {
 			// GEO fast path: re-emit captured commands (geometry + text) through the
 			// current transform. Crisp at any scale/rotation, bit-exact, no texture.
+			// A rectangular content clip narrows the SDL clip rect first (honoured by
+			// SDL_RenderGeometry), keeping cached geometry inside the layer bounds.
+			if (clip && outline is Outline.Rectangle) {
+				canvas.clipRect(outline.rect.left, outline.rect.top, outline.rect.right, outline.rect.bottom)
+			}
 			canvas.replayDisplayList(list)
 		} else {
 			// Block-replay fallback (== DeferredRenderNode): clip + alpha + re-run block.
