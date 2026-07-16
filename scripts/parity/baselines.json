@@ -1,7 +1,7 @@
 {
   "mingwX64/sdl3": {
     "Animation": 24.5,
-    "AnnotatedString": 24.88,
+    "AnnotatedString": 24.59,
     "AppBars": 19.54,
     "BasicText": 18.0,
     "BasicTextField": 16.52,
@@ -24,7 +24,7 @@
     "FlowLayout": 11.84,
     "FocusRequester": 21.68,
     "Gestures": 19.21,
-    "GraphicsLayer": 19.95,
+    "GraphicsLayer": 19.94,
     "GridsExtra": 28.53,
     "Icons": 9.68,
     "Images": 21.89,
@@ -32,7 +32,7 @@
     "InteractionSource": 14.67,
     "Layout": 14.59,
     "LazyColumn": 11.12,
-    "LazyExtra": 30.0,
+    "LazyExtra": 27.74,
     "LazyGrid": 20.72,
     "Lists": 16.35,
     "M3Misc": 17.98,

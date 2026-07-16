@@ -131,10 +131,28 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
 
 ## Phase 3 — B3: SDL fidelity (CAPPED under G1 — only parity-ranked user-visible wins)
 
-- [ ] **P3.1** From the parity ranking, list the worst *user-visible* SDL gaps (gamma
+- [~] **P3.1** From the parity ranking, list the worst *user-visible* SDL gaps (gamma
   gradients / AA / blur / complex-script text). Do ONLY the ones that rank as real wins, each
   gated by a parity improvement. **Stop when the ranking flattens** — JVM is the fidelity
   tier for the rest. [§0.5.3, §4 (B3)]
+  **Ranked gap list (classified from the beta02 sweep's diff images):**
+  1. *(cross-cutting, dominates every text-bearing screen)* **vertical text-metric drift** —
+     two components: (a) `TextStyle.lineHeight` was IGNORED by SdlParagraph → ~1px/wrapped-line
+     accumulation inside multi-line paragraphs — **FIXED** (compat-trim model: first line keeps
+     the tight font cell, following lines advance by the style lineHeight; LazyExtra 30.00→27.74,
+     AnnotatedString 24.88→24.59, all 55 other screens byte-identical); (b) single-line label
+     cells: TTF's grid-fitted INTEGER font height vs Skia's fractional ascent+descent
+     (~0.9px/label, accumulates across stacked labels — the remaining Tabs/GridsExtra term).
+     NEXT candidate; needs fractional metrics from FreeType (unrounded hhea × size / upem)
+     through lineHeight()/cell math — riskier, fractional layout heights everywhere.
+  2. **Gradient colour ramps** (Brushes 22.3, Canvas bottom section) — gradients DO render
+     (CLAUDE.md's "solid" note is stale) but interpolation/gamma differs visibly, radial/sweep
+     worst. Real user-visible SDL gap.
+  3. **Shadow falloff** (Shadows 24.6) — stacked-ring approximation vs Gaussian; named in the
+     screen's own subtitle as a known engine difference. Improving = new blur primitive; weigh
+     against §0.5.3 cap.
+  *(Tabs/LazyExtra/GridsExtra/AnnotatedString/Images top ranks are (1); content is otherwise
+  identical. NOT gaps: Animation/Pickers — quiescence-era determinism handled those.)*
 
 ## Ongoing — vendoring cadence
 
@@ -194,6 +212,16 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   are inert outside screenshot mode; full parity PASSed against the OLD frame-6 baselines
   (55/57 identical %, only Pickers 20.02→19.49 + Remember 14.72→14.71 moved), re-seeded,
   fresh full run PASS exit 0 with every screen exactly on baseline.
+- 2026-07-16 · **P3.1 (started)** · classified the top-12 diff images (ranked gap list in the
+  task) + landed fix #1: SdlParagraph now honours `TextStyle.lineHeight` with upstream's
+  COMPAT-TRIM semantics (first line = tight font cell; lineHeight = the advance between
+  lines; single-line boxes unchanged), threaded as `inLineHeightPx` through NativeTextCanvas
+  → Sdl3Canvas/Sdl3TextRenderer AND SkiaCanvas/SkiaTextRenderer (skiko side textual —
+  compile pends Mac). First attempt (uniform lineHeight bands) REGRESSED Counter
+  2.53→9.18 and was rejected by the parity gate — the trim model then passed everywhere ·
+  verified on **Windows**: full 57-screen parity PASS, LazyExtra 30.00→27.74 +
+  AnnotatedString 24.88→24.59, other 55 screens byte-identical; paragraph/key/click/
+  scroll/back probes PASS; baselines re-seeded.
 - 2026-07-16 · **P0.2 (in progress)** · authored `scripts/verify-mac.sh` (host-target
   detect, both legs: build → nav3/back/click/scroll/multiwin probes gated on PASS →
   parity per leg → LazyColumn/Tabs draw-ms spot-check vs self-seeded baseline, +20% gate;

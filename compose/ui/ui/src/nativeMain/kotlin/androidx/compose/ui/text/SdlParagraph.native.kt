@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.isUnspecified
 import com.compose.sdl.text.NativeTextCanvas
 import com.compose.sdl.text.currentTextMeasurer
@@ -73,7 +74,25 @@ internal class SdlParagraph(
 	private val wrapped = currentTextMeasurer.wrap(text, fontPx, maxWidthPx, family, variations)
 	private val allLines: List<String> = wrapped.lines
 	private val lineStarts: IntArray = wrapped.lineStarts
-	private val lh: Float = currentTextMeasurer.lineHeight(fontPx, family, variations).coerceAtLeast(1f)
+
+	// TextStyle.lineHeight in px — upstream Skia paragraphs honour it (every M3
+	// Typography style sets one, e.g. bodyMedium 14sp/20sp), so ignoring it made every
+	// text block's height differ from upstream by ~1px per WRAPPED line, an error that
+	// ACCUMULATED down the page (the dominant term in every parity diff). sp scales by
+	// density like fontPx; em multiplies the font size.
+	private val styleLineHeightPx: Float? = when {
+		style.lineHeight.isUnspecified -> null
+		style.lineHeight.type == TextUnitType.Sp -> style.lineHeight.value * density
+		style.lineHeight.type == TextUnitType.Em -> style.lineHeight.value * fontPx
+		else -> null
+	}?.takeIf { it > 0f }
+	// Upstream applies lineHeight with the COMPAT TRIM (LineHeightStyle.Trim.Both when
+	// unspecified): the FIRST line keeps the tight font cell — lineHeight is the advance
+	// BETWEEN baselines, not first-line padding. So a single-line label's box stays the
+	// font cell, and an n-line paragraph is fontCell + (n-1) * lineHeight.
+	private val fontCellH: Float =
+		currentTextMeasurer.lineHeight(fontPx, family, variations).coerceAtLeast(1f)
+	private val lh: Float = styleLineHeightPx ?: fontCellH
 
 	// True when a span changes glyph METRICS (fontSize / fontWeight) — gates
 	// the styled measurement paths so plain/colour-only text keeps the cheap
@@ -103,10 +122,14 @@ internal class SdlParagraph(
 	// Per-line box heights: base line height unless a size span makes a line's
 	// tallest run cell bigger. lineTops[i] = cumulative top; last entry = height.
 	private val lineHeights: FloatArray by lazy {
-		if (!metricSpans) FloatArray(lineCount) { lh }
+		if (!metricSpans) FloatArray(lineCount) { if (it == 0) fontCellH else lh }
 		else FloatArray(lineCount) {
-			styledLineCellHeight(allLines[it], lineStarts[it], spanStyles, fontPx, density, currentTextMeasurer, family, variations)
-				.coerceAtLeast(1f)
+			// A size span can push a line's cell above the style's line height, but
+			// never below it (first line keeps its tight cell — compat trim).
+			max(
+				styledLineCellHeight(allLines[it], lineStarts[it], spanStyles, fontPx, density, currentTextMeasurer, family, variations),
+				if (it == 0) 0f else (styleLineHeightPx ?: 0f),
+			).coerceAtLeast(1f)
 		}
 	}
 	private val lineTops: FloatArray by lazy {
@@ -118,7 +141,9 @@ internal class SdlParagraph(
 	override val width: Float by lazy {
 		if (maxWidthPx == Int.MAX_VALUE) (lineWidths.maxOrNull() ?: 0f) else widthConstraint
 	}
-	override val height: Float by lazy { if (!metricSpans) lineCount * lh else lineTops[lineCount] }
+	override val height: Float by lazy {
+		if (!metricSpans) fontCellH + (lineCount - 1) * lh else lineTops[lineCount]
+	}
 	// Widest single HARD-BREAK line — NOT the concatenated all-on-one-line width.
 	// Compose's Text(softWrap = false) reads this to decide the paragraph width
 	// (LayoutUtils.finalMaxWidth returns Constraints.Infinity when softWrap=false,
@@ -193,8 +218,9 @@ internal class SdlParagraph(
 	}
 
 	override fun getLineForVerticalPosition(vertical: Float): Int {
-		if (!metricSpans) return (vertical / lh).toInt().coerceIn(0, lineCount - 1)
 		// Cumulative tops are monotonic — walk to the line containing `vertical`.
+		// (No uniform-divide fast path anymore: the first line's box is the font
+		// cell while later lines use the style lineHeight.)
 		for (i in 0 until lineCount) if (vertical < lineTops[i + 1]) return i
 		return lineCount - 1
 	}
@@ -368,6 +394,7 @@ internal class SdlParagraph(
 			inFontVariations = variations,
 			inBaseItalic = style.fontStyle == androidx.compose.ui.text.font.FontStyle.Italic,
 			inTextDecoration = inDecoration ?: style.textDecoration,
+			inLineHeightPx = lh,
 		)
 	}
 
