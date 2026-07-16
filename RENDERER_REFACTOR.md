@@ -852,3 +852,41 @@ alpha byte-identical), `Buttons`/`Shapes` correct; `--nav3test` PASS.
   texture backend). Verify against `DeferredRenderNode` output (should be pixel-equal)
   + profiler (draw drops on the static sidebar). Best done with the parity harness,
   not just screenshots.
+
+### 2026-07-16 — SDL caching node landed (opt-in), perf win measured
+
+The SDL perf payoff shipped, flag-gated (commit `3f76f77e`). **`SdlRenderNode`**
+records a leaf layer into an offscreen texture; replay is a blit, not a
+re-tessellation.
+
+- **Nesting solved WITHOUT the ancestor-invalidation divergence I'd scoped above.**
+  Instead of "cache everything + re-bake ancestors", the node does **cache leaves,
+  defer parents**: it auto-detects on first record whether its block drew a child
+  layer (via a recording stack) and, if so, replays the block (children composite
+  their own live textures → no staleness). Correct-by-construction, no
+  `GraphicsLayerOwnerLayer` edit. This is cleaner than the earlier plan — supersedes
+  the "wire invalidateParentLayer" note above.
+- **Strictly non-regressing:** the texture fast-path is used only for opaque,
+  untransformed, effect-free leaves (verified pixel-equal). scale/rotation (texture
+  would bilinear-resample) and alpha/blend/colorFilter/renderEffect (blit ≠ offscreen
+  compositing) fall back to a crisp block-replay.
+- **Gated behind `CDN_LAYERCACHE=1`**; default is still `DeferredRenderNode`. The
+  batch-flush-before-child-target-switch gotcha didn't bite — each node records into
+  its own `offscreenRenderer` canvas, and the offscreen save/restore isolates targets.
+
+**Verified (cached vs default):** GraphicsLayer / Shapes / Text / LazyColumn / Scroll
+/ Brushes / Canvas **pixel-equal (0.000%)**; Buttons 0.006% + Icons 0.36% (AA fringe
+from the premultiplied texture round-trip at rounded-clip / glyph edges — cosmetic,
+not structural); `--nav3test` + `--backtest` PASS. Profiler (LazyColumn, forced
+continuous): per-frame **verts 2958→1158 (−61%)**, text draws 22→6, draw 4.0→3.4 ms
+— static leaves blit instead of re-tessellate.
+
+**Remaining follow-ups:**
+1. **Flip the default to caching** after a full parity-harness sweep (all screens,
+   native-vs-JVM), not just the spot-diffs above.
+2. **Fix the AA-fringe round-trip** (Buttons/Icons) — get the premultiplied blit-back
+   bit-exact so icon/rounded-clip leaves are pixel-equal too.
+3. **Phase 4 — cached-geometry display list** would widen the fast-path (crisp under
+   scale/rotation, real compositing) and remove the opaque/untransformed restriction.
+4. **Skia leg (2a, mac/CI)** — back `NativeRenderNode` with skiko `RenderNode` (needs
+   the SkiaCanvas↔SkCanvas bridge + renderer-resource wiring noted above).
