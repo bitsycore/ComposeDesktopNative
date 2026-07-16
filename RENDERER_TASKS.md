@@ -75,9 +75,12 @@ Windows pixel-parity). See `RENDERER_CONVERGE.md` §0.5.
   simulated stale ref fails (exit 1). *(File-set corrected: `NativeRenderNode.kt` is a port
   invention with no upstream base — annotated the real copy-edits instead: `GraphicsLayer
   OwnerLayer.kt`, `GraphicsLayer.native.kt`, `LayerTransformationMatrix.kt`.)* [§8/§9]
-- [ ] **P0.7** **Vendor-clean** check target: `sync.py` on a clean checkout + diff
+- [x] **P0.7** **Vendor-clean** check target: `sync.py` on a clean checkout + diff
   `src/vendor/`; wire into the runbook. *Done:* passes clean; fails if a hand-edit leaks into
-  `src/vendor/`. [§8]
+  `src/vendor/`. *(Implemented as `scripts/compose-fork/check-vendor-clean.py`: hash
+  src/vendor → run sync.py → re-hash; any changed/stale/missing file or manifest-annotation
+  churn fails exit 1 — and the tree is left RESTORED to the pin (sync's normal behaviour).
+  Wired into `verify-mac.sh` as step 0 together with the P0.6 tripwire.)* [§8]
 
 ## Phase 1 — B2: vendor upstream GraphicsLayer on the Skia leg (the core convergence)
 
@@ -192,3 +195,9 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   `--update-perf-baseline` reseeds) · verified on **Windows** only to the extent possible:
   `bash -n` clean, profiler-line parse + regression awk unit-smoked. End-to-end run,
   perf-baseline seed and parity mac keys all pending the first Mac session.
+- 2026-07-16 · **P0.7** · vendor-clean check (`scripts/compose-fork/check-vendor-clean.py`:
+  hash src/vendor → sync.py → re-hash → fail on any change/stale/missing or manifest
+  churn; tree left restored) · verified on **Windows**: clean run PASS exit 0 (1553 files,
+  15 modules, both repos at their pins); simulated hand-edit + orphan file FAIL exit 1
+  (`changed`/`stale` both listed), immediate re-run PASS. Wired into verify-mac.sh as
+  step 0 (with the P0.6 provenance tripwire); the runbook itself still pends a Mac run.

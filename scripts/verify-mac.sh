@@ -2,6 +2,8 @@
 # MAC-VERIFY runbook (P0.2, RENDERER_TASKS.md) - the one-command gate for renderer work.
 #
 # Runs on macOS or Linux and exercises BOTH renderers:
+#   0. DRIFT-CHECK: vendor-clean (sync.py + diff src/vendor, P0.7) + manual-vendor
+#      provenance tripwire (P0.6)
 #   1. Build :demo + :apidemo for the host target        (Skia leg, then -Prenderer=sdl3)
 #   2. Run the interaction probes on each leg, gate on their PASS/FAIL output
 #   3. Run scripts/parity/parity.py for each leg         (gates on baselines.json when seeded)
@@ -106,6 +108,14 @@ run_leg() { # $1=skia|sdl3
 	perf_check "$leg" LazyColumn
 	perf_check "$leg" Tabs
 }
+
+# ============
+#  DRIFT-CHECK first (cheap, cross-platform): the legs must build from a vendor tree
+#  that matches the pinned refs, with no manual vendor lagging the pin.
+note "drift-check: vendor-clean (sync.py + diff src/vendor)"
+python3 scripts/compose-fork/check-vendor-clean.py || fail "drift-check: src/vendor drifted from the pinned refs"
+note "drift-check: manual-vendor provenance"
+python3 scripts/compose-fork/check-vendor-drift.py || fail "drift-check: a manual vendor lags the pinned ref"
 
 run_leg skia
 run_leg sdl3
