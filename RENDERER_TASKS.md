@@ -138,8 +138,11 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
 
 ## Ongoing — vendoring cadence
 
-- [ ] **O.1** Pin `COMPOSE_CORE_REF` to a durable **tag** (not the `+dev` commit that upstream
-  may GC). *Done:* a fresh clone can `sync.py` from the pinned ref. [§9]
+- [x] **O.1** Pin `COMPOSE_CORE_REF` to a durable **tag** (not the `+dev` commit that upstream
+  may GC). *Done:* a fresh clone can `sync.py` from the pinned ref. *(Pin switched to tag
+  `v1.12.0-beta01+dev4324` — verified to dereference to the exact previous hash `1be9d64…`
+  and to exist on upstream's remote (`ls-remote`), so clone/fetch-by-name always works;
+  the 3 `VENDOR-BASE` headers re-spelled to the tag so P0.6's ref-compare stays green.)* [§9]
 - [ ] **O.2** Write + follow the **ref-bump runbook**: bump → `sync.py` → build → DRIFT-CHECK
   → MAC-VERIFY + WIN-SMOKE. Run it on each upstream bump. [§9]
 
@@ -201,3 +204,8 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   15 modules, both repos at their pins); simulated hand-edit + orphan file FAIL exit 1
   (`changed`/`stale` both listed), immediate re-run PASS. Wired into verify-mac.sh as
   step 0 (with the P0.6 provenance tripwire); the runbook itself still pends a Mac run.
+- 2026-07-16 · **O.1** · COMPOSE_CORE_REF pinned to tag `v1.12.0-beta01+dev4324` (was the
+  bare hash `1be9d64…`; VENDOR-BASE headers re-spelled to match) · verified on **Windows**:
+  tag dereferences to the exact old hash (`rev-parse ^{}`), exists on upstream's remote
+  (`ls-remote`), full re-sync at the tag byte-identical (check-vendor-clean PASS, 1553
+  files), check-vendor-drift PASS (3/3 base == pin).
