@@ -99,11 +99,20 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   SkiaGraphicsContext/SkiaGraphicsLayer use). Verified two ways: klib linkdata inspection +
   a throwaway `skikoRendererMain` file compiling those references via `:ui:compileKotlin
   MacosArm64` (BUILD SUCCESSFUL, then removed). NO skiko/compose-ref bump needed.*
-- [ ] **P1.2** Relocate the SDL node cluster `nativeMain → sdlRendererMain`:
+- [x] **P1.2** Relocate the SDL node cluster `nativeMain → sdlRendererMain`:
   `GraphicsLayer.native.kt`, the `createNativeRenderNode` `expect` + SDL actual,
   `DeferredRenderNode`, `SdlDisplayList*`/`SdlRenderNode`. **Keep `GraphicsLayerOwnerLayer`
   SHARED.** *Done:* per-target compile green; MAC-VERIFY green (behaviour unchanged — still
   the port's GraphicsLayer on both legs at this step). [§4/§6]  *blocked-by: P1.1*
+  *Done (commit `f8a211cb`): 4 files moved nativeMain→sdlRendererMain (`GraphicsLayer.native
+  .kt`, `NativeRenderNode.kt` interface+context, `DeferredRenderNode.kt`, `GraphicsLayer
+  Factory.native.kt`). `SdlDisplayList*`/`SdlRenderNode`/`NativeRenderNode.sdl.kt` were
+  ALREADY in sdlRendererMain. The `expect fun createNativeRenderNode` dropped (return type no
+  longer shared) → the two factories are plain `internal fun`s. `createProjectGraphicsLayer`
+  stays a commonMain `expect` with an actual now in each renderer set. Skia leg keeps a
+  TRANSIENT copy of the cluster in skikoRendererMain (P1.6 deletes it). Verified: Skia+SDL
+  per-target compile, `:ui:compileCommonMainKotlinMetadata` clean, full MAC-VERIFY ALL GREEN
+  (10/10 probes, parity PASS both legs, perf within/below baseline).*
 - [ ] **P1.3** Fork `GraphicsContext` per-leg: replace the ad-hoc anonymous
   `ComposeOwner.graphicsContext` (`createProjectGraphicsLayer()`) with an `expect`/factory
   seam; SDL → the relocated project impl. *Done:* MAC-VERIFY green. [§4]  *blocked-by: P1.2*
@@ -310,4 +319,10 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   `skikoRendererMain` file using `RenderNodeContext(measureDrawBounds=…)`, `RenderNode(ctx)`,
   `.setLightingInfo(...)`, `.close()` compiled clean (`:ui:compileKotlinMacosArm64` SUCCESS)
   then was removed. No skiko/compose-ref bump required. **Unblocks P1.2–P1.7.**
+- 2026-07-16 · **P1.2** · commit `f8a211cb` · relocated the SDL node cluster nativeMain→
+  sdlRendererMain (GraphicsLayer.native.kt, NativeRenderNode.kt, DeferredRenderNode.kt,
+  GraphicsLayerFactory.native.kt) + transient skikoRendererMain copies so both legs keep the
+  port GraphicsLayer this step; dropped the `expect fun createNativeRenderNode` (factories
+  now plain `internal fun`). Verified per-target (Skia+SDL) + metadata compile + full
+  MAC-VERIFY ALL GREEN (perf actually a hair BELOW baseline both legs). Behaviour unchanged.
   Windows-only; Mac legs pend P0.2.
