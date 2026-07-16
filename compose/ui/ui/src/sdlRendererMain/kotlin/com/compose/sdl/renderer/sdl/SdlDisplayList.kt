@@ -55,6 +55,22 @@ internal class TextRun(
 	val colorArgb: Int,
 ) : DisplayCommand()
 
+/* One captured icon-font glyph (Material Symbols via FreeType). The box origin is
+   layer-local (replay maps it through the layer affine); the box size stays logical
+   (the glyph centres in it, like the immediate icon path). Replay re-draws through
+   FreeTypeIcons' own glyph cache — eviction-safe (re-rasterises if dropped). */
+internal class IconRun(
+	val fontFamily: String,
+	val text: String,
+	val fontSizePx: Int,
+	val variations: List<FontVariation.Setting>?,
+	val boxX: Float,
+	val boxY: Float,
+	val boxW: Float,
+	val boxH: Float,
+	val colorArgb: Int,
+) : DisplayCommand()
+
 /* Sink the drawscope + text renderer capture into during a recording. */
 internal interface GeometrySink {
 	fun captureGeometry(vertexData: FloatArray, vertexCount: Int)
@@ -101,6 +117,22 @@ internal class SdlDisplayList : GeometrySink, TextRunSink {
 
 	override fun markUnsupported() {
 		unsupported = true
+	}
+
+	/* Icon glyphs are captured directly by the canvas (not via a sink) since the
+	   canvas owns the icon-draw path. Box origin is layer-local; size logical. */
+	fun captureIconRun(
+		fontFamily: String,
+		text: String,
+		fontSizePx: Int,
+		variations: List<FontVariation.Setting>?,
+		boxX: Float,
+		boxY: Float,
+		boxW: Float,
+		boxH: Float,
+		colorArgb: Int,
+	) {
+		commands.add(IconRun(fontFamily, text, fontSizePx, variations, boxX, boxY, boxW, boxH, colorArgb))
 	}
 
 	fun clear() {

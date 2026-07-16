@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.compose.sdl.graphics.a8
 import com.compose.sdl.graphics.b8
 import com.compose.sdl.graphics.g8
 import com.compose.sdl.graphics.r8
@@ -128,6 +129,22 @@ internal class Sdl3Canvas(
 						inDeviceY = mapY(cmd.x, cmd.y),
 						inLogW = cmd.w,
 						inLogH = cmd.h,
+						inColor = androidx.compose.ui.graphics.Color(cmd.colorArgb),
+					)
+				}
+				is IconRun -> {
+					fScope.flush() // submit geometry before this glyph (z-order)
+					// Map the box origin through the affine; box size stays logical (the
+					// glyph centres in it — layer scale reaches position, not glyph size).
+					fTextRenderer?.blitIconRun(
+						inFontFamily = cmd.fontFamily,
+						inText = cmd.text,
+						inFontSize = cmd.fontSizePx,
+						inFontVariations = cmd.variations,
+						inDeviceBoxX = mapX(cmd.boxX, cmd.boxY),
+						inDeviceBoxY = mapY(cmd.boxX, cmd.boxY),
+						inBoxW = cmd.boxW,
+						inBoxH = cmd.boxH,
 						inColor = androidx.compose.ui.graphics.Color(cmd.colorArgb),
 					)
 				}
@@ -1026,13 +1043,21 @@ internal class Sdl3Canvas(
 		inBaseItalic: Boolean,
 		inTextDecoration: androidx.compose.ui.text.style.TextDecoration?,
 	) {
-		// Capture mode: icon families blit via a separate FreeType path not captured
-		// yet → defer that leaf. Plain/decorated AND spanned text ARE captured (runSink
-		// set below; each styled run becomes a TextRun) — only a run with a
+		// Capture mode: icon-font glyphs (Material Symbols via FreeType) record as an
+		// IconRun — flush pending geometry first for z-order, then capture the box in
+		// LAYER-LOCAL device coords (replay maps it through the layer affine + re-draws
+		// via FreeTypeIcons' cache). Plain/decorated AND spanned text ARE captured too
+		// (runSink set below; each styled run becomes a TextRun) — only a run with a
 		// SpanStyle.background still bails inside Sdl3TextRenderer.drawText.
 		val vCaptureList = fCaptureList
 		if (vCaptureList != null && inFontFamily != null && IconFont.isIconFamily(inFontFamily)) {
-			vCaptureList.unsupported = true
+			fScope.flush()
+			val vIconColor = if (fAlpha >= 1f) inColor else inColor.copy(alpha = inColor.alpha * fAlpha)
+			val vArgb = (vIconColor.a8 shl 24) or (vIconColor.r8 shl 16) or (vIconColor.g8 shl 8) or vIconColor.b8
+			vCaptureList.captureIconRun(
+				inFontFamily, inText, inFontSizePx, inFontVariations,
+				mapX(inX, inY), mapY(inX, inY), inBoxWidth, inBoxHeight, vArgb,
+			)
 			return
 		}
 		// Small centred labels (a popped bubble's "pop") usually sit fully

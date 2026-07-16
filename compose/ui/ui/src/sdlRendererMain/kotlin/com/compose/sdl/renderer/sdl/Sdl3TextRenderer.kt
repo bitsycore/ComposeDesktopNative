@@ -625,6 +625,52 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         }
     }
 
+    /* Phase 4 replay: re-draw a captured icon glyph. Mirrors drawNativeText's icon
+       branch — FreeType glyph first (its own cache re-rasterises on eviction), then the
+       SDL_ttf fallback for a codepoint the FreeType path can't draw (rare: a glyph
+       absent from the subset font). Box origin is DEVICE (already mapped through the
+       layer affine); the glyph centres in the logical box. */
+    internal fun blitIconRun(
+        inFontFamily: String,
+        inText: String,
+        inFontSize: Int,
+        inFontVariations: List<FontVariation.Setting>?,
+        inDeviceBoxX: Float,
+        inDeviceBoxY: Float,
+        inBoxW: Float,
+        inBoxH: Float,
+        inColor: ComposeColor,
+    ) {
+        val vRenderer = backend.renderer ?: return
+        val vDrew = fFreeTypeIcons.drawGlyph(
+            inSdlRenderer = vRenderer,
+            inFamily = inFontFamily,
+            inCodepoint = inText.codePointAtSafe(0),
+            inPixelSize = inFontSize,
+            inColor = inColor,
+            inVariations = inFontVariations ?: emptyList(),
+            inBoxX = inDeviceBoxX.toInt(),
+            inBoxY = inDeviceBoxY.toInt(),
+            inBoxW = inBoxW.toInt(),
+            inBoxH = inBoxH.toInt(),
+            inDpr = fDpr,
+        )
+        if (vDrew) return
+        // SDL_ttf fallback — render the codepoint as a normal glyph, centred in the box.
+        val vCached = getOrCreateTexture(inFontFamily, inText, inFontSize, inFontVariations, 0) ?: return
+        applyTint(vCached.tex, inColor)
+        val vLogW = vCached.w / fDpr
+        val vLogH = vCached.h / fDpr
+        memScoped {
+            val vDst = alloc<SDL_FRect>()
+            vDst.x = kotlin.math.round((inDeviceBoxX + (inBoxW - vLogW) / 2f) * fDpr) / fDpr
+            vDst.y = kotlin.math.round((inDeviceBoxY + (inBoxH - vLogH) / 2f) * fDpr) / fDpr
+            vDst.w = vLogW
+            vDst.h = vLogH
+            SDL_RenderTexture(vRenderer.reinterpret(), vCached.tex.reinterpret(), null, vDst.ptr)
+        }
+    }
+
     // Coverage gamma: alpha' = 255*(alpha/255)^kTextGamma. kTextGamma < 1
     // boosts partial coverage so antialiased stems read heavier and smoother
     // for light text on a dark background — closer to Skia's gamma-corrected
