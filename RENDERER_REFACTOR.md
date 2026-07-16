@@ -1037,3 +1037,42 @@ next value increment is caching static text (the sidebar). Reading the text path
 So text capture is a focused sub-project (multi-point capture + ordered stream + tint +
 eviction-safe glyph lifetime). Then image + clip, re-sweep, and **flip the default to
 `geo`** (now unblocked on correctness/determinism by the geo node itself).
+
+### 2026-07-16 — Phase 4 TEXT CAPTURE landed (commit `65503e60`) — the perf win
+
+Plain text runs now cache in the geo node, the skiko-faithful way: the display list
+records a **"draw run" command by params** (`family, text, size, variations, style`),
+NOT the texture pointer; replay re-looks-up via `Sdl3TextRenderer`'s per-run LRU (our
+glyph-atlas analog) — **eviction-safe** (re-rasterises if dropped). Spanned/icon text
+defers. `SdlDisplayList` became an ORDERED command stream (`GeometryBatch | TextRun`)
+for z-order. Also fixed a nesting regression text capture exposed: the geo node now
+has **cache-leaves-defer-parents** (a child `drawInto` during record defers the parent
+and draws nothing — no GPU leak into the target-less capture pass).
+
+**Measured win:** LazyColumn (forced continuous) **draw 3.56 ms → 1.47 ms (−59%)**,
+text draws 22 → 6 — static text stops being re-shaped/re-blit every frame. This is the
+sidebar win the whole refactor was aiming at.
+
+**Correctness (geo vs default):** Text / LazyColumn / Shapes / Icons / Cards / Chips
+**0.000%**, Buttons 0.006%. So the geo node renders correctly across the board.
+
+**Flip-the-default analysis — one real blocker (Carousel), the rest are not bugs.**
+Tested at settled frames (60, 200), geo-vs-default AND geo-vs-geo:
+- **Pickers** — renders CORRECTLY (content identical; the geo-vs-geo heatmap is the
+  whole page doubled by a few px). It's a **scroll/layout-settle position that varies
+  a few px** because text-capture's variable per-frame cost perturbs a time-driven
+  settle; a few-px vertical shift ghosts lots of text → an inflated %. **Not a render
+  bug** — a screenshot-methodology sensitivity; real interactive use is fine.
+- **Carousel — the one genuine render diff:** deterministic (geo-vs-geo 0.000%) but
+  persistently **4.4%** off default — the carousel sits at a slightly different
+  horizontal position + one solid element at the bottom differs. Isolated to that
+  widget; needs a look (likely its layer/layout interacts with capture).
+- **GraphicsLayer 0.16%** — cosmetic sub-pixel AA on ROTATED squares (deterministic).
+
+**Decision: still DON'T flip the default.** Not for correctness broadly (geo is
+correct) but because shipping a known — even small — Carousel regression to every SDL
+user isn't right. `CDN_LAYERCACHE=geo` remains a verified, big-win opt-in; default
+stays `DeferredRenderNode`. **Before flipping:** fix the Carousel widget diff; a
+frame-locked/deterministic harness would also let Pickers be verified cleanly (its
+timing sensitivity defeats free-running screenshots). Image + clip capture would widen
+coverage further (both currently defer, correctly).
