@@ -25,6 +25,14 @@ import screens.ExtraWindows
 import utils.encodeBmpBgra32
 import utils.parseArgs
 import utils.writeFile
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toKString
+import platform.posix.RUSAGE_SELF
+import platform.posix.getrusage
+import platform.posix.rusage
 
 // ==================
 // MARK: Entry point
@@ -121,6 +129,10 @@ fun main(args: Array<String>) {
     // ViewModel store owners created at RESUMED must opt out of saved state.
     if (args.any { it == "--nav3test" }) {
         runNav3Test()
+        return
+    }
+    if (args.any { it == "--soaktest" }) {
+        runSoakTest()
         return
     }
 
@@ -471,6 +483,82 @@ private fun runSearchEscTest() {
    Crashes here (e.g. enableSavedStateHandles' INITIALIZED/CREATED contract) never
    reproduce under --screen, which composes during the initial CREATED composition.
    PASS = a screenshot gets written and the app exits cleanly. */
+/* P2.2 soak — cycle through EVERY registered screen kCycles times in ONE process,
+   disposing each via a changing key() so composition + layer (skiko RenderNode / SDL
+   node) allocate-and-release is exercised repeatedly. After each full cycle, GC then
+   record peak RSS (getrusage ru_maxrss). Peak RSS is monotonic, so after cycle 1 it
+   already reflects visiting every screen once; if there is NO leak it plateaus, if
+   there IS one it keeps climbing each cycle. PASS iff last-cycle peak stays within a
+   ceiling of the first-cycle peak. Runs on both renderer legs. */
+@OptIn(kotlin.native.runtime.NativeRuntimeApi::class, ExperimentalForeignApi::class)
+private fun runSoakTest() {
+    // Disable never-settling animations so RSS reflects composition/layer lifetime,
+    // not live animation-state churn (same seed the screenshot path uses).
+    com.compose.sdl.disableInfiniteAnimations = true
+    com.compose.sdl.useVirtualFrameTime = true
+    val vScreens = allCategories().flatMap { it.screens }
+    val vIndex = mutableStateOf(0)
+    val kFramesPerScreen = 3
+    val kCycles = platform.posix.getenv("CDN_SOAK_CYCLES")?.toKString()?.toIntOrNull() ?: 3
+    val vRssPerCycleMb = mutableListOf<Long>()
+    var vShown = 0
+
+    nativeComposeWindow(
+        title = "soaktest",
+        width = 1000,
+        height = 700,
+        onFrame = { _, vFrame ->
+            if (vFrame > 0 && vFrame % kFramesPerScreen == 0) {
+                vShown++
+                vIndex.value = vShown % vScreens.size
+                if (vShown % vScreens.size == 0) {
+                    kotlin.native.runtime.GC.collect()
+                    vRssPerCycleMb.add(currentMaxRssMb())
+                }
+            }
+            if (vRssPerCycleMb.size >= kCycles) {
+                val vFirst = vRssPerCycleMb.first()
+                val vLast = vRssPerCycleMb.last()
+                val vGrowth = vLast - vFirst
+                val vCeiling = maxOf(48L, vFirst / 4)  // 25% or 48MB, whichever larger
+                println("soaktest: peakRSS/cycle(MB)=$vRssPerCycleMb (${vScreens.size} screens x $kCycles cycles)")
+                if (vGrowth <= vCeiling) {
+                    println("soaktest: PASS (peak RSS grew ${vGrowth}MB over cycles 1->$kCycles, within ${vCeiling}MB ceiling)")
+                } else {
+                    println("soaktest: FAIL (peak RSS grew ${vGrowth}MB > ${vCeiling}MB ceiling — possible leak)")
+                }
+                false
+            } else true
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            val vScroll = rememberScrollState()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .verticalScroll(vScroll)
+                    .padding(24.dp),
+            ) {
+                // key() so switching screens DISPOSES the old subtree (+ its layers)
+                // and composes the new one — the allocate/release churn we soak.
+                key(vIndex.value) { vScreens[vIndex.value].content() }
+            }
+        }
+    }
+}
+
+/* Current process peak RSS in MB. ru_maxrss units differ by OS (macOS: bytes,
+   Linux: kilobytes); a Compose app's RSS makes the two ranges non-overlapping, so
+   a magnitude check disambiguates (bytes value >> any sane KB value). */
+@OptIn(ExperimentalForeignApi::class)
+private fun currentMaxRssMb(): Long = memScoped {
+    val vUsage = alloc<rusage>()
+    getrusage(RUSAGE_SELF, vUsage.ptr)
+    val vRaw = vUsage.ru_maxrss.toLong()
+    if (vRaw > 10_000_000L) vRaw / (1024 * 1024) else vRaw / 1024  // bytes(macOS) : KB(linux)
+}
+
 private fun runNav3Test() {
     val vShow = mutableStateOf(false)
     nativeComposeWindow(
