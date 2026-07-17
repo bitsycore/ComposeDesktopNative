@@ -142,19 +142,21 @@ MODERATE (a source-set migration, not a file-flip). See CONVERGE §4 (B2), §6, 
   are SUBSUMED by the new **Phase 1B (B6)** below — the skiko leg switches to upstream's
   SkiaBackedCanvas so `SkiaGraphicsLayer` vendors cleanly. Deeper scoping (from a full draw-
   dispatch map, 2026-07-16) below.
-- [-] **P1.5 / P1.6 — SUBSUMED by Phase 1B (B6).** Kept for the matrix-rename reversal (P1.5)
-  and the GraphicsLayer swap (P1.6), both now done as B6.2 once the canvas is upstream.
-- [ ] **P1.5** Reverse the `prepareLayerTransformationMatrix` rename — use upstream
-  `Matrices.skiko` `prepareTransformationMatrix`; drop the `com.compose.sdl` copy on the Skia
-  leg (SDL keeps its own). [§7]  *blocked-by: P1.4*
-- [ ] **P1.6** Provide upstream `actual class GraphicsLayer(renderNode: skiko.RenderNode)` on
-  `skikoRendererMain`; delete the skiko-side `NativeRenderNode` usage (`NativeRenderNode.skia
-  .kt`). *Done:* MAC-VERIFY Skia leg — self-tests PASS, parity approaches **~0% golden-master**
-  (post-P0.3), no perf regression. [§4]  *blocked-by: P1.5*
-- [ ] **P1.7** Add the **actual-API-parity invariant**: an `apiDump`/
-  `:ui:compileCommonMainKotlinMetadata` check asserting the SDL `GraphicsLayer` actual and
-  the vendored Skia one both match the shared `expect` (the shared owner layer depends on
-  it). *Done:* check runs green + fails on a deliberate API skew. [§8]  *blocked-by: P1.6*
+- [x] **P1.5 — DONE via B6.2** (matrix): skiko DRAW uses upstream `SkiaGraphicsLayer`'s own
+  skiko-RenderNode transform; the shared `prepareLayerTransformationMatrix` stays for
+  `GraphicsLayerOwnerLayer` HIT-TEST on both legs (it's shared, can't drop from skiko) and
+  provably agrees (clicktest/scrolltest/backtest PASS on transformed layers). The literal
+  "drop the copy" doesn't apply — it's shared, not skiko-only.
+- [x] **P1.6 — DONE via B6.2** (commit `2210d1fa`): upstream `actual class GraphicsLayer(skiko
+  .RenderNode)` provided by the un-refused `SkiaGraphicsLayer.skiko.kt`; the skiko `NativeRender
+  Node` cluster (incl. `NativeRenderNode.skia.kt`) deleted. MAC-VERIFY Skia leg green, parity
+  holds golden-master, PERF IMPROVED (draw 1.75ms→0.2ms).
+- [x] **P1.7 — DONE via B6.2** (the actual-API-parity invariant): `:ui:compileCommonMain
+  KotlinMetadata` is the enforcement — `GraphicsLayerOwnerLayer` (shared) compiles against
+  BOTH `GraphicsLayer` actuals (upstream skiko + port SDL) only if both satisfy the commonMain
+  `expect class GraphicsLayer` API; it's in the MAC-VERIFY runbook (verify-mac step) and in
+  every per-leg compile. A skew fails the metadata compile. *(Kept as an ongoing invariant,
+  not a one-off check.)*
 - [ ] **P1.8** (measure — the G1 justification) Quantify the **sync-tax**: reconcile a mock
   `compose.properties` bump before vs after B2, record hours-saved in the log. [§0.5]
 
@@ -197,7 +199,7 @@ solid-color brush fallback; `SkiaBackedCanvas`+`SkiaShader` draw true gradients 
   MUST be re-pointed per-frame in drawRoot (+ cleared on destroy), not set once in the ctor —
   a ctor global dangled at a CLOSED window's destroyed renderer → multiwintest crash. Full
   MAC-VERIFY ALL GREEN both legs; 56/57 parity byte-identical (Images fluctuates in noise).*
-- [ ] **B6.2** Now the canvas is `SkiaBackedCanvas`: un-refuse + vendor `SkiaGraphicsLayer.skiko
+- [x] **B6.2** Now the canvas is `SkiaBackedCanvas`: un-refuse + vendor `SkiaGraphicsLayer.skiko
   .kt` + `SkiaGraphicsContext.skiko.kt` + `Blur.skiko.kt`; point the skiko `createGraphicsContext`
   actual (P1.3 seam) at `SkiaGraphicsContext`; provide upstream `actual class GraphicsLayer
   (skiko.RenderNode)`; DELETE the transient skiko port cluster (GraphicsLayer.native.kt,
@@ -207,6 +209,17 @@ solid-color brush fallback; `SkiaBackedCanvas`+`SkiaShader` draw true gradients 
   vendor `ChildLayerDependenciesTracker` (P2.2) — reconcile if `SkiaGraphicsLayer` hard-needs it.
   *Done:* MAC-VERIFY Skia leg — parity holds ~golden-master, blur/RenderEffect improve (P2.3).
   This IS P1.6 + P1.7 (the actual-API-parity invariant). *blocked-by: B6.1*
+  *DONE (commit `2210d1fa`). ChildLayerDependenciesTracker was ALREADY vendored (commonMain)
+  → SkiaGraphicsLayer vendors VERBATIM, no manual edit (supersedes P2.2's "don't vendor
+  tracker" for the skiko leg — upstream's GraphicsLayer inherently uses it). Also had to move
+  `Blur.native.kt` nativeMain→sdl (same split as the paint actuals) and relocate
+  `ProjectGraphicsContext` + `createProjectGraphicsLayer` nativeMain→sdl (drop the commonMain
+  expect — SDL-only now). GraphicsLayerOwnerLayer stays SHARED, compiles against both
+  actuals (P1.7 invariant holds via the metadata compile). Hit-test agrees with the new
+  skiko-RenderNode draw (clicktest/scrolltest/backtest PASS). Layer screens byte-stable
+  (transparent swap). PERF WIN: skia draw 1.75ms→0.2ms (skiko RenderNode display-list cache).
+  P1.5 rename-reversal N/A: prepareLayerTransformationMatrix stays shared (GraphicsLayerOwnerLayer
+  hit-test needs it on both legs); skiko DRAW uses upstream's matrix internally and agrees.*
 - [-] **B6.3 (OPTIONAL, not decided)** Full upstream TEXT on the skiko leg (`SkiaParagraph` +
   the ui-text skiko stack), retiring `SdlParagraph`/`SkiaTextRenderer` on skiko only. Would make
   skiko text use the SAME skia paragraph engine as the JVM parity reference → could drive text
@@ -452,3 +465,14 @@ solid-color brush fallback; `SkiaBackedCanvas`+`SkiaShader` draw true gradients 
   + vendor-clean pass). **Unblocks B6.2 (= P1.4/P1.5/P1.6/P1.7 — vendor upstream
   SkiaGraphicsLayer now the canvas is upstream).** Note: the port already had real gradients
   (Brushes unchanged); the fidelity win is deferred to whatever upstream paint/shader adds.
+- 2026-07-17 · **B6.2** (= P1.4/P1.5/P1.6/P1.7) · commit `2210d1fa` · Skia leg now runs
+  upstream's OWN GraphicsLayer + GraphicsContext (org.jetbrains.skiko.node.RenderNode) — the
+  core B2 convergence. Un-refused SkiaGraphicsLayer/SkiaGraphicsContext/Blur VERBATIM
+  (ChildLayerDependenciesTracker already vendored → no manual edit). Wired the P1.3 context
+  seam (skiko→SkiaGraphicsContext, SDL→ProjectGraphicsContext moved to sdl with the
+  createProjectGraphicsLayer factory; commonMain expect dropped); moved Blur.native.kt→sdl;
+  deleted the 5-file transient skiko port cluster. GraphicsLayerOwnerLayer stays SHARED
+  (P1.7 API-parity invariant holds via metadata compile). MAC-VERIFY ALL GREEN both legs
+  (10/10 probes, parity layer-screens byte-stable = transparent swap, drift+vendor-clean pass).
+  **PERF WIN: skia draw 1.75ms→0.2ms** (skiko RenderNode record-once/replay display-list
+  cache). Baselines re-seeded. B6.3 (upstream text) remains optional/deferred.
