@@ -272,7 +272,27 @@ GraphicsLayer/GraphicsContext (B6.2) verbatim. Text stays the port's engine (B6.
   • **D6** `Focusability`/`PlatformVelocityTracker` — byte-equal to upstream; trivial vendor.
   Everything else: load-bearing port constraints (SDL graphics actuals, the whole
   ComposeScene→ComposeOwner replacement behind manifest !lines 362–406, the port text engine,
-  cinterop infra). Full delta list captured in the session; D2/D3 are the worthwhile cleanups. [§7]
+  cinterop infra). Full delta list captured in the session. [§7]
+  **D2–D6 evaluated in depth (2026-07-17) — decision: DEFER all; none is a worthwhile win now:**
+  • **D2 (GraphicsLayerOwnerLayer per-leg split): DEFER.** CORRECTION: upstream
+    `GraphicsLayerOwnerLayer.skiko.kt` is NOT coupled to the refused `RootNodeOwner` (verified:
+    same ctor `(graphicsLayer, context, layerManager, drawBlock, invalidateParentLayer)`;
+    `setLightingInfo` is a self-contained `SkiaGraphicsContext` extension + private `LIGHT_*`).
+    So CONVERGE §7's stated blocker is OUTDATED. BUT the ROI is still poor: it's a ~400-line
+    per-leg split of the file EVERY hit-test + draw flows through (high blast radius), for a
+    marginal gain — elevation shadows already match JVM (Shadows parity 1.49%), so exact
+    upstream lighting adds little, and the change would swap the skiko shadow mechanism (parity
+    risk) for a modest sync-tax reduction. Not worth destabilizing the clean B2 work.
+  • **D3 (matrix dedupe): DEFER — depends on D2.** The shared `GraphicsLayerOwnerLayer` hit-test
+    needs a BOTH-legs matrix fn; `Matrices.skiko` is skiko-only, so the port
+    `LayerTransformationMatrix.kt` must stay shared while the owner layer is shared. The
+    duplicate is 15 lines of identical, proven-agreeing math — benign. Only dedup-able if D2 is
+    done first.
+  • **D4/D5 (SemanticsRegion / CharHelpers): DEFER — gated on roadmap.** Real fidelity gaps
+    (a11y region math / ICU bidi+grapheme) but only matter if accessibility or complex-script/
+    RTL text becomes a requirement; under G1 neither is. Vendor-on-skiko when needed.
+  • **D6 (Focusability/PlatformVelocityTracker): SKIP — negligible.** 2 tiny byte-equal files;
+    vendoring them saves nothing meaningful.
 - [~] **P2.2** Lifetime model + soak test. *Superseded note:* B6.2 made the skiko leg use
   upstream `SkiaGraphicsLayer` WITH `ChildLayerDependenciesTracker` (it was already vendored);
   SDL keeps the port GC/release-queue. So "keep shared GC/release-queue on both legs; do NOT
@@ -284,6 +304,14 @@ GraphicsLayer/GraphicsContext (B6.2) verbatim. Text stays the port's engine (B6.
   (composition/snapshot on both legs + SDL texture retention). **NOT yet passing → P2.2 stays
   open.** Needs a dedicated heap-profiled leak hunt (RSS alone can't pinpoint it). Kept as a
   standalone diagnostic, NOT wired into verify-mac's gate until fixed. [§7/§8]
+  *Leak HUNT done (commit `c1fabc5b`) — characterized, not yet fixed:* layers CLEAN (live
+  OwnerLayer counter flat while RSS climbed → destroy/release runs); NOT GC-lag (Counter x10
+  linear 114→176MB, no plateau); NOT animation churn; bisected to a BASELINE composition-
+  machinery leak (~0.15MB/mount, even trivial Counter) + CONTENT amplification on image/vector/
+  list screens (~0.55MB/mount); image decode caches ruled out (bounded, keyed). Remaining
+  suspects (need heap tooling): composition/snapshot observation retention + DrawCache/vector
+  offscreen bitmap lifetime. `CDN_SOAK_SCREEN=<name>` added for single-screen bisection. A
+  precise FIX is a dedicated focused session — P2.2 stays open.
 - [x] **P2.3 — DONE via B6.2.** Outsets/blur-bounds expansion + `renderEffect` are now handled by
   upstream `SkiaGraphicsLayer` (real `setOutsets` used in draw bounds + `renderEffect`→
   `skiaImageFilter`; `Blur.skiko` vendored). The port's `setOutsets` was a no-op. No demo screen
@@ -551,3 +579,12 @@ GraphicsLayer/GraphicsContext (B6.2) verbatim. Text stays the port's engine (B6.
   SDL 5× worse → textures). P2.2 stays OPEN pending a dedicated heap-profiled leak hunt; soak is
   a standalone diagnostic, not wired into the verify-mac gate yet. **Next candidates: the leak
   hunt (P2.2), or the D2/D3 convergence cleanups.**
+- 2026-07-17 · **P2.2 leak hunt + D2–D6 evaluation** · commit `c1fabc5b` (soak bisect mode) ·
+  Leak HUNT done (characterized, not fixed): real slow leak, both legs; layers CLEAN, not GC-lag,
+  not animations; baseline composition-machinery ~0.15MB/mount + content amplification (image/
+  vector/list) ~0.55MB/mount; image caches bounded/ruled out; remaining suspects (composition/
+  snapshot retention + DrawCache offscreen bitmap lifetime) need a heap-tooling session. P2.2
+  stays open. D2–D6 (from the P2.1 audit) evaluated in order and ALL DEFERRED: D2 feasible (the
+  RootNodeOwner blocker is outdated) but poor ROI + high blast radius (shadows already parity);
+  D3 depends on D2; D4/D5 gated on a11y/complex-text roadmap; D6 negligible. Net: Phase 2's
+  clean wins are spent (P2.1 audit + P2.3-via-B6.2); the only substantive open item is the leak.
