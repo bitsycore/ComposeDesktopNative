@@ -15,7 +15,7 @@
  */
 
 // DERIVED (copy + edit) from compose-multiplatform-core -- MANUAL VENDOR, NON-IDEMPOTENT.
-// VENDOR-BASE: compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.skiko.kt @ v1.12.0-beta02
+// VENDOR-BASE: compose/ui/ui-graphics/src/skikoMain/kotlin/androidx/compose/ui/graphics/SkiaBackedCanvas.skiko.kt @ v1.12.0-beta03+dev4483
 // ONLY change vs upstream: this class also implements the port draw contracts
 // (NativeTextCanvas / NativePainterCanvas / NativeShadowCanvas / NativeFinishableCanvas) so
 // the port text engine (SkiaTextRenderer, P3.1 metrics) + resource-image cache + elevation

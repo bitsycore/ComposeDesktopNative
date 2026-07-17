@@ -1094,7 +1094,7 @@ skikoMain/kotlin/androidx/compose/ui/text/style/TextMotion.skiko.kt -> src/vendo
 #     | wasmJsMain/kotlin/androidx/compose/ui/Actuals.wasm.kt -> src/vendor/wasmJs/kotlin/androidx/compose/ui/Actuals.wasm.kt
 #     | wasmJsMain/kotlin/androidx/compose/ui/internal/System.wasm.kt -> src/vendor/wasmJs/kotlin/androidx/compose/ui/internal/System.wasm.kt
 #     | wasmJsMain/kotlin/androidx/compose/ui/platform/PlatformClipboard.wasm.kt -> src/vendor/wasmJs/kotlin/androidx/compose/ui/platform/PlatformClipboard.wasm.kt
-#   webMain (39)
+#   webMain (40)
 #     | webMain/kotlin/androidx/compose/ui/dom/Events.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/dom/Events.web.kt
 #     | webMain/kotlin/androidx/compose/ui/draganddrop/DragAndDrop.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/draganddrop/DragAndDrop.web.kt
 #     | webMain/kotlin/androidx/compose/ui/draganddrop/DragAndDropTransferData.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/draganddrop/DragAndDropTransferData.web.kt
@@ -1131,6 +1131,7 @@ skikoMain/kotlin/androidx/compose/ui/text/style/TextMotion.skiko.kt -> src/vendo
 #     | webMain/kotlin/androidx/compose/ui/window/ComposeViewportConfiguration.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/ComposeViewportConfiguration.web.kt
 #     | webMain/kotlin/androidx/compose/ui/window/ComposeWindow.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/ComposeWindow.web.kt
 #     | webMain/kotlin/androidx/compose/ui/window/ComposeWindowInternal.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/ComposeWindowInternal.web.kt
+#     | webMain/kotlin/androidx/compose/ui/window/RootScrollObserver.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/RootScrollObserver.kt
 #     | webMain/kotlin/androidx/compose/ui/window/SystemThemeObserver.web.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/SystemThemeObserver.web.kt
 #     | webMain/kotlin/androidx/compose/ui/window/WebCompositionLocals.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/WebCompositionLocals.kt
 #     | webMain/kotlin/androidx/compose/ui/window/WebTextInputSession.kt -> src/vendor/web/kotlin/androidx/compose/ui/window/WebTextInputSession.kt
