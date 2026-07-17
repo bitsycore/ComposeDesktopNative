@@ -94,7 +94,7 @@ internal class SkiaRenderBackend(
         fCurrentCanvas = canvas
     }
 
-    override fun drawRoot(inHost: com.compose.sdl.node.ComposeRootHost) {
+    override fun drawRoot(inDraw: (androidx.compose.ui.graphics.Canvas) -> Unit) {
         val canvas = fCurrentCanvas ?: return
         // Point the leaf-draw global at THIS window's renderers before drawing.
         skiaLeafDrawer = fLeafDrawer
@@ -103,7 +103,7 @@ internal class SkiaRenderBackend(
         // ImageBitmap-backed offscreen (VectorPainter / DrawCache) now goes through
         // upstream's own ActualCanvas, so no project offscreenRenderer registration.
         val vCanvas = canvas.asComposeCanvas()
-        inHost.drawRoot(vCanvas)
+        inDraw(vCanvas)
         (vCanvas as? com.compose.sdl.graphics.NativeFinishableCanvas)?.finish()
     }
 

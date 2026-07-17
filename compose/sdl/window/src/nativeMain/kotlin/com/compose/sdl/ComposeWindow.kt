@@ -846,7 +846,7 @@ internal class WindowInstance(
 		}
 
 		vRender.beginFrame(1f)
-		vRender.drawRoot(host)
+		vRender.drawRoot { canvas -> host.drawRoot(canvas) }
 		if (onFrame != null) {
 			renderingWindow = this
 			val vContinue = onFrame.invoke(vRender, frameIndex)
