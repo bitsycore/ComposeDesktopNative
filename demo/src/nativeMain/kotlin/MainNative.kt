@@ -496,7 +496,14 @@ private fun runSoakTest() {
     // not live animation-state churn (same seed the screenshot path uses).
     com.compose.sdl.disableInfiniteAnimations = true
     com.compose.sdl.useVirtualFrameTime = true
-    val vScreens = allCategories().flatMap { it.screens }
+    val vAll = allCategories().flatMap { it.screens }
+    // CDN_SOAK_SCREEN=<name> bisects: repeat ONE screen 40x/cycle (trivial screen leaking =>
+    // composition/machinery leak; only heavy screens leaking => content, e.g. image cache).
+    val vTarget = platform.posix.getenv("CDN_SOAK_SCREEN")?.toKString()
+    val vScreens = if (vTarget != null) {
+        val vS = vAll.first { it.name.equals(vTarget, ignoreCase = true) }
+        List(40) { vS }
+    } else vAll
     val vIndex = mutableStateOf(0)
     val kFramesPerScreen = 3
     val kCycles = platform.posix.getenv("CDN_SOAK_CYCLES")?.toKString()?.toIntOrNull() ?: 3
@@ -514,6 +521,7 @@ private fun runSoakTest() {
                 if (vShown % vScreens.size == 0) {
                     kotlin.native.runtime.GC.collect()
                     vRssPerCycleMb.add(currentMaxRssMb())
+                    println("soaktest: cycle ${vRssPerCycleMb.size}: peakRSS=${vRssPerCycleMb.last()}MB")
                 }
             }
             if (vRssPerCycleMb.size >= kCycles) {
@@ -540,9 +548,9 @@ private fun runSoakTest() {
                     .verticalScroll(vScroll)
                     .padding(24.dp),
             ) {
-                // key() so switching screens DISPOSES the old subtree (+ its layers)
-                // and composes the new one — the allocate/release churn we soak.
-                key(vIndex.value) { vScreens[vIndex.value].content() }
+                // key(vShown) forces a FULL dispose+recompose each advance (even when the
+                // target screen repeats) — the allocate/release churn we soak.
+                key(vShown) { vScreens[vIndex.value].content() }
             }
         }
     }
