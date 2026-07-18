@@ -563,21 +563,11 @@ private fun runSoakTest() {
     }
 }
 
-/* CURRENT resident set (MB) via `ps` — unlike getrusage ru_maxrss (monotonic peak),
-   this can DROP after GC, so it distinguishes a true leak (ratchets up) from K/N
-   allocator high-water. Portable across macOS/Linux (`ps -o rss=` prints KB). */
-@OptIn(ExperimentalForeignApi::class)
-private fun currentResidentMb(): Long {
-    val vPid = platform.posix.getpid()
-    val vFp = platform.posix.popen("ps -o rss= -p $vPid", "r") ?: return -1
-    val vKb = memScoped {
-        val vBuf = allocArray<kotlinx.cinterop.ByteVar>(64)
-        val vLine = platform.posix.fgets(vBuf, 64, vFp)?.toKString()?.trim()
-        vLine?.toLongOrNull() ?: -1L
-    }
-    platform.posix.pclose(vFp)
-    return if (vKb < 0) -1 else vKb / 1024
-}
+/* CURRENT resident set (MB): current RSS can DROP after GC, so it distinguishes a
+   true leak (ratchets up) from K/N allocator high-water, unlike getrusage's
+   monotonic peak. posix reads it from `ps`; mingw has no `ps`/popen and returns
+   -1 (the soak gate runs on macOS/Linux — see scripts/verify-mac.sh). */
+internal expect fun currentResidentMb(): Long
 
 private fun runNav3Test() {
     val vShow = mutableStateOf(false)
