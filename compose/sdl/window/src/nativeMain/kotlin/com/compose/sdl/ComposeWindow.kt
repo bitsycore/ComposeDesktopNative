@@ -575,6 +575,7 @@ internal class WindowInstance(
 	fun onActivationEvent(inEvent: AppEvent.WindowActivation) {
 		inEvent.focused?.let { windowFocused = it }
 		inEvent.visible?.let { windowVisible = it }
+		if (::host.isInitialized) host.setWindowFocused(windowFocused)
 		architectureOwner.setLifecycleState(
 			when {
 				!windowVisible -> androidx.lifecycle.Lifecycle.State.CREATED

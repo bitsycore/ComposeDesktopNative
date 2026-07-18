@@ -141,6 +141,10 @@ fun main(args: Array<String>) {
         runCursorTest()
         return
     }
+    if (args.any { it == "--windowinfotest" }) {
+        runWindowInfoTest()
+        return
+    }
 
     val vCli = parseArgs(args)
     val vTitle = buildString {
@@ -652,6 +656,26 @@ private fun runCursorTest() {
                 Box(Modifier.fillMaxWidth().height(100.dp).pointerHoverIcon(PointerIcon.Text))
                 Box(Modifier.fillMaxWidth().height(100.dp).pointerHoverIcon(PointerIcon.Hand))
             }
+        }
+    }
+}
+
+/* --windowinfotest: prints LocalWindowInfo.isWindowFocused / containerSize /
+   containerDpSize. containerSize starts Zero and becomes the window pixel size
+   after the first measure — proof it's fed from the live root constraints. */
+private fun runWindowInfoTest() {
+    nativeComposeWindow(
+        title = "windowinfotest",
+        width = 400,
+        height = 300,
+        onFrame = { _, vFrame -> vFrame < 6 },
+    ) {
+        val vWi = androidx.compose.ui.platform.LocalWindowInfo.current
+        androidx.compose.runtime.LaunchedEffect(vWi.containerSize, vWi.isWindowFocused) {
+            println("windowinfotest: focused=${vWi.isWindowFocused} containerSize=${vWi.containerSize} containerDpSize=${vWi.containerDpSize}")
+        }
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
         }
     }
 }

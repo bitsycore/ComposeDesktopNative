@@ -115,6 +115,9 @@ class ComposeRootHost(inDensity: Float = 1f) {
 	val hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback get() = fOwner.hapticFeedBack
 	val textToolbar: androidx.compose.ui.platform.TextToolbar get() = fOwner.textToolbar
 	val windowInfo: androidx.compose.ui.platform.WindowInfo get() = fOwner.windowInfo
+
+	// Push SDL window focus into windowInfo.isWindowFocused (focus-reactive UI).
+	fun setWindowFocused(inFocused: Boolean) = fOwner.setWindowFocused(inFocused)
 	val softwareKeyboardController: androidx.compose.ui.platform.SoftwareKeyboardController
 		get() = fOwner.softwareKeyboardController
 

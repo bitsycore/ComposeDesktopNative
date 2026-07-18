@@ -91,6 +91,15 @@ internal class ComposeOwner(
 	// synthesizing Enter/Exit. Fed from ComposeWindow via ComposeRootHost.
 	private val fPointerProcessor = androidx.compose.ui.input.pointer.PointerInputEventProcessor(root)
 
+	// Window focus + container size backing [windowInfo], snapshot-backed so
+	// focus-reactive UI and LocalWindowInfo.containerSize readers recompose. Fed by
+	// the window: focus via setWindowFocused (SDL activation), size from setRootConstraints.
+	private val fWindowFocused = androidx.compose.runtime.mutableStateOf(true)
+	private val fContainerSize = androidx.compose.runtime.mutableStateOf(androidx.compose.ui.unit.IntSize.Zero)
+
+	// Called by the window on SDL focus gain/loss.
+	internal fun setWindowFocused(inFocused: Boolean) { fWindowFocused.value = inFocused }
+
 	// Dispatch one pointer event to the upstream PointerInputModifierNode tree.
 	// [this] is the PositionCalculator (Owner : PositionCalculator).
 	internal fun processPointerInput(inEvent: androidx.compose.ui.input.pointer.PointerInputEvent): Boolean {
@@ -111,6 +120,12 @@ internal class ComposeOwner(
 	// logical points). Call each frame before [measureAndLayout].
 	fun setRootConstraints(inConstraints: Constraints) {
 		fDelegate.updateRootConstraints(inConstraints)
+		// Report the container size (physical px, the port's layout coord space) to
+		// windowInfo; updates on every resize since the window re-measures per frame.
+		if (inConstraints.hasBoundedWidth && inConstraints.hasBoundedHeight) {
+			fContainerSize.value =
+				androidx.compose.ui.unit.IntSize(inConstraints.maxWidth, inConstraints.maxHeight)
+		}
 	}
 
 	// ============
@@ -357,11 +372,15 @@ internal class ComposeOwner(
 		owner = this,
 	)
 	override val windowInfo: WindowInfo = object : WindowInfo {
-		override val isWindowFocused: Boolean get() = true
-		override val containerSize: androidx.compose.ui.unit.IntSize
-			get() = androidx.compose.ui.unit.IntSize.Zero
+		override val isWindowFocused: Boolean get() = fWindowFocused.value
+		override val containerSize: androidx.compose.ui.unit.IntSize get() = fContainerSize.value
 		override val containerDpSize: androidx.compose.ui.unit.DpSize
-			get() = androidx.compose.ui.unit.DpSize.Zero
+			get() = with(density) {
+				androidx.compose.ui.unit.DpSize(
+					fContainerSize.value.width.toDp(),
+					fContainerSize.value.height.toDp(),
+				)
+			}
 	}
 	override val retainedValuesStore: RetainedValuesStore = ForgetfulRetainedValuesStore
 	@Suppress("DEPRECATION")

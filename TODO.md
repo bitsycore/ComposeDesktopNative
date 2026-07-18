@@ -148,8 +148,8 @@ Drop INTO the window (files + text) is fully wired and works. Drag OUT does not.
 
 ## I. Window and platform info
 
-- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:354` · `windowInfo.containerSize`/`containerDpSize` return `IntSize.Zero`/`DpSize.Zero`; `LocalWindowInfo.containerSize` readers (popup sizing, window-size-aware layout) get 0. **Nice-to-have.**
-- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:353` · `windowInfo.isWindowFocused` hardcoded `true`; not fed by SDL focus events (which the window already tracks). Focus-reactive UI will not react. **Nice-to-have.**
+- [x] `ComposeOwner.windowInfo.containerSize`/`containerDpSize` · **DONE** — snapshot-backed, fed from the live root constraints in `setRootConstraints` (physical px + its Dp equivalent). Verified `demo --windowinfotest`: `0x0` → `800x600` / `400x300dp` for a 400x300 window at DPR 2.
+- [x] `ComposeOwner.windowInfo.isWindowFocused` · **DONE** — snapshot-backed, pushed from SDL activation (`ComposeWindow.onActivationEvent` → `ComposeRootHost.setWindowFocused`), so focus-reactive UI recomposes.
 - Multi-monitor: no display enumeration or per-monitor placement anywhere (`SDL_GetDisplays`/`SDL_GetDisplayBounds`/`SDL_GetDisplayForWindow` unused). **Nice-to-have.**
 - `compose/ui/ui/src/nativeMain/.../platform/PrefetchLocals.native.kt:18` · `LocalPlatformPrefetchScheduler` default is a NOP scheduler; lazy lists skip ahead-of-time item composition (correctness fine, possible scroll-in jank). **Nice-to-have (perf).**
 - `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:324` · `autofill`/`autofillManager` are null; `requestAutofill` NOP. **Nice-to-have.**
