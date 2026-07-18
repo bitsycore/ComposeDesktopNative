@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ClipOp
@@ -394,8 +395,8 @@ internal class Sdl3DrawScope(
 				val vDash = style.pathEffect as? androidx.compose.ui.graphics.DashPathEffect
 				for (vSub in linearisePath(path)) {
 					if (vDash != null) {
-						for (vRun in dashPolyline(vSub, vDash.intervals, vDash.phase)) strokePolyline(vRun, style.width, vSampler)
-					} else strokePolyline(vSub, style.width, vSampler)
+						for (vRun in dashPolyline(vSub, vDash.intervals, vDash.phase)) strokePolyline(vRun, style.width, vSampler, style.cap, style.join, style.miter)
+					} else strokePolyline(vSub, style.width, vSampler, style.cap, style.join, style.miter)
 				}
 			}
 		}
@@ -636,11 +637,20 @@ internal class Sdl3DrawScope(
 		if (vLen < 1e-4f) return
 		val vNx = -vDy / vLen * strokeWidth / 2f
 		val vNy = vDx / vLen * strokeWidth / 2f
+		// Square cap projects the stroke half a width beyond each endpoint along
+		// the segment direction (Round adds discs below; Butt stops at the ends).
+		var vSx = vX1; var vSy = vY1; var vEx2 = vX2; var vEy2 = vY2
+		if (cap == StrokeCap.Square) {
+			val vUx = vDx / vLen * strokeWidth / 2f
+			val vUy = vDy / vLen * strokeWidth / 2f
+			vSx -= vUx; vSy -= vUy
+			vEx2 += vUx; vEy2 += vUy
+		}
 		emitQuad(
-			vX1 + vNx, vY1 + vNy,
-			vX2 + vNx, vY2 + vNy,
-			vX2 - vNx, vY2 - vNy,
-			vX1 - vNx, vY1 - vNy,
+			vSx + vNx, vSy + vNy,
+			vEx2 + vNx, vEy2 + vNy,
+			vEx2 - vNx, vEy2 - vNy,
+			vSx - vNx, vSy - vNy,
 			vSampler,
 		)
 		if (cap == StrokeCap.Round) {
@@ -821,11 +831,19 @@ internal class Sdl3DrawScope(
 		return vResult
 	}
 
-	private fun strokePolyline(inPolyline: List<Pair<Float, Float>>, inWidth: Float, inSampler: Sampler) {
+	private fun strokePolyline(
+		inPolyline: List<Pair<Float, Float>>,
+		inWidth: Float,
+		inSampler: Sampler,
+		inCap: StrokeCap = StrokeCap.Butt,
+		inJoin: StrokeJoin = StrokeJoin.Miter,
+		inMiter: Float = 4f,
+	) {
 		val vHalfW = inWidth / 2f
 		val vSolidW = (vHalfW - kAaHalf).coerceAtLeast(0f)
 		val vEdgeW = vHalfW + kAaHalf
-		for (vI in 0 until inPolyline.size - 1) {
+		val vN = inPolyline.size
+		for (vI in 0 until vN - 1) {
 			val (vAx, vAy) = inPolyline[vI]
 			val (vBx, vBy) = inPolyline[vI + 1]
 			val vDx = vBx - vAx; val vDy = vBy - vAy
@@ -845,6 +863,109 @@ internal class Sdl3DrawScope(
 				vAx - vUx * vSolidW, vAy - vUy * vSolidW, vBx - vUx * vSolidW, vBy - vUy * vSolidW,
 				vBx - vUx * vEdgeW, vBy - vUy * vEdgeW, vAx - vUx * vEdgeW, vAy - vUy * vEdgeW, inSampler,
 			)
+		}
+		if (vN < 2) return
+		// Interior corners: fill the wedge the per-segment quads leave open on the
+		// convex side (miter / bevel / round). Without this, polyline corners notch.
+		for (vI in 1 until vN - 1) {
+			val (vPx, vPy) = inPolyline[vI - 1]
+			val (vVx, vVy) = inPolyline[vI]
+			val (vNx, vNy) = inPolyline[vI + 1]
+			emitJoin(vVx, vVy, vPx, vPy, vNx, vNy, vHalfW, inJoin, inMiter, inSampler)
+		}
+		// A closed contour (first ≈ last) joins at the seam; an open one caps its ends.
+		val vClosed = kotlin.math.abs(inPolyline[0].first - inPolyline[vN - 1].first) < 1e-3f &&
+			kotlin.math.abs(inPolyline[0].second - inPolyline[vN - 1].second) < 1e-3f
+		if (vClosed && vN >= 3) {
+			emitJoin(
+				inPolyline[0].first, inPolyline[0].second,
+				inPolyline[vN - 2].first, inPolyline[vN - 2].second,
+				inPolyline[1].first, inPolyline[1].second,
+				vHalfW, inJoin, inMiter, inSampler,
+			)
+		} else if (inCap != StrokeCap.Butt) {
+			emitCap(inPolyline[0], inPolyline[1], vHalfW, inCap, inSampler)
+			emitCap(inPolyline[vN - 1], inPolyline[vN - 2], vHalfW, inCap, inSampler)
+		}
+	}
+
+	/* Fills the convex wedge where two stroke segments meet at [inV], between the
+	   outer offset corners of the incoming (from [inPa]) and outgoing (to [inNb])
+	   segments. Round = a disc, Bevel = one triangle to the two corners, Miter =
+	   extends the outer edges to their apex (falls back to bevel past the limit). */
+	private fun emitJoin(
+		inVx: Float, inVy: Float,
+		inPax: Float, inPay: Float,
+		inNbx: Float, inNby: Float,
+		inHalfW: Float,
+		inJoin: StrokeJoin,
+		inMiter: Float,
+		inSampler: Sampler,
+	) {
+		var vD1x = inVx - inPax; var vD1y = inVy - inPay
+		var vD2x = inNbx - inVx; var vD2y = inNby - inVy
+		val vL1 = sqrt(vD1x * vD1x + vD1y * vD1y)
+		val vL2 = sqrt(vD2x * vD2x + vD2y * vD2y)
+		if (vL1 < 1e-4f || vL2 < 1e-4f) return
+		vD1x /= vL1; vD1y /= vL1; vD2x /= vL2; vD2y /= vL2
+		val vCross = vD1x * vD2y - vD1y * vD2x
+		if (kotlin.math.abs(vCross) < 1e-4f) return // collinear: no gap to fill
+		if (inJoin == StrokeJoin.Round) {
+			emitFilledArc(inVx, inVy, inHalfW, inHalfW, 0f, 360f, true, arcSegments(360f, inHalfW), inSampler)
+			return
+		}
+		// Outer (convex-side) normal for each segment: left turn -> right side.
+		val vS = if (vCross > 0f) -1f else 1f
+		val vN1x = vS * -vD1y; val vN1y = vS * vD1x
+		val vN2x = vS * -vD2y; val vN2y = vS * vD2x
+		val vP1x = inVx + vN1x * inHalfW; val vP1y = inVy + vN1y * inHalfW
+		val vP2x = inVx + vN2x * inHalfW; val vP2y = inVy + vN2y * inHalfW
+		if (inJoin == StrokeJoin.Bevel) {
+			emitTri(inVx, inVy, vP1x, vP1y, vP2x, vP2y, inSampler)
+			return
+		}
+		// Miter: apex = intersection of the two outer edge lines (p1 along d1, p2 along d2).
+		val vDet = -vCross
+		val vEx = vP2x - vP1x; val vEy = vP2y - vP1y
+		val vT = (vD2x * vEy - vD2y * vEx) / vDet
+		val vApexX = vP1x + vD1x * vT; val vApexY = vP1y + vD1y * vT
+		val vMdx = vApexX - inVx; val vMdy = vApexY - inVy
+		if (sqrt(vMdx * vMdx + vMdy * vMdy) <= inMiter * inHalfW) {
+			emitTri(inVx, inVy, vP1x, vP1y, vApexX, vApexY, inSampler)
+			emitTri(inVx, inVy, vApexX, vApexY, vP2x, vP2y, inSampler)
+		} else {
+			emitTri(inVx, inVy, vP1x, vP1y, vP2x, vP2y, inSampler) // past miter limit -> bevel
+		}
+	}
+
+	/* Round / square end cap at [inEnd], oriented by the outward direction
+	   [inEnd] - [inNeighbor]. Butt draws nothing (the segment quad already ends flush). */
+	private fun emitCap(
+		inEnd: Pair<Float, Float>,
+		inNeighbor: Pair<Float, Float>,
+		inHalfW: Float,
+		inCap: StrokeCap,
+		inSampler: Sampler,
+	) {
+		val vEx = inEnd.first; val vEy = inEnd.second
+		var vDx = vEx - inNeighbor.first; var vDy = vEy - inNeighbor.second
+		val vLen = sqrt(vDx * vDx + vDy * vDy)
+		if (vLen < 1e-4f) return
+		vDx /= vLen; vDy /= vLen
+		when (inCap) {
+			StrokeCap.Round -> emitFilledArc(vEx, vEy, inHalfW, inHalfW, 0f, 360f, true, arcSegments(360f, inHalfW), inSampler)
+			StrokeCap.Square -> {
+				val vUx = -vDy; val vUy = vDx // normal
+				val vTx = vEx + vDx * inHalfW; val vTy = vEy + vDy * inHalfW // projected end centre
+				emitQuad(
+					vEx + vUx * inHalfW, vEy + vUy * inHalfW,
+					vTx + vUx * inHalfW, vTy + vUy * inHalfW,
+					vTx - vUx * inHalfW, vTy - vUy * inHalfW,
+					vEx - vUx * inHalfW, vEy - vUy * inHalfW,
+					inSampler,
+				)
+			}
+			else -> {}
 		}
 	}
 

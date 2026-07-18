@@ -179,6 +179,10 @@ fun main(args: Array<String>) {
         runBlendTest()
         return
     }
+    if (args.any { it == "--jointest" }) {
+        runJoinTest()
+        return
+    }
 
     val vCli = parseArgs(args)
     val vTitle = buildString {
@@ -956,6 +960,49 @@ private fun runBlendTest() {
                 // Modulate: white over a gradient-ish grey scales it down.
                 drawRect(Color(0xFF808080), topLeft = off(40f, 230f), size = androidx.compose.ui.geometry.Size(160f, 60f))
                 drawRect(Color(0xFFC00000), topLeft = off(80f, 230f), size = androidx.compose.ui.geometry.Size(160f, 60f), blendMode = androidx.compose.ui.graphics.BlendMode.Modulate)
+            }
+        }
+    }
+}
+
+/* --jointest: three thick chevron polylines stroked with Miter / Bevel / Round
+   joins, plus a Butt vs Square capped line. On the SDL leg corners used to notch
+   and Square fell back to Butt; now joins fill the corner and Square projects. */
+private fun runJoinTest() {
+    nativeComposeWindow(
+        title = "jointest",
+        width = 460,
+        height = 320,
+        onFrame = { vBridge, vFrame ->
+            if (vFrame >= 12) {
+                val vSnap = vBridge.snapshotBgra()
+                if (vSnap != null) {
+                    val (vW, vH, vBgra) = vSnap
+                    writeFile("jointest.bmp", encodeBmpBgra32(vW, vH, vBgra))
+                    println("jointest: wrote jointest.bmp (${vW}x${vH})")
+                } else println("jointest: FAIL (no snapshot)")
+                false
+            } else true
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize().background(Color(0xFF202020))) {
+                fun off(x: Float, y: Float) = androidx.compose.ui.geometry.Offset(x, y)
+                fun chevron(x: Float): androidx.compose.ui.graphics.Path =
+                    androidx.compose.ui.graphics.Path().apply {
+                        moveTo(x, 40f); lineTo(x + 70f, 110f); lineTo(x, 180f)
+                    }
+                val vJoins = listOf(
+                    androidx.compose.ui.graphics.StrokeJoin.Miter to Color.Cyan,
+                    androidx.compose.ui.graphics.StrokeJoin.Bevel to Color.Yellow,
+                    androidx.compose.ui.graphics.StrokeJoin.Round to Color.Magenta,
+                )
+                vJoins.forEachIndexed { vI, (vJoin, vColor) ->
+                    drawPath(chevron(30f + vI * 140f), vColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 26f, join = vJoin))
+                }
+                // Butt (top) vs Square (bottom) capped lines - Square extends past the endpoints.
+                drawLine(Color.White, off(40f, 240f), off(200f, 240f), strokeWidth = 24f, cap = androidx.compose.ui.graphics.StrokeCap.Butt)
+                drawLine(Color.Green, off(40f, 290f), off(200f, 290f), strokeWidth = 24f, cap = androidx.compose.ui.graphics.StrokeCap.Square)
             }
         }
     }
