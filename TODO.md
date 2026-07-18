@@ -15,13 +15,26 @@ Severity is a rough guide, not a mandate:
 
 Context for prioritizing: the project goal is **G1, cheap upstream-tracking**
 (see [RENDERER.md](RENDERER.md)). The **JVM Compose Desktop target is the
-documented Windows fidelity/feature tier**, so SDL-leg visual gaps (section J)
-are lower priority than the cross-cutting platform gaps (input, locale, a11y,
-cursor) that affect every backend including Skia on macOS/Linux.
+documented Windows fidelity/feature tier**, so SDL-leg visual gaps (section H)
+are lower priority than the cross-cutting platform gaps that affect every
+backend including Skia on macOS/Linux.
 
 Renderer-internal cleanups (the deferred D2 shadow-lighting split, D3 matrix
 dedupe) live in [RENDERER.md](RENDERER.md#6-remaining-and-future-work), not
 here.
+
+## Completed
+
+- **Locale / i18n** (`5d03711f`) — `Locale.current` / `LocaleList.current` read the
+  OS locale via SDL, unlocking the 40+ Material 3 translations. The date/number
+  format tail remains (section C).
+- **IME text input** (`500c49e4`) — a real `PlatformTextInputSession` routes SDL
+  committed + composing text to the focused field (commit replaces the
+  composition); `SDL_SetTextInputArea` positions the OS candidate window.
+- **Cursor icons** (`1fcc0828`) — `Modifier.pointerHoverIcon` drives the OS cursor
+  via SDL (I-beam over text, hand over links).
+- **WindowInfo** (`bad23073`) — `isWindowFocused` + `containerSize` / `containerDpSize`
+  report real values (were hardcoded `true` / `Zero`).
 
 ---
 
@@ -29,19 +42,12 @@ here.
 
 The cross-cutting items to weigh first (all detailed below):
 
-1. ~~Locale hardcoded to `en-US`~~ **DONE** (section E) — `Locale.current` /
-   `LocaleList.current` now read the OS preferred locales via SDL, unlocking the
-   40+ Material 3 translations. The date/number-format tail (needs CLDR) remains.
-2. ~~No IME / text composition~~ **DONE** (section B) — a real text-input session
-   routes SDL committed + composing text to the focused field; preedit and
-   commit-replace verified.
-3. ~~No cursor changes~~ **DONE** (section D) — `Modifier.pointerHoverIcon` now
-   drives the OS cursor via SDL (I-beam over text, hand over links).
-4. **No copy/paste context menu** (section C). Keyboard copy works; there is no
-   right-click or selection toolbar.
-5. **Accessibility is entirely absent** (section A). Decide whether stable
+1. **No copy/paste context menu** (section B). Keyboard copy works; there is no
+   right-click or selection toolbar (the desktop path is the right-click context
+   menu, upstream TODO CMP-7819).
+2. **Accessibility is entirely absent** (section A). Decide whether stable
    requires any screen-reader support at all.
-6. **Standard `Font(...)` / resource-font loading is a no-op** (section F). Only
+3. **Standard `Font(...)` / resource-font loading is a no-op** (section D). Only
    pre-registered named fonts render. A blocker only if apps use the standard
    font APIs.
 
@@ -58,100 +64,44 @@ a11y). Screen readers get nothing.
 - `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:297` · `accessibilityManager` implements only `calculateRecommendedTimeoutMillis` (passthrough); no announce/focus/event surface. **Nice-to-have.**
 - `compose/ui/ui/src/nativeMain/.../semantics/SemanticsRegion.native.kt:14` · `StubSemanticsRegion.intersect()`/`difference()` hardcode `false`; only `set`/`bounds` work. Region math for semantics culling is inert. **Nice-to-have.**
 
-## B. Text input / IME
+## B. Text toolbar and context menus (copy / paste / select-all)
 
-**DONE — real IME composition.** `ComposeOwner.textInputSession` now establishes a
-`PlatformTextInputSession` that registers the focused field's request with
-`com.compose.sdl.text.input.ImeBridge`. `ComposeWindow` routes `SDL_EVENT_TEXT_INPUT`
-through `CommitTextCommand` (replacing any active composition) and the newly-mapped
-`SDL_EVENT_TEXT_EDITING` through `SetComposingTextCommand` (preedit); with no field
-focused it falls back to the synthetic-KeyEvent path, so plain typing is unchanged.
-`SDL_SetTextInputArea` tracks the focused field so the OS candidate window is
-positioned correctly. Verified `demo --imetest`: composing "ni" → `text='ni'`
-`composition=(0,2)`; commit "に" → `text='に'` `composition=null` (replaced).
-`--keytest` (committed Latin) still PASS.
+- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:311` · `textToolbar` is a stub: `showMenu`/`hide` NOP, `status` always `Hidden`. NOTE: the floating toolbar is gated on `isInTouchMode`, so on desktop (mouse) it never shows anyway — the desktop path is the right-click context menu below. **Nice-to-have (touch only).**
+- `compose/foundation/.../text/selection/SelectionActuals.native.kt:42` · `addSelectionContainerTextContextMenuComponents` NOP (upstream TODO CMP-7819). No right-click copy/select-all menu for `SelectionContainer`. **Blocker for desktop text UX.**
+- `compose/foundation/.../text/selection/TextFieldSelectionManager.native.kt:24` and `compose/foundation/.../text/input/internal/selection/TextFieldSelectionState.native.kt:36` · `addBasicTextFieldTextContextMenuComponents` NOP for both the legacy and state-based `BasicTextField`. **Blocker for desktop text UX.**
 
-- [x] `ComposeOwner.textInputSession` · real `PlatformTextInputSession` + `ImeBridge`. **Done.**
-- [x] `SDL3EventMapper` · `SDL_EVENT_TEXT_EDITING` → `AppEvent.TextEditing` (preedit). **Done.**
-- [x] `ComposeWindow` · `SDL_SetTextInputArea` positions the IME candidate window. **Done.**
-- `NoOpPlatformTextInputService.kt` · the LEGACY `PlatformTextInputService` is still a NOP, but it's bypassed by the modern session path above (CoreTextField reaches the session via the legacy adapter). **Cosmetic.**
-- `ComposeOwner.softwareKeyboardController.show/hide` NOP — desktop has no on-screen keyboard. **Cosmetic.**
+## C. Locale / i18n tail (needs locale-aware DATA, no ICU on K/N)
 
-Caveat: verified on macOS with synthetic SDL text events (a preedit + a CJK
-commit-replace). A real OS input method (live CJK typing) wasn't exercised on
-this host; the composition + commit-replace machinery is proven end-to-end.
+`Locale.current` / `LocaleList.current` are wired to the OS (see Completed). The
+rest needs month/weekday name tables and date/number patterns, which Kotlin/Native
+has no ICU for; SDL reports language + country only (no script subtag, no
+calendar/clock/number prefs). These require a bundled CLDR subset or a K/N i18n lib.
 
-## C. Text toolbar and context menus (copy / paste / select-all)
-
-- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:311` · `textToolbar` is a stub: `showMenu`/`hide` NOP, `status` always `Hidden`. No selection or right-click copy/paste popup anywhere. Keyboard copy still works. **Blocker for text UX.**
-- `compose/foundation/.../text/selection/SelectionActuals.native.kt:42` · `addSelectionContainerTextContextMenuComponents` NOP (upstream TODO CMP-7819). No copy/select-all menu for `SelectionContainer`. **Nice-to-have.**
-- `compose/foundation/.../text/selection/TextFieldSelectionManager.native.kt:24` and `compose/foundation/.../text/input/internal/selection/TextFieldSelectionState.native.kt:36` · `addBasicTextFieldTextContextMenuComponents` NOP for both the legacy and state-based `BasicTextField`. **Nice-to-have.**
-
-## D. Pointer / cursor icons
-
-**DONE — `Modifier.pointerHoverIcon` now changes the OS cursor via SDL.** The
-four canonical `PointerIcon`s map by identity to `SDL_SYSTEM_CURSOR_*`
-(`com.compose.sdl.SdlCursors`, cached + deduped); the owner's
-`pointerIconService` tracks the hover pipeline's desired icon and applies it
-after each pointer event; `ComposeRootHost.ProvidePointerIconService` seeds the
-`:ui`-internal `LocalPointerIconService` that the vendored `HoverIconModifierNode`
-reads (it defaulted to `null`, so `setIcon` was never called). Verified with
-`demo --cursortest`: background=DEFAULT, `pointerHoverIcon(Text)`=TEXT,
-`pointerHoverIcon(Hand)`=POINTER.
-
-- [x] `PointerIcon.native.kt` + `SdlCursors.kt` · identity map to SDL system cursors, `SDL_SetCursor`. **Done.**
-- [x] `ComposeOwner.pointerIconService` · stores the desired icon, applies it via SDL after hover processing. **Done.**
-- [x] `LocalPointerIconService` seeded at the composition root. **Done.**
-
-Remaining (minor): only the four canonical cursors are mapped; custom image
-cursors (`PointerIcon(image)`) aren't in the common expect and fall back to the
-default arrow. Stylus hover icons stay unset (desktop has no stylus). **Cosmetic.**
-
-## E. Locale and internationalization
-
-**DONE — `Locale.current` / `LocaleList.current` now read the OS preferred
-locales via SDL.** A shared reader (`com.compose.sdl.text.systemPreferredLocaleTags`,
-backed by `SDL_GetPreferredLocales()`, cached after first non-empty read) feeds
-both actuals. This is what keys Material 3 string translation, so all 40+
-vendored `material3/internal/l10n/*.kt` tables now resolve. Verified with the
-`demo --localetest` probe: `-AppleLanguages "(fr-FR)"` renders the DatePicker
-headline as "Sélectionner une date"; `(de-DE, fr-FR, en)` returns the full
-ordered `LocaleList` (`de-DE` first). en-US fallback before SDL init.
-
-- [x] `Locale.native.kt` · `Locale.current` reads the OS locale (first preferred), en-US fallback. **Done.**
-- [x] `PlatformLocale.native.kt` · `createPlatformLocaleDelegate().current` returns the full ordered `LocaleList` from SDL. **Done.**
-
-The rest of section E is the i18n **tail** that needs locale-aware DATA
-(month/weekday names, date/number patterns), which Kotlin/Native has no ICU for.
-It is NOT unlocked by the SDL wiring above:
-
-- `compose/material3/.../CalendarLocale.native.kt:20` · locale-agnostic stub: `toString()` fixed `"en"`, single shared instance, `equals` treats all instances as equal. A separate type from `ui.text.intl.Locale`; needs its own wiring so `CalendarModel`/`PlatformDateFormat` can vary by locale. Inert until `PlatformDateFormat` below is localized. **Nice-to-have (DatePicker/TimePicker).**
+- `compose/material3/.../CalendarLocale.native.kt:20` · locale-agnostic stub: `toString()` fixed `"en"`, single shared instance, `equals` treats all instances as equal. A separate type from `ui.text.intl.Locale`; needs its own wiring so `CalendarModel`/`PlatformDateFormat` can vary by locale. Inert until `PlatformDateFormat` is localized. **Nice-to-have (DatePicker/TimePicker).**
 - `compose/material3/.../internal/PlatformDateFormat.native.kt` · multiple hardcodes:
-  - `:27` `weekdayNames` hardcoded English full/short names (DatePicker shows English day initials regardless of locale). **Blocker.**
-  - `:32` `formatWithPattern`/`formatWithSkeleton` ignore the pattern/skeleton and always emit ISO `yyyy-MM-dd`. **Blocker.**
+  - `:27` `weekdayNames` hardcoded English full/short names (DatePicker shows English day initials regardless of locale). **Blocker for localized DatePicker.**
+  - `:32` `formatWithPattern`/`formatWithSkeleton` ignore the pattern/skeleton and always emit ISO `yyyy-MM-dd`. **Blocker for localized DatePicker.**
   - `:25` `firstDayOfWeek` hardcoded `1` (Sunday); locale-dependent. **Nice-to-have.**
   - `:44` `parse()` only accepts ISO `yyyy-MM-dd`, ignoring pattern/locale. **Nice-to-have.**
   - `:62` `getDateInputFormat()` hardcoded `yyyy-MM-dd` / `'-'`. **Nice-to-have.**
   - `:65` `is24HourFormat()` hardcoded `true`. **Cosmetic.**
 - `compose/ui/ui/src/nativeMain/.../text/platform/NativeStringDelegate.native.kt:17` · `toUpperCase`/`toLowerCase` use locale-independent stdlib casing; the `locale` param is ignored (wrong for Turkish dotted/dotless i, etc.). **Cosmetic.**
-- `compose/ui/ui/src/nativeMain/.../text/intl/Locale.native.kt:17` · `Locale.isRtl()` not implemented; the pipeline is LTR-only (`SdlParagraph.native.kt:333` `getBidiRunDirection` always returns `Ltr`; owners/DrawScopes default `LayoutDirection.Ltr`). No RTL shaping. **Nice-to-have.**
+- `compose/ui/ui/src/nativeMain/.../text/intl/Locale.native.kt` · `Locale.isRtl()` not implemented; the pipeline is LTR-only (`SdlParagraph.native.kt` `getBidiRunDirection` always returns `Ltr`; owners/DrawScopes default `LayoutDirection.Ltr`). No RTL shaping. **Nice-to-have.**
 - No `NumberFormat` / currency / decimal-grouping actual exists; numbers render via `toString()` with `.` decimal and no grouping regardless of locale. **Cosmetic.**
 
-**Beyond a real `getLocale`:** SDL reports language + country only (no script subtag, no calendar/clock/number preferences), and Kotlin/Native bundles no ICU. Localized month/weekday name tables, date/number/currency patterns, first-day-of-week, locale-aware casing, and RTL all still require a bundled CLDR subset or a third-party K/N i18n library. The SDL wiring is the cheap 80%; these are the expensive tail.
-
-## F. Font resolution
+## D. Font resolution
 
 - `compose/ui/ui/src/nativeMain/.../text/font/FontFamilyResolver.native.kt:32` · `SdlPlatformFontLoader.loadBlocking`/`awaitLoad` are NOP (return `Unit`); font bytes for `ResourceFont` / `Font(bytes)` / `LoadedFontFamily` are never loaded. Only pre-registered `NamedFont` names reach the renderer. **Blocker if the app uses standard `Font(...)` / resource-font APIs; otherwise nice-to-have.**
 - `compose/ui/ui/src/nativeMain/.../text/font/FontFamilyResolver.native.kt:38` · `PlatformFontFamilyTypefaceAdapter.resolve` returns `TypefaceResult.Immutable(Unit)`; any code reading the resolved typeface gets `Unit` (the renderer bypasses this via name lookup, so usually harmless). **Nice-to-have.**
 - `compose/ui/ui/src/commonMain/.../text/NamedFont.kt:62` · `FontFamily.projectFontName` resolves only a `FontListFontFamily` whose first font is a `NamedFont`; returns `null` for `Serif`/`SansSerif`/`Monospace`/`Cursive`/`Default`, `LoadedFontFamily`, and resource-backed families, so all of those collapse to the single default font (no serif/mono/cursive distinction). **Nice-to-have.**
 - `compose/ui/ui/src/nativeMain/.../text/font/FontFamilyResolver.native.kt:69` · deprecated `createFontFamilyResolver(fontResourceLoader)` ignores the supplied loader. **Cosmetic.**
 
-## G. Text rendering details
+## E. Text rendering details
 
 - `compose/ui/ui/src/nativeMain/.../text/SdlParagraph.native.kt:376` · `drawNativeText` accepts and ignores text `Shadow`, stroke `DrawStyle`, and non-`SrcOver` blend, so those never render on text. **Cosmetic.**
 - `compose/foundation/.../text/StringHelpers.native.kt:31` and `compose/ui/ui/src/nativeMain/.../text/CharHelpers.native.kt:14` · `findPrecedingBreak`/`findFollowingBreak` (and `offsetByCodePoints`) do a codepoint/surrogate walk only, with no ICU grapheme clusters, so caret movement and backspace split combining marks and emoji ZWJ sequences. **Nice-to-have.**
 
-## H. Drag and drop
+## F. Drag and drop
 
 Drop INTO the window (files + text) is fully wired and works. Drag OUT does not.
 
@@ -159,10 +109,8 @@ Drop INTO the window (files + text) is fully wired and works. Drag OUT does not.
 - `compose/ui/ui/src/nativeMain/.../draganddrop/Sdl3DragAndDropOwner.kt:119` · incoming transfer carries only file paths + a text blob; no image/URL/custom-MIME payloads. **Cosmetic.**
 - `compose/foundation/.../draganddrop/DragAndDropSource.native.kt:36` · no drag-shadow / drag-image feedback for internal DnD (upstream skiko renders one). **Cosmetic.**
 
-## I. Window and platform info
+## G. Window and platform info
 
-- [x] `ComposeOwner.windowInfo.containerSize`/`containerDpSize` · **DONE** — snapshot-backed, fed from the live root constraints in `setRootConstraints` (physical px + its Dp equivalent). Verified `demo --windowinfotest`: `0x0` → `800x600` / `400x300dp` for a 400x300 window at DPR 2.
-- [x] `ComposeOwner.windowInfo.isWindowFocused` · **DONE** — snapshot-backed, pushed from SDL activation (`ComposeWindow.onActivationEvent` → `ComposeRootHost.setWindowFocused`), so focus-reactive UI recomposes.
 - Multi-monitor: no display enumeration or per-monitor placement anywhere (`SDL_GetDisplays`/`SDL_GetDisplayBounds`/`SDL_GetDisplayForWindow` unused). **Nice-to-have.**
 - `compose/ui/ui/src/nativeMain/.../platform/PrefetchLocals.native.kt:18` · `LocalPlatformPrefetchScheduler` default is a NOP scheduler; lazy lists skip ahead-of-time item composition (correctness fine, possible scroll-in jank). **Nice-to-have (perf).**
 - `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:324` · `autofill`/`autofillManager` are null; `requestAutofill` NOP. **Nice-to-have.**
@@ -170,7 +118,7 @@ Drop INTO the window (files + text) is fully wired and works. Drag OUT does not.
 - `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:287` · deprecated `clipboardManager` `setText`/`getText` NOP, and `clipboard.getClipEntry` null. Harmless: the real `LocalClipboard` (text + PNG image via SDL3) works. **Cosmetic.**
 - `compose/foundation/.../text/input/internal/selection/TextFieldSelectionState.native.kt:44` · `ClipboardPasteState.hasClip` aliased to `hasText`, so image-only clipboard is not detected for the paste affordance. **Cosmetic.**
 
-## J. SDL renderer graphics (Windows / `-Prenderer=sdl3` only)
+## H. SDL renderer graphics (Windows / `-Prenderer=sdl3` only)
 
 These affect only the SDL leg. On macOS/Linux the Skia leg implements them
 correctly, and JVM is the documented Windows fidelity tier, so these are lower
@@ -190,6 +138,6 @@ priority under G1. Listed because SDL is the shipped Windows renderer.
 - Images under a rotated layer are not rotated (`SDL_RenderTexture` is axis-aligned, `Sdl3Canvas.kt:1264`); stroked non-square ovals stroke as a circular ring (`Sdl3DrawScope.kt:527`); `SdlImageBitmap.readPixels` is a no-op (`Sdl3Offscreen.kt:117`). **Cosmetic / nice-to-have.**
 - Drop shadow is approximated (9-slice / stacked rings, not a gaussian blur; ambient vs spot largely collapsed) at `Sdl3Canvas.kt:785`; AA is a ~1px geometry fringe rather than analytic coverage. **Cosmetic.**
 
-## K. GraphicsLayer / image
+## I. GraphicsLayer / image
 
 - `compose/ui/ui/src/sdlRendererMain/.../graphics/CanvasPaintActuals.native.kt:151` · `createImageBitmap(bytes)` throws `UnsupportedOperationException`. (`GraphicsLayer.toImageBitmap` and `snapshotBgra` do work on both renderers.) **Nice-to-have.**
