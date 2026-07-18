@@ -920,6 +920,35 @@ internal class Sdl3Canvas(
 			Stroke(inPaint.strokeWidth, cap = inPaint.strokeCap, pathEffect = inPaint.pathEffect)
 		else Fill
 
+	/* Compose BlendMode → an SDL renderer draw blend mode. SDL natively supports a
+	   handful; the rest (Screen, Overlay, Darken, …) have no SDL equivalent and fall
+	   back to normal alpha blend. */
+	private fun sdlBlendFor(inMode: BlendMode): UInt = when (inMode) {
+		BlendMode.Plus -> SDL_BLENDMODE_ADD
+		BlendMode.Modulate -> SDL_BLENDMODE_MOD
+		BlendMode.Multiply -> SDL_BLENDMODE_MUL
+		BlendMode.Src -> SDL_BLENDMODE_NONE
+		else -> SDL_BLENDMODE_BLEND
+	}
+
+	/* Runs [inEmit] (which emits geometry into the batch) under [inPaint]'s blend
+	   mode. SrcOver (and unsupported modes) stay on the normal batched path. A
+	   supported non-default mode flushes the pending batch, sets the SDL blend, emits
+	   + flushes THIS draw, then restores alpha blend — and, in capture mode, defers to
+	   block-replay (captured geometry replays with the default blend, so it can't carry
+	   a per-op blend). */
+	private inline fun withBlend(inPaint: Paint, inEmit: () -> Unit) {
+		val vBlend = sdlBlendFor(inPaint.blendMode)
+		if (vBlend == SDL_BLENDMODE_BLEND) { inEmit(); return }
+		if (captureUnsupported()) return
+		fScope.flush()
+		val vRenderer = fRenderer.reinterpret<cnames.structs.SDL_Renderer>()
+		SDL_SetRenderDrawBlendMode(vRenderer, vBlend)
+		inEmit()
+		fScope.flush()
+		SDL_SetRenderDrawBlendMode(vRenderer, SDL_BLENDMODE_BLEND)
+	}
+
 	override fun drawRect(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
 		// BlendMode.Clear zeroes the region (DrawCache clears an offscreen this way
 		// before re-rasterising a vector). Write transparent directly instead of the
@@ -934,7 +963,7 @@ internal class Sdl3Canvas(
 			return
 		}
 		if (fPendingClips.isNotEmpty() && tryDrawRectUnderPendingClips(left, top, right, bottom, paint)) return
-		prep().rectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().rectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	/* The `clip(shape).background(color)` idiom: a FILL rect that fully covers
@@ -992,17 +1021,17 @@ internal class Sdl3Canvas(
 		radiusX: Float, radiusY: Float, paint: Paint,
 	) {
 		admitDraw(left, top, right, bottom)
-		prep().roundRectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), radiusX, (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().roundRectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), radiusX, (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawOval(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
 		admitDraw(left, top, right, bottom)
-		prep().ovalCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().ovalCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawCircle(center: Offset, radius: Float, paint: Paint) {
 		admitDraw(center.x - radius, center.y - radius, center.x + radius, center.y + radius)
-		prep().circleCore(brushFor(paint), radius, center, (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().circleCore(brushFor(paint), radius, center, (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawArc(
@@ -1010,17 +1039,17 @@ internal class Sdl3Canvas(
 		startAngle: Float, sweepAngle: Float, useCenter: Boolean, paint: Paint,
 	) {
 		realizePendingClips()
-		prep().arcCore(brushFor(paint), startAngle, sweepAngle, useCenter, Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().arcCore(brushFor(paint), startAngle, sweepAngle, useCenter, Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawLine(p1: Offset, p2: Offset, paint: Paint) {
 		realizePendingClips()
-		prep().lineCoreDashed(brushFor(paint), p1, p2, paint.strokeWidth, paint.strokeCap, (paint.alpha * fAlpha), paint.pathEffect)
+		withBlend(paint) { prep().lineCoreDashed(brushFor(paint), p1, p2, paint.strokeWidth, paint.strokeCap, (paint.alpha * fAlpha), paint.pathEffect) }
 	}
 
 	override fun drawPath(path: ComposePath, paint: Paint) {
 		realizePendingClips()
-		prep().pathCore(path, brushFor(paint), (paint.alpha * fAlpha), styleFor(paint))
+		withBlend(paint) { prep().pathCore(path, brushFor(paint), (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	// ============

@@ -146,7 +146,7 @@ priority under G1. Listed because SDL is the shipped Windows renderer.
 - **DONE** — gradient `TileMode` now honoured: `Sdl3DrawScope`'s linear/radial samplers apply `Repeated` (wrap), `Mirror` (reflect), `Decal` (transparent outside), `Clamp` unchanged (`tileT` + `gradientTileMode`). Verified `demo --tilemodetest`. **Nice-to-have.**
 - `compose/ui/ui/src/sdlRendererMain/.../graphics/CanvasPaintActuals.native.kt:106` · `ActualImageShader`/`ActualCompositeShader` are stubs; image/composite `ShaderBrush` degrades to solid fill (white/black). **Nice-to-have.**
 - `compose/ui/ui/src/sdlRendererMain/.../graphics/ColorFilter.sdl.kt:13` · tint/color-matrix/lighting color filters are empty stubs; only `BlendModeColorFilter` tint on image blits is honored (`Sdl3Canvas.kt:1251`). ColorMatrix (grayscale/saturation) and all filters on shapes are inert. **Nice-to-have.**
-- BlendMode: only `SrcOver` (plus a `Clear` special case) composites; `Multiply`/`Screen`/`Plus`/etc. are ignored (`Sdl3DrawScope.kt:206`, `Sdl3Canvas.kt:926`). Note `BlendMode.isSupported()` misleadingly returns `true`. **Nice-to-have.**
+- **BlendMode DONE (SDL-native modes)** — `Sdl3Canvas.withBlend` maps the paint's `BlendMode` to the SDL render blend mode around each geometry emit: `Plus`→`ADD`, `Modulate`→`MOD`, `Multiply`→`MUL`, `Src`→`NONE`, everything else→`BLEND` (SrcOver). Verified `demo --blendtest` (Plus overlaps brighten to white, Modulate scales down; matches the Skia leg). Note SDL only exposes those four hardware blend modes, so `Screen`/`Overlay`/`Darken`/the separable PDF modes still fall back to SrcOver. Also note `Multiply` diverges from the Skia leg **because the Skia leg is wrong here** (it renders opaque cyan×yellow as blue, impossible from the multiply formula) — the SDL result `(0,255,0)` green is the correct one; the Skia `MULTIPLY` anomaly is tracked separately below. `BlendMode.isSupported()` still returns `true` for all modes. **Nice-to-have.**
 - `compose/ui/ui/src/sdlRendererMain/.../renderer/sdl/Sdl3Canvas.kt:436` · `saveLayer` has no offscreen buffer; layer alpha is multiplied into each primitive, so overlapping content double-composites (wrong group opacity) and the layer paint's colorFilter/blendMode/renderEffect are dropped. **Nice-to-have (blocker for correct group-alpha over overlapping content).**
 - `compose/ui/ui/src/sdlRendererMain/.../renderer/sdl/Sdl3Canvas.kt:509` · `clipPath` degrades an arbitrary path to its bounding box; rotated/sheared `clipRect` collapses to an AABB. Non-rect clips leak. (Rounded/difference clips are real, with feathered AA.) **Nice-to-have.**
 - Stroke joins (`StrokeJoin`) are never applied, so polyline corners notch; `StrokeCap.Square` falls back to butt (`Sdl3DrawScope.kt:380,342`). **Nice-to-have / cosmetic.**
@@ -154,3 +154,17 @@ priority under G1. Listed because SDL is the shipped Windows renderer.
 - **`drawPoints`/`drawRawPoints` DONE** — Points mode draws filled strokeWidth squares, Lines/Polygon modes draw segments (via the scope's rect/line primitives). Verified `demo --pointstest`. `drawVertices` (custom vertex meshes) still NOP. **Nice-to-have.**
 - **Rotated images DONE** — under a rotated/sheared layer, `drawImageRect` maps all 4 corners and submits a textured `SDL_RenderGeometry` quad (axis-aligned keeps the fast `SDL_RenderTexture`). Verified `demo --rotimgtest`. Remaining: stroked non-square ovals stroke as a circular ring (`Sdl3DrawScope.kt:527`); `SdlImageBitmap.readPixels` is a no-op (`Sdl3Offscreen.kt:117`). **Cosmetic / nice-to-have.**
 - Drop shadow is approximated (9-slice / stacked rings, not a gaussian blur; ambient vs spot largely collapsed) at `Sdl3Canvas.kt:785`; AA is a ~1px geometry fringe rather than analytic coverage. **Cosmetic.**
+
+## I. Skia renderer (macOS/Linux default) anomalies
+
+The Skia leg is normally the fidelity reference, so its bugs are rarely tracked
+here. This one surfaced while adding SDL BlendMode parity (`demo --blendtest`):
+
+- `BlendMode.Multiply` renders wrong on the Skia leg. A filled `drawRect` with
+  opaque `Color.Cyan` over opaque `Color.Yellow` reads back `(0,0,255)` blue;
+  the multiply formula can only yield `(0,255,0)` green for opaque cyan×yellow,
+  and the SDL leg produces exactly that. `Plus` and `Modulate` composite
+  correctly on the same path, so `paint.blendMode` IS applied — the fault is
+  specific to `MULTIPLY` (likely a Metal-backend / premultiply interaction in
+  the graphics-layer flatten, not the `BlendMode.toSkia()` map, which is
+  correct). Needs isolating on the Skia draw path. **Nice-to-have (Skia leg).**

@@ -175,6 +175,10 @@ fun main(args: Array<String>) {
         runPointsTest()
         return
     }
+    if (args.any { it == "--blendtest" }) {
+        runBlendTest()
+        return
+    }
 
     val vCli = parseArgs(args)
     val vTitle = buildString {
@@ -914,6 +918,44 @@ private fun runPointsTest() {
                 drawPoints(vLines, androidx.compose.ui.graphics.PointMode.Lines, Color.Yellow, strokeWidth = 5f)
                 val vPoly = (0..8).map { off(40f + it * 42f, 260f + kotlin.math.sin(it.toFloat()) * 24f) }
                 drawPoints(vPoly, androidx.compose.ui.graphics.PointMode.Polygon, Color.Magenta, strokeWidth = 5f)
+            }
+        }
+    }
+}
+
+/* --blendtest: three overlapping circles (R/G/B) drawn with BlendMode.Plus, plus a
+   Multiply and a Modulate pair. On the SDL leg blend modes were ignored (all SrcOver);
+   now Plus overlaps brighten toward white and Multiply darkens. */
+private fun runBlendTest() {
+    nativeComposeWindow(
+        title = "blendtest",
+        width = 420,
+        height = 320,
+        onFrame = { vBridge, vFrame ->
+            if (vFrame >= 12) {
+                val vSnap = vBridge.snapshotBgra()
+                if (vSnap != null) {
+                    val (vW, vH, vBgra) = vSnap
+                    writeFile("blendtest.bmp", encodeBmpBgra32(vW, vH, vBgra))
+                    println("blendtest: wrote blendtest.bmp (${vW}x${vH})")
+                } else println("blendtest: FAIL (no snapshot)")
+                false
+            } else true
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            androidx.compose.foundation.Canvas(Modifier.fillMaxSize().background(Color(0xFF101010))) {
+                fun off(x: Float, y: Float) = androidx.compose.ui.geometry.Offset(x, y)
+                // Additive: R + G + B overlaps -> white at the centre.
+                drawCircle(Color.Red, radius = 60f, center = off(120f, 100f), blendMode = androidx.compose.ui.graphics.BlendMode.Plus)
+                drawCircle(Color.Green, radius = 60f, center = off(170f, 100f), blendMode = androidx.compose.ui.graphics.BlendMode.Plus)
+                drawCircle(Color.Blue, radius = 60f, center = off(145f, 150f), blendMode = androidx.compose.ui.graphics.BlendMode.Plus)
+                // Multiply: yellow over cyan -> green intersection.
+                drawRect(Color.Yellow, topLeft = off(260f, 40f), size = androidx.compose.ui.geometry.Size(120f, 120f))
+                drawRect(Color.Cyan, topLeft = off(300f, 80f), size = androidx.compose.ui.geometry.Size(120f, 120f), blendMode = androidx.compose.ui.graphics.BlendMode.Multiply)
+                // Modulate: white over a gradient-ish grey scales it down.
+                drawRect(Color(0xFF808080), topLeft = off(40f, 230f), size = androidx.compose.ui.geometry.Size(160f, 60f))
+                drawRect(Color(0xFFC00000), topLeft = off(80f, 230f), size = androidx.compose.ui.geometry.Size(160f, 60f), blendMode = androidx.compose.ui.graphics.BlendMode.Modulate)
             }
         }
     }
