@@ -145,6 +145,10 @@ fun main(args: Array<String>) {
         runWindowInfoTest()
         return
     }
+    if (args.any { it == "--imetest" }) {
+        runImeTest()
+        return
+    }
 
     val vCli = parseArgs(args)
     val vTitle = buildString {
@@ -676,6 +680,48 @@ private fun runWindowInfoTest() {
         }
         MaterialTheme(colorScheme = darkColorScheme()) {
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        }
+    }
+}
+
+/* --imetest: focuses a BasicTextField, injects an IME composition (SDL TEXT_EDITING
+   "ni"), then a commit (SDL TEXT_INPUT "に"). Verifies the preedit shows a
+   composing region and the commit REPLACES it (not appends) — the real IME path. */
+private fun runImeTest() {
+    val vField = mutableStateOf(androidx.compose.ui.text.input.TextFieldValue(""))
+    nativeComposeWindow(
+        title = "imetest",
+        width = 500,
+        height = 200,
+        onFrame = { _, vFrame ->
+            when (vFrame) {
+                12 -> { com.compose.sdl.injectMouseEvent(1, 250f, 100f); true } // focus centered field
+                14 -> { com.compose.sdl.injectMouseEvent(2, 250f, 100f); true }
+                34 -> { com.compose.sdl.injectTextEditing("ni"); true }         // composing (preedit)
+                40 -> { println("imetest: composing text='${vField.value.text}' composition=${vField.value.composition}"); true }
+                50 -> { com.compose.sdl.injectTextInput("に"); true }       // commit "に"
+                60 -> {
+                    println("imetest: committed text='${vField.value.text}' composition=${vField.value.composition}")
+                    val vOk = vField.value.text == "に" && vField.value.composition == null
+                    println(if (vOk) "imetest: PASS" else "imetest: FAIL")
+                    false
+                }
+                else -> true
+            }
+        },
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center,
+            ) {
+                androidx.compose.foundation.text.BasicTextField(
+                    value = vField.value,
+                    onValueChange = { vField.value = it },
+                    textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 24.sp),
+                    cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+                )
+            }
         }
     }
 }

@@ -34,6 +34,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.ptr
 import sdl3.SDL_Delay
 import sdl3.SDL_GetPerformanceCounter
 import sdl3.SDL_GetPerformanceFrequency
@@ -179,6 +181,7 @@ fun nativeComposeApp(content: @Composable ApplicationScope.() -> Unit) {
 					is AppEvent.MouseWheel -> runtime.windowFor(vEvent.windowId)?.onWheelEvent(vEvent)
 					is AppEvent.Key -> runtime.windowFor(vEvent.windowId)?.onKeyEvent(vEvent)
 					is AppEvent.TextInput -> runtime.windowFor(vEvent.windowId)?.onTextInputEvent(vEvent)
+					is AppEvent.TextEditing -> runtime.windowFor(vEvent.windowId)?.onTextEditingEvent(vEvent)
 					is AppEvent.Drop -> runtime.windowFor(vEvent.windowId)?.onDropEvent(vEvent)
 				}
 			}
@@ -777,12 +780,43 @@ internal class WindowInstance(
 	fun onTextInputEvent(inEvent: AppEvent.TextInput) {
 		needsFrame = true
 		installGlobals()
-		// SDL's committed text is the only layout-correct source of characters —
-		// SDL key events carry UNSHIFTED keycodes (no uppercase, no numpad digits,
-		// no dead keys). Synthesise typed KeyEvents so the vendored text stacks
-		// (CoreTextField's isTypedEvent path and the state-based field's key
-		// handler) commit it.
-		dispatchTypedText(host, inEvent.text)
+		// A focused text field runs an IME session (ComposeOwner.textInputSession):
+		// commit through it so the text REPLACES any active composition. Falls back
+		// to synthesising typed KeyEvents when no field is focused — SDL key events
+		// carry UNSHIFTED keycodes (no uppercase/numpad/dead keys), so committed
+		// text is the only layout-correct character source.
+		if (!com.compose.sdl.text.input.ImeBridge.commit(inEvent.text)) {
+			dispatchTypedText(host, inEvent.text)
+		}
+	}
+
+	fun onTextEditingEvent(inEvent: AppEvent.TextEditing) {
+		needsFrame = true
+		installGlobals()
+		// IME preedit: show the composing (underlined) region in the focused field.
+		// No-op if no field is focused. Also nudge the OS candidate window to the
+		// field's on-screen rect.
+		com.compose.sdl.text.input.ImeBridge.compose(inEvent.text)
+		updateImeArea()
+	}
+
+	// Nudge the OS IME candidate window to the focused field's on-screen rect.
+	// Best-effort: no-op without an active session or a laid-out field.
+	@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class, kotlinx.cinterop.ExperimentalForeignApi::class)
+	private fun updateImeArea() {
+		val vRequest = com.compose.sdl.text.input.ImeBridge.request ?: return
+		val vRect = vRequest.focusedRectInRoot() ?: return
+		val vWindow = backend.window ?: return
+		val vDpr = backend.pixelDensity
+		kotlinx.cinterop.memScoped {
+			// SDL wants the area in logical window points; layout runs in physical px.
+			val vSdlRect = alloc<sdl3.SDL_Rect>()
+			vSdlRect.x = (vRect.left / vDpr).toInt()
+			vSdlRect.y = (vRect.top / vDpr).toInt()
+			vSdlRect.w = (vRect.width / vDpr).toInt().coerceAtLeast(1)
+			vSdlRect.h = (vRect.height / vDpr).toInt().coerceAtLeast(1)
+			sdl3.SDL_SetTextInputArea(vWindow.reinterpret(), vSdlRect.ptr, 0)
+		}
 	}
 
 	fun onDropEvent(inEvent: AppEvent.Drop) {

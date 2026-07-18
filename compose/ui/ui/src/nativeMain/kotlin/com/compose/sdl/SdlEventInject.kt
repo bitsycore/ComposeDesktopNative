@@ -62,6 +62,25 @@ fun injectTextInput(inText: String) {
 	}
 }
 
+/* Test-only: push a synthetic SDL_EVENT_TEXT_EDITING (IME preedit/composition). Like
+   injectTextInput, edit.text is a non-copied const char*, so the buffer is nativeHeap
+   allocated and intentionally leaked until the event is polled. */
+@OptIn(ExperimentalForeignApi::class)
+fun injectTextEditing(inText: String) {
+	val vBytes = inText.encodeToByteArray()
+	val vBuf = nativeHeap.allocArray<ByteVar>(vBytes.size + 1)
+	for (i in vBytes.indices) vBuf[i] = vBytes[i]
+	vBuf[vBytes.size] = 0
+	memScoped {
+		val vEv = alloc<SDL_Event>()
+		vEv.type = SDL_EVENT_TEXT_EDITING
+		vEv.edit.text = vBuf
+		vEv.edit.start = 0
+		vEv.edit.length = inText.length
+		SDL_PushEvent(vEv.ptr)
+	}
+}
+
 /* Test-only: push a synthetic mouse-wheel event at (inX,inY) with wheel deltas (inDeltaX,inDeltaY).
    SDL convention: deltaY positive = wheel up. */
 @OptIn(ExperimentalForeignApi::class)

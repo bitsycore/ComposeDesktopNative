@@ -433,11 +433,29 @@ internal class ComposeOwner(
 	override suspend fun textInputSession(
 		session: suspend PlatformTextInputSessionScope.() -> Nothing,
 	): Nothing {
-		// SDL IME wire-up isn't done yet; suspend forever so upstream's
-		// LegacyAdaptingPlatformTextInputModifierNode has something to await
-		// instead of throwing on every TextField click. Cancellation of the
-		// launching coroutine (focus loss, dispose) resumes cleanly.
-		kotlinx.coroutines.awaitCancellation()
+		// A focused text field runs its input here. startInputMethod registers the
+		// request with ImeBridge so SDL text events (committed + composing) reach the
+		// field's EditProcessor; cancellation (focus loss / dispose) clears it.
+		kotlinx.coroutines.coroutineScope {
+			val vScope = object :
+				PlatformTextInputSessionScope,
+				kotlinx.coroutines.CoroutineScope by this {
+				@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+				override suspend fun startInputMethod(
+					request: androidx.compose.ui.platform.PlatformTextInputMethodRequest,
+				): Nothing {
+					try {
+						com.compose.sdl.text.input.ImeBridge.setRequest(request)
+						kotlinx.coroutines.awaitCancellation()
+					} finally {
+						if (com.compose.sdl.text.input.ImeBridge.request === request) {
+							com.compose.sdl.text.input.ImeBridge.setRequest(null)
+						}
+					}
+				}
+			}
+			vScope.session()
+		}
 	}
 }
 

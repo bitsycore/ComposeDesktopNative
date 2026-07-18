@@ -32,8 +32,9 @@ The cross-cutting items to weigh first (all detailed below):
 1. ~~Locale hardcoded to `en-US`~~ **DONE** (section E) — `Locale.current` /
    `LocaleList.current` now read the OS preferred locales via SDL, unlocking the
    40+ Material 3 translations. The date/number-format tail (needs CLDR) remains.
-2. **No IME / text composition** (section B). Only committed Latin text works;
-   CJK, dead keys, and accented input do not.
+2. ~~No IME / text composition~~ **DONE** (section B) — a real text-input session
+   routes SDL committed + composing text to the focused field; preedit and
+   commit-replace verified.
 3. ~~No cursor changes~~ **DONE** (section D) — `Modifier.pointerHoverIcon` now
    drives the OS cursor via SDL (I-beam over text, hand over links).
 4. **No copy/paste context menu** (section C). Keyboard copy works; there is no
@@ -59,14 +60,26 @@ a11y). Screen readers get nothing.
 
 ## B. Text input / IME
 
-Committed text, arrow/backspace/enter editing, and mouse-drag selection work.
-Composition (preedit) does not.
+**DONE — real IME composition.** `ComposeOwner.textInputSession` now establishes a
+`PlatformTextInputSession` that registers the focused field's request with
+`com.compose.sdl.text.input.ImeBridge`. `ComposeWindow` routes `SDL_EVENT_TEXT_INPUT`
+through `CommitTextCommand` (replacing any active composition) and the newly-mapped
+`SDL_EVENT_TEXT_EDITING` through `SetComposingTextCommand` (preedit); with no field
+focused it falls back to the synthetic-KeyEvent path, so plain typing is unchanged.
+`SDL_SetTextInputArea` tracks the focused field so the OS candidate window is
+positioned correctly. Verified `demo --imetest`: composing "ni" → `text='ni'`
+`composition=(0,2)`; commit "に" → `text='に'` `composition=null` (replaced).
+`--keytest` (committed Latin) still PASS.
 
-- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:407` · `textInputSession` awaits cancellation forever (`awaitCancellation()` at :414); no real `PlatformTextInputSession`. The modern `PlatformTextInputModifierNode` pipeline (BasicTextField2) has no IME start/stop, composition, or cursor-rect reporting. **Blocker.**
-- `compose/ui/ui/src/nativeMain/.../SDL3EventMapper.kt:126` · maps `SDL_EVENT_TEXT_INPUT` (committed) only; `SDL_EVENT_TEXT_EDITING` (preedit/composition) is never mapped, so there is no underlined composing region for dead keys / CJK. **Blocker for CJK and dead-key input.**
-- `compose/ui/ui/src/nativeMain/.../SDL3Backend.kt:111` · `SDL_StartTextInput` is called once at window init and never scoped to the focused field; `SDL_SetTextInputArea` is never called, so the IME candidate window renders at the wrong location. **Nice-to-have.**
-- `compose/ui/ui/src/commonMain/.../text/input/NoOpPlatformTextInputService.kt:24,32` · legacy `PlatformTextInputService` `startInput`/`stopInput`/`updateState` + software-keyboard toggles are all NOP. Superseded by the modern path above. **Nice-to-have / cosmetic (desktop).**
-- `compose/ui/ui/src/nativeMain/.../node/impl/ComposeOwner.kt:328` · `softwareKeyboardController.show/hide` NOP. **Cosmetic (desktop).**
+- [x] `ComposeOwner.textInputSession` · real `PlatformTextInputSession` + `ImeBridge`. **Done.**
+- [x] `SDL3EventMapper` · `SDL_EVENT_TEXT_EDITING` → `AppEvent.TextEditing` (preedit). **Done.**
+- [x] `ComposeWindow` · `SDL_SetTextInputArea` positions the IME candidate window. **Done.**
+- `NoOpPlatformTextInputService.kt` · the LEGACY `PlatformTextInputService` is still a NOP, but it's bypassed by the modern session path above (CoreTextField reaches the session via the legacy adapter). **Cosmetic.**
+- `ComposeOwner.softwareKeyboardController.show/hide` NOP — desktop has no on-screen keyboard. **Cosmetic.**
+
+Caveat: verified on macOS with synthetic SDL text events (a preedit + a CJK
+commit-replace). A real OS input method (live CJK typing) wasn't exercised on
+this host; the composition + commit-replace machinery is proven end-to-end.
 
 ## C. Text toolbar and context menus (copy / paste / select-all)
 

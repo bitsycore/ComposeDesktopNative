@@ -20,6 +20,9 @@ sealed class AppEvent {
 	data class Pointer(val event: LegacyPointerEvent, val windowId: UInt = 0u) : AppEvent()
 	data class Key(val event: KeyEvent, val windowId: UInt = 0u) : AppEvent()
 	data class TextInput(val text: String, val windowId: UInt = 0u) : AppEvent()
+	/* IME preedit / composition (SDL_EVENT_TEXT_EDITING). Empty text = composition
+	   cleared, so it's dispatched even when blank (unlike committed TextInput). */
+	data class TextEditing(val text: String, val windowId: UInt = 0u) : AppEvent()
 	data class MouseWheel(val x: Int, val y: Int, val deltaX: Float, val deltaY: Float, val windowId: UInt = 0u) : AppEvent()
 	data class WindowResized(val windowId: UInt = 0u) : AppEvent()
 	/* The user asked THIS window to close (OS close button). The loop routes it
@@ -127,6 +130,9 @@ private fun mapEvent(e: SDL_Event): AppEvent? {
 			val vText = e.text.text?.toKString().orEmpty()
 			if (vText.isEmpty()) null else AppEvent.TextInput(vText, e.text.windowID)
 		}
+
+		SDL_EVENT_TEXT_EDITING ->
+			AppEvent.TextEditing(e.edit.text?.toKString().orEmpty(), e.edit.windowID)
 
 		SDL_EVENT_MOUSE_WHEEL -> {
 			val mw = e.wheel
