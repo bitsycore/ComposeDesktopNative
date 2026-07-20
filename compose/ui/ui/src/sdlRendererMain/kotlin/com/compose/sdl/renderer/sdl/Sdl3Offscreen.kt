@@ -133,6 +133,13 @@ internal class SdlImageBitmap(
 internal class Sdl3OffscreenRenderer(
 	private val fRenderer: COpaquePointer,
 	private val fTextRenderer: Sdl3TextRenderer?,
+	// Passed through to offscreen canvases so content drawn into an ImageBitmap
+	// (VectorPainter / DrawCache, and the shape-clip texture cache in
+	// SdlDisplayListRenderNode) can realize rounded-clip masks + drop shadows the
+	// same way the frame canvas does. Without the clip targets, clipRoundRect on an
+	// offscreen degrades to a rect clip and bakes SQUARE corners into the texture.
+	private val fClipTargets: Sdl3ClipTargets? = null,
+	private val fShadowCache: Sdl3ShadowCache? = null,
 ) : OffscreenRenderer {
 
 	override fun createImageBitmap(
@@ -150,6 +157,8 @@ internal class Sdl3OffscreenRenderer(
 			fRenderer,
 			Size(vBmp.width.toFloat(), vBmp.height.toFloat()),
 			fTextRenderer,
+			fClipTargets = fClipTargets,
+			fShadowCache = fShadowCache,
 			fOffscreenTexture = vTex,
 			// A single-colour icon is rasterised as an Alpha8 mask: draw it WHITE so
 			// the tint applied on blit (SDL_SetTextureColorMod, a multiply) yields the

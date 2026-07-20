@@ -10,11 +10,14 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.layer.CompositingStrategy
@@ -23,6 +26,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import com.compose.sdl.graphics.DrawStats
+import com.compose.sdl.graphics.NativeFinishableCanvas
 import com.compose.sdl.graphics.NativeRenderNode
 import com.compose.sdl.graphics.NativeShadowCanvas
 import com.compose.sdl.graphics.NativeShapeClipCanvas
@@ -99,6 +104,18 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 	private var deferMode = false   // sticky: block drew a not-yet-capturable op / has a child layer
 	private var sawChild = false    // a child layer drew during this node's record
 
+	// Texture cache for a ROUNDED / GENERIC content-clip leaf. The geo replay clips
+	// only to a rect, so a shape-clipped subtree can't ride the geo fast path — it
+	// would otherwise block-replay AND re-realize its offscreen rounded mask every
+	// frame (the dominant apidemo cost). Instead we bake the clipped content into a
+	// layer-local texture ONCE (record()) and blit it under the transform (drawInto),
+	// exactly like SdlRenderNode but scoped to the case geo can't cache. A scroll is
+	// translation-only, never re-records, so it just blits.
+	private var shapeBitmap: ImageBitmap? = null
+	private var shapeBitmapW = 0
+	private var shapeBitmapH = 0
+	private var shapeCached = false
+
 	// Main-loop-thread stack of nodes currently recording. A child's drawInto (invoked
 	// while its parent's block runs) flags the parent as a non-leaf so the parent
 	// defers — nesting is by DEFER (children composite themselves on the parent's
@@ -118,11 +135,22 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 		this.size = size
 		recordedBlock = block
 		displayList = null
+		shapeCached = false
 
 		val w = size.width
 		val h = size.height
 		val renderer = offscreenRenderer as? Sdl3OffscreenRenderer
 		if (deferMode || w <= 0 || h <= 0 || renderer == null) return
+
+		// Rounded / generic CONTENT clip → texture-cache instead of block-replaying and
+		// re-realizing the mask every frame (see shapeBitmap). Everything else takes the
+		// geo-geometry cache below.
+		val outline = clipOutline
+		if (clip && (outline is Outline.Rounded || outline is Outline.Generic)) {
+			recordShapeClipTexture(w, h, block)
+			return
+		}
+		releaseShapeBitmap()
 
 		// Capture at identity base CTM ⇒ layer-local geometry. No GPU touched.
 		val list = SdlDisplayList()
@@ -141,6 +169,56 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 		} else {
 			displayList = list
 		}
+	}
+
+	// Bake a rounded/generic-clip leaf's content into an offscreen texture once (the
+	// rounded mask realizes here, not every frame). Mirrors SdlRenderNode.record:
+	// watches for a child layer (→ defer, children composite live) and for an image
+	// blit (partial-alpha content doesn't round-trip bit-exact through the 8-bit
+	// premultiplied offscreen → defer). Leaves of shapes + text (the bulk of apidemo's
+	// rounded Surfaces) keep the texture and blit it thereafter.
+	private fun recordShapeClipTexture(w: Int, h: Int, block: DrawScope.() -> Unit) {
+		val renderer = offscreenRenderer ?: run { deferMode = true; return }
+		val bmp = ensureShapeBitmap(w, h) ?: run { deferMode = true; return }
+		val target = renderer.createCanvas(bmp) ?: run { deferMode = true; return }
+		sawChild = false
+		val imgBlitsBefore = DrawStats.imageBlits
+		fRecordingStack.add(this)
+		try {
+			// Bake the clip into the texture so the rounded corners are transparent in
+			// the cached pixels; content records at layer-local origin (transform is
+			// applied at blit).
+			applyClip(target)
+			drawScope.draw(recordedDensity, recordedLayoutDirection, target, Size(w.toFloat(), h.toFloat()), block)
+		} finally {
+			fRecordingStack.removeAt(fRecordingStack.size - 1)
+			(target as? NativeFinishableCanvas)?.finish()
+		}
+		if (sawChild || DrawStats.imageBlits > imgBlitsBefore) {
+			deferMode = true
+			releaseShapeBitmap()
+		} else {
+			shapeCached = true
+		}
+	}
+
+	private fun ensureShapeBitmap(w: Int, h: Int): ImageBitmap? {
+		val renderer = offscreenRenderer ?: return null
+		if (shapeBitmap == null || shapeBitmapW != w || shapeBitmapH != h) {
+			releaseShapeBitmap()
+			shapeBitmap = renderer.createImageBitmap(w, h, ImageBitmapConfig.Argb8888, true, ColorSpaces.Srgb)
+			shapeBitmapW = w
+			shapeBitmapH = h
+		}
+		return shapeBitmap
+	}
+
+	private fun releaseShapeBitmap() {
+		(shapeBitmap as? SdlImageBitmap)?.close()
+		shapeBitmap = null
+		shapeBitmapW = 0
+		shapeBitmapH = 0
+		shapeCached = false
 	}
 
 	override fun drawInto(canvas: Canvas) {
@@ -181,6 +259,30 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 			if (outline != null) {
 				(canvas as? NativeShadowCanvas)
 					?.drawDropShadow(outline, shadowElevation, ambientShadowColor, spotShadowColor)
+			}
+		}
+
+		// Shape-clip leaf cached as a texture: blit it (the baked-in rounded mask means
+		// no per-frame realization). Translation rides the affine, so a scroll just
+		// blits. Scale/rotation would bilinear-resample the fixed-resolution texture,
+		// and alpha/blend/colorFilter/renderEffect need real offscreen compositing, so
+		// those fall through to the exact block-replay below (which re-realizes the
+		// mask, as before) — the cache is strictly non-regressing.
+		val shapeBmp = shapeBitmap
+		if (shapeCached && shapeBmp != null && w > 0f && h > 0f) {
+			val hasScaleOrRotation = scaleX != 1f || scaleY != 1f ||
+				rotationZ != 0f || rotationX != 0f || rotationY != 0f
+			val blitComposites = alpha < 1f || blendMode != BlendMode.SrcOver ||
+				colorFilter != null || renderEffect != null
+			if (!hasScaleOrRotation && !blitComposites) {
+				canvas.drawImageRect(
+					image = shapeBmp,
+					srcOffset = IntOffset.Zero, srcSize = IntSize(shapeBitmapW, shapeBitmapH),
+					dstOffset = IntOffset.Zero, dstSize = IntSize(shapeBitmapW, shapeBitmapH),
+					paint = Paint(),
+				)
+				canvas.restore()
+				return
 			}
 		}
 
@@ -245,5 +347,6 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 	override fun close() {
 		recordedBlock = null
 		displayList = null
+		releaseShapeBitmap()
 	}
 }
