@@ -85,7 +85,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                     Text("PREVIEW", color = c.accent, fontSize = 13.sp)
                 }
                 Spacer(Modifier.weight(1f))
-                Text("not sent", color = kWarnColor, fontSize = 11.sp)
+                Text("not sent", color = VolticTheme.extended.warning, fontSize = 11.sp)
             } else {
                 // Request tab — adds the coloured method only once the
                 // request has actually been sent (sentReq != null).

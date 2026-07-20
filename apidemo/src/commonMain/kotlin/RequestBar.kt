@@ -32,6 +32,8 @@ import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 internal fun OptionsMenu(
     inDark: Boolean,
     inOnToggleTheme: () -> Unit,
+    inPalette: VolticPalette,
+    inOnPalette: (VolticPalette) -> Unit,
 ) {
     val c = LocalAppColors.current
     var vOpen by remember { mutableStateOf(false) }
@@ -44,6 +46,24 @@ internal fun OptionsMenu(
             DropdownMenuItem(text = {
                 Text("Light mode", color = if (!inDark) c.accent else c.text, fontSize = 13.sp)
             }, onClick = { if (inDark) inOnToggleTheme(); vOpen = false })
+            HorizontalDivider(color = c.border)
+            // Palette picker — a swatch of each theme's primary + a check on the active one.
+            Box(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 6.dp, bottom = 2.dp)) {
+                Text("Theme", color = c.dim, fontSize = 11.sp)
+            }
+            VolticPalette.entries.forEach { vPal ->
+                val vSel = vPal == inPalette
+                DropdownMenuItem(text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(vPal.scheme.light.primary))
+                        Text(vPal.label, color = if (vSel) c.accent else c.text, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                        if (vSel) MaterialSymbolsOutlined(MaterialSymbols.Check, tint = c.accent, size = 16.dp)
+                    }
+                }, onClick = { inOnPalette(vPal); vOpen = false })
+            }
             HorizontalDivider(color = c.border)
             DropdownMenuItem(text = {
                 MenuRow(MaterialSymbols.Folder, "Open settings folder")

@@ -17,6 +17,7 @@ import okio.Path.Companion.toPath
 data class AppState(
     val launched: Boolean = false,
     val dark: Boolean = true,
+    val theme: String = "purple",                     // selected voltic palette id (VolticPalette.id)
     val globalEnv: List<KeyVal> = emptyList(),        // session-level variables (base of the inheritance ladder)
     val globalHeaders: List<KeyVal> = emptyList(),    // session-level headers (inherited by every request)
     val globalParams: List<KeyVal> = emptyList(),     // session-level query params (inherited by every request)

@@ -45,7 +45,7 @@ internal fun TlsChainDialog(inChain: TlsChain?, inUrl: String, inOnDismiss: () -
                 val vCerts = inChain?.certs.orEmpty()
                 when {
                     inChain == null -> Text("Probing…", color = c.dim, fontSize = 13.sp)
-                    vCerts.isEmpty() -> Text(inChain.error ?: "No chain reported.", color = kWarnColor, fontSize = 13.sp)
+                    vCerts.isEmpty() -> Text(inChain.error ?: "No chain reported.", color = VolticTheme.extended.warning, fontSize = 13.sp)
                     else -> {
                         Text("${vCerts.size} certificate(s) presented by ${hostOf(inUrl)}", color = c.dim, fontSize = 12.sp)
                         Column(

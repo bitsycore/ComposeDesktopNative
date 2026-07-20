@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 internal fun App() {
     val vInitial = remember { loadAppState() }
     var vDark by remember { mutableStateOf(vInitial.dark) }
+    var vPalette by remember { mutableStateOf(VolticPalette.fromId(vInitial.theme)) }
 
     val vRunner = remember { HttpRunner() }
     val vScope = rememberCoroutineScope()
@@ -205,6 +206,7 @@ internal fun App() {
         saveAppState(AppState(
             launched = true,
             dark = vDark,
+            theme = vPalette.id,
             globalEnv = vGE,
             globalHeaders = vSessionHeaders.toList(),
             globalParams = vSessionParams.toList(),
@@ -714,15 +716,18 @@ internal fun App() {
     }
     InstallWindowHooks(inOnCloseRequest = { persist(); true }, inOnKeyShortcut = vKeyHandler)
 
-    val vC = if (vDark) DarkColors else LightColors
-    val vMat = if (vDark) {
-        darkColorScheme(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
-    } else {
-        lightColorScheme(primary = vC.accent, background = vC.bg, surface = vC.panel, onPrimary = vC.onAccent, onBackground = vC.text, onSurface = vC.text)
-    }
+    // The whole app runs on the selected voltic palette's Material 3 scheme; the
+    // legacy AppColors are derived from it so the custom widgets follow, and the
+    // extended (warning) colours ride alongside.
+    val vScheme = if (vDark) vPalette.scheme.dark else vPalette.scheme.light
+    val vExtended = if (vDark) vPalette.scheme.darkExtended else vPalette.scheme.lightExtended
+    val vC = appColorsFromScheme(vScheme)
 
-    MaterialTheme(colorScheme = vMat) {
-        CompositionLocalProvider(LocalAppColors provides vC) {
+    MaterialTheme(colorScheme = vScheme) {
+        CompositionLocalProvider(
+            LocalAppColors provides vC,
+            LocalVolticExtended provides vExtended,
+        ) {
             val c = vC
             val vP = activePack()   // the active pack/scope (may be the loose root)
 
@@ -767,6 +772,8 @@ internal fun App() {
                                 OptionsMenu(
                                     inDark = vDark,
                                     inOnToggleTheme = { vDark = !vDark; persist() },
+                                    inPalette = vPalette,
+                                    inOnPalette = { vPalette = it; persist() },
                                 )
                             }
                             // Tabs centred via equal-weight side slots; the + sits in the
@@ -1201,7 +1208,7 @@ internal fun App() {
                     Surface(color = c.panel, shape = RoundedCornerShape(10.dp), modifier = Modifier.width(420.dp)) {
                         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 20.dp)
+                                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = VolticTheme.extended.warning, size = 20.dp)
                                 Text("Replace current session?", color = c.text, fontSize = 16.sp)
                             }
                             Text("This session hasn't been saved to a file — continuing will discard it. Save it first if you want to keep it.", color = c.dim, fontSize = 13.sp)

@@ -6,9 +6,6 @@ import androidx.compose.ui.graphics.Color
 // MARK: App-wide constants + pure color / asset mappers
 // ==================
 
-// Amber used to flag undefined {{variables}} and unsaved-changes warnings.
-internal val kWarnColor = Color(0xFFFFAB00)
-
 // SDL scancodes used for app keyboard shortcuts.
 internal const val kScS = 22
 internal const val kScN = 17

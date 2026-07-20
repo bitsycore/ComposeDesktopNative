@@ -53,10 +53,10 @@ internal fun RequestBuilder(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = kWarnColor, size = 15.dp)
+                MaterialSymbolsOutlined(MaterialSymbols.Warning, tint = VolticTheme.extended.warning, size = 15.dp)
                 Text(
                     "Undefined: ${inUnresolved.joinToString(", ") { "{{$it}}" }}",
-                    color = kWarnColor,
+                    color = VolticTheme.extended.warning,
                     fontSize = 11.sp
                 )
             }
