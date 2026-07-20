@@ -1054,13 +1054,18 @@ internal class Sdl3DrawScope(
 		val vStartRad = inStartDeg * (PI / 180.0).toFloat()
 		val vSweepRad = inSweepDeg * (PI / 180.0).toFloat()
 		val vStep = vSweepRad / inSegments
-		// Solid band inset by half the feather on both edges; feather each curved
-		// edge (outer + inner) out to alpha 0. If the band is thinner than the
-		// feather it drops out and the two fringes meet — a thin AA'd ring.
-		val vOuterSolid = (inOuterR - kAaHalf).coerceAtLeast(0f)
-		val vOuterEdge = inOuterR + kAaHalf
-		val vInnerSolid = inInnerR + kAaHalf
-		val vInnerEdge = (inInnerR - kAaHalf).coerceAtLeast(0f)
+		// Solid band across the FULL geometric width [innerR, outerR], with the AA
+		// feather added strictly OUTSIDE it (outer beyond outerR, inner below innerR).
+		// The straight edges (lineCore) paint a hard full-width quad with no fringe,
+		// so eroding the arc's core by half the feather made the corners visibly
+		// lighter — and for a ≤1px stroke the core collapsed entirely, leaving only
+		// the feather (the "1dp selected-tab" artifact). Keeping the core full-width
+		// matches the straight edges' opacity at the tangent; the outside-only fringe
+		// gives the curve its AA without thinning it.
+		val vOuterSolid = inOuterR
+		val vOuterEdge = inOuterR + kAaFeather
+		val vInnerSolid = inInnerR
+		val vInnerEdge = (inInnerR - kAaFeather).coerceAtLeast(0f)
 		val vHasBand = vOuterSolid > vInnerSolid
 		for (i in 0 until inSegments) {
 			val vA = vStartRad + i * vStep
@@ -1105,8 +1110,11 @@ internal class Sdl3DrawScope(
 	) {
 		val vStart = inStartDeg * (PI / 180.0).toFloat()
 		val vStep = (inSweepDeg * (PI / 180.0).toFloat()) / inSegments
-		val vSolid = (inHalfW - kAaHalf).coerceAtLeast(0f)
-		val vEdge = inHalfW + kAaHalf
+		// Full-width solid band (± halfW off the centreline) with the feather added
+		// outside it — same rationale as emitStrokedArc: don't thin the curve's core
+		// relative to the hard straight edges.
+		val vSolid = inHalfW
+		val vEdge = inHalfW + kAaFeather
 		val vHasBand = vSolid > 0f
 		var vPrev = ellipseNormalPoint(inCx, inCy, inRx, inRy, vStart)
 		for (i in 0 until inSegments) {
