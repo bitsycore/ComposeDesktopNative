@@ -451,6 +451,13 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inItalic: Boolean = false,
         inUnderline: Boolean = false,
         inLineThrough: Boolean = false,
+        // Layer-scale carried by the current canvas affine. Glyphs are rasterised at
+        // their LOGICAL size (stable hinting, one cache entry) and the blit is
+        // stretched by this — so text grows/shrinks smoothly with a scaled layer
+        // (menu/dropdown enter animation) the way Skia GPU-scales the layer, instead
+        // of the geometry scaling while the text stays a fixed size. 1f = no scale.
+        inScaleX: Float = 1f,
+        inScaleY: Float = 1f,
     ) {
         if (inText.isEmpty()) return
         val vRenderer = backend.renderer ?: return
@@ -528,13 +535,16 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             // Line width = sum of each run's width at ITS style (for alignment).
             var vLineW = 0f
             for (vRun in vRuns) vLineW += measureWidth(runSeg(vRun), runPx(vRun), inFontFamily, runVars(vRun), runStyle(vRun)).toFloat()
+            // Alignment offsets are logical; scale them so the styled line lays out
+            // in the layer's scaled space (see inScaleX/inScaleY on the plain path).
+            val vScaled = inScaleX != 1f || inScaleY != 1f
             val vPenX0 = when (inAlign) {
                 TextAlign.Start  -> inX.toFloat()
-                TextAlign.Center -> inX + (inBoxWidth - vLineW) / 2f
-                TextAlign.End    -> inX + (inBoxWidth - vLineW)
+                TextAlign.Center -> inX + (inBoxWidth - vLineW) / 2f * inScaleX
+                TextAlign.End    -> inX + (inBoxWidth - vLineW) * inScaleX
                 else             -> inX.toFloat()
             }
-            fun snap(inV: Float): Float = kotlin.math.round(inV * fDpr) / fDpr
+            fun snap(inV: Float): Float = if (vScaled) inV else kotlin.math.round(inV * fDpr) / fDpr
             // Common baseline: centre the line's TALLEST run cell in the line box
             // (the box the canvas passes IS that tall for mixed-size lines), then
             // sit every run's baseline on it. Without this, a bigger/smaller run
@@ -553,7 +563,7 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                     if (vAsc > vMaxAscent) vMaxAscent = vAsc
                 }
             }
-            val vBaselineY = inY + (inBoxHeight - vMaxCellH) / 2f + vMaxAscent
+            val vBaselineY = inY + ((inBoxHeight - vMaxCellH) / 2f + vMaxAscent) * inScaleY
             // Walk runs left to right, advancing by each run's styled advance so
             // a bold/resized run pushes the following runs over by the right amount.
             var vRunX = vPenX0
@@ -570,8 +580,8 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                         val vRect = alloc<SDL_FRect>()
                         vRect.x = snap(vRunX)
                         vRect.y = inY.toFloat()
-                        vRect.w = vAdvance
-                        vRect.h = inBoxHeight.toFloat()
+                        vRect.w = vAdvance * inScaleX
+                        vRect.h = inBoxHeight.toFloat() * inScaleY
                         SDL_SetRenderDrawBlendMode(vRenderer.reinterpret(), SDL_BLENDMODE_BLEND)
                         SDL_SetRenderDrawColor(
                             vRenderer.reinterpret(),
@@ -585,9 +595,11 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                 if (vCachedSeg != null) {
                     val vLogW = vCachedSeg.w / fDpr
                     val vLogH = vCachedSeg.h / fDpr
-                    val vPenY = vBaselineY - fontAscent(vPx, inFontFamily, vVars)
+                    // Ascent offset is logical → scale it onto the (device) baseline.
+                    val vPenY = vBaselineY - fontAscent(vPx, inFontFamily, vVars) * inScaleY
                     if (vCapture != null) {
                         // Record params (not the texture pointer) — eviction-safe replay.
+                        // Always identity at record time, so LOGICAL size is stored.
                         val vArgb = (vRun.color.a8 shl 24) or (vRun.color.r8 shl 16) or
                             (vRun.color.g8 shl 8) or vRun.color.b8
                         vCapture.captureTextRun(
@@ -600,13 +612,13 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
                             val vDst = alloc<SDL_FRect>()
                             vDst.x = snap(vRunX)
                             vDst.y = snap(vPenY)
-                            vDst.w = vLogW
-                            vDst.h = vLogH
+                            vDst.w = vLogW * inScaleX
+                            vDst.h = vLogH * inScaleY
                             SDL_RenderTexture(vRenderer.reinterpret(), vCachedSeg.tex.reinterpret(), null, vDst.ptr)
                         }
                     }
                 }
-                vRunX += vAdvance
+                vRunX += vAdvance * inScaleX
             }
             return
         }
@@ -619,16 +631,21 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // stretch brings it back to the same pixel size — i.e. 1:1, crisp.
         val vLogW = vCached.w / fDpr
         val vLogH = vCached.h / fDpr
+        // Blit size under the layer scale (see inScaleX/inScaleY). At scale 1 this
+        // is the logical size — the crisp 1:1 common case.
+        val vDstW = vLogW * inScaleX
+        val vDstH = vLogH * inScaleY
+        val vScaled = inScaleX != 1f || inScaleY != 1f
 
         val vPenX = when (inAlign) {
             TextAlign.Start  -> inX.toFloat()
-            TextAlign.Center -> inX + (inBoxWidth - vLogW) / 2f
-            TextAlign.End    -> inX + (inBoxWidth - vLogW)
+            TextAlign.Center -> inX + (inBoxWidth * inScaleX - vDstW) / 2f
+            TextAlign.End    -> inX + (inBoxWidth * inScaleX - vDstW)
                 else             -> inX.toFloat()
         }
         // Vertically centre — matches the Skia path which cap-centres the
         // glyphs inside the box.
-        val vPenY = inY + (inBoxHeight - vLogH) / 2f
+        val vPenY = inY + (inBoxHeight * inScaleY - vDstH) / 2f
 
         // Snap the blit origin to the physical pixel grid. The glyph texture is
         // rasterised once at physical size, so drawing it at a fractional
@@ -636,13 +653,18 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         // — e.g. the sidebar items in a 40dp box — land on a half-pixel when
         // (boxHeight - textHeight) is odd, which is the main source of blur.
         // round(v * dpr) / dpr keeps the blit 1:1, matching Skia's crispness.
-        fun snap(inV: Float): Float = kotlin.math.round(inV * fDpr) / fDpr
+        // When the layer is scaled the blit is a resample anyway (and mid-animation
+        // positions are fractional by design), so snapping would only cause jitter —
+        // skip it.
+        fun snap(inV: Float): Float = if (vScaled) inV else kotlin.math.round(inV * fDpr) / fDpr
 
         val vSink = runSink
         if (vSink != null) {
             // Capture the plain run for eviction-safe retained replay — params, NOT the
             // texture pointer (the LRU may evict it; replay re-looks-up). Snapped
-            // layer-local dst; replay maps the origin through the layer affine.
+            // layer-local dst; replay maps the origin through the layer affine and
+            // applies the layer scale to the size. Capture always runs at identity
+            // (record-time) so vScaled is false here; store LOGICAL size.
             val vArgb = (inColor.a8 shl 24) or (inColor.r8 shl 16) or (inColor.g8 shl 8) or inColor.b8
             vSink.captureTextRun(
                 inFontFamily, vText, inFontSize, inFontVariations, vBaseStyle,
@@ -654,8 +676,8 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
             val vDst = alloc<SDL_FRect>()
             vDst.x = snap(vPenX)
             vDst.y = snap(vPenY)
-            vDst.w = vLogW
-            vDst.h = vLogH
+            vDst.w = vDstW
+            vDst.h = vDstH
             SDL_RenderTexture(vRenderer.reinterpret(), vCached.tex.reinterpret(), null, vDst.ptr)
         }
     }
@@ -675,16 +697,21 @@ internal class Sdl3TextRenderer(private val backend: SDL3Backend) {
         inLogW: Float,
         inLogH: Float,
         inColor: ComposeColor,
+        // Layer scale from the replay affine — blit-stretches the logical-size run so
+        // text tracks a scaled layer on the fast path (matches drawText's inScale*).
+        inScaleX: Float = 1f,
+        inScaleY: Float = 1f,
     ) {
         val vRenderer = backend.renderer ?: return
         val vCached = getOrCreateTexture(inFontFamily, inText, inFontSize, inFontVariations, inStyle) ?: return
         applyTint(vCached.tex, inColor)
+        val vScaled = inScaleX != 1f || inScaleY != 1f
         memScoped {
             val vDst = alloc<SDL_FRect>()
-            vDst.x = kotlin.math.round(inDeviceX * fDpr) / fDpr
-            vDst.y = kotlin.math.round(inDeviceY * fDpr) / fDpr
-            vDst.w = inLogW
-            vDst.h = inLogH
+            vDst.x = if (vScaled) inDeviceX else kotlin.math.round(inDeviceX * fDpr) / fDpr
+            vDst.y = if (vScaled) inDeviceY else kotlin.math.round(inDeviceY * fDpr) / fDpr
+            vDst.w = inLogW * inScaleX
+            vDst.h = inLogH * inScaleY
             SDL_RenderTexture(vRenderer.reinterpret(), vCached.tex.reinterpret(), null, vDst.ptr)
         }
     }

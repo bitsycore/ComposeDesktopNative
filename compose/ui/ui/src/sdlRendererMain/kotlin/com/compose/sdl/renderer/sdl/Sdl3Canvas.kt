@@ -117,8 +117,9 @@ internal class Sdl3Canvas(
 				is GeometryBatch -> fScope.replayBatch(cmd.vertexData, cmd.vertexCount)
 				is TextRun -> {
 					fScope.flush() // submit geometry before this run (z-order)
-					// Transform the run ORIGIN by the affine; keep glyph size logical
-					// (matches the immediate path: layer scale reaches position, not size).
+					// Transform the run ORIGIN by the affine and stretch the blit by the
+					// affine's scale, so text tracks a scaled layer (matches the immediate
+					// path). Rotation contributes 1 to the column norms and only repositions.
 					fTextRenderer?.blitRun(
 						inFontFamily = cmd.fontFamily,
 						inText = cmd.text,
@@ -130,6 +131,8 @@ internal class Sdl3Canvas(
 						inLogW = cmd.w,
 						inLogH = cmd.h,
 						inColor = androidx.compose.ui.graphics.Color(cmd.colorArgb),
+						inScaleX = sqrt(fMa * fMa + fMb * fMb),
+						inScaleY = sqrt(fMc * fMc + fMd * fMd),
 					)
 				}
 				is IconRun -> {
@@ -1188,6 +1191,14 @@ internal class Sdl3Canvas(
 		// not capturing (vCaptureList == null).
 		fTextRenderer?.runSink = vCaptureList
 
+		// Layer scale carried by the affine (column norms; rotation contributes 1 and
+		// only repositions). Glyphs rasterise at logical size and the blit stretches
+		// by this so text follows a scaled layer (menu/dropdown enter animation)
+		// instead of staying fixed size. At capture (record) the affine is identity,
+		// so this is 1 and the captured run stays logical (replay applies the scale).
+		val vGlyphScaleX = sqrt(fMa * fMa + fMb * fMb)
+		val vGlyphScaleY = sqrt(fMc * fMc + fMd * fMd)
+
 		var vLineY = inY
 		for ((vIdx, vLine) in vWrapped.lines.withIndex()) {
 			val vLineH =
@@ -1225,6 +1236,8 @@ internal class Sdl3Canvas(
 				inItalic = inBaseItalic,
 				inUnderline = vUnderline,
 				inLineThrough = vLineThrough,
+				inScaleX = vGlyphScaleX,
+				inScaleY = vGlyphScaleY,
 			)
 			vLineY += vLineH
 		}
