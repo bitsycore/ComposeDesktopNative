@@ -1242,9 +1242,12 @@ internal class Sdl3DrawScope(
 
 	// Phase 4 replay: re-emit a captured (layer-local) batch through the CURRENT CTM.
 	// The batch was recorded with an identity base CTM, so applying fMa..fMf here
-	// places it at the layer's transform. Colours/UVs pass through unchanged. Runs
-	// in NORMAL (non-recording) mode → the next flush() submits via SDL_RenderGeometry.
-	internal fun replayBatch(vd: FloatArray, count: Int) {
+	// places it at the layer's transform. Colours/UVs pass through unchanged apart
+	// from [inAlphaMul] — the canvas's current alpha multiplier (an enclosing
+	// alpha-layer saveLayer) scales the captured vertex alpha (straight-alpha
+	// colours + SDL_BLENDMODE_BLEND, so alpha alone fades correctly). Runs in
+	// NORMAL (non-recording) mode → the next flush() submits via SDL_RenderGeometry.
+	internal fun replayBatch(vd: FloatArray, count: Int, inAlphaMul: Float = 1f) {
 		for (i in 0 until count) {
 			if (fBatchCount >= kBatchCapacity && fBatchCount % 3 == 0) flush()
 			val s = i * kFloatsPerVertex
@@ -1255,7 +1258,7 @@ internal class Sdl3DrawScope(
 			fVertexData[base + 2] = vd[s + 2]
 			fVertexData[base + 3] = vd[s + 3]
 			fVertexData[base + 4] = vd[s + 4]
-			fVertexData[base + 5] = vd[s + 5]
+			fVertexData[base + 5] = if (inAlphaMul >= 1f) vd[s + 5] else vd[s + 5] * inAlphaMul
 			fVertexData[base + 6] = vd[s + 6]
 			fVertexData[base + 7] = vd[s + 7]
 			fBatchCount++

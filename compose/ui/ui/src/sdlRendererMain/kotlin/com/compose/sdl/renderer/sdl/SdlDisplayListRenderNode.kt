@@ -237,6 +237,13 @@ internal class SdlDisplayListRenderNode : NativeRenderNode {
 			fRecordingStack[fRecordingStack.size - 1].sawChild = true
 			return
 		}
+		// Fully transparent layer → skip drawing entirely (upstream skiko skips
+		// invisible layers too). Also keeps alpha(0)-hidden hover controls from
+		// forcing the enclosing rounded clip to realize its offscreen mask. Must
+		// stay AFTER the recording-stack flag: a parent baking around an invisible
+		// child must still learn it is a non-leaf, or its cache goes stale when
+		// the child fades in.
+		if (alpha <= 0.003f) return
 		val w = size.width.toFloat()
 		val h = size.height.toFloat()
 

@@ -118,6 +118,9 @@ internal class DeferredRenderNode : NativeRenderNode {
 
 	override fun drawInto(canvas: Canvas) {
 		val block = recordedBlock ?: return
+		// Fully transparent layer → skip drawing entirely (matches the caching nodes
+		// and upstream skiko's invisible-layer skip).
+		if (alpha <= 0.003f) return
 		val w = size.width.toFloat()
 		val h = size.height.toFloat()
 

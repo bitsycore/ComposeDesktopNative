@@ -205,6 +205,9 @@ internal class SdlRenderNode : NativeRenderNode {
 		// parent so it works for any nesting depth.)
 		if (fRecordingStack.isNotEmpty()) fRecordingStack[fRecordingStack.size - 1].sawChildDuringRecord = true
 
+		// Fully transparent layer → skip drawing entirely (see SdlDisplayListRenderNode).
+		if (alpha <= 0.003f) return
+
 		canvas.save()
 		canvas.translate(topLeft.x.toFloat(), topLeft.y.toFloat())
 

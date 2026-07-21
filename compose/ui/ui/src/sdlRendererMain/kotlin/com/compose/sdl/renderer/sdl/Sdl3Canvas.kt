@@ -109,12 +109,25 @@ internal class Sdl3Canvas(
 	// layer-local vertices through the affine; text runs flush pending geometry then
 	// re-look-up + blit at the transformed origin (glyph size stays logical). Used by
 	// SdlDisplayListRenderNode.drawInto.
+	// Captured run colour with the current replay alpha multiplier folded in.
+	private fun fadedColor(inArgb: Int, inMul: Float): androidx.compose.ui.graphics.Color {
+		val vColor = androidx.compose.ui.graphics.Color(inArgb)
+		return if (inMul >= 1f) vColor else vColor.copy(alpha = vColor.alpha * inMul)
+	}
+
 	internal fun replayDisplayList(list: SdlDisplayList) {
+		// A geo leaf replayed under an enclosing alpha layer (block-replay saveLayer)
+		// must fade like the immediate path: vertex colours and run colours were
+		// captured at fAlpha=1, so the CURRENT multiplier is applied on re-emit.
+		val vAlphaMul = fAlpha
+		// Fully faded → nothing to draw (SrcOver no-op), and skipping keeps invisible
+		// content from realizing the enclosing rounded clip's mask.
+		if (vAlphaMul <= 0.003f) return
 		fScope.flush()
 		fScope.setMatrix(fMa, fMb, fMc, fMd, fMe, fMf)
 		for (i in list.commands.indices) {
 			when (val cmd = list.commands[i]) {
-				is GeometryBatch -> fScope.replayBatch(cmd.vertexData, cmd.vertexCount)
+				is GeometryBatch -> fScope.replayBatch(cmd.vertexData, cmd.vertexCount, vAlphaMul)
 				is TextRun -> {
 					fScope.flush() // submit geometry before this run (z-order)
 					// Transform the run ORIGIN by the affine and stretch the blit by the
@@ -130,7 +143,7 @@ internal class Sdl3Canvas(
 						inDeviceY = mapY(cmd.x, cmd.y),
 						inLogW = cmd.w,
 						inLogH = cmd.h,
-						inColor = androidx.compose.ui.graphics.Color(cmd.colorArgb),
+						inColor = fadedColor(cmd.colorArgb, vAlphaMul),
 						inScaleX = sqrt(fMa * fMa + fMb * fMb),
 						inScaleY = sqrt(fMc * fMc + fMd * fMd),
 					)
@@ -148,7 +161,7 @@ internal class Sdl3Canvas(
 						inDeviceBoxY = mapY(cmd.boxX, cmd.boxY),
 						inBoxW = cmd.boxW,
 						inBoxH = cmd.boxH,
-						inColor = androidx.compose.ui.graphics.Color(cmd.colorArgb),
+						inColor = fadedColor(cmd.colorArgb, vAlphaMul),
 					)
 				}
 			}
@@ -300,6 +313,100 @@ internal class Sdl3Canvas(
 				return
 			}
 		}
+	}
+
+	/* Round-shape-aware admit for drawRoundRect / drawOval / drawCircle: the
+	   tessellated geometry IS the rounded shape, so a rounded draw whose outline
+	   (expanded by half the stroke width for strokes) stays inside every pending
+	   rounded clip needs no mask. The m3 Surface idiom — clip(shape) +
+	   background(shape) + border(shape) — can NEVER pass the aabb test above
+	   (its box spans the clip's corner cuts), so without this every bordered
+	   rounded surface realized an offscreen mask every frame (the dominant
+	   apidemo draw cost). Boundary-equal geometry admits via a half-pixel
+	   tolerance; the sub-pixel outward AA fringe left un-cut at the corners is
+	   the same class as the geo replay's accepted rotated-edge fringe.
+	   An oval/circle is the degenerate round-rect with radii = half extents.
+	   Rotation / shear / flip → the mapped outline is no longer an axis-aligned
+	   round-rect: fall back to realizing, exactly as before. */
+	private fun admitRoundShapeDraw(
+		inL: Float, inT: Float, inR: Float, inB: Float,
+		inRx: Float, inRy: Float, inStyle: DrawStyle,
+	) {
+		if (fPendingClips.isEmpty()) return
+		if (kotlin.math.abs(fMb) > 1e-4f || kotlin.math.abs(fMc) > 1e-4f || fMa <= 0f || fMd <= 0f) {
+			realizePendingClips()
+			return
+		}
+		// Stroke geometry extends half the width beyond the outline on each side.
+		val vExpand = (inStyle as? Stroke)?.width?.let { it * 0.5f } ?: 0f
+		val vL = mapX(inL - vExpand, 0f)
+		val vR = mapX(inR + vExpand, 0f)
+		val vT = mapY(0f, inT - vExpand)
+		val vB = mapY(0f, inB + vExpand)
+		// Radii clamp to the half box (matches the tessellator), then scale to device.
+		val vHalfW = (inR - inL) / 2f + vExpand
+		val vHalfH = (inB - inT) / 2f + vExpand
+		val vRx = (min(inRx + vExpand, vHalfW)) * fMa
+		val vRy = (min(inRy + vExpand, vHalfH)) * fMd
+		for (vPending in fPendingClips) {
+			if (!roundRectInsideRoundRect(vPending.deviceRound, vL, vT, vR, vB, vRx, vRy)) {
+				realizePendingClips()
+				return
+			}
+		}
+	}
+
+	/* Device-space "inner axis-aligned round-rect fully inside outer round-rect",
+	   with ~half-pixel tolerance so boundary-equal geometry passes. Edges check
+	   directly; each inner corner arc is sampled at five points against the
+	   outer's (tolerance-inflated) corner ellipses. */
+	private fun roundRectInsideRoundRect(
+		inOuter: RoundRect,
+		inL: Float, inT: Float, inR: Float, inB: Float,
+		inRx: Float, inRy: Float,
+	): Boolean {
+		val vEps = 0.51f
+		if (inL < inOuter.left - vEps || inT < inOuter.top - vEps ||
+			inR > inOuter.right + vEps || inB > inOuter.bottom + vEps
+		) return false
+		// Arc sample angles: 0, 22.5, 45, 67.5, 90 degrees.
+		val vCos = floatArrayOf(1f, 0.9239f, 0.7071f, 0.3827f, 0f)
+		fun sampleCorner(inCx: Float, inCy: Float, inSx: Float, inSy: Float): Boolean {
+			for (vI in vCos.indices) {
+				val vPx = inCx + inSx * inRx * vCos[vI]
+				val vPy = inCy + inSy * inRy * vCos[vCos.size - 1 - vI]
+				if (!roundRectContainsEps(inOuter, vPx, vPy, vEps)) return false
+			}
+			return true
+		}
+		return sampleCorner(inL + inRx, inT + inRy, -1f, -1f) &&   // top-left
+			sampleCorner(inR - inRx, inT + inRy, +1f, -1f) &&      // top-right
+			sampleCorner(inR - inRx, inB - inRy, +1f, +1f) &&      // bottom-right
+			sampleCorner(inL + inRx, inB - inRy, -1f, +1f)         // bottom-left
+	}
+
+	/* roundRectContains with the corner ellipses inflated by [inEps] px (and the
+	   rect edges relaxed by it) — admits points ON the outline. */
+	private fun roundRectContainsEps(inRR: RoundRect, inX: Float, inY: Float, inEps: Float): Boolean {
+		if (inX < inRR.left - inEps || inX > inRR.right + inEps ||
+			inY < inRR.top - inEps || inY > inRR.bottom + inEps
+		) return false
+		fun corner(inRx: Float, inRy: Float, inDx: Float, inDy: Float): Boolean {
+			if (inRx <= 0f || inRy <= 0f) return true
+			val vNx = inDx / (inRx + inEps); val vNy = inDy / (inRy + inEps)
+			return vNx * vNx + vNy * vNy <= 1f
+		}
+		val vTl = inRR.topLeftCornerRadius; val vTr = inRR.topRightCornerRadius
+		val vBr = inRR.bottomRightCornerRadius; val vBl = inRR.bottomLeftCornerRadius
+		if (inX < inRR.left + vTl.x && inY < inRR.top + vTl.y)
+			return corner(vTl.x, vTl.y, inX - (inRR.left + vTl.x), inY - (inRR.top + vTl.y))
+		if (inX > inRR.right - vTr.x && inY < inRR.top + vTr.y)
+			return corner(vTr.x, vTr.y, inX - (inRR.right - vTr.x), inY - (inRR.top + vTr.y))
+		if (inX > inRR.right - vBr.x && inY > inRR.bottom - vBr.y)
+			return corner(vBr.x, vBr.y, inX - (inRR.right - vBr.x), inY - (inRR.bottom - vBr.y))
+		if (inX < inRR.left + vBl.x && inY > inRR.bottom - vBl.y)
+			return corner(vBl.x, vBl.y, inX - (inRR.left + vBl.x), inY - (inRR.bottom - vBl.y))
+		return true
 	}
 
 	/* Convert pending clips into real offscreen mask layers (outermost first).
@@ -1071,17 +1178,17 @@ internal class Sdl3Canvas(
 		left: Float, top: Float, right: Float, bottom: Float,
 		radiusX: Float, radiusY: Float, paint: Paint,
 	) {
-		admitDraw(left, top, right, bottom)
+		admitRoundShapeDraw(left, top, right, bottom, radiusX, radiusY, styleFor(paint))
 		withBlend(paint) { prep().roundRectCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), radiusX, (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawOval(left: Float, top: Float, right: Float, bottom: Float, paint: Paint) {
-		admitDraw(left, top, right, bottom)
+		admitRoundShapeDraw(left, top, right, bottom, (right - left) / 2f, (bottom - top) / 2f, styleFor(paint))
 		withBlend(paint) { prep().ovalCore(brushFor(paint), Offset(left, top), Size(right - left, bottom - top), (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
 	override fun drawCircle(center: Offset, radius: Float, paint: Paint) {
-		admitDraw(center.x - radius, center.y - radius, center.x + radius, center.y + radius)
+		admitRoundShapeDraw(center.x - radius, center.y - radius, center.x + radius, center.y + radius, radius, radius, styleFor(paint))
 		withBlend(paint) { prep().circleCore(brushFor(paint), radius, center, (paint.alpha * fAlpha), styleFor(paint)) }
 	}
 
@@ -1329,7 +1436,17 @@ internal class Sdl3Canvas(
 		paint: Paint,
 	) {
 		if (captureUnsupported()) return
-		realizePendingClips()
+		val vAlpha = (paint.alpha * fAlpha).coerceIn(0f, 1f)
+		// Fully faded → a SrcOver no-op. Return BEFORE any clip realization so an
+		// invisible blit (an alpha(0)-hidden hover control) neither draws nor forces
+		// the enclosing rounded clip to realize its offscreen mask.
+		if (vAlpha <= 0.003f) return
+		// Containment-checked like every other draw: a blit inside the pending
+		// rounded region (a baked child inside a rounded row/card) needs no mask.
+		admitDraw(
+			dstOffset.x.toFloat(), dstOffset.y.toFloat(),
+			(dstOffset.x + dstSize.width).toFloat(), (dstOffset.y + dstSize.height).toFloat(),
+		)
 		val vTex = (image as? SdlImageBitmap)?.texture ?: return
 		com.compose.sdl.graphics.DrawStats.imageBlits++
 		// Commit pending frame geometry and re-assert this canvas's target + clip
@@ -1339,14 +1456,23 @@ internal class Sdl3Canvas(
 		SDL_SetRenderTarget(vRenderer, mainTarget()?.reinterpret())
 		applyClip()
 
+		// The blit composites with BLEND_PREMULTIPLIED (dst = srcRGB + dst*(1-srcA)):
+		// srcRGB enters the sum DIRECTLY, so fading must scale the COLOUR mod as well
+		// as the alpha mod — alpha-mod alone leaves srcRGB whole and an "alpha 0" blit
+		// degenerates to additive (hidden hover controls rendered fully bright).
 		val vTint = (paint.colorFilter as? androidx.compose.ui.graphics.BlendModeColorFilter)?.color
-		val vAlpha = (paint.alpha * fAlpha).coerceIn(0f, 1f)
 		if (vTint != null) {
-			SDL_SetTextureColorMod(vTex.reinterpret(), vTint.r8.toUByte(), vTint.g8.toUByte(), vTint.b8.toUByte())
+			SDL_SetTextureColorMod(
+				vTex.reinterpret(),
+				(vTint.r8 * vAlpha).toInt().coerceIn(0, 255).toUByte(),
+				(vTint.g8 * vAlpha).toInt().coerceIn(0, 255).toUByte(),
+				(vTint.b8 * vAlpha).toInt().coerceIn(0, 255).toUByte(),
+			)
 			SDL_SetTextureAlphaMod(vTex.reinterpret(), (vTint.alpha * vAlpha * 255f).toInt().coerceIn(0, 255).toUByte())
 		} else {
-			SDL_SetTextureColorMod(vTex.reinterpret(), 255u, 255u, 255u)
-			SDL_SetTextureAlphaMod(vTex.reinterpret(), (vAlpha * 255f).toInt().coerceIn(0, 255).toUByte())
+			val vMod = (vAlpha * 255f).toInt().coerceIn(0, 255).toUByte()
+			SDL_SetTextureColorMod(vTex.reinterpret(), vMod, vMod, vMod)
+			SDL_SetTextureAlphaMod(vTex.reinterpret(), vMod)
 		}
 		SDL_SetTextureBlendMode(vTex.reinterpret(), SDL_BLENDMODE_BLEND_PREMULTIPLIED)
 
