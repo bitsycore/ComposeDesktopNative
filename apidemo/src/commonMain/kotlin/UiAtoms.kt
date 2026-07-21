@@ -189,16 +189,6 @@ internal fun DangerButton(inLabel: String, inIcon: Int, inOnClick: () -> Unit) {
     ) { BtnContent(inIcon, inLabel, Color.White) }
 }
 
-/** Bordered icon+label chip (Copy / Save as / Cancel). */
-@Composable
-internal fun IconLabelChip(inIcon: Int, inLabel: String, inOnClick: () -> Unit) {
-    val c = LocalAppColors.current
-    Box(
-        modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, c.border, RoundedCornerShape(6.dp))
-            .clickable(onClick = inOnClick).padding(horizontal = 8.dp, vertical = 5.dp),
-    ) { BtnContent(inIcon, inLabel, c.dim, 14.dp) }
-}
-
 /** Icon + label row used inside buttons. */
 @Composable
 internal fun BtnContent(inIcon: Int, inLabel: String, inColor: Color, inSize: Dp = 16.dp) {

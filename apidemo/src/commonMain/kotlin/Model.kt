@@ -280,13 +280,6 @@ data class KeyVal(val key: String = "", val value: String = "", val enabled: Boo
 @Serializable
 enum class ReqMethod { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS }
 
-/** HTTP doesn't forbid a body on GET / HEAD / OPTIONS — RFC 7230 §3.3
-leaves it as "SHOULD NOT" / server discretion. Many APIs use a body
-on GET (Elasticsearch search, GraphQL queries) so we don't gate it
-here; the UI just sets bodyType=NONE by default for those methods. */
-val ReqMethod.allowsBody: Boolean
-    get() = true
-
 @Serializable
 enum class BodyType { NONE, TEXT, FORM, FILE }
 
@@ -314,7 +307,6 @@ fun ApiRequest.bodyContentType(): String? = when (bodyType) {
 // ==================
 
 class ApiResponse(
-    val ok: Boolean,
     val status: Int,
     val statusText: String,
     val timeMs: Long,

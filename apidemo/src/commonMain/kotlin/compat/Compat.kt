@@ -1,4 +1,4 @@
-package apidemo
+package apidemo.compat
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter

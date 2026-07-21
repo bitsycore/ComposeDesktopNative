@@ -1,4 +1,4 @@
-package apidemo
+package apidemo.compat
 
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInWindow

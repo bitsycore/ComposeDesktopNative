@@ -1,5 +1,7 @@
 package apidemo
 
+import apidemo.compat.createApiHttpClient
+import apidemo.compat.systemFileSystem
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -42,7 +44,7 @@ class HttpRunner {
                 inReq.headers
                     .filter { it.enabled && it.key.isNotBlank() }
                     .forEach { header(it.key, it.value) }
-                if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
+                if (inReq.bodyType != BodyType.NONE) {
                     // Content-Type comes from the body type / text format, unless the
                     // request already carries an explicit Content-Type header.
                     val vCt = inReq.bodyContentType()
@@ -70,7 +72,6 @@ class HttpRunner {
             // so show a short note instead and let the user Save the raw bytes.
             val vBinary = !vIsImage && isBinaryBody(vContentType, vBody)
             ApiResponse(
-                ok = true,
                 status = vResp.status.value,
                 statusText = vResp.status.description,
                 timeMs = vMark.elapsedNow().inWholeMilliseconds,
@@ -101,7 +102,6 @@ class HttpRunner {
             throw e
         } catch (e: Throwable) {
             ApiResponse(
-                ok = false,
                 status = 0,
                 statusText = "—",
                 timeMs = vMark.elapsedNow().inWholeMilliseconds,

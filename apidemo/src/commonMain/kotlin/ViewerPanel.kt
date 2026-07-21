@@ -36,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import apidemo.compat.*
+import apidemo.compat.ScrollbarStyle
+import apidemo.compat.rememberScrollbarAdapter
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 import kotlinx.coroutines.launch
@@ -135,7 +138,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                     val vRawHeaders =
                         if (vSentHeaders != null) vSentHeaders else parseHeaderLines(requestHeadersText(vR))
                     val vHeaders = synthesizeRequestHeaders(vR, vRawHeaders)
-                    val vBody = if (!vR.method.allowsBody || vR.bodyType == BodyType.NONE) null else requestBodyText(vR)
+                    val vBody = if (!true || vR.bodyType == BodyType.NONE) null else requestBodyText(vR)
                     HttpFlowView(
                         inStatusLine = formatRequestLine(vR, inRs.response?.httpVersion ?: "HTTP/1.1", c),
                         inStatusLineAccentColor = methodColor(vR.method),
@@ -190,7 +193,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
             ) {
                 // Response viewer: format selector for the body. Auto-detected
                 // from Content-Type until the user overrides, then pinned.
-                if (vRespHasContent && vResp != null && !vRespImage) {
+                if (vRespHasContent && !vRespImage) {
                     val vAuto = autoFormatFor(vResp.contentType)
                     val vCurrent = inRs.respFormatOverride ?: vAuto
                     BodyFormatSelector(
@@ -204,7 +207,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                 // Wrap toggle — soft-wrap long lines (default) vs. no wrap +
                 // horizontal scroll (one source line per row). Shown for any text
                 // body (request preview or response), hidden for an image.
-                val vHasTextBody = (vRespHasContent && vResp != null && !vRespImage) || vReqHasContent
+                val vHasTextBody = (vRespHasContent && !vRespImage) || vReqHasContent
                 if (vHasTextBody) {
                     val vWrapOn = inRs.bodyWrap
                     Box(
@@ -228,7 +231,7 @@ internal fun ViewerPanel(inRs: ReqState, inResolved: ApiRequest) {
                 }
                 vMsg?.let { Text(it, color = c.dim, fontSize = 11.sp) }
                 Spacer(Modifier.weight(1f))
-                if (vRespHasContent && vResp != null && vResp.error == null) {
+                if (vRespHasContent && vResp.error == null) {
                     Text(formatTimingSize(vResp), color = c.dim, fontSize = 11.sp)
                     Spacer(Modifier.width(8.dp))
                 }
@@ -651,7 +654,7 @@ internal fun HttpFlowView(
 
 /** A response body's selection is a pair of character offsets in the whole body
 string: [anchor] is where the user pressed / started the selection, [caret] is
-where they've moved to. When they differ, the selected range is [min..max].
+where they've moved to. When they differ, the selected range is [ min..max ].
 When equal, it's a zero-width caret still useful as a starting point for
 subsequent Shift+Arrow / Shift+Click extensions.
 
@@ -903,7 +906,7 @@ private fun buildBodyChunks(inText: String, inAnn: AnnotatedString, inLinesPerCh
     return vOut
 }
 
-/** Offsets where each source line starts (line i spans [starts[i], starts[i+1]-1),
+/** Offsets where each source line starts (line i spans [starts[ i], starts[i+1]-1),
 the -1 dropping the '\n'; the last line runs to the string end). One cheap O(n)
 scan, memoised — replaces the old gutter pre-pass that ran measurer.wrap() on
 every one of N lines on each width change (the other half of the freeze). */
@@ -1229,14 +1232,14 @@ internal fun synthesizeRequestHeaders(
     inReq: ApiRequest,
     inReported: List<Pair<String, String>>,
 ): List<Pair<String, String>> {
-    val vByKey = inReported.associate { it.first.lowercase() to it }.toMutableMap()
+    val vByKey = inReported.associateBy { it.first.lowercase() }.toMutableMap()
     urlHost(inReq.url)?.let { vHost ->
         vByKey.getOrPut("host") { "Host" to vHost }
     }
     if (!vByKey.containsKey("user-agent")) {
         vByKey["user-agent"] = "User-Agent" to kUserAgent
     }
-    if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE && !vByKey.containsKey("content-length")) {
+    if (true && inReq.bodyType != BodyType.NONE && !vByKey.containsKey("content-length")) {
         val vLen = computedBodyLength(inReq)
         if (vLen != null) vByKey["content-length"] = "Content-Length" to vLen.toString()
     }
@@ -1409,7 +1412,7 @@ internal fun BodyFormatSelector(
             )
         }
         DropdownMenu(expanded = vOpen, onDismissRequest = { vOpen = false }) {
-            for (vF in BodyFormat.values()) {
+            for (vF in BodyFormat.entries) {
                 DropdownMenuItem(
                     text = { Text(vF.label, color = if (vF == inSelected) c.accent else c.text) },
                     onClick = { inOnChange(vF); vOpen = false })
@@ -1462,35 +1465,6 @@ internal fun ViewerEmpty(inIcon: Int, inText: String, inModifier: Modifier = Mod
     }
 }
 
-/** A labelled, read-only (selectable) code block used by the viewer sections. */
-@Composable
-internal fun CodeSection(inLabel: String, inText: String) {
-    val c = LocalAppColors.current
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(inLabel, color = c.dim, fontSize = 11.sp)
-        Box(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
-                .background(c.bg, RoundedCornerShape(8.dp)).border(1.dp, c.border, RoundedCornerShape(8.dp))
-                .padding(12.dp),
-        ) {
-            androidx.compose.runtime.CompositionLocalProvider(
-                LocalTextSelectionColors provides
-                        androidx.compose.foundation.text.selection.TextSelectionColors(
-                            handleColor = c.accent,
-                            backgroundColor = c.accent.copy(alpha = 0.35f),
-                        ),
-            ) {
-                BasicTextField(
-                    value = inText.ifEmpty { "(empty)" }, onValueChange = {}, readOnly = true,
-                    textStyle = TextStyle(color = c.text, fontSize = 12.sp),
-                    cursorBrush = androidx.compose.ui.graphics.SolidColor(c.accent),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
-    }
-}
-
 /** Format an actual header list (key: value per line). */
 internal fun headersText(inHeaders: List<Pair<String, String>>): String =
     inHeaders.joinToString("\n") { (vK, vV) -> "$vK: $vV" }.ifEmpty { "(no headers)" }
@@ -1502,7 +1476,7 @@ internal fun requestHeadersText(inReq: ApiRequest): String {
     val vLines = mutableListOf<String>()
     inReq.headers.filter { it.enabled && it.key.isNotBlank() }.forEach { vLines.add("${it.key}: ${it.value}") }
     val vCt = inReq.bodyContentType()
-    if (inReq.method.allowsBody && vCt != null && inReq.headers.none {
+    if (true && vCt != null && inReq.headers.none {
             it.enabled && it.key.equals(
                 "content-type",
                 ignoreCase = true
@@ -1520,15 +1494,3 @@ internal fun requestBodyText(inReq: ApiRequest): String = when (inReq.bodyType) 
     BodyType.FORM -> formEncode(inReq.form).ifEmpty { "(empty form)" }
     BodyType.FILE -> if (inReq.body.isBlank()) "(no file)" else "(file) ${inReq.body}"
 }
-
-@Composable
-internal fun StatusPill(inStatus: Int, inLabel: String) {
-    val vC = statusColor(inStatus)
-    Box(
-        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(vC.copy(alpha = 0.20f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Text(inLabel, color = vC, fontSize = 14.sp)
-    }
-}
-

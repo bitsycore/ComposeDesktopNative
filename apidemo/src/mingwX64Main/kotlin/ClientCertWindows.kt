@@ -3,7 +3,6 @@ package apidemo
 import kotlinx.cinterop.*
 import platform.windows.*
 import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 // ==================
 // MARK: Windows client-certificate store import (Schannel mTLS)
@@ -519,7 +518,6 @@ private fun certPem(inCtx: CPointer<CERT_CONTEXT>): String? = memScoped {
 // ============
 
 /** Decode a PEM block (by label) to DER, or pass bytes through if already DER. */
-@OptIn(ExperimentalEncodingApi::class)
 private fun derFromMaybePem(inBytes: ByteArray, inLabel: String): ByteArray {
     val vText = inBytes.decodeToString()
     if (!vText.contains("-----BEGIN")) return inBytes
@@ -531,7 +529,6 @@ private fun derFromMaybePem(inBytes: ByteArray, inLabel: String): ByteArray {
 
 /** Extract + DER-decode the first PRIVATE KEY block from PEM text, or pass DER
 bytes through. Null if no key. */
-@OptIn(ExperimentalEncodingApi::class)
 private fun privateKeyDer(inBytes: ByteArray): ByteArray? {
     val vText = inBytes.decodeToString()
     if (!vText.contains("-----BEGIN")) return inBytes   // already DER
@@ -558,6 +555,5 @@ private fun CPointer<UShortVar>.toKStringFromUtf16(): String {
     return vSb.toString()
 }
 
-@OptIn(ExperimentalForeignApi::class)
 private fun winError(inWhat: String): Nothing =
     throw RuntimeException("$inWhat failed (Windows error 0x${GetLastError().toString(16)})")

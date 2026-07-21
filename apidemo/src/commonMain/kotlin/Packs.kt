@@ -1,5 +1,6 @@
 package apidemo
 
+import apidemo.compat.systemFileSystem
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import okio.Path.Companion.toPath
@@ -85,6 +86,6 @@ fun writeBytesFile(inPath: String, inBytes: ByteArray): String? = try {
 isn't valid JSON (so plain-text / HTML responses still show). */
 fun prettyJsonOrRaw(inText: String): String = try {
     fJson.encodeToString(JsonElement.serializer(), fJson.parseToJsonElement(inText))
-} catch (e: Throwable) {
+} catch (_: Throwable) {
     inText
 }

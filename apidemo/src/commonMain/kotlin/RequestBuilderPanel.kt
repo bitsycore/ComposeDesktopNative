@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package apidemo
 
 import androidx.compose.foundation.*
@@ -17,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import apidemo.compat.editorTabWidth
+import apidemo.compat.showOpenFileDialog
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 
@@ -40,7 +40,7 @@ internal fun RequestBuilder(
     inEdit: ((ApiRequest) -> ApiRequest) -> Unit,
 ) {
     val c = LocalAppColors.current
-    val vBodySet = inReq.method.allowsBody && when (inReq.bodyType) {
+    val vBodySet = true && when (inReq.bodyType) {
         BodyType.NONE -> false
         BodyType.FORM -> inReq.form.any { it.enabled && it.key.isNotBlank() }
         else -> inReq.body.isNotBlank()
@@ -331,7 +331,7 @@ internal fun CertConfigEditor(
                 }
             }
             Text(
-                if (inCert.keyPath.isNotBlank()) inCert.keyPath else "Optional — only if the key is in a separate file.",
+                inCert.keyPath.ifBlank { "Optional — only if the key is in a separate file." },
                 color = if (inCert.keyPath.isNotBlank()) c.text else c.dim, fontSize = 12.sp,
             )
         }

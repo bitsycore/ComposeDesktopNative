@@ -13,7 +13,6 @@ private const val kNativeOnly =
 actual fun inspectTlsChain(inReq: ApiRequest): TlsChain = TlsChain(emptyList(), kNativeOnly)
 
 actual fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse = ApiResponse(
-    ok = false,
     status = 0,
     statusText = "",
     timeMs = 0,

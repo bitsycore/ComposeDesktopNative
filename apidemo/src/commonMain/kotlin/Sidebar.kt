@@ -1,5 +1,4 @@
 @file:OptIn(
-    ExperimentalMaterial3Api::class,
     androidx.compose.ui.ExperimentalComposeUiApi::class,
 )
 
@@ -31,6 +30,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import apidemo.compat.fileManagerName
+import apidemo.compat.revealInFileManager
+import apidemo.compat.y
 import com.compose.sdl.icons.MaterialSymbols
 import com.compose.sdl.icons.material.symbols.MaterialSymbolsOutlined
 

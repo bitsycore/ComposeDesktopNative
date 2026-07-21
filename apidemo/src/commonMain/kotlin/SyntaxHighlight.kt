@@ -199,10 +199,8 @@ private fun highlightXml(inText: String, inP: SyntaxPalette): AnnotatedString = 
     val vN = inText.length
     var vI = 0
     while (vI < vN) {
-        val vC = inText[vI]
-        when {
-            // Comment block: <!-- ... -->
-            vC == '<' && inText.startsWith("<!--", vI) -> {
+        when (val vC = inText[vI]) {
+            '<' if inText.startsWith("<!--", vI) -> {
                 val vEnd = inText.indexOf("-->", vI + 4).let { if (it < 0) vN else it + 3 }
                 pushStyle(SpanStyle(color = inP.comment))
                 append(inText.substring(vI, vEnd))
@@ -210,7 +208,7 @@ private fun highlightXml(inText: String, inP: SyntaxPalette): AnnotatedString = 
                 vI = vEnd
             }
 
-            vC == '<' -> {
+            '<' -> {
                 // Tag open: <[/]name attr=val attr2="val2">
                 val vGt = inText.indexOf('>', vI).let { if (it < 0) vN else it + 1 }
                 pushStyle(SpanStyle(color = inP.punct)); append('<'); pop()
@@ -370,11 +368,10 @@ private fun findUnquotedHash(inLine: String): Int {
     var vInSingle = false
     var vInDouble = false
     for (vI in inLine.indices) {
-        val vC = inLine[vI]
-        when {
-            vC == '"' && !vInSingle -> vInDouble = !vInDouble
-            vC == '\'' && !vInDouble -> vInSingle = !vInSingle
-            vC == '#' && !vInSingle && !vInDouble -> return vI
+        when (inLine[vI]) {
+            '"' if !vInSingle -> vInDouble = !vInDouble
+            '\'' if !vInDouble -> vInSingle = !vInSingle
+            '#' if !vInSingle && !vInDouble -> return vI
         }
     }
     return -1
@@ -387,11 +384,10 @@ private fun indexOfKeyColon(inLine: String): Int {
     var vInSingle = false
     var vInDouble = false
     for (vI in inLine.indices) {
-        val vC = inLine[vI]
-        when {
-            vC == '"' && !vInSingle -> vInDouble = !vInDouble
-            vC == '\'' && !vInDouble -> vInSingle = !vInSingle
-            vC == ':' && !vInSingle && !vInDouble -> {
+        when (inLine[vI]) {
+            '"' if !vInSingle -> vInDouble = !vInDouble
+            '\'' if !vInDouble -> vInSingle = !vInSingle
+            ':' if !vInSingle && !vInDouble -> {
                 val vNext = if (vI + 1 < inLine.length) inLine[vI + 1] else ' '
                 if (vNext.isWhitespace() || vI + 1 == inLine.length) return vI
             }

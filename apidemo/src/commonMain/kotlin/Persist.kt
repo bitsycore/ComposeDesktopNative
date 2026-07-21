@@ -1,5 +1,8 @@
 package apidemo
 
+import apidemo.compat.appDataDir
+import apidemo.compat.revealInFileManager
+import apidemo.compat.systemFileSystem
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toPath
@@ -86,7 +89,7 @@ fun loadAppState(): AppState {
     return try {
         val vText = systemFileSystem.read(vPath.toPath()) { readUtf8() }
         fStateJson.decodeFromString<AppState>(vText)
-    } catch (e: Throwable) {
+    } catch (_: Throwable) {
         AppState()
     }
 }
@@ -97,7 +100,7 @@ fun saveAppState(inState: AppState) {
     val vPath = stateFilePath() ?: return
     try {
         systemFileSystem.write(vPath.toPath()) { writeUtf8(fStateJson.encodeToString(inState)) }
-    } catch (e: Throwable) {
+    } catch (_: Throwable) {
         // ignore — nothing the user can act on, and packs can still be exported
     }
 }

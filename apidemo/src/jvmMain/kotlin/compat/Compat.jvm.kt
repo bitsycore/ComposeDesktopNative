@@ -1,6 +1,6 @@
 @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 
-package apidemo
+package apidemo.compat
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.ImageBitmap

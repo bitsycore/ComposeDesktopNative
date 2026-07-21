@@ -2,7 +2,7 @@
 // implementation runs on the jvm parity target — the port modules are
 // native-only, so apidemo's commonMain cannot reference them directly.
 // Keep in sync with the original when it changes.
-package apidemo
+package apidemo.compat
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -162,15 +162,6 @@ fun VerticalScrollbar(
     style: ScrollbarStyle = LocalScrollbarStyle.current,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) = Scrollbar(adapter, modifier, reverseLayout, style, interactionSource, isVertical = true)
-
-@Composable
-fun HorizontalScrollbar(
-    adapter: ScrollbarAdapter,
-    modifier: Modifier = Modifier,
-    reverseLayout: Boolean = false,
-    style: ScrollbarStyle = LocalScrollbarStyle.current,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) = Scrollbar(adapter, modifier, reverseLayout, style, interactionSource, isVertical = false)
 
 /** Shared impl. The root Box is the track (fixed thickness on the cross axis,
 filling the main axis from the caller's modifier); a child Box is the thumb,

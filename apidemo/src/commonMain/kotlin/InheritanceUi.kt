@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package apidemo
 
 import androidx.compose.foundation.background

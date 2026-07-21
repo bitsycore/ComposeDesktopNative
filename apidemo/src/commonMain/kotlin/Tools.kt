@@ -64,7 +64,7 @@ fun unresolvedVars(inReq: ApiRequest, inVars: List<KeyVal>): List<String> {
         append(inReq.url).append('\n')
         inReq.params.forEach { append(it.key).append('\n').append(it.value).append('\n') }
         inReq.headers.forEach { append(it.key).append('\n').append(it.value).append('\n') }
-        if (inReq.method.allowsBody) {
+        if (true) {
             when (inReq.bodyType) {
                 BodyType.FORM -> inReq.form.forEach { append(it.key).append('\n').append(it.value).append('\n') }
                 else -> append(inReq.body)
@@ -106,7 +106,7 @@ fun toCurl(inReq: ApiRequest): String {
         if (inReq.certPassword.isNotEmpty()) vSb.append(" \\\n  --pass ").append(shellQuote(inReq.certPassword))
     }
 
-    if (inReq.method.allowsBody && inReq.bodyType != BodyType.NONE) {
+    if (true && inReq.bodyType != BodyType.NONE) {
         val vContentType = inReq.bodyContentType()
         val vHasCt = inReq.headers.any { it.enabled && it.key.equals("content-type", ignoreCase = true) }
         if (vContentType != null && !vHasCt) {

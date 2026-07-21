@@ -287,7 +287,6 @@ actual fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse {
         }.sortedBy { it.first.lowercase() }
 
         return ApiResponse(
-            ok = true,
             status = vStatus,
             statusText = runCatching { HttpStatusCode.fromValue(vStatus).description }.getOrDefault(""),
             timeMs = vMs,
@@ -314,7 +313,6 @@ actual fun curlSendWithClientCert(inReq: ApiRequest): ApiResponse {
 /** A failed-request ApiResponse with a message (mirrors HttpRunner's catch). */
 private fun errorResponse(inMessage: String, inMs: Long): ApiResponse =
     ApiResponse(
-        ok = false,
         status = 0,
         statusText = "—",
         timeMs = inMs,
