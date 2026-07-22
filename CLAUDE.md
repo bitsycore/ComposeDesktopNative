@@ -89,7 +89,8 @@ utils/
                                                     declares official Maven compose coords — the root
                                                     build's FULL-COMMONIZATION BRIDGE substitutes the
                                                     whole ui / foundation / animation / material3 /
-                                                    nav3-ui family to project modules on native configs
+                                                    nav3-ui / components-resources family to project
+                                                    modules on native configs
                                                     (:demo and :apidemo commonMains rely on the same
                                                     bridge; :compose-desktop-native-bridge ships it to
                                                     consumers). Apps get one dep; the consumer Zip task
@@ -133,16 +134,27 @@ apidemo/             → :apidemo   — Postman-style REST API manager. MULTIPLA
                                     to com.compose.sdl, jvm actuals use AWT + upstream desktop).
                                     mTLS / TLS-chain inspection stays native-only (bundled libcurl).
                                     DOGFOODS the bridge plugin: data.kres packaging + app icon come
-                                    from compose.desktop.native {}; only the font pipeline (Noto +
-                                    Material Symbols subsetting) stays custom in its build file.
+                                    from compose.desktop.native {}; the font pipeline (Noto +
+                                    Material Symbols subsetting) comes from the shared buildSrc
+                                    helper (registerComposeFontBundling).
+buildSrc/            → shared build logic for the app modules: ComposeFontBundling.kt —
+                      registerComposeFontBundling { } (everything OPT-IN; no flag = no-op)
+                      registers downloadNotoFonts (bundleNotoSans / bundleNotoSansMono /
+                      autoDetectNotoSansMono), detects the Material Symbols styles the
+                      sources use (bundleMaterialSymbols), wires the font/ entries into
+                      every data.kres Zip (the bridge plugin's package* tasks; hand-rolled
+                      copy*ComposeResources* tasks also match) and stages the same fonts on
+                      the JVM classpath; hb-subset pipeline behind enableIconSubsetting
+                      (findMaterialSymbolsUsage + subsetMaterialSymbols<Style>).
 gradle-plugin/
 └── compose-desktop-native-bridge/ → the CONSUMER-side bridge as a published Gradle plugin
                                     (id com.bitsycore.compose-desktop-native.bridge, applies to
                                     Settings or Project). An INCLUDED build (pluginManagement.
                                     includeBuild in settings.gradle.kts), NOT a subproject — a
                                     plugins{} block can only resolve plugins from repositories or
-                                    included builds; :apidemo applies it from source (dogfooding:
-                                    its data.kres packaging + app icon run through the plugin).
+                                    included builds; :demo and :apidemo apply it from source
+                                    (dogfooding: data.kres packaging — and apidemo's app icon —
+                                    run through the plugin).
                                     Three halves: (1) substitution — third-party apps declare
                                     OFFICIAL CMP coords in commonMain and native configurations
                                     swap in the published com.bitsycore.compose.sdl klibs
@@ -409,18 +421,24 @@ executable, loaded via `SDL_GetBasePath()`). Contents:
 
 - App drawables + files under `composeResources/{drawable,files}/`
 - `font/NotoSans.ttf` — the default variable font. Bundling it is the APP's
-  job: each app registers its own `downloadNotoFonts` task (into
-  `<app>/build/fonts/`); the library ships no download task. Pass
-  `-PbundleDefaultFont=false` to skip (demo).
-- `font/NotoSansMono.ttf` — mono body font (apidemo only)
-- Material Symbols fonts for the styles the app **actually uses** — the
-  Zip task scans the app's Kotlin sources for `MaterialSymbolsOutlined` /
-  `Rounded` / `Sharp` and only bundles the fonts referenced.
-- `-PsubsetIcons=true` (default on): `scripts/subset-material-symbols.py`
-  scans app sources for `MaterialSymbols.<Name>` usage and hb-subsets each
-  bundled font down to just those glyphs. Needs `hb-subset` on PATH
-  (`brew install harfbuzz` / `apt install harfbuzz-utils`) — falls back
-  to the full font if absent.
+  job: each app opts in via `registerComposeFontBundling { bundleNotoSans =
+  true; … }` (buildSrc — every flag is opt-in, no flag = no-op), which
+  registers its `downloadNotoFonts` task (into `<app>/build/fonts/`); the
+  library ships no download task. Pass `-PbundleDefaultFont=false` to skip.
+- `font/NotoSansMono.ttf` — `autoDetectNotoSansMono = true` bundles it when
+  `FontFamily.Monospace` appears in the app sources (demo);
+  `bundleNotoSansMono = true` forces it (apidemo's body font, loaded through
+  its own seam)
+- Material Symbols fonts for the styles the app **actually uses**
+  (`bundleMaterialSymbols = true`) — the Zip task scans the app's Kotlin
+  sources for `MaterialSymbolsOutlined` / `Rounded` / `Sharp` and only
+  bundles the fonts referenced.
+- `-PsubsetIcons=true` (default on, opted into per app via
+  `enableIconSubsetting = true` — apidemo yes, demo no):
+  `scripts/subset-material-symbols.py` scans app sources for
+  `MaterialSymbols.<Name>` usage and hb-subsets each bundled font down to
+  just those glyphs. Needs `hb-subset` on PATH (`brew install harfbuzz` /
+  `apt install harfbuzz-utils`) — falls back to the full font if absent.
 
 ## Vendor sync workflow
 

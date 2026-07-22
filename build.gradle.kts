@@ -141,7 +141,6 @@ subprojects {
 // swaps those modules for the port's project equivalents — the Maven
 // artifacts ship no mingwX64/linux klibs. org.jetbrains.compose.runtime is
 // deliberately NOT here: the port uses the official runtime klibs everywhere.
-// (:demo carries the same pattern locally for components-resources.)
 val vNativeTargetTokens = listOf("mingwX64", "linuxX64", "linuxArm64", "macosArm64")
 allprojects {
     configurations.configureEach {
@@ -164,6 +163,9 @@ allprojects {
                 // navigation3-ui: the JB Maven artifact has no K/N desktop
                 // klibs — the port vendors it as :navigation3-ui.
                 substitute(module("org.jetbrains.androidx.navigation3:navigation3-ui")).using(project(":navigation3-ui"))
+                // components-resources: the official resources runtime ships no
+                // mingwX64/linux klibs — the port vendors it as :components-resources.
+                substitute(module("org.jetbrains.compose.components:components-resources")).using(project(":components-resources"))
             }
         }
     }
