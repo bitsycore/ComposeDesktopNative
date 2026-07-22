@@ -6,9 +6,6 @@ pluginManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
     // The consumer-side bridge plugin, built from source as an INCLUDED build
-    // (it cannot be a subproject: a plugins { id(...) } block can only resolve
-    // plugins from repositories or included builds). :apidemo applies it —
-    // dogfooding the exact packaging / icon pipeline third-party apps get.
     includeBuild("gradle-plugin/compose-desktop-native-bridge")
 }
 
@@ -19,9 +16,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        // Consumers of the published compose-desktop-native artifacts. GitHub
-        // Packages requires auth even for public reads — set gpr.user / gpr.token
-        // in ~/.gradle/gradle.properties, or export GITHUB_ACTOR / GITHUB_TOKEN.
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/bitsycore/compose-desktop-native")
@@ -39,19 +33,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "ComposeDesktopNative"
 
-// Library modules mirror upstream Compose Multiplatform's `compose/` tree — one
-// Gradle module per upstream artifact (dir = upstream path, gradle path kept short):
-//   :ui                (compose/ui)                            androidx.compose.ui.* + com.compose.sdl.* + SDL cinterops
-//   :animation-core    (compose/animation/animation-core)      androidx.compose.animation.core.*
-//   :animation         (compose/animation/animation)           androidx.compose.animation.* )
-//   :foundation        (compose/foundation/foundation)         androidx.compose.foundation.*
-//   :foundation-layout (compose/foundation/foundation-layout)  androidx.compose.foundation.layout.*
-//   :material3         (compose/material3/material3)           androidx.compose.material3.*
-//   :material-ripple   (compose/material/material-ripple)      androidx.compose.material.ripple.*
-//   :material-symbols  (utils/material-symbols)                icon-font modules (outlined / rounded / sharp)
-// androidx.collection comes from Maven.
-// Module PATHS stay short (:ui, :foundation, …) so build files stay terse
-// Our custom modules: :window in compose/sdl/, :material-symbols in utils/
+// Library modules mirror upstream Compose Multiplatform's `compose/` tree
 include(":ui")
 include(":ui-util")
 include(":ui-geometry")

@@ -1,33 +1,20 @@
-// Root build — declare the Kotlin/Compose plugins once (apply false) so every
-// subproject shares a single plugin classloader. Applying them independently
-// per-subproject can load Kotlin Gradle plugin build services under isolated
-// classloaders, which fails with "X cannot be cast to X" once several modules
-// apply the multiplatform plugin. Each subproject still applies the ones it needs.
+import kotlinx.validation.ExperimentalBCVApi
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.plugin.compose) apply false
     alias(libs.plugins.kotlin.plugin.serialization) apply false
     alias(libs.plugins.compose.multiplatform) apply false
-    // Public-ABI dumps (api/<module>.klib.api). Used by scripts/compose-coverage.py
-    // to diff our mirrored API surface against the official upstream klib ABI dumps.
     alias(libs.plugins.binary.compatibility.validator)
 }
 
-// Generate klib ABI dumps; the apps and icon-font modules carry no public API
-// surface worth tracking, so skip them.
 apiValidation {
+    @OptIn(ExperimentalBCVApi::class)
     klib { enabled = true }
-    // (compose-desktop-native-bridge is an INCLUDED build, not a subproject —
-    // out of BCV's reach by construction.)
     ignoredProjects.addAll(listOf("demo", "apidemo"))
 }
 
-// Project coordinates. `group` is baked into every module's Kotlin/Native klib
-// metadata as its module ID (e.g. `com.bitsycore.compose.sdl:ui`) — keep it
-// stable, or a stale IC cache surfaces as "Unknown dependent library …" (see
-// the pitfall note in CLAUDE.md).
-//
 // Version is driven by PUBLISH_VERSION (set from the git tag in the publish
 // workflow, `v1.2.3` → `1.2.3`). Local dev / demo runs default to SNAPSHOT.
 val vPublishVersion = (System.getenv("PUBLISH_VERSION") ?: "0.0.0-SNAPSHOT").removePrefix("v")
@@ -39,6 +26,7 @@ allprojects {
 // ==================
 // MARK: Publish to GitHub Packages
 // ==================
+
 // Every library module (everything except the two demo apps) auto-registers a
 // MavenPublication via the kotlin-multiplatform plugin — one per target + one
 // for the shared kotlinMultiplatform metadata. The CI publish workflow runs on
