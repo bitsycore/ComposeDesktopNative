@@ -8,7 +8,7 @@ plugins {
     id("com.bitsycore.compose-desktop-native.bridge")
 }
 
-val vHostSupportsMingw = rootProject.extra["vHostSupportsMingw"] as Boolean
+val isHostMingwCompatible = rootProject.extra["vHostSupportsMingw"] as Boolean
 
 // ==================
 // MARK: Targets
@@ -21,7 +21,7 @@ kotlin {
         add(linuxArm64())
         add(linuxX64())
         add(macosArm64())
-        if (vHostSupportsMingw) add(mingwX64())
+        if (isHostMingwCompatible) add(mingwX64())
     }.forEach {
         it.binaries {
             executable {
@@ -109,7 +109,6 @@ compose.desktop {
 compose.desktop.native {
     entryPoint = "apidemo.main"
     icon {
-        // Window/taskbar icon → icon/<name>.rgba in data.kres (paths in Main.kt).
         light.from(
             layout.projectDirectory.file("icons/voltic-icon-32.png"),
             layout.projectDirectory.file("icons/voltic-icon-128.png"),
@@ -118,16 +117,17 @@ compose.desktop.native {
             layout.projectDirectory.file("icons/voltic-icon-dark-32.png"),
             layout.projectDirectory.file("icons/voltic-icon-dark-128.png"),
         )
-        // .exe (Explorer): the full branded icon with background.
-        exeIcon.from(listOf(16, 32, 48, 64, 128, 256).map {
-            layout.projectDirectory.file("icons/voltic-icon-$it.png")
-        })
+        exeIcon.from(
+            listOf(16, 32, 48, 64, 128, 256).map {
+                layout.projectDirectory.file("icons/voltic-icon-$it.png")
+            }
+        )
         embedWindowsIcon = providers.gradleProperty("embedWindowsIcon").map { it.toBoolean() }
     }
 }
 
 // ==================
-// MARK: Fonts → data.kres + JVM classpath
+// MARK: Fonts
 // ==================
 
 val notoSansFile = layout.buildDirectory.file("fonts/NotoSans.ttf")
@@ -172,8 +172,7 @@ fun detectUsedStyles(): List<String> {
 }
 
 val vUsedStyles: List<String> = detectUsedStyles()
-
-val subsetIcons = (findProperty("subsetIcons") as? String)?.toBoolean() ?: false
+val subsetIcons = providers.gradleProperty("subsetIcons").map(String::toBoolean).getOrElse(false)
 val iconsBuildDir = layout.buildDirectory.dir("icons")
 
 val findMaterialSymbolsUsage = tasks.register<Exec>("findMaterialSymbolsUsage") {
@@ -193,8 +192,7 @@ val findMaterialSymbolsUsage = tasks.register<Exec>("findMaterialSymbolsUsage") 
     )
 }
 
-/* hb-subset a style's downloaded TTF (owned by :material-symbols) to the
-   codepoints in usage-codepoint.txt, into this app's build/icons/. */
+/** hb-subset a style's downloaded TTF to the codepoints in usage-codepoint.txt, into this app's build/icons/. */
 fun registerSubsetTask(inStyle: String): TaskProvider<*> {
     val vSymbolsProject = rootProject.project(":material-symbols")
     return tasks.register("subsetMaterialSymbols$inStyle") {
@@ -214,14 +212,14 @@ fun registerSubsetTask(inStyle: String): TaskProvider<*> {
                 .filter { it.isNotBlank() && !it.startsWith("#") && it.contains("=") }
                 .map { it.substringAfter("=").trim().removePrefix("0x").removePrefix("0X") }
             if (vCodepoints.isEmpty()) throw GradleException(
-                "usage-codepoint.txt has no entries — refusing to subset to an empty font."
+                "usage-codepoint.txt has no entries : refusing to subset to an empty font."
             )
             val vUnicodes = vCodepoints.joinToString(",") { "U+$it" }
             vOut.parentFile.mkdirs()
             val vInputFile = vInputProvider.get().asFile
             val vBefore = vInputFile.length()
             // ProcessBuilder: project.exec isn't usable inside doLast on Gradle 9.
-            // hb-subset is optional — without it, bundle the full font.
+            // hb-subset is optional : without it, bundle the full font.
             val vProc = try {
                 ProcessBuilder(
                     "hb-subset",
@@ -232,7 +230,7 @@ fun registerSubsetTask(inStyle: String): TaskProvider<*> {
             } catch (_: java.io.IOException) {
                 vInputFile.copyTo(vOut, overwrite = true)
                 logger.warn(
-                    "[subset $inStyle] hb-subset not found on PATH — bundling the full font " +
+                    "[subset $inStyle] hb-subset not found on PATH : bundling the full font " +
                             "(${vBefore / 1024}KB). Install harfbuzz to shrink it (brew install harfbuzz / " +
                             "pacman -S mingw-w64-x86_64-harfbuzz / apt install harfbuzz-utils)."
                 )
@@ -252,7 +250,7 @@ fun registerSubsetTask(inStyle: String): TaskProvider<*> {
 val subsetTasksByStyle: Map<String, TaskProvider<*>> =
     if (subsetIcons) vUsedStyles.associateWith { registerSubsetTask(it) } else emptyMap()
 
-// Fonts ride in every data.kres zip the plugin registers (matching{} is lazy —
+// Fonts ride in every data.kres zip the plugin registers (matching{} is lazy :
 // the package* tasks appear in the plugin's afterEvaluate).
 tasks.withType<Zip>().matching { it.name.startsWith("package") && it.name.contains("ComposeResources") }.configureEach {
     from(notoSansFile) { into("font") }
@@ -265,7 +263,7 @@ tasks.withType<Zip>().matching { it.name.startsWith("package") && it.name.contai
         val vDownloadTask = vSymbolsProject.extra["iconFontDownloadTask$vStyle"] as TaskProvider<*>
         val vSubsetTask = subsetTasksByStyle[vStyle]
         if (vSubsetTask != null) {
-            // Subset output keeps the original filename — runtime registration unchanged.
+            // Subset output keeps the original filename : runtime registration unchanged.
             val vOriginalName = vFontFile.get().asFile.name
             from(vSubsetTask.get().outputs.files) {
                 into("font")
@@ -283,7 +281,7 @@ tasks.withType<Zip>().matching { it.name.startsWith("package") && it.name.contai
 tasks.named<ProcessResources>("jvmProcessResources") {
     from(notoMonoFile) { into("font") }
     dependsOn(downloadNotoFonts)
-    // Parity-window icon (cosmetic — the harness compares the canvas, not chrome).
+    // Parity-window icon (cosmetic : the harness compares the canvas, not chrome).
     from(layout.projectDirectory.file("icons/voltic-icon-256.png")) { into("icon") }
     val vSymbolsProject = rootProject.project(":material-symbols")
     for (vStyle in vUsedStyles) {
